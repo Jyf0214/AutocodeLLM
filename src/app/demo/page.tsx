@@ -29,13 +29,13 @@ const scenarios = [
 ];
 
 export default function DemoPage() {
-  const t = useTranslations('demo');
+  const t = useTranslations();
 
   return (
     <AppLayout>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <Title level={3}>{t('title')}</Title>
-        <Paragraph type="secondary">{t('description')}</Paragraph>
+        <Title level={3}>{t('demo.title')}</Title>
+        <Paragraph type="secondary">{t('demo.description')}</Paragraph>
 
         <Row gutter={[24, 24]} style={{ marginTop: 32 }}>
           {scenarios.map((scenario) => (

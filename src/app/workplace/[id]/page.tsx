@@ -12,13 +12,13 @@ export default function WorkplaceDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const t = useTranslations('workplace');
+  const t = useTranslations();
   const { id } = React.use(params);
 
   const tabItems = [
-    { key: 'read', label: t('readFile'), children: <p>文件读取功能开发中...</p> },
-    { key: 'write', label: t('writeFile'), children: <p>文件写入功能开发中...</p> },
-    { key: 'edit', label: t('editFile'), children: <p>文件编辑功能开发中...</p> },
+    { key: 'read', label: t('workplace.readFile'), children: <p>文件读取功能开发中...</p> },
+    { key: 'write', label: t('workplace.writeFile'), children: <p>文件写入功能开发中...</p> },
+    { key: 'edit', label: t('workplace.editFile'), children: <p>文件编辑功能开发中...</p> },
   ];
 
   return (

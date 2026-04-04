@@ -10,12 +10,12 @@ const { Title, Paragraph } = Typography;
  * MCP 服务配置页
  */
 export default function McpPage() {
-  const t = useTranslations('common');
+  const t = useTranslations();
 
   return (
     <AppLayout>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <Title level={3}>{t('mcp')}</Title>
+        <Title level={3}>{t('common.mcp')}</Title>
         <Paragraph type="secondary">
           配置和管理 MCP（Model Context Protocol）服务连接。
         </Paragraph>

@@ -22,17 +22,17 @@ const { Sider, Content } = Layout;
 const { Title } = Typography;
 
 const menuItems = [
-  { key: '/', icon: <HomeOutlined />, label: 'common:appName' },
-  { key: '/workplace', icon: <FolderOutlined />, label: 'common:workplace' },
-  { key: '/setting/mcp', icon: <SettingOutlined />, label: 'common:mcp' },
-  { key: '/env', icon: <EnvironmentOutlined />, label: 'common:env' },
-  { key: '/workers', icon: <CloudServerOutlined />, label: 'common:workers' },
-  { key: '/agents', icon: <TeamOutlined />, label: 'common:agents' },
-  { key: '/sync', icon: <SyncOutlined />, label: 'common:sync' },
-  { key: '/model', icon: <AppstoreOutlined />, label: 'common:models' },
-  { key: '/openai/provider', icon: <ApiOutlined />, label: 'common:providers' },
-  { key: '/docs', icon: <BookOutlined />, label: 'common:docs' },
-  { key: '/demo', icon: <PlayCircleOutlined />, label: 'common:demo' },
+  { key: '/', icon: <HomeOutlined />, label: 'common.appName' },
+  { key: '/workplace', icon: <FolderOutlined />, label: 'common.workplace' },
+  { key: '/setting/mcp', icon: <SettingOutlined />, label: 'common.mcp' },
+  { key: '/env', icon: <EnvironmentOutlined />, label: 'common.env' },
+  { key: '/workers', icon: <CloudServerOutlined />, label: 'common.workers' },
+  { key: '/agents', icon: <TeamOutlined />, label: 'common.agents' },
+  { key: '/sync', icon: <SyncOutlined />, label: 'common.sync' },
+  { key: '/model', icon: <AppstoreOutlined />, label: 'common.models' },
+  { key: '/openai/provider', icon: <ApiOutlined />, label: 'common.providers' },
+  { key: '/docs', icon: <BookOutlined />, label: 'common.docs' },
+  { key: '/demo', icon: <PlayCircleOutlined />, label: 'common.demo' },
 ];
 
 interface AppLayoutProps {
@@ -50,11 +50,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   const translatedMenuItems = useMemo(
     () =>
-      menuItems.map((item) => ({
-        key: item.key,
-        icon: item.icon,
-        label: t(item.label),
-      })),
+      menuItems.map((item) => {
+        const parts = item.label.split('.');
+        const namespace = parts[0] ?? '';
+        const key = parts[1] ?? '';
+        return {
+          key: item.key,
+          icon: item.icon,
+          label: t(`${namespace}.${key}`),
+        };
+      }),
     [t],
   );
 

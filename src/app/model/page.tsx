@@ -10,12 +10,12 @@ const { Title, Paragraph } = Typography;
  * 模型管理页
  */
 export default function ModelPage() {
-  const t = useTranslations('common');
+  const t = useTranslations();
 
   return (
     <AppLayout>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <Title level={3}>{t('models')}</Title>
+        <Title level={3}>{t('common.models')}</Title>
         <Paragraph type="secondary">
           配置和管理可用的 AI 模型及其参数。
         </Paragraph>

@@ -10,12 +10,12 @@ const { Title, Paragraph } = Typography;
  * API 提供商配置页
  */
 export default function ProviderPage() {
-  const t = useTranslations('common');
+  const t = useTranslations();
 
   return (
     <AppLayout>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <Title level={3}>{t('providers')}</Title>
+        <Title level={3}>{t('common.providers')}</Title>
         <Paragraph type="secondary">
           配置和管理 OpenAI 兼容的 API 提供商连接。
         </Paragraph>

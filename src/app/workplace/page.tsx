@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl';
 const { Title } = Typography;
 
 export default function WorkplacePage() {
-  const t = useTranslations('workplace');
+  const t = useTranslations();
 
   return (
     <AppLayout>
@@ -22,13 +22,13 @@ export default function WorkplacePage() {
           }}
         >
           <Title level={3} style={{ margin: 0 }}>
-            {t('title')}
+            {t('workplace.title')}
           </Title>
           <Button type="primary" icon={<PlusOutlined />}>
-            {t('create')}
+            {t('workplace.create')}
           </Button>
         </div>
-        <Empty description={t('empty')} />
+        <Empty description={t('workplace.empty')} />
       </div>
     </AppLayout>
   );

@@ -10,7 +10,7 @@ import type { LoginResponse } from '@/lib/api/types';
 const { Title, Text } = Typography;
 
 export default function LoginPage() {
-  const t = useTranslations('login');
+  const t = useTranslations();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -67,16 +67,16 @@ export default function LoginPage() {
       >
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Title level={3} style={{ marginBottom: 8 }}>
-            {t('title')}
+            {t('login.title')}
           </Title>
-          <Text type="secondary">{t('subtitle')}</Text>
+          <Text type="secondary">{t('login.subtitle')}</Text>
         </div>
         <Form name="login" onFinish={onFinish} size="large">
           <Form.Item
             name="username"
             rules={[{ required: true, message: '请输入用户名' }]}
           >
-            <Input prefix={<UserOutlined />} placeholder={t('username')} />
+            <Input prefix={<UserOutlined />} placeholder={t('login.username')} />
           </Form.Item>
           <Form.Item
             name="password"
@@ -84,12 +84,12 @@ export default function LoginPage() {
           >
             <Input.Password
               prefix={<LockOutlined />}
-              placeholder={t('password')}
+              placeholder={t('login.password')}
             />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading} block>
-              {t('submit')}
+              {t('login.submit')}
             </Button>
           </Form.Item>
         </Form>

@@ -47,12 +47,12 @@ const faqItems = [
 ];
 
 export default function DocsPage() {
-  const t = useTranslations('common');
+  const t = useTranslations();
 
   return (
     <AppLayout>
       <div style={{ maxWidth: 800, margin: '0 auto' }}>
-        <Title level={3}>{t('docs')}</Title>
+        <Title level={3}>{t('common.docs')}</Title>
         <Paragraph type="secondary">AutocodeLLM 使用指南与常见问题</Paragraph>
 
         <Collapse items={faqItems} style={{ marginTop: 24 }} defaultActiveKey={['1']} />

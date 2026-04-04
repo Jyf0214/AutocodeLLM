@@ -10,12 +10,12 @@ const { Title, Paragraph } = Typography;
  * 任务代理编排页
  */
 export default function AgentsPage() {
-  const t = useTranslations('common');
+  const t = useTranslations();
 
   return (
     <AppLayout>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <Title level={3}>{t('agents')}</Title>
+        <Title level={3}>{t('common.agents')}</Title>
         <Paragraph type="secondary">
           编排和管理自动化任务代理工作流。
         </Paragraph>

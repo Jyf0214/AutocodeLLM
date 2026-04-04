@@ -10,12 +10,12 @@ const { Title, Paragraph } = Typography;
  * Worker 节点管理页
  */
 export default function WorkersPage() {
-  const t = useTranslations('common');
+  const t = useTranslations();
 
   return (
     <AppLayout>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <Title level={3}>{t('workers')}</Title>
+        <Title level={3}>{t('common.workers')}</Title>
         <Paragraph type="secondary">
           监控和管理 Worker 节点状态与资源分配。
         </Paragraph>
