@@ -5,6 +5,7 @@ import { Button, Form, Input, Typography, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import type { LoginResponse } from '@/lib/api/types';
 
 const { Title, Text } = Typography;
 
@@ -13,12 +14,39 @@ export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const onFinish = (_values: { username: string; password: string }) => {
+  const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true);
-    // TODO: 实现实际登录逻辑
-    message.success('登录成功（演示）');
-    router.push('/workplace');
-    setLoading(false);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
+
+      const result = (await response.json()) as LoginResponse;
+
+      if (result.success) {
+        // 存储用户信息到 sessionStorage
+        sessionStorage.setItem('userId', result.data?.userId ?? '');
+        sessionStorage.setItem('username', result.data?.username ?? '');
+        sessionStorage.setItem('forceChangePassword', String(result.data?.forceChangePassword));
+
+        // 如果需要强制修改密码
+        if (result.data?.forceChangePassword) {
+          message.warning('首次登录，请修改初始密码');
+          router.push('/change-password');
+        } else {
+          message.success('登录成功');
+          router.push('/workplace');
+        }
+      } else {
+        message.error(result.error?.message ?? '登录失败');
+      }
+    } catch {
+      message.error('网络错误，请重试');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
