@@ -43,3 +43,22 @@ prisma/.prisma/
 *.db
 *.sqlite
 *.sqlite3
+
+# 二进制文件（Hugging Face 不支持）
+*.ttf
+*.otf
+*.woff
+*.woff2
+*.eot
+*.dll
+*.exe
+*.so
+*.dylib
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# 缓存目录
+/cache/
