@@ -1,0 +1,52 @@
+{
+  "common": {
+    "appName": "AutocodeLLM",
+    "login": "登录",
+    "logout": "退出",
+    "workplace": "工作空间",
+    "settings": "设置",
+    "agents": "任务代理",
+    "models": "模型管理",
+    "sync": "同步管理",
+    "env": "环境变量",
+    "workers": "工作节点",
+    "mcp": "MCP 服务",
+    "providers": "API 提供商",
+    "docs": "文档",
+    "demo": "演示"
+  },
+  "login": {
+    "title": "登录",
+    "subtitle": "访问你的工作空间",
+    "username": "用户名",
+    "password": "密码",
+    "submit": "登录"
+  },
+  "workplace": {
+    "title": "工作空间",
+    "create": "创建工作空间",
+    "empty": "暂无工作空间",
+    "fileOperations": "文件操作",
+    "readFile": "读取文件",
+    "writeFile": "写入文件",
+    "editFile": "编辑文件"
+  },
+  "agents": {
+    "title": "任务代理",
+    "create": "创建代理",
+    "taskAim": "任务目标",
+    "mode": "执行模式",
+    "onlyRead": "仅读取",
+    "yolo": "Yolo 模式",
+    "maxAgents": "最多可调用 5 个代理"
+  },
+  "demo": {
+    "title": "功能演示",
+    "description": "体验 AutocodeLLM 的核心功能",
+    "scenarios": {
+      "office": "办公场景",
+      "coding": "编码辅助",
+      "analysis": "数据分析"
+    }
+  }
+}

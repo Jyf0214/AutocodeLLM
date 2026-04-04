@@ -1,0 +1,52 @@
+{
+  "common": {
+    "appName": "AutocodeLLM",
+    "login": "Login",
+    "logout": "Logout",
+    "workplace": "Workspace",
+    "settings": "Settings",
+    "agents": "Task Agents",
+    "models": "Model Management",
+    "sync": "Sync Management",
+    "env": "Environment Variables",
+    "workers": "Workers",
+    "mcp": "MCP Servers",
+    "providers": "API Providers",
+    "docs": "Documentation",
+    "demo": "Demo"
+  },
+  "login": {
+    "title": "Login",
+    "subtitle": "Access your workspace",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign In"
+  },
+  "workplace": {
+    "title": "Workspace",
+    "create": "Create Workspace",
+    "empty": "No workspaces yet",
+    "fileOperations": "File Operations",
+    "readFile": "Read File",
+    "writeFile": "Write File",
+    "editFile": "Edit File"
+  },
+  "agents": {
+    "title": "Task Agents",
+    "create": "Create Agent",
+    "taskAim": "Task Objective",
+    "mode": "Execution Mode",
+    "onlyRead": "Read Only",
+    "yolo": "Yolo Mode",
+    "maxAgents": "Maximum 5 agents allowed"
+  },
+  "demo": {
+    "title": "Feature Demo",
+    "description": "Experience the core features of AutocodeLLM",
+    "scenarios": {
+      "office": "Office Scenarios",
+      "coding": "Coding Assistance",
+      "analysis": "Data Analysis"
+    }
+  }
+}

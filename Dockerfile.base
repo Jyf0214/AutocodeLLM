@@ -6,25 +6,52 @@ FROM node:24-slim AS base
 # 设置工作目录
 WORKDIR /app
 
-# 安装系统依赖
+# 安装系统依赖（包含笔记中要求的全部工具）
 RUN apt-get update && apt-get install -y \
-    python3 \
+    # Node.js 24（基础镜像已包含）
+    # npm（随 Node.js 安装）
+    # Python 3.13
+    python3-full \
     python3-pip \
-    php-cli \
+    pipx \
+    # Go
     golang-go \
+    # PHP 8.0+
+    php-cli \
+    # Rust
     rustc \
     cargo \
+    # Git + OpenSSH/SSL
+    git \
+    openssh-client \
+    openssl \
+    # rclone
+    rclone \
+    # 通用工具
     wget \
     curl \
-    git \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装 Bun
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:$PATH"
 
+# 安装 nvm（Node 版本管理器）
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+ENV NVM_DIR="/root/.nvm"
+
+# 配置 pipx 全局路径
+ENV PIPX_HOME=/usr/local/pipx
+ENV PIPX_BIN_DIR=/usr/local/bin
+
 # 安装 Playwright 依赖
 RUN npx playwright install-deps
+
+# 确保所有工具对 uid 1000 可用
+RUN groupadd -g 1000 appuser && \
+    useradd -u 1000 -g appuser -m appuser && \
+    chown -R 1000:1000 /app /root/.bun /root/.nvm /usr/local/pipx
 
 # 标记此镜像为基础镜像
 ENV BASE_IMAGE=true
