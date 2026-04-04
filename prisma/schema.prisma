@@ -1,0 +1,114 @@
+// AutocodeLLM 数据库 Schema
+
+generator client {
+  provider      = "prisma-client-js"
+  engineType    = "library"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户认证
+model User {
+  id                  String   @id @default(uuid())
+  username            String   @unique @default("admin")
+  passwordHash        String
+  forceChangePassword Boolean  @default(true)
+  isInitialPassword   Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("users")
+}
+
+// API 提供商配置
+model Provider {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  baseUrl     String
+  apiKey      String   @db.Text // 加密存储的 API 密钥
+  databaseUrl String?
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("providers")
+}
+
+// MCP 服务器配置
+model McpServer {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  url       String
+  enabled   Boolean  @default(true)
+  status    String   @default("disconnected")
+  tools     Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("mcp_servers")
+}
+
+// 聊天全局配置
+model ChatConfig {
+  id                     String   @id @default(uuid())
+  temperature            Float    @default(0.7)
+  maxTokens              Int      @default(4096)
+  topP                   Float    @default(1.0)
+  frequencyPenalty       Float    @default(0.0)
+  presencePenalty        Float    @default(0.0)
+  maxToolCallsPerMessage Int      @default(10)
+  enableStreaming        Boolean  @default(true)
+  enableFunctionCall     Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@map("chat_configs")
+}
+
+// 工作区
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  messages ChatMessage[]
+
+  @@map("workspaces")
+}
+
+// 聊天对话记录
+model ChatMessage {
+  id          String   @id @default(uuid())
+  workspaceId String
+  role        String   // user | assistant | system | tool
+  content     String   @db.Text
+  toolCalls   Json?    // 工具调用记录
+  toolCallId  String?
+  tokensUsed  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+// WebDAV 备份配置
+model WebdavConfig {
+  id         String   @id @default(uuid())
+  url        String   // WebDAV 服务器地址
+  username   String
+  password   String   // 加密存储
+  remotePath String   @default("/autocodellm") // 远程路径
+  enabled    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("webdav_configs")
+}

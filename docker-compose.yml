@@ -1,0 +1,50 @@
+# AutocodeLLM Docker Compose 配置
+# 包含 MySQL 数据库和应用服务
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: autocodellm-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-autocodellm}
+      MYSQL_USER: ${MYSQL_USER:-autocode}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-autocode}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - autocodellm
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autocodellm-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER:-autocode}:${MYSQL_PASSWORD:-autocode}@mysql:3306/${MYSQL_DATABASE:-autocodellm}
+      NODE_ENV: production
+      PORT: 3000
+      DEMO_MODE: ${DEMO_MODE:-false}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    networks:
+      - autocodellm
+
+volumes:
+  mysql_data:
+
+networks:
+  autocodellm:
+    driver: bridge
