@@ -53,12 +53,7 @@ jobs:
         run: bun install --ignore-scripts
 
       - name: Generate version
-        run: |
-          if [ -f scripts/version.mjs ]; then
-            node scripts/version.mjs
-          else
-            echo "Version script not found, skipping"
-          fi
+        run: node scripts/version.mjs
 
       - name: Generate Prisma Client
         run: bunx prisma generate
@@ -123,12 +118,7 @@ jobs:
           HF_REPO: ${{ secrets.HF_REPO }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_REPO_TYPE: ${{ vars.HF_REPO_TYPE }}
-        run: |
-          if [ -f scripts/sync-to-hf.sh ]; then
-            bash scripts/sync-to-hf.sh
-          else
-            echo "Sync script not found, skipping"
-          fi
+        run: bash scripts/sync-to-hf.sh
 
   build-base:
     name: Build Base Image
