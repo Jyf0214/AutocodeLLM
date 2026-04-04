@@ -1,0 +1,59 @@
+{
+  "name": "autocodellm",
+  "version": "0.1.0",
+  "module": "index.ts",
+  "type": "module",
+  "bin": {
+    "autocodellm": "scripts/start.mjs"
+  },
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "prisma generate && next telemetry disable && next build",
+    "start": "node scripts/start.mjs",
+    "prepare": "bun run build",
+    "lint": "eslint --max-warnings=0 .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio"
+  },
+  "devDependencies": {
+    "@next/eslint-plugin-next": "^16.2.2",
+    "@playwright/test": "^1.59.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/bun": "latest",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "husky": "^9.1.7",
+    "jsdom": "^29.0.1",
+    "lint-staged": "^16.4.0",
+    "playwright": "^1.59.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5",
+    "typescript-eslint": "^8.58.0",
+    "vitest": "^4.1.2"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.82.0",
+    "@lobehub/ui": "^5.6.4",
+    "@prisma/client": "6.19.3",
+    "antd": "^6.3.5",
+    "fast-glob": "^3.3.3",
+    "motion": "^12.38.0",
+    "next": "16.2.2",
+    "next-intl": "^4.9.0",
+    "openai": "^6.33.0",
+    "prisma": "6.19.3",
+    "react": "19",
+    "react-dom": "19",
+    "react-markdown": "^10.1.0"
+  }
+}
