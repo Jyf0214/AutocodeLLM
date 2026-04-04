@@ -86,6 +86,16 @@ rsync -av --delete \
   --exclude='cache/' \
   "$SYNC_DIR/" "$TEMP_DIR/"
 
+# 清理远程仓库中已存在的二进制文件（仅在远程清理，不删除本地文件）
+echo "清理远程仓库中的二进制文件..."
+find "$TEMP_DIR" -type f \( \
+  -name '*.ttf' -o -name '*.otf' -o -name '*.woff' -o -name '*.woff2' -o -name '*.eot' \
+  -o -name '*.dll' -o -name '*.exe' -o -name '*.so' -o -name '*.dylib' \
+  \) -print -delete
+
+# 清理空目录
+find "$TEMP_DIR" -type d -empty -delete 2>/dev/null || true
+
 # 生成 HF README：硬编码 Space 配置前缀 + GitHub README 内容
 if [ -f "$SYNC_DIR/README.md" ]; then
   echo "生成 HF README（Space 配置 + GitHub 内容）..."
