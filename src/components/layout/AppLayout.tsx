@@ -41,7 +41,7 @@ const menuItems = [
   { key: '/agents', icon: TeamOutlined, labelKey: 'common.agents' },
   { key: '/sync', icon: SyncOutlined, labelKey: 'common.sync' },
   { key: '/model', icon: AppstoreOutlined, labelKey: 'common.models' },
-  { key: '/openai/provider', icon: ApiOutlined, labelKey: 'common.providers' },
+  { key: '/provider', icon: ApiOutlined, labelKey: 'common.providers' },
   { key: '/docs', icon: BookOutlined, labelKey: 'common.docs' },
   { key: '/demo', icon: PlayCircleOutlined, labelKey: 'common.demo' },
 ];
