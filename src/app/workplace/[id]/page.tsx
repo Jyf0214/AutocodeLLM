@@ -169,7 +169,7 @@ export default function WorkplaceDetailPage({
   const [verified, setVerified] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
 
-  const currentModel: ModelOption = MOCK_MODELS.find((m) => m.id === currentModelId)!;
+  const currentModel: ModelOption | undefined = MOCK_MODELS.find((m) => m.id === currentModelId);
 
   useEffect(() => {
     const fetchWorkspace = async () => {
@@ -218,7 +218,7 @@ export default function WorkplaceDetailPage({
       if (!trimmed || loading) return;
 
       const userMessage: WorkspaceChatMessage = {
-        id: `user-${Date.now()}`,
+        id: `user-${Date.now().toString()}`,
         role: 'user',
         content: trimmed,
         createAt: Date.now(),
@@ -247,7 +247,7 @@ export default function WorkplaceDetailPage({
           const result: { success: boolean; data?: { content: string } } = await response.json();
           if (result.success && result.data) {
             const assistantMessage: WorkspaceChatMessage = {
-              id: `assistant-${Date.now()}`,
+              id: `assistant-${Date.now().toString()}`,
               role: 'assistant',
               content: result.data.content,
               createAt: Date.now(),
@@ -314,7 +314,7 @@ export default function WorkplaceDetailPage({
             size="large"
           />
           <ModelSelector
-            currentModel={currentModel}
+            currentModel={currentModel ?? { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', isDefault: true }}
             onSelect={handleModelSelect}
           />
         </Flexbox>

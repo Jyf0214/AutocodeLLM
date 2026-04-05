@@ -124,12 +124,19 @@ model ChatMessage {
   toolCalls   String?  // 工具调用记录 (JSON 字符串)
   toolCallId  String?
   tokensUsed  Int      @default(0)
+  inputTokens Int      @default(0)
+  outputTokens Int     @default(0)
+  totalTokens Int      @default(0)
+  model       String?  // 使用的模型
+  providerId  String?  // 使用的提供商 ID
+  parentId    String?  // 关联的父消息 ID（用于对话对）
   createdAt   DateTime @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
   @@index([createdAt])
+  @@index([providerId])
   @@map("chat_messages")
 }
 

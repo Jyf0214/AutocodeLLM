@@ -1,5 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { prisma } from '@/lib/db/prisma';
+import { refreshQwenToken as refreshQwenOAuth } from '@/lib/auth/qwen/oauth';
 
 /**
  * AES-256-CBC 加密
@@ -422,7 +423,12 @@ async function fetchWithRetry(
 
       // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
       if (provider != null && provider.oauthRefreshToken != null && provider.oauthClientId != null) {
-        const refreshed = await refreshOAuthToken(provider);
+        const refreshed = await refreshOAuthToken({
+          id: provider.id,
+          oauthRefreshToken: provider.oauthRefreshToken,
+          oauthClientId: provider.oauthClientId,
+          authType: provider.authType,
+        });
         if (refreshed) {
           const newHeaders = { ...(headers ?? {}) };
           if (headers?.Authorization) {
@@ -448,6 +454,7 @@ async function refreshOAuthToken(provider: {
   id: string;
   oauthRefreshToken: string | null;
   oauthClientId: string | null;
+  authType: string | null;
 }): Promise<string | null> {
   if (!provider.oauthRefreshToken || !provider.oauthClientId) {
     return null;
@@ -456,39 +463,44 @@ async function refreshOAuthToken(provider: {
   try {
     const refreshToken = decryptValue(provider.oauthRefreshToken);
 
-    const response = await fetch('https://oauth.token.endpoint', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-        client_id: provider.oauthClientId,
-      }),
-      signal: AbortSignal.timeout(10000),
-    });
+    let newAccessToken: string;
+    let newRefreshToken: string;
+    let expiresIn: number;
 
-    if (!response.ok) {
-      return null;
+    if (provider.authType === 'oauth') {
+      const refreshed = await refreshQwenOAuth(refreshToken);
+      newAccessToken = refreshed.accessToken;
+      newRefreshToken = refreshed.refreshToken;
+      expiresIn = refreshed.expiresIn;
+    } else {
+      const response = await fetch('https://oauth.token.endpoint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken,
+          client_id: provider.oauthClientId,
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = (await response.json()) as Record<string, unknown>;
+      newAccessToken = data.access_token as string;
+      newRefreshToken = typeof data.refresh_token === 'string' ? data.refresh_token : refreshToken;
+      expiresIn = data.expires_in ? (data.expires_in as number) : 3600;
     }
 
-    const data = (await response.json()) as Record<string, unknown>;
-    const newAccessToken = data.access_token as string | undefined;
-    const newRefreshToken = data.refresh_token as string | undefined;
-    const expiresIn = data.expires_in as number | undefined;
-
-    if (!newAccessToken) {
-      return null;
-    }
-
-    const expiresAt = expiresIn
-      ? new Date(Date.now() + expiresIn * 1000)
-      : new Date(Date.now() + 3600 * 1000);
+    const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
     await prisma.provider.update({
       where: { id: provider.id },
       data: {
         oauthAccessToken: encryptValue(newAccessToken),
-        ...(newRefreshToken && { oauthRefreshToken: encryptValue(newRefreshToken) }),
+        oauthRefreshToken: encryptValue(newRefreshToken),
         oauthExpiresAt: expiresAt,
       },
     });

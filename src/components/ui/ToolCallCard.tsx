@@ -81,7 +81,7 @@ export default function ToolCallCard({
           ]}
           activeKey={expanded ? ['detail'] : []}
           onChange={(keys) => {
-            setExpanded(Array.isArray(keys) ? keys.length > 0 : keys != null);
+            setExpanded(keys.length > 0);
           }}
           style={{ marginTop: 8 }}
         />
