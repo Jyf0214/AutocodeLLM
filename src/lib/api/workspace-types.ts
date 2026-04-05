@@ -6,6 +6,7 @@ export interface WorkspaceListItem {
   id: string;
   name: string;
   description: string;
+  accessPassword: string | null;
   createdAt: string;
   updatedAt: string;
 }

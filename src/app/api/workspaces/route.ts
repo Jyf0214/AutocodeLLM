@@ -18,6 +18,7 @@ export async function GET() {
       id: workspace.id,
       name: workspace.name,
       description: workspace.description,
+      accessPassword: workspace.accessPassword ? '***' : null,
       createdAt: workspace.createdAt.toISOString(),
       updatedAt: workspace.updatedAt.toISOString(),
     }));
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
           id: newWorkspace.id,
           name: newWorkspace.name,
           description: newWorkspace.description,
+          accessPassword: newWorkspace.accessPassword ? '***' : null,
           createdAt: newWorkspace.createdAt.toISOString(),
           updatedAt: newWorkspace.updatedAt.toISOString(),
         },

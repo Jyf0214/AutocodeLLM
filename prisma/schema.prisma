@@ -93,13 +93,15 @@ model ChatConfig {
 
 // 工作区
 model Workspace {
-  id          String   @id @default(uuid())
-  name        String
-  description String   @default("")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(uuid())
+  name           String
+  description    String   @default("")
+  accessPassword String?  // 工作区进入密码（可选）
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   messages ChatMessage[]
+  logs     WorkspaceLog[]
 
   @@map("workspaces")
 }
@@ -180,4 +182,21 @@ model AgentTask {
   updatedAt   DateTime @updatedAt
 
   @@map("agent_tasks")
+}
+
+// 工作区日志
+model WorkspaceLog {
+  id           String   @id @default(uuid())
+  workspaceId  String
+  type         String   // "function_call" | "chat_message"
+  functionName String?  // 函数名（仅 function_call 类型）
+  summary      String?  // 参数摘要/消息摘要
+  status       String?  // "success" | "error" | "pending"
+  createdAt    DateTime @default(now())
+
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([createdAt])
+  @@map("workspace_logs")
 }
