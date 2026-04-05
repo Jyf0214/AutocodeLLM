@@ -28,7 +28,7 @@ export default function ModelPage() {
   const fetchModels = useCallback(async () => {
     try {
       const response = await fetch('/api/models');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; data?: ModelConfig[]; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -86,7 +86,7 @@ export default function ModelPage() {
         body: JSON.stringify(body),
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -109,7 +109,7 @@ export default function ModelPage() {
         method: 'DELETE',
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {

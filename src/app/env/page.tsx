@@ -48,7 +48,7 @@ export default function EnvPage() {
   const fetchEnvVars = useCallback(async () => {
     try {
       const response = await fetch('/api/env');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; data?: EnvVariable[]; error?: { message: string } } =
         await response.json();
 
@@ -106,7 +106,7 @@ export default function EnvPage() {
         body: JSON.stringify(body),
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -129,7 +129,7 @@ export default function EnvPage() {
         method: 'DELETE',
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -176,7 +176,7 @@ export default function EnvPage() {
   const handleImport = async (values: { jsonData: string }) => {
     setLoading(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const parsed = JSON.parse(values.jsonData);
       if (!Array.isArray(parsed)) {
         message.error(t('importFormatError'));
@@ -204,7 +204,7 @@ export default function EnvPage() {
             }),
           });
 
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           const result: { success: boolean } = await response.json();
           if (result.success) {
             successCount++;

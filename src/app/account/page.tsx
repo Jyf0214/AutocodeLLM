@@ -32,7 +32,7 @@ export default function AccountPage() {
         headers: { 'x-user-id': id },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; data?: UserInfo; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -86,7 +86,7 @@ export default function AccountPage() {
         }),
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; data?: UserInfo; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -120,7 +120,7 @@ export default function AccountPage() {
         }),
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; data?: UserInfo; error?: { message: string } } = await response.json();
 
       if (result.success) {

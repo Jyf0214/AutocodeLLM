@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createCipheriv, randomBytes } from 'crypto';
 
 // Mock Prisma
 const mockFindMany = vi.fn();
@@ -19,6 +20,19 @@ vi.mock('@/lib/db/prisma', () => ({
   },
 }));
 
+/**
+ * AES-256-CBC 加密（与 route.ts 保持一致）
+ */
+function encryptValue(value: string): string {
+  const keyStr = 'autocodellm-encryption-key-32b!';
+  const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const iv = randomBytes(16);
+  const cipher = createCipheriv('aes-256-cbc', key, iv);
+  let encrypted = cipher.update(value, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  return iv.toString('hex') + ':' + encrypted;
+}
+
 describe('环境变量 API (/api/env)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -30,7 +44,7 @@ describe('环境变量 API (/api/env)', () => {
         {
           id: 'env-1',
           key: 'API_KEY',
-          value: Buffer.from('test123').map((b) => b ^ 0x5a).toString('base64'),
+          value: encryptValue('test123'),
           description: 'API 密钥',
           enabled: true,
           createdAt: new Date('2024-01-01'),
@@ -39,7 +53,7 @@ describe('环境变量 API (/api/env)', () => {
         {
           id: 'env-2',
           key: 'DATABASE_URL',
-          value: Buffer.from('postgres://localhost').map((b) => b ^ 0x5a).toString('base64'),
+          value: encryptValue('postgres://localhost'),
           description: '数据库连接',
           enabled: false,
           createdAt: new Date('2024-01-02'),
@@ -92,7 +106,7 @@ describe('环境变量 API (/api/env)', () => {
         {
           id: 'env-1',
           key: 'SECRET_KEY',
-          value: Buffer.from('my-secret-value').map((b) => b ^ 0x5a).toString('base64'),
+          value: encryptValue('my-secret-value'),
           description: '',
           enabled: true,
           createdAt: new Date('2024-01-01'),
@@ -119,7 +133,7 @@ describe('环境变量 API (/api/env)', () => {
       const newEnvVar = {
         id: 'env-1',
         key: 'API_KEY',
-        value: Buffer.from('sk-test123').map((b) => b ^ 0x5a).toString('base64'),
+        value: encryptValue('sk-test123'),
         description: '测试 API 密钥',
         enabled: true,
         createdAt: new Date('2024-01-01'),
@@ -222,7 +236,7 @@ describe('环境变量 API (/api/env)', () => {
       const newEnvVar = {
         id: 'env-1',
         key: 'API_KEY',
-        value: Buffer.from('sk-test').map((b) => b ^ 0x5a).toString('base64'),
+        value: encryptValue('sk-test'),
         description: '',
         enabled: true,
         createdAt: new Date('2024-01-01'),
@@ -256,7 +270,7 @@ describe('环境变量 API (/api/env)', () => {
       const existingEnvVar = {
         id: 'env-1',
         key: 'API_KEY',
-        value: Buffer.from('sk-old').map((b) => b ^ 0x5a).toString('base64'),
+        value: encryptValue('sk-old'),
         description: '旧描述',
         enabled: true,
       };
@@ -264,7 +278,7 @@ describe('环境变量 API (/api/env)', () => {
       const updatedEnvVar = {
         id: 'env-1',
         key: 'API_KEY',
-        value: Buffer.from('sk-new').map((b) => b ^ 0x5a).toString('base64'),
+        value: encryptValue('sk-new'),
         description: '新描述',
         enabled: false,
         createdAt: new Date('2024-01-01'),
@@ -376,7 +390,7 @@ describe('环境变量 API (/api/env)', () => {
       const existingEnvVar = {
         id: 'env-1',
         key: 'API_KEY',
-        value: Buffer.from('sk-old').map((b) => b ^ 0x5a).toString('base64'),
+        value: encryptValue('sk-old'),
         description: '',
         enabled: true,
       };
@@ -384,7 +398,7 @@ describe('环境变量 API (/api/env)', () => {
       const updatedEnvVar = {
         id: 'env-1',
         key: 'API_KEY',
-        value: Buffer.from('sk-new').map((b) => b ^ 0x5a).toString('base64'),
+        value: encryptValue('sk-new'),
         description: '',
         enabled: true,
         createdAt: new Date('2024-01-01'),

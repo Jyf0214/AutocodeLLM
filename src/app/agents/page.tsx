@@ -42,7 +42,7 @@ export default function AgentsPage() {
   const fetchAgents = useCallback(async () => {
     try {
       const response = await fetch('/api/agents');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; data?: AgentTask[]; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -99,7 +99,7 @@ export default function AgentsPage() {
         body: JSON.stringify(body),
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -122,7 +122,7 @@ export default function AgentsPage() {
         method: 'DELETE',
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -162,7 +162,7 @@ export default function AgentsPage() {
         }),
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {

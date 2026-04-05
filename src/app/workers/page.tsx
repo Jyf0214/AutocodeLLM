@@ -41,7 +41,7 @@ export default function WorkersPage() {
   const fetchWorkers = useCallback(async () => {
     try {
       const response = await fetch('/api/workers');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; data?: Worker[]; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -110,7 +110,7 @@ export default function WorkersPage() {
         body: JSON.stringify(body),
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -133,7 +133,7 @@ export default function WorkersPage() {
         method: 'DELETE',
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {

@@ -1,23 +1,41 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import type { EnvVariableResponse, CreateEnvVariableRequest, UpdateEnvVariableRequest } from '@/lib/api/env-types';
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
 /**
- * 简单加密函数（XOR 基础混淆，生产环境应使用更强的加密）
+ * AES-256-CBC 加密函数（生产级别加密）
  */
 function encryptValue(value: string): string {
-  const key = 0x5a;
-  return btoa(Buffer.from(value)
-    .map((byte) => byte ^ key)
-    .toString());
+  // 使用环境变量中的密钥，若无则使用默认 32 字节密钥
+  const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
+  // 确保密钥长度为 32 字节
+  const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const iv = randomBytes(16);
+  const cipher = createCipheriv('aes-256-cbc', key, iv);
+  let encrypted = cipher.update(value, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  // 返回 iv:encrypted 格式，hex 编码
+  return iv.toString('hex') + ':' + encrypted;
 }
 
+/**
+ * AES-256-CBC 解密函数
+ */
 function decryptValue(encrypted: string): string {
-  const key = 0x5a;
-  const decoded = atob(encrypted);
-  return Buffer.from(decoded)
-    .map((byte) => byte ^ key)
-    .toString();
+  const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
+  const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const parts = encrypted.split(':');
+  const ivHex = parts[0];
+  const encryptedData = parts[1];
+  if (!ivHex || !encryptedData) {
+    throw new Error('无效的加密数据格式');
+  }
+  const iv = Buffer.from(ivHex, 'hex');
+  const decipher = createDecipheriv('aes-256-cbc', key, iv);
+  let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
 }
 
 /**
