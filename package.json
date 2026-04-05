@@ -19,7 +19,7 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "db:init": "bun run scripts/migrate-db.mjs",
+    "db:init": "bun run scripts/push-db.mjs",
     "db:health": "bun run src/lib/db/health-check.ts",
     "db:reset": "prisma migrate reset --force && bun run db:init"
   },
