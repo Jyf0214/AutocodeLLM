@@ -58,7 +58,10 @@ export default function FunctionCall({
             </Text>
             <CodeEditor
               value={paramsJson}
-              onValueChange={() => {}}
+              onValueChange={(newValue: string) => {
+                // 只读模式，不处理值变更
+                void newValue;
+              }}
               language="json"
               height={Math.min(paramsLines * 24 + 40, 200)}
               variant="borderless"
@@ -77,7 +80,10 @@ export default function FunctionCall({
               </Text>
               <CodeEditor
                 value={result}
-                onValueChange={() => {}}
+                onValueChange={(newValue: string) => {
+                  // 只读模式，不处理值变更
+                  void newValue;
+                }}
                 language="text"
                 height={Math.min(resultLines * 24 + 40, 300)}
                 variant="borderless"
@@ -95,7 +101,7 @@ export default function FunctionCall({
         items={collapseItems}
         activeKey={expanded ? ['params'] : []}
         onChange={(keys) => {
-          setExpanded((keys as string[]).length > 0);
+          setExpanded(keys.length > 0);
         }}
         bordered={false}
       />

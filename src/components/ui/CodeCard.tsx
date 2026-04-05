@@ -90,7 +90,10 @@ export default function CodeCard({
       {/* Code body */}
       <CodeEditor
         value={code}
-        onValueChange={() => {}}
+        onValueChange={(newValue: string) => {
+          // 只读模式，不处理值变更
+          void newValue;
+        }}
         language={language}
         height={Math.max(lineCount * 24 + 24, 120)}
         variant="borderless"

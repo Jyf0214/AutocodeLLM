@@ -40,7 +40,12 @@ export default function ChatInput({
     [handleSubmit],
   );
 
-  const handleInput = useCallback(() => {}, []);
+  const handleInput = useCallback(
+    (_e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      // 输入事件处理，保留以备将来扩展
+    },
+    [],
+  );
 
   const canSend = value.trim().length > 0 && !disabled && !loading;
 
