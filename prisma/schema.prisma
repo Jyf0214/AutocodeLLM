@@ -125,3 +125,19 @@ model EnvironmentVariable {
 
   @@map("environment_variables")
 }
+
+// 工作节点
+model Worker {
+  id           String    @id @default(uuid())
+  name         String    @unique
+  type         String    // compute, storage, inference
+  status       String    @default("offline") // online, offline, busy, error
+  url          String
+  lastHeartbeat DateTime?
+  metadata     Json?     // 额外配置信息
+  enabled      Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("workers")
+}
