@@ -54,7 +54,16 @@
     "fileOperations": "File Operations",
     "readFile": "Read File",
     "writeFile": "Write File",
-    "editFile": "Edit File"
+    "editFile": "Edit File",
+    "chat": {
+      "back": "Back",
+      "share": "Share",
+      "modelSwitch": "Model",
+      "placeholder": "Start with any idea...",
+      "pressForNewline": "Ctrl+Enter for newline",
+      "thinking": "Deep thinking ({seconds}s)",
+      "toolCall": "Execute tool: {name}"
+    }
   },
   "agents": {
     "title": "Task Agents",
