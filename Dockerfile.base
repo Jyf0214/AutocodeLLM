@@ -53,7 +53,7 @@ ENV PIPX_BIN_DIR=/usr/local/bin
 RUN npx playwright install-deps
 
 # 确保所有工具对 uid 1000 可用
-RUN sudo chown -R 1000:1000 /app /root/.bun /root/.nvm /usr/local/pipx
+RUN sudo chown -R 1000:1000 /app /root/.bun /root/.nvm 
 
 # 标记此镜像为基础镜像
 ENV BASE_IMAGE=true
