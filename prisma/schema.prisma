@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -28,7 +28,7 @@ model Provider {
   id          String   @id @default(uuid())
   name        String   @unique
   baseUrl     String
-  apiKey      String   @db.Text // 加密存储的 API 密钥
+  apiKey      String   // 加密存储的 API 密钥
   databaseUrl String?
   enabled     Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -44,7 +44,7 @@ model McpServer {
   url       String
   enabled   Boolean  @default(true)
   status    String   @default("disconnected")
-  tools     Json     @default("[]")
+  tools     String   @default("[]")  // JSON 字符串
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -86,8 +86,8 @@ model ChatMessage {
   id          String   @id @default(uuid())
   workspaceId String
   role        String   // user | assistant | system | tool
-  content     String   @db.Text
-  toolCalls   Json?    // 工具调用记录
+  content     String   // 内容
+  toolCalls   String?  // 工具调用记录 (JSON 字符串)
   toolCallId  String?
   tokensUsed  Int      @default(0)
   createdAt   DateTime @default(now())
@@ -117,7 +117,7 @@ model WebdavConfig {
 model EnvironmentVariable {
   id          String   @id @default(uuid())
   key         String   @unique
-  value       String   @db.Text // 加密存储
+  value       String   // 加密存储
   description String   @default("")
   enabled     Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -134,10 +134,27 @@ model Worker {
   status       String    @default("offline") // online, offline, busy, error
   url          String
   lastHeartbeat DateTime?
-  metadata     Json?     // 额外配置信息
-  enabled      Boolean   @default(true)
+  metadata     String?  // 额外配置信息 (JSON 字符串)
+  enabled      Boolean  @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   @@map("workers")
+}
+
+// 任务代理
+model AgentTask {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @default("")
+  mode        String   // read_only, yolo
+  status      String   @default("ready") // ready, running, completed, failed
+  maxAgents   Int      @default(5)
+  progress    Int      @default(0)
+  logs        String?  // 执行日志 (JSON 字符串)
+  result      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("agent_tasks")
 }
