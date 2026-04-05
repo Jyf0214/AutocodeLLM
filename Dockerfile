@@ -20,6 +20,7 @@ WORKDIR /app
 COPY . .
 USER  node
 RUN curl -fsSL https://bun.sh/install | bash
+USER root
 # 安装依赖并预构建
 RUN rm -rf .next && \
     bun install --ignore-scripts && \
