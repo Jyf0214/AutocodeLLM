@@ -6,6 +6,7 @@ import { LockOutlined, SafetyOutlined, InfoCircleOutlined } from '@ant-design/ic
 import { useRouter } from 'next/navigation';
 import { message, Tag, Divider, Card } from 'antd';
 import { useTranslations } from 'next-intl';
+import AppLayout from '@/components/layout/AppLayout';
 
 interface UserInfo {
   id: string;
@@ -140,8 +141,8 @@ export default function AccountPage() {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: 24 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <AppLayout>
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* 页面标题 */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <SafetyOutlined style={{ fontSize: 24, marginRight: 12 }} />
@@ -263,6 +264,6 @@ export default function AccountPage() {
           </Form>
         </Card>
       </div>
-    </div>
+    </AppLayout>
   );
 }
