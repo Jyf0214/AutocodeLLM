@@ -1,13 +1,24 @@
 'use client';
 
 import { Button, Grid, Text, Icon } from '@lobehub/ui';
-import { ArrowRightOutlined, CodeOutlined, ApiOutlined, TeamOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, CodeOutlined, ApiOutlined, TeamOutlined, PlayCircleOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Card } from 'antd';
+import { useState, useEffect } from 'react';
 
 export default function LandingPage() {
   const t = useTranslations('common.landing');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(!!sessionStorage.getItem('userId'));
+  }, []);
+
+  const handleLogout = () => {
+    sessionStorage.clear();
+    window.location.reload();
+  };
 
   const features = [
     {
@@ -58,18 +69,27 @@ export default function LandingPage() {
           {t('subtitle')}
         </Text>
         <div style={{ display: 'flex', gap: 16 }}>
-          <Link href="/login">
-            <Button type="primary" size="large">
-              {t('startUsing')}
-              <Icon icon={ArrowRightOutlined} />
+          {isLoggedIn ? (
+            <Button type="primary" size="large" onClick={handleLogout}>
+              {t('logout')}
+              <Icon icon={LogoutOutlined} />
             </Button>
-          </Link>
-          <Link href="/demo">
-            <Button size="large">
-              <Icon icon={PlayCircleOutlined} />
-              {t('onlineDemo')}
-            </Button>
-          </Link>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button type="primary" size="large">
+                  {t('startUsing')}
+                  <Icon icon={ArrowRightOutlined} />
+                </Button>
+              </Link>
+              <Link href="/demo">
+                <Button size="large">
+                  <Icon icon={PlayCircleOutlined} />
+                  {t('onlineDemo')}
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 

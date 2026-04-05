@@ -7,12 +7,17 @@ import { execSync } from 'node:child_process';
 
 export async function runDbPush() {
   try {
-    console.log('  执行 Prisma db push...');
-    execSync('bunx prisma db push', { stdio: 'inherit' });
-    console.log('  ✅ 数据库同步完成');
+    console.log('  正在检查数据库同步状态 (Prisma db push)...');
+    // 在 TiDB/生产环境下，db push 可能会提示数据丢失。
+    // 我们不使用 --accept-data-loss，这样如果存在数据丢失风险，脚本会报错而不是直接清空数据。
+    execSync('bunx prisma db push --skip-generate', { stdio: 'inherit' });
+    console.log('  ✅ 数据库结构已同步');
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Prisma db push 失败: ${message}`);
+    // 如果同步失败，通常是因为 Prisma 检测到了破坏性变更
+    console.error('\n  ⚠️ 数据库同步警告: 同步可能存在数据丢失风险，已自动终止以保护数据。');
+    console.error('  提示: 如果您确定要应用变更且不在乎数据丢失，请手动运行 bunx prisma db push --accept-data-loss');
+    console.log('  ℹ️ 尝试跳过同步并继续启动应用...\n');
+    // 这里不抛出错误，允许应用尝试在现有结构上启动
   }
 }
 

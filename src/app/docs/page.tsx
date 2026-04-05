@@ -1,62 +1,141 @@
 'use client';
 
+import { useCallback, useEffect, useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
-import { Text, Collapse } from '@lobehub/ui';
+import { Text, Markdown, Flexbox, Skeleton } from '@lobehub/ui';
+import { List, Typography } from 'antd';
 import { useTranslations } from 'next-intl';
 
-const faqItems = [
-  {
-    key: '1',
-    label: 'AutocodeLLM 是什么？',
-    children: (
-      <Text>
-        AutocodeLLM 是一个基于 LobeHub UI 的 AI 编码代理平台，支持函数调用、任务代理、文件操作、Web
-        搜索等完整工具链。
-      </Text>
-    ),
-  },
-  {
-    key: '2',
-    label: '如何配置模型？',
-    children: (
-      <Text>
-        在「模型管理」页面中添加 API 提供商配置，支持 OpenAI、Anthropic、Google、DeepSeek 等主流服务商。
-      </Text>
-    ),
-  },
-  {
-    key: '3',
-    label: 'Demo 模式有什么限制？',
-    children: (
-      <Text>
-        Demo 模式最多可调用 5 个代理，仅支持「仅读取」和「Yolo 模式」两种执行模式，后端交互为模拟响应。
-      </Text>
-    ),
-  },
-  {
-    key: '4',
-    label: '如何同步工作空间？',
-    children: (
-      <Text>
-        在「同步管理」页面中配置 WebDAV 服务，即可将工作空间文件同步到云端或其他设备。
-      </Text>
-    ),
-  },
-];
+interface DocFile {
+  filename: string;
+  path: string;
+  title: string;
+}
 
 export default function DocsPage() {
   const t = useTranslations();
+  const [docs, setDocs] = useState<DocFile[]>([]);
+  const [selectedDoc, setSelectedDoc] = useState<DocFile | null>(null);
+  const [content, setContent] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [contentLoading, setContentLoading] = useState(false);
+
+  // 加载文档列表
+  useEffect(() => {
+    const fetchDocs = async () => {
+      try {
+        const response = await fetch('/api/docs');
+        const data = await response.json();
+        setDocs(data.docs ?? []);
+      } catch (error) {
+        console.error('加载文档列表失败:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDocs();
+  }, []);
+
+  // 加载文档内容
+  const fetchDocContent = useCallback(async (docPath: string) => {
+    setContentLoading(true);
+    try {
+      const response = await fetch(`/api/docs/content?path=${encodeURIComponent(docPath)}`);
+      const data = await response.json();
+      setContent(data.content ?? '');
+    } catch (error) {
+      console.error('加载文档内容失败:', error);
+      setContent('');
+    } finally {
+      setContentLoading(false);
+    }
+  }, []);
+
+  const handleDocSelect = useCallback((doc: DocFile) => {
+    setSelectedDoc(doc);
+    fetchDocContent(doc.path);
+  }, [fetchDocContent]);
 
   return (
     <AppLayout>
-      <Text strong style={{ fontSize: 20, display: 'block', marginBottom: 8 }}>
-        {t('common.docs')}
-      </Text>
-      <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
-        AutocodeLLM 使用指南与常见问题
-      </Text>
+      <Flexbox horizontal gap={24} style={{ height: 'calc(100vh - 120px)' }}>
+        {/* 左侧文档列表 */}
+        <Flexbox style={{ width: 280, flexShrink: 0 }} gap={16}>
+          <Text strong style={{ fontSize: 20 }}>
+            {t('common.docs')}
+          </Text>
+          
+          {loading ? (
+            <Skeleton active />
+          ) : (
+            <List
+              dataSource={docs}
+              renderItem={(doc) => (
+                <List.Item
+                  onClick={() => { handleDocSelect(doc); }}
+                  style={{
+                    cursor: 'pointer',
+                    backgroundColor: selectedDoc?.path === doc.path ? 'var(--ant-color-primary-bg)' : undefined,
+                    padding: '12px 16px',
+                    borderRadius: 'var(--ant-border-radius)',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedDoc?.path !== doc.path) {
+                      e.currentTarget.style.backgroundColor = 'var(--ant-color-fill-secondary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedDoc?.path !== doc.path) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  <Text strong={selectedDoc?.path === doc.path}>
+                    {doc.title}
+                  </Text>
+                </List.Item>
+              )}
+              locale={{ emptyText: '暂无文档' }}
+            />
+          )}
+        </Flexbox>
 
-      <Collapse items={faqItems} defaultActiveKey={['1']} />
+        {/* 右侧内容预览 */}
+        <Flexbox style={{ flex: 1, minWidth: 0 }} gap={16}>
+          {selectedDoc ? (
+            <>
+              <Typography.Title level={3} style={{ margin: 0 }}>
+                {selectedDoc.title}
+              </Typography.Title>
+              
+              <div
+                style={{
+                  padding: 24,
+                  backgroundColor: 'var(--ant-color-bg-container)',
+                  borderRadius: 'var(--ant-border-radius-lg)',
+                  border: '1px solid var(--ant-color-border-secondary)',
+                  overflow: 'auto',
+                  maxHeight: 'calc(100vh - 240px)',
+                }}
+              >
+                {contentLoading ? (
+                  <Skeleton active paragraph={{ rows: 8 }} />
+                ) : (
+                  <Markdown>{content}</Markdown>
+                )}
+              </div>
+            </>
+          ) : (
+            <Flexbox flex={1} align="center" justify="center">
+              <Text type="secondary">
+                请从左侧选择一篇文档查看
+              </Text>
+            </Flexbox>
+          )}
+        </Flexbox>
+      </Flexbox>
     </AppLayout>
   );
 }
