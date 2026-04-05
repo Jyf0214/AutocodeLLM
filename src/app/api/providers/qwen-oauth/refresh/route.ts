@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { createDecipheriv, createCipheriv, randomBytes } from 'crypto';
+import { encryptToken, decryptToken } from '@/lib/providers/qwen-oauth';
 import { refreshQwenToken } from '@/lib/auth/qwen/oauth';
 import type { QwenOAuthRefreshResponse } from '@/lib/api/provider-types';
 
@@ -42,29 +42,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
-    const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
-    const parts = provider.oauthRefreshToken.split(':');
-    const ivHex = parts[0];
-    const encryptedData = parts[1];
-    if (!ivHex || !encryptedData) {
-      throw new Error('无效的加密数据格式');
-    }
-    const iv = Buffer.from(ivHex, 'hex');
-    const decipher = createDecipheriv('aes-256-cbc', key, iv);
-    let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
+    const decryptedRefreshToken = decryptToken(provider.oauthRefreshToken);
 
-    const result = await refreshQwenToken(decrypted);
+    const result = await refreshQwenToken(decryptedRefreshToken);
     const expiresAt = new Date(Date.now() + result.expiresIn * 1000);
-
-    const encryptToken = (token: string): string => {
-      const newIv = randomBytes(16);
-      const cipher = createCipheriv('aes-256-cbc', key, newIv);
-      let encrypted = cipher.update(token, 'utf8', 'hex');
-      encrypted += cipher.final('hex');
-      return newIv.toString('hex') + ':' + encrypted;
-    };
 
     await prisma.provider.update({
       where: { id: providerId },

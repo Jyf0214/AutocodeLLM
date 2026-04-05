@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { startQwenDeviceFlow } from '@/lib/providers/qwen-oauth';
+import { startQwenDeviceFlow } from '@/lib/auth/qwen/oauth';
 import type { QwenOAuthStartResponse } from '@/lib/api/provider-types';
 
 /**

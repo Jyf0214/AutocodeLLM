@@ -1,22 +1,11 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { prisma } from '@/lib/db/prisma';
 import { isTokenExpiring, refreshQwenToken } from '@/lib/auth/qwen/oauth';
-export { startQwenDeviceFlow, pollQwenToken, refreshQwenToken, isTokenExpiring } from '@/lib/auth/qwen/oauth';
-
-/**
- * Device Flow 会话数据（存储在内存或前端）
- */
-export interface DeviceFlowSession {
-  deviceCode: string;
-  codeVerifier: string;
-  expiresAt: number;
-  interval: number;
-}
 
 /**
  * AES-256-CBC 加密 Token
  */
-function encryptToken(token: string): string {
+export function encryptToken(token: string): string {
   const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
   const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
   const iv = randomBytes(16);
@@ -29,7 +18,7 @@ function encryptToken(token: string): string {
 /**
  * AES-256-CBC 解密 Token
  */
-function decryptToken(encrypted: string): string {
+export function decryptToken(encrypted: string): string {
   const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
   const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
   const parts = encrypted.split(':');

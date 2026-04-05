@@ -92,6 +92,7 @@ export async function startQwenDeviceFlow(): Promise<{
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       Accept: 'application/json',
+      'x-request-id': crypto.randomUUID(),
     },
     body: objectToUrlEncoded(bodyData),
   });

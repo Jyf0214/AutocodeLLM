@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { pollQwenToken, saveQwenOAuthCredentials } from '@/lib/providers/qwen-oauth';
+import { pollQwenToken } from '@/lib/auth/qwen/oauth';
+import { saveQwenOAuthCredentials } from '@/lib/providers/qwen-oauth';
 import type { QwenOAuthPollResponse } from '@/lib/api/provider-types';
 
 /**
