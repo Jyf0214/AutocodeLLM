@@ -26,3 +26,24 @@ export function generatePrismaClient() {
     throw new Error(`Prisma generate 失败: ${message}`);
   }
 }
+
+// 支持直接执行：bun run scripts/db-push.mjs
+if (process.argv[1] && process.argv[1].endsWith('db-push.mjs')) {
+  console.log('========================================');
+  console.log('开始数据库迁移...');
+  console.log('========================================');
+
+  (async () => {
+    try {
+      await runDbPush();
+      generatePrismaClient();
+      console.log('========================================');
+      console.log('✅ 数据库设置完成！');
+      console.log('========================================');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('❌ 数据库迁移失败:', message);
+      process.exit(1);
+    }
+  })();
+}
