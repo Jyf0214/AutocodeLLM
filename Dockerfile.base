@@ -36,7 +36,8 @@ RUN apt-get update && apt-get install -y sudo \
 
 USER node
 # 安装 Bun（使用官方推荐方式，全局安装）
-RUN curl -fsSL https://bun.sh/install | bash 
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /home/node/.bun/bin/bun /usr/local/bin/bun
 
 # 安装 nvm（Node 版本管理器）
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
