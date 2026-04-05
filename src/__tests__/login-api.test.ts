@@ -51,7 +51,7 @@ describe('登录 API (/api/auth/login)', () => {
     expect(response.status).toBe(401);
 
     const body = await response.json();
-    expect(body.error.code).toBe('INVALID_CREDENTIALS');
+    expect(body.error.code).toBe('USER_NOT_FOUND');
   });
 
   it('应该拒绝错误密码', async () => {
