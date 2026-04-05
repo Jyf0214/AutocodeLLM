@@ -46,7 +46,7 @@ export default function ChatInput({
           </Flexbox>
         }
       />
-      <ChatInputArea
+      <ChatInputArea.Inner
         value={value}
         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
           setValue(e.target.value);

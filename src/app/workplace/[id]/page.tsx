@@ -26,11 +26,13 @@ import {
   PaperClipOutlined,
   PictureOutlined,
   SettingOutlined as SettingOutlinedIcon,
+  DesktopOutlined,
 } from '@ant-design/icons';
 import { ModelIcon } from '@lobehub/icons';
 import WorkspacePasswordModal from '@/components/features/WorkspacePasswordModal';
 import WorkspaceSettings from '@/components/features/WorkspaceSettings';
 import WorkspaceLogs from '@/components/features/WorkspaceLogs';
+import TerminalPanel from '@/components/features/TerminalPanel';
 import type { WorkspaceListItem } from '@/lib/api/workspace-types';
 
 const USER_META: MetaData = {
@@ -391,7 +393,7 @@ export default function WorkplaceDetailPage({
                     </Flexbox>
                   }
                 />
-                <ChatInputArea
+                <ChatInputArea.Inner
                   value={inputValue}
                   onChange={handleTextAreaChange}
                   onSend={handleInputSend}
@@ -407,6 +409,20 @@ export default function WorkplaceDetailPage({
               </div>
             </div>
           </div>
+        </div>
+      ),
+    },
+    {
+      key: 'terminal',
+      label: (
+        <Flexbox gap={4} horizontal align="center">
+          <DesktopOutlined />
+          <span>终端</span>
+        </Flexbox>
+      ),
+      children: (
+        <div style={{ height: 'calc(100dvh - 46px)', padding: 16 }}>
+          <TerminalPanel workspaceId={id} />
         </div>
       ),
     },

@@ -56,11 +56,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 标准化 baseUrl，确保以 /v1/models 结尾
+    // 标准化 baseUrl，确保正确处理 /v1 结尾的情况
     const normalizedUrl = baseUrl.replace(/\/+$/, '');
-    const modelsUrl = normalizedUrl.includes('/v1/models')
-      ? normalizedUrl
-      : `${normalizedUrl}/v1/models`;
+    const modelsUrl = normalizedUrl.endsWith('/v1')
+      ? `${normalizedUrl}/models`
+      : normalizedUrl.includes('/v1/models')
+        ? normalizedUrl
+        : `${normalizedUrl}/v1/models`;
 
     const response = await fetch(modelsUrl, {
       method: 'GET',
@@ -148,7 +150,7 @@ export async function POST(request: NextRequest) {
       data: models,
     } as DiscoverResponse);
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
+    if (error instanceof DOMException && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
       return NextResponse.json(
         {
           success: false,
