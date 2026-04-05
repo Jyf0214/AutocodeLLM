@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button, Text, Empty, Modal, Form, Input, Switch } from '@lobehub/ui';
+import { Button, Text, Empty, Modal, Form, Input } from '@lobehub/ui';
 import {
   PlusOutlined,
   EditOutlined,
@@ -11,9 +11,8 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
 } from '@ant-design/icons';
-import { Table, Tag, Space, Popconfirm } from 'antd';
+import { Table, Tag, Space, Popconfirm, Switch, message } from 'antd';
 import { useTranslations } from 'next-intl';
-import { message } from 'antd';
 import AppLayout from '@/components/layout/AppLayout';
 
 interface EnvVariable {

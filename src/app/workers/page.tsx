@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Text, Empty, Modal, Form, Input, Switch } from '@lobehub/ui';
+import { Button, Text, Empty, Modal, Form, Input } from '@lobehub/ui';
 import { PlusOutlined, EditOutlined, DeleteOutlined, HeartOutlined } from '@ant-design/icons';
-import { Table, Tag, Space, Popconfirm, Select as AntSelect } from 'antd';
+import { Table, Tag, Space, Popconfirm, Select as AntSelect, Switch, message } from 'antd';
 import { useTranslations } from 'next-intl';
-import { message } from 'antd';
 import AppLayout from '@/components/layout/AppLayout';
 import type { Worker } from '@/lib/api/worker-types';
 
