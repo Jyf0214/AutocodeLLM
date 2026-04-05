@@ -63,5 +63,10 @@
     "react": "19",
     "react-dom": "19",
     "react-markdown": "^10.1.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix"
+    ]
   }
 }
