@@ -203,13 +203,11 @@ export default function AgentsPage() {
       title: t('agentName'),
       dataIndex: 'name',
       key: 'name',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
     },
     {
       title: t('status'),
       dataIndex: 'status',
       key: 'status',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
       render: (status: keyof typeof STATUS_COLORS) => (
         <Tag color={STATUS_COLORS[status]}>{t(status)}</Tag>
       ),
@@ -218,7 +216,6 @@ export default function AgentsPage() {
       title: t('executionMode'),
       dataIndex: 'mode',
       key: 'mode',
-      responsive: ['sm', 'md', 'lg', 'xl'] as const,
       render: (mode: keyof typeof MODE_COLORS) => (
         <Tag color={MODE_COLORS[mode]}>{formatMode(mode)}</Tag>
       ),
@@ -227,17 +224,15 @@ export default function AgentsPage() {
       title: t('maxAgents'),
       dataIndex: 'maxAgents',
       key: 'maxAgents',
-      responsive: ['md', 'lg', 'xl'] as const,
     },
     {
       title: t('progress'),
       dataIndex: 'progress',
       key: 'progress',
-      responsive: ['sm', 'md', 'lg', 'xl'] as const,
       render: (progress: number, record: AgentTask) => (
-        <Progress 
-          percent={progress} 
-          size="small" 
+        <Progress
+          percent={progress}
+          size="small"
           status={record.status === 'failed' ? 'exception' : record.status === 'completed' ? 'success' : 'active'}
         />
       ),
@@ -245,7 +240,6 @@ export default function AgentsPage() {
     {
       title: t('actions'),
       key: 'actions',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
       render: (_: unknown, record: AgentTask) => (
         <Space orientation="vertical" size="small">
           <Space>
