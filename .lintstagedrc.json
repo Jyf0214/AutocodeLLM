@@ -1,5 +1,11 @@
 {
   "*.{ts,tsx}": [
     "npx eslint --max-warnings=0"
+  ],
+  "*.{ts,tsx,js,mjs}": [
+    "npx tsc --noEmit"
+  ],
+  "*": [
+    "bun run test"
   ]
 }
