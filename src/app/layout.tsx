@@ -25,9 +25,39 @@ export default async function RootLayout({
             <ConfigProvider
               theme={{
                 token: {
-                  colorPrimary: '#4f46e5',
+                  colorPrimary: '#000000',
+                  colorBgContainer: 'var(--bg-primary)',
+                  colorBgLayout: 'var(--bg-primary)',
+                  colorBgElevated: 'var(--bg-secondary)',
+                  colorBorder: 'var(--border-primary)',
+                  colorText: 'var(--text-secondary)',
+                  colorTextHeading: 'var(--text-primary)',
+                  colorTextDescription: 'var(--text-tertiary)',
                   borderRadius: 6,
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif',
+                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif",
+                  fontSize: 14,
+                },
+                components: {
+                  Button: {
+                    borderRadius: 6,
+                    controlHeight: 36,
+                  },
+                  Card: {
+                    borderRadius: 8,
+                  },
+                  Input: {
+                    borderRadius: 6,
+                    controlHeight: 36,
+                  },
+                  Menu: {
+                    itemBorderRadius: 6,
+                  },
+                  Tabs: {
+                    borderRadius: 8,
+                  },
+                  Collapse: {
+                    borderRadius: 8,
+                  },
                 },
               }}
             >

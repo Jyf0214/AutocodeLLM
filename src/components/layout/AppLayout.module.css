@@ -1,0 +1,134 @@
+.layout {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.desktopSider {
+  display: none;
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  overflow-y: auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 10;
+}
+
+@media (min-width: 1024px) {
+  .desktopSider {
+    display: block;
+  }
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.sidebarHeader {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.sidebarTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.sidebarMenu {
+  flex: 1;
+  background: transparent;
+  border-right: none;
+}
+
+.sidebarMenu :global(.ant-menu-item) {
+  margin: 4px 8px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.sidebarMenu :global(.ant-menu-item:hover) {
+  background: var(--bg-tertiary);
+}
+
+.sidebarMenu :global(.ant-menu-item-selected) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-left: 2px solid var(--border-strong);
+}
+
+.sidebarMenu :global(.ant-menu-item-selected::after) {
+  display: none;
+}
+
+.sidebarMenu :global(.ant-menu-item-icon) {
+  font-size: 20px;
+  stroke-width: 1.5;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 0 16px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+@media (min-width: 1024px) {
+  .header {
+    padding-left: 296px;
+  }
+}
+
+.menuToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 1024px) {
+  .menuToggle {
+    display: none;
+  }
+}
+
+.headerTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.mainLayout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+  .mainLayout {
+    margin-left: 280px;
+  }
+}
+
+.content {
+  padding: 24px;
+  background: var(--bg-primary);
+  flex: 1;
+}
+
+@media (max-width: 767px) {
+  .content {
+    padding: 16px;
+  }
+}

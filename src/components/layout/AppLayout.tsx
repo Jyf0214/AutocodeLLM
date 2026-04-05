@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import { Layout, Menu, Typography } from 'antd';
+import { useMemo, useState } from 'react';
+import { Layout, Menu, Typography, Button, Drawer } from 'antd';
 import {
   HomeOutlined,
   FolderOutlined,
@@ -14,11 +14,13 @@ import {
   ApiOutlined,
   BookOutlined,
   PlayCircleOutlined,
+  MenuOutlined,
 } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import styles from './AppLayout.module.css';
 
-const { Sider, Content } = Layout;
+const { Content, Header } = Layout;
 const { Title } = Typography;
 
 const menuItems = [
@@ -43,6 +45,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const selectedKey = useMemo(() => {
     return menuItems.find((item) => pathname.startsWith(item.key))?.key ?? '/';
@@ -63,53 +66,57 @@ export default function AppLayout({ children }: AppLayoutProps) {
     [t],
   );
 
-  return (
-    <Layout style={{ minHeight: '100dvh' }}>
-      <Sider
-        breakpoint="lg"
-        collapsedWidth={80}
-        style={{
-          borderRight: '1px solid var(--border)',
+  const SidebarContent = () => (
+    <div className={styles.sidebar}>
+      <div className={styles.sidebarHeader}>
+        <Title level={4} className={styles.sidebarTitle!}>
+          {t('common:appName')}
+        </Title>
+      </div>
+      <Menu
+        mode="inline"
+        selectedKeys={[selectedKey]}
+        items={translatedMenuItems}
+        onClick={({ key }) => {
+          router.push(key);
+          setMobileOpen(false);
         }}
-      >
-        <div
-          style={{
-            padding: '16px 24px',
-            borderBottom: '1px solid var(--border)',
-          }}
-        >
-          <Title
-            level={4}
-            style={{
-              margin: 0,
-              color: 'var(--primary)',
-              fontSize: 18,
-            }}
-          >
-            {t('common:appName')}
-          </Title>
-        </div>
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[selectedKey]}
-          items={translatedMenuItems}
-          onClick={({ key }) => {
-            router.push(key);
-          }}
-          style={{ borderRight: 'none' }}
+        className={styles.sidebarMenu!}
+      />
+    </div>
+  );
+
+  return (
+    <Layout className={styles.layout!}>
+      <div className={styles.desktopSider!}>
+        <SidebarContent />
+      </div>
+      <Header className={styles.header!}>
+        <Button
+          type="text"
+          icon={<MenuOutlined />}
+          className={styles.menuToggle!}
+          onClick={() => setMobileOpen(true)}
         />
-      </Sider>
-      <Layout>
-        <Content
-          style={{
-            padding: 24,
-            background: 'var(--background)',
-          }}
-        >
+        <Title level={5} className={styles.headerTitle!}>
+          {t('common:appName')}
+        </Title>
+      </Header>
+      <Layout className={styles.mainLayout!}>
+        <Content className={styles.content!}>
           {children}
         </Content>
       </Layout>
+      <Drawer
+        placement="left"
+        onClose={() => setMobileOpen(false)}
+        open={mobileOpen}
+        width={280}
+        destroyOnClose
+        styles={{ body: { padding: 0 } }}
+      >
+        <SidebarContent />
+      </Drawer>
     </Layout>
   );
 }

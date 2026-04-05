@@ -1,0 +1,63 @@
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.message:last-child {
+  margin-bottom: 0;
+}
+
+.message.user {
+  flex-direction: row-reverse;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.bubbleWrapper {
+  max-width: 70%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.message.user .bubbleWrapper {
+  align-items: flex-end;
+}
+
+.bubble {
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.userBubble {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-radius: var(--radius-card) var(--radius-card) 4px var(--radius-card);
+}
+
+.assistantBubble {
+  background: transparent;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  padding-bottom: 16px;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}

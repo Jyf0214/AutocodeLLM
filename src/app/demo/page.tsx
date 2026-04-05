@@ -9,19 +9,19 @@ const { Title, Paragraph } = Typography;
 
 const scenarios = [
   {
-    icon: <ApartmentOutlined style={{ fontSize: 48, color: '#4f46e5' }} />,
+    icon: <ApartmentOutlined style={{ fontSize: 48, color: 'var(--text-primary)' }} />,
     key: 'office',
     titleKey: 'demo:scenarios.office',
     description: '文档生成、数据处理、邮件撰写等办公自动化场景',
   },
   {
-    icon: <CodeOutlined style={{ fontSize: 48, color: '#4f46e5' }} />,
+    icon: <CodeOutlined style={{ fontSize: 48, color: 'var(--text-primary)' }} />,
     key: 'coding',
     titleKey: 'demo:scenarios.coding',
     description: '代码生成、Bug 修复、重构建议等编码辅助场景',
   },
   {
-    icon: <BarChartOutlined style={{ fontSize: 48, color: '#4f46e5' }} />,
+    icon: <BarChartOutlined style={{ fontSize: 48, color: 'var(--text-primary)' }} />,
     key: 'analysis',
     titleKey: 'demo:scenarios.analysis',
     description: '数据可视化、统计分析、报告生成等数据分析场景',

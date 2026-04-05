@@ -78,13 +78,13 @@ export default function ChangePasswordPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'var(--bg-primary)',
       }}
     >
       <Card
         style={{
           width: 450,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+          boxShadow: 'var(--shadow-modal)',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
