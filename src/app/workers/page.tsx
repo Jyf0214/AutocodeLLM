@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Text, Empty, Modal, Form, Input, Switch, Select } from '@lobehub/ui';
+import { Button, Text, Empty, Modal, Form, Input, Switch } from '@lobehub/ui';
 import { PlusOutlined, EditOutlined, DeleteOutlined, HeartOutlined } from '@ant-design/icons';
 import { Table, Tag, Space, Popconfirm, Select as AntSelect } from 'antd';
 import { useTranslations } from 'next-intl';
@@ -295,11 +295,14 @@ export default function WorkersPage() {
             label={t('workerType')}
             rules={[{ required: true, message: t('workerTypeRequired') }]}
           >
-            <AntSelect placeholder={t('workerTypeRequired')}>
-              <AntSelect.Option value="compute">{t('compute')}</AntSelect.Option>
-              <AntSelect.Option value="storage">{t('storage')}</AntSelect.Option>
-              <AntSelect.Option value="inference">{t('inference')}</AntSelect.Option>
-            </AntSelect>
+          <AntSelect
+            placeholder={t('workerTypeRequired')}
+            options={[
+              { value: 'compute', label: t('compute') },
+              { value: 'storage', label: t('storage') },
+              { value: 'inference', label: t('inference') },
+            ]}
+          />
           </Form.Item>
 
           <Form.Item

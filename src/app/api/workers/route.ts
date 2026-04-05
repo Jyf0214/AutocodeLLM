@@ -53,7 +53,9 @@ export async function POST(request: Request) {
     const body = (await request.json()) as CreateWorkerRequest;
     const { name, type, url, metadata, enabled } = body;
 
-    if (!name || !type || !url) {
+    // 运行时验证（外部数据可能不符合类型定义）
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (name === undefined || type === undefined || url === undefined) {
       return NextResponse.json(
         {
           success: false,
@@ -102,7 +104,7 @@ export async function POST(request: Request) {
         type,
         url,
         status: 'offline',
-        ...(metadata !== undefined ? { metadata: metadata as Record<string, unknown> } : {}),
+        ...(metadata !== undefined ? { metadata } : {}),
         enabled: enabled ?? true,
       },
     });
@@ -116,7 +118,7 @@ export async function POST(request: Request) {
         status: newWorker.status as Worker['status'],
         url: newWorker.url,
         lastHeartbeat: newWorker.lastHeartbeat ? newWorker.lastHeartbeat.toISOString() : null,
-        metadata: newWorker.metadata ? (newWorker.metadata as Record<string, unknown>) : null,
+        metadata: newWorker.metadata ?? null,
         enabled: newWorker.enabled,
         createdAt: newWorker.createdAt.toISOString(),
         updatedAt: newWorker.updatedAt.toISOString(),
@@ -227,7 +229,7 @@ export async function PUT(request: Request) {
         ...(type !== undefined && { type }),
         ...(status !== undefined && { status }),
         ...(url !== undefined && { url }),
-        ...(metadata !== undefined ? { metadata: metadata as Record<string, unknown> } : {}),
+        ...(metadata !== undefined ? { metadata } : {}),
         ...(enabled !== undefined && { enabled }),
       },
     });
@@ -241,7 +243,7 @@ export async function PUT(request: Request) {
         status: updatedWorker.status as Worker['status'],
         url: updatedWorker.url,
         lastHeartbeat: updatedWorker.lastHeartbeat ? updatedWorker.lastHeartbeat.toISOString() : null,
-        metadata: updatedWorker.metadata ? (updatedWorker.metadata as Record<string, unknown>) : null,
+        metadata: updatedWorker.metadata ?? null,
         enabled: updatedWorker.enabled,
         createdAt: updatedWorker.createdAt.toISOString(),
         updatedAt: updatedWorker.updatedAt.toISOString(),
