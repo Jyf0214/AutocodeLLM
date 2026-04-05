@@ -80,5 +80,33 @@
       "title": "演示限制",
       "description": "Demo 模式下最多可调用 {maxAgents} 个代理，仅支持「仅读取」和「Yolo 模式」两种执行模式。"
     }
+  },
+  "account": {
+    "title": "账户设置",
+    "userInfo": "用户信息",
+    "username": "用户名",
+    "forceChangePassword": "强制修改密码",
+    "isInitialPassword": "初始密码状态",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "yes": "是",
+    "no": "否",
+    "createdAt": "创建时间",
+    "updatedAt": "更新时间",
+    "flagWarning": "这些标志表示您的账户需要修改密码。您可以手动禁用这些标志。",
+    "disableFlags": "禁用标志",
+    "changePassword": "修改密码",
+    "oldPassword": "旧密码",
+    "oldPasswordRequired": "请输入旧密码",
+    "oldPasswordPlaceholder": "请输入当前密码",
+    "newPassword": "新密码",
+    "newPasswordRequired": "请输入新密码",
+    "passwordMinLength": "密码长度至少为 8 位",
+    "newPasswordPlaceholder": "请输入新密码",
+    "confirmPassword": "确认新密码",
+    "confirmPasswordRequired": "请再次输入新密码",
+    "confirmPasswordPlaceholder": "请再次输入新密码",
+    "passwordMismatch": "两次输入的密码不一致",
+    "submit": "更新密码"
   }
 }

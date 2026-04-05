@@ -25,3 +25,28 @@ export interface ChangePasswordResponse {
     code: string;
   };
 }
+
+export interface UserInfo {
+  id: string;
+  username: string;
+  forceChangePassword: boolean;
+  isInitialPassword: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AccountResponse {
+  success: boolean;
+  data?: UserInfo;
+  error?: {
+    message: string;
+    code: string;
+  };
+}
+
+export interface UpdateAccountRequest {
+  oldPassword?: string;
+  newPassword?: string;
+  forceChangePassword?: boolean;
+  isInitialPassword?: boolean;
+}

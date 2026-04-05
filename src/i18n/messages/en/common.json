@@ -80,5 +80,33 @@
       "title": "Demo Limitations",
       "description": "Demo mode supports up to {maxAgents} agents, with \"Read Only\" and \"Yolo Mode\" execution modes available."
     }
+  },
+  "account": {
+    "title": "Account Settings",
+    "userInfo": "User Information",
+    "username": "Username",
+    "forceChangePassword": "Force Change Password",
+    "isInitialPassword": "Initial Password Status",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "yes": "Yes",
+    "no": "No",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "flagWarning": "These flags indicate that your account needs to change password. You can manually disable these flags.",
+    "disableFlags": "Disable Flags",
+    "changePassword": "Change Password",
+    "oldPassword": "Old Password",
+    "oldPasswordRequired": "Please enter your old password",
+    "oldPasswordPlaceholder": "Enter your current password",
+    "newPassword": "New Password",
+    "newPasswordRequired": "Please enter a new password",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "newPasswordPlaceholder": "Enter a new password",
+    "confirmPassword": "Confirm New Password",
+    "confirmPasswordRequired": "Please enter the new password again",
+    "confirmPasswordPlaceholder": "Re-enter the new password",
+    "passwordMismatch": "Passwords do not match",
+    "submit": "Update Password"
   }
 }
