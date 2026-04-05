@@ -1,2 +1,5 @@
 #!/usr/bin/env bash
+echo "🔨 运行完整构建验证..."
+bun run build || { echo "❌ 构建失败，提交中止！"; exit 1; }
+echo "✅ 构建成功，继续执行代码检查..."
 npx lint-staged
