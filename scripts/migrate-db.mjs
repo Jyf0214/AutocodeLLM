@@ -12,10 +12,10 @@ console.log('开始数据库迁移...');
 console.log('========================================');
 
 try {
-  // 1. 运行 Prisma 迁移
-  console.log('执行 Prisma migrate deploy...');
-  execSync('bunx prisma migrate deploy', { stdio: 'inherit' });
-  console.log('✅ 数据库迁移完成');
+  // 1. 运行 Prisma db push
+  console.log('执行 Prisma db push...');
+  execSync('bunx prisma db push', { stdio: 'inherit' });
+  console.log('✅ 数据库同步完成');
 
   // 2. 生成 Prisma Client
   console.log('生成 Prisma Client...');
