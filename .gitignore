@@ -62,3 +62,6 @@ __pycache__/
 
 # 缓存目录
 /cache/
+
+# Next.js 配置缓存
+cache/config.json
