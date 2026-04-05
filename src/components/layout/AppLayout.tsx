@@ -18,6 +18,7 @@ import {
 } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import '@/styles/AppLayout.css';
 
 const { Content, Header } = Layout;
@@ -66,6 +67,9 @@ function SidebarContent({
         }}
         className="sidebar-menu"
       />
+      <div className="sidebar-footer">
+        <ThemeToggle />
+      </div>
     </div>
   );
 }
