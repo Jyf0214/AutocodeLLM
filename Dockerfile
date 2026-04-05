@@ -18,9 +18,10 @@ WORKDIR /app
 
 # 复制源代码
 COPY . .
-USER  node
-RUN curl -fsSL https://bun.sh/install | bash
-USER root
+
+# 确保 bun 可用（创建符号链接）
+RUN ln -sf /home/node/.bun/bin/bun /usr/local/bin/bun 2>/dev/null || true
+
 # 安装依赖并预构建
 RUN rm -rf .next && \
     bun install --ignore-scripts && \
