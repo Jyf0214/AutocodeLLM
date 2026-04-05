@@ -5,7 +5,7 @@
 
 import { execSync } from 'node:child_process';
 
-export async function runMigration() {
+export async function runDbPush() {
   try {
     console.log('  执行 Prisma db push...');
     execSync('bunx prisma db push', { stdio: 'inherit' });
