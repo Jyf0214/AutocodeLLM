@@ -13,7 +13,31 @@
     "mcp": "MCP Servers",
     "providers": "API Providers",
     "docs": "Documentation",
-    "demo": "Demo"
+    "demo": "Demo",
+    "landing": {
+      "subtitle": "AI Coding Agent Platform — Full toolchain for function calling, task agents, file operations, and web search",
+      "startUsing": "Get Started",
+      "onlineDemo": "Live Demo",
+      "coreFeatures": "Core Features",
+      "featureAI": {
+        "title": "AI Coding Agent",
+        "desc": "Function calling, task agents, file operations — let AI handle repetitive coding tasks"
+      },
+      "featureModels": {
+        "title": "Multi-Model Support",
+        "desc": "Compatible with OpenAI, Anthropic, Google, DeepSeek and more — flexible configuration"
+      },
+      "featureTasks": {
+        "title": "Task Orchestration",
+        "desc": "Orchestrate and manage automated agent workflows to boost productivity"
+      },
+      "cta": {
+        "title": "Ready to Get Started?",
+        "desc": "Log in to your account and experience the full AI coding agent features",
+        "loginBtn": "Sign In Now"
+      },
+      "footer": "AutocodeLLM — AI Coding Agent Platform"
+    }
   },
   "login": {
     "title": "Login",

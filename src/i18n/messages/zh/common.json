@@ -13,7 +13,31 @@
     "mcp": "MCP 服务",
     "providers": "API 提供商",
     "docs": "文档",
-    "demo": "演示"
+    "demo": "演示",
+    "landing": {
+      "subtitle": "AI 编码代理平台 — 支持函数调用、任务代理、文件操作、Web 搜索等完整工具链",
+      "startUsing": "开始使用",
+      "onlineDemo": "在线演示",
+      "coreFeatures": "核心功能",
+      "featureAI": {
+        "title": "AI 编码代理",
+        "desc": "支持函数调用、任务代理、文件操作，让 AI 帮你完成重复的编码工作"
+      },
+      "featureModels": {
+        "title": "多模型支持",
+        "desc": "兼容 OpenAI、Anthropic、Google、DeepSeek 等主流 AI 模型，灵活配置"
+      },
+      "featureTasks": {
+        "title": "任务编排",
+        "desc": "编排和管理自动化任务代理工作流，提升开发效率"
+      },
+      "cta": {
+        "title": "准备好开始了吗？",
+        "desc": "登录你的账户，体验完整的 AI 编码代理功能",
+        "loginBtn": "立即登录"
+      },
+      "footer": "AutocodeLLM — AI 编码代理平台"
+    }
   },
   "login": {
     "title": "登录",
