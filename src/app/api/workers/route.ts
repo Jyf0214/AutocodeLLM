@@ -54,8 +54,7 @@ export async function POST(request: Request) {
     const { name, type, url, metadata, enabled } = body;
 
     // 运行时验证（外部数据可能不符合类型定义）
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (name === undefined || type === undefined || url === undefined) {
+    if (!name || !type || !url) {
       return NextResponse.json(
         {
           success: false,

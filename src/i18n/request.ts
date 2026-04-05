@@ -5,8 +5,8 @@ export default getRequestConfig(async () => {
   const cookieStore = await cookies();
   const locale = cookieStore.get('NEXT_LOCALE')?.value ?? 'zh';
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const messages = (await import(`./messages/${locale}/common.json`)).default as Record<string, unknown>;
+  const messagesModule = await import(`./messages/${locale}/common.json`) as { default: Record<string, unknown> };
+  const messages = messagesModule.default;
 
   return {
     locale,

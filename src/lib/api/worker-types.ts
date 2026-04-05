@@ -30,9 +30,9 @@ export interface WorkerListResponse {
 }
 
 export interface CreateWorkerRequest {
-  name: string;
-  type: 'compute' | 'storage' | 'inference';
-  url: string;
+  name?: string;
+  type?: 'compute' | 'storage' | 'inference';
+  url?: string;
   metadata?: Record<string, unknown>;
   enabled?: boolean;
 }

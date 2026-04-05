@@ -119,12 +119,13 @@ describe('环境变量 API (/api/env)', () => {
       const { GET } = await import('@/app/api/env/route');
       const response = await GET();
 
-      const body = await response.json();
+      const body = await response.json() as { data: { value: string }[] };
+      const firstItem = body.data[0];
+      if (!firstItem) throw new Error('Expected at least one env var');
       // 脱敏后应该包含星号
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      expect(body.data[0].value.includes('*')).toBe(true);
+      expect(firstItem.value.includes('*')).toBe(true);
       // 长度应该大于原值的前2字符 + 至少4个星号
-      expect(body.data[0].value.length).toBeGreaterThanOrEqual(6);
+      expect(firstItem.value.length).toBeGreaterThanOrEqual(6);
     });
   });
 
