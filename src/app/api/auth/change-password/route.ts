@@ -34,6 +34,7 @@ export async function POST(request: Request) {
 
     const newPasswordHash = createHash('sha256').update(newPassword).digest('hex');
 
+    // 修改密码后强制清除初始密码标志，不允许恢复为 true
     await prisma.user.update({
       where: { id: userId },
       data: {
