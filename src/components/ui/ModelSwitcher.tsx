@@ -1,3 +1,15 @@
+/**
+ * This component is inspired by the LobeChat project (https://github.com/lobehub/lobe-chat)
+ * which is licensed under the MIT License.
+ *
+ * This implementation is independently written and does not contain any
+ * copied source code from LobeChat. It only uses the public APIs provided
+ * by the @lobehub/ui npm package.
+ *
+ * Original work Copyright (c) 2023 LobeHub (MIT License)
+ * This work Copyright (c) 2026 Jyf0214 (Apache License 2.0)
+ */
+
 'use client';
 
 import { useCallback } from 'react';
@@ -52,8 +64,15 @@ export default function ModelSwitcher({
           return (
             <div
               key={model.id}
+              role="button"
+              tabIndex={0}
               onClick={() => {
                 handleSelect(model.id);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleSelect(model.id);
+                }
               }}
               style={{
                 padding: '12px 16px',
@@ -61,16 +80,6 @@ export default function ModelSwitcher({
                 cursor: 'pointer',
                 background: isSelected ? 'var(--color-hover-bg)' : 'transparent',
                 transition: 'background 200ms',
-              }}
-              onMouseEnter={(e: React.MouseEvent) => {
-                if (!isSelected) {
-                  (e.currentTarget as HTMLElement).style.background = 'var(--color-hover-bg)';
-                }
-              }}
-              onMouseLeave={(e: React.MouseEvent) => {
-                if (!isSelected) {
-                  (e.currentTarget as HTMLElement).style.background = 'transparent';
-                }
               }}
             >
               <Flexbox gap={12} horizontal align="center">
@@ -81,7 +90,7 @@ export default function ModelSwitcher({
                 <Flexbox flex={1}>
                   <Flexbox gap={8} horizontal align="center">
                     <Text strong>{model.name}</Text>
-                    {model.isDefault != null && model.isDefault && (
+                    {model.isDefault && (
                       <Tag color="blue" style={{ margin: 0, fontSize: 10 }}>
                         默认
                       </Tag>

@@ -1,3 +1,15 @@
+/**
+ * This component is inspired by the LobeChat project (https://github.com/lobehub/lobe-chat)
+ * which is licensed under the MIT License.
+ *
+ * This implementation is independently written and does not contain any
+ * copied source code from LobeChat. It only uses the public APIs provided
+ * by the @lobehub/ui npm package.
+ *
+ * Original work Copyright (c) 2023 LobeHub (MIT License)
+ * This work Copyright (c) 2026 Jyf0214 (Apache License 2.0)
+ */
+
 'use client';
 
 import { useCallback, useState } from 'react';
@@ -8,6 +20,7 @@ import {
   PaperClipOutlined,
   PictureOutlined,
   SettingOutlined,
+  SendOutlined,
 } from '@ant-design/icons';
 
 interface ChatInputProps {
@@ -44,6 +57,15 @@ export default function ChatInput({
             <ActionIcon icon={PictureOutlined} size={{ blockSize: 20 }} />
             <ActionIcon icon={SettingOutlined} size={{ blockSize: 20 }} />
           </Flexbox>
+        }
+        rightAddons={
+          <ActionIcon
+            icon={SendOutlined}
+            onClick={handleSend}
+            loading={loading}
+            disabled={!value.trim() || loading || disabled}
+            size={{ blockSize: 24 }}
+          />
         }
       />
       <ChatInputArea.Inner

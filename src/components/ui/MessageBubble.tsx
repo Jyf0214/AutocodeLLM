@@ -1,3 +1,15 @@
+/**
+ * This component is inspired by the LobeChat project (https://github.com/lobehub/lobe-chat)
+ * which is licensed under the MIT License.
+ *
+ * This implementation is independently written and does not contain any
+ * copied source code from LobeChat. It only uses the public APIs provided
+ * by the @lobehub/ui npm package.
+ *
+ * Original work Copyright (c) 2023 LobeHub (MIT License)
+ * This work Copyright (c) 2026 Jyf0214 (Apache License 2.0)
+ */
+
 'use client';
 
 import { ChatItem, type MetaData } from '@lobehub/ui/chat';
@@ -19,12 +31,10 @@ interface ThinkingProcess {
 }
 
 interface MessageBubbleProps {
-  content?: string | undefined;
+  content: string | undefined;
   role: 'user' | 'assistant';
-  timestamp?: string | undefined;
-  avatar?: React.ReactNode;
-  toolCalls?: ToolCall[] | undefined;
-  thinkingProcess?: ThinkingProcess | undefined;
+  toolCalls: ToolCall[] | undefined;
+  thinkingProcess: ThinkingProcess | undefined;
   className?: string;
 }
 
@@ -41,8 +51,6 @@ const ASSISTANT_META: MetaData = {
 export default function MessageBubble({
   content,
   role,
-  timestamp: _timestamp,
-  avatar: _avatar,
   toolCalls,
   thinkingProcess,
   className,
@@ -52,7 +60,7 @@ export default function MessageBubble({
 
   const aboveMessage =
     toolCalls != null && toolCalls.length > 0 ? (
-      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {toolCalls.map((tool) => (
           <ToolCallCard
             key={tool.id}

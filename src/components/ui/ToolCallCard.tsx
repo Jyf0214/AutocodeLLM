@@ -1,3 +1,15 @@
+/**
+ * This component is inspired by the LobeChat project (https://github.com/lobehub/lobe-chat)
+ * which is licensed under the MIT License.
+ *
+ * This implementation is independently written and does not contain any
+ * copied source code from LobeChat. It only uses the public APIs provided
+ * by the @lobehub/ui npm package.
+ *
+ * Original work Copyright (c) 2023 LobeHub (MIT License)
+ * This work Copyright (c) 2026 Jyf0214 (Apache License 2.0)
+ */
+
 'use client';
 
 import { useState } from 'react';
@@ -6,10 +18,10 @@ import { CheckCircleOutlined, CloseCircleOutlined, ToolOutlined } from '@ant-des
 
 interface ToolCallCardProps {
   toolName: string;
-  description?: string | undefined;
+  description: string | undefined;
   status: 'success' | 'error' | 'running';
-  error?: string | undefined;
-  duration?: string | undefined;
+  error: string | undefined;
+  duration: string | undefined;
 }
 
 export default function ToolCallCard({
@@ -69,7 +81,7 @@ export default function ToolCallCard({
           ]}
           activeKey={expanded ? ['detail'] : []}
           onChange={(keys) => {
-            setExpanded(keys.length > 0);
+            setExpanded(Array.isArray(keys) ? keys.length > 0 : keys != null);
           }}
           style={{ marginTop: 8 }}
         />

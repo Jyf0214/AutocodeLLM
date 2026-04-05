@@ -1,3 +1,15 @@
+/**
+ * This component is inspired by the LobeChat project (https://github.com/lobehub/lobe-chat)
+ * which is licensed under the MIT License.
+ *
+ * This implementation is independently written and does not contain any
+ * copied source code from LobeChat. It only uses the public APIs provided
+ * by the @lobehub/ui npm package.
+ *
+ * Original work Copyright (c) 2023 LobeHub (MIT License)
+ * This work Copyright (c) 2026 Jyf0214 (Apache License 2.0)
+ */
+
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
@@ -27,6 +39,7 @@ import {
   PictureOutlined,
   SettingOutlined as SettingOutlinedIcon,
   DesktopOutlined,
+  SendOutlined,
 } from '@ant-design/icons';
 import { ModelIcon } from '@lobehub/icons';
 import WorkspacePasswordModal from '@/components/features/WorkspacePasswordModal';
@@ -68,7 +81,14 @@ interface WorkspaceChatMessage {
   };
 }
 
-const MOCK_MODELS = [
+interface ModelOption {
+  id: string;
+  name: string;
+  provider: string;
+  isDefault?: boolean;
+}
+
+const MOCK_MODELS: ModelOption[] = [
   { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', isDefault: true },
   { id: 'claude-3', name: 'Claude 3', provider: 'Anthropic' },
   { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google' },
@@ -79,20 +99,20 @@ function ModelSelector({
   currentModel,
   onSelect,
 }: {
-  currentModel: { id: string; name: string };
+  currentModel: ModelOption;
   onSelect: (modelId: string) => void;
 }) {
-  const items = MOCK_MODELS.map((model) => ({
+  const menuItems = MOCK_MODELS.map((model) => ({
     key: model.id,
     label: (
       <Flexbox gap={8} horizontal align="center">
         <ModelIcon model={model.id} size={20} />
-        <span>{model.name}</span>
+        <Text>{model.name}</Text>
         <Text type="secondary" style={{ fontSize: 12 }}>
           {model.provider}
         </Text>
         {model.isDefault && (
-          <span
+          <Text
             style={{
               fontSize: 10,
               padding: '0 4px',
@@ -102,7 +122,7 @@ function ModelSelector({
             }}
           >
             默认
-          </span>
+          </Text>
         )}
       </Flexbox>
     ),
@@ -112,7 +132,7 @@ function ModelSelector({
   }));
 
   return (
-    <Dropdown menu={{ items }} placement="bottomLeft" arrow>
+    <Dropdown menu={{ items: menuItems }} placement="bottomLeft" arrow>
       <Flexbox
         gap={6}
         horizontal
@@ -121,13 +141,6 @@ function ModelSelector({
           padding: '4px 8px',
           borderRadius: 8,
           cursor: 'pointer',
-          transition: 'background 200ms',
-        }}
-        onMouseEnter={(e: React.MouseEvent) => {
-          (e.currentTarget as HTMLElement).style.background = 'var(--color-hover-bg)';
-        }}
-        onMouseLeave={(e: React.MouseEvent) => {
-          (e.currentTarget as HTMLElement).style.background = 'transparent';
         }}
       >
         <ModelIcon model={currentModel.id} size={18} />
@@ -144,18 +157,19 @@ export default function WorkplaceDetailPage({
 }) {
   const router = useRouter();
   const { id } = React.use(params);
+
   const [messages, setMessages] = useState<WorkspaceChatMessage[]>([]);
   const [currentModelId, setCurrentModelId] = useState('gpt-4');
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [inputValue, setInputValue] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const [workspace, setWorkspace] = useState<WorkspaceListItem | null>(null);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [verified, setVerified] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
 
-  const currentModel = MOCK_MODELS.find((m) => m.id === currentModelId) ?? MOCK_MODELS[0];
+  const currentModel: ModelOption = MOCK_MODELS.find((m) => m.id === currentModelId)!;
 
   useEffect(() => {
     const fetchWorkspace = async () => {
@@ -204,7 +218,7 @@ export default function WorkplaceDetailPage({
       if (!trimmed || loading) return;
 
       const userMessage: WorkspaceChatMessage = {
-        id: `user-${String(Date.now())}`,
+        id: `user-${Date.now()}`,
         role: 'user',
         content: trimmed,
         createAt: Date.now(),
@@ -233,7 +247,7 @@ export default function WorkplaceDetailPage({
           const result: { success: boolean; data?: { content: string } } = await response.json();
           if (result.success && result.data) {
             const assistantMessage: WorkspaceChatMessage = {
-              id: `assistant-${String(Date.now())}`,
+              id: `assistant-${Date.now()}`,
               role: 'assistant',
               content: result.data.content,
               createAt: Date.now(),
@@ -256,9 +270,12 @@ export default function WorkplaceDetailPage({
     setCurrentModelId(modelId);
   }, []);
 
-  const handleTextAreaChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputValue(e.target.value);
-  }, []);
+  const handleTextAreaChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setInputValue(e.target.value);
+    },
+    [],
+  );
 
   const handleInputSend = useCallback(() => {
     handleSend(inputValue);
@@ -272,6 +289,142 @@ export default function WorkplaceDetailPage({
     );
   }
 
+  const renderChatTab = () => (
+    <Flexbox
+      style={{
+        height: 'calc(100dvh - 46px)',
+      }}
+    >
+      <Flexbox
+        horizontal
+        justify="space-between"
+        align="center"
+        style={{
+          borderBottom: '1px solid var(--color-border)',
+          padding: '8px 16px',
+          background: 'var(--color-bg-container)',
+        }}
+      >
+        <Flexbox gap={8} horizontal align="center">
+          <ActionIcon
+            icon={ArrowLeftOutlined}
+            onClick={() => {
+              router.push('/workplace');
+            }}
+            size="large"
+          />
+          <ModelSelector
+            currentModel={currentModel}
+            onSelect={handleModelSelect}
+          />
+        </Flexbox>
+        <ActionIcon icon={ShareAltOutlined} size="large" />
+      </Flexbox>
+
+      <Flexbox
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '16px',
+        }}
+      >
+        <Flexbox style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
+          {messages.length === 0 && !loading ? (
+            <Flexbox
+              gap={16}
+              align="center"
+              justify="center"
+              style={{ height: '60vh' }}
+            >
+              <Avatar avatar="🤖" size={64} background="var(--lobe-color-primary)" />
+              <Text type="secondary" style={{ fontSize: 16 }}>
+                开始对话，让 AI 帮助你完成工作
+              </Text>
+            </Flexbox>
+          ) : (
+            <>
+              {messages.map((msg) => {
+                const isUser = msg.role === 'user';
+                const isLast = msg.id === messages[messages.length - 1]?.id;
+
+                return (
+                  <ChatItem
+                    key={msg.id}
+                    avatar={isUser ? USER_META : ASSISTANT_META}
+                    placement={isUser ? 'right' : 'left'}
+                    message={msg.content}
+                    loading={loading && isLast}
+                    showAvatar
+                    variant="bubble"
+                    markdownProps={{
+                      variant: 'chat',
+                      enableMermaid: true,
+                      enableGithubAlert: true,
+                      enableLatex: true,
+                    }}
+                  />
+                );
+              })}
+              {loading && (
+                <ChatItem
+                  avatar={ASSISTANT_META}
+                  placement="left"
+                  message={<LoadingDots />}
+                  showAvatar
+                  variant="bubble"
+                />
+              )}
+              <div ref={messagesEndRef} />
+            </>
+          )}
+        </Flexbox>
+      </Flexbox>
+
+      <Flexbox
+        style={{
+          borderTop: '1px solid var(--color-border)',
+          background: 'var(--color-bg-container)',
+          padding: '12px 16px 16px',
+        }}
+      >
+        <Flexbox style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
+          <ChatInputActionBar
+            leftAddons={
+              <Flexbox gap={4} horizontal>
+                <ActionIcon icon={GlobalOutlined} size={{ blockSize: 20 }} />
+                <ActionIcon icon={PaperClipOutlined} size={{ blockSize: 20 }} />
+                <ActionIcon icon={PictureOutlined} size={{ blockSize: 20 }} />
+                <ActionIcon icon={SettingOutlinedIcon} size={{ blockSize: 20 }} />
+              </Flexbox>
+            }
+            rightAddons={
+              <ActionIcon
+                icon={SendOutlined}
+                onClick={handleInputSend}
+                loading={loading}
+                disabled={!inputValue.trim() || loading}
+                size={{ blockSize: 24 }}
+              />
+            }
+          />
+          <ChatInputArea.Inner
+            value={inputValue}
+            onChange={handleTextAreaChange}
+            onSend={handleInputSend}
+            loading={loading}
+            placeholder="从任何想法开始..."
+            autoSize={{ minRows: 2, maxRows: 8 }}
+          />
+          <Flexbox justify="center" style={{ marginTop: 8 }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              按 Ctrl+Enter 换行
+            </Text>
+          </Flexbox>
+        </Flexbox>
+      </Flexbox>
+    </Flexbox>
+  );
+
   const tabItems = [
     {
       key: 'chat',
@@ -281,138 +434,7 @@ export default function WorkplaceDetailPage({
           <span>聊天</span>
         </Flexbox>
       ),
-      children: (
-        <div
-          style={{
-            height: 'calc(100dvh - 46px)',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <div
-            style={{
-              borderBottom: '1px solid var(--color-border)',
-              padding: '8px 16px',
-              background: 'var(--color-bg-container)',
-            }}
-          >
-            <div style={{ maxWidth: 800, margin: '0 auto' }}>
-              <Flexbox justify="space-between" horizontal align="center">
-                <Flexbox gap={8} horizontal align="center">
-                  <ActionIcon
-                    icon={ArrowLeftOutlined}
-                    onClick={() => {
-                      router.push('/workplace');
-                    }}
-                    size="large"
-                  />
-                  {currentModel != null && (
-                    <ModelSelector
-                      currentModel={{ id: currentModel.id, name: currentModel.name }}
-                      onSelect={handleModelSelect}
-                    />
-                  )}
-                </Flexbox>
-                <Flexbox gap={4} horizontal>
-                  <ActionIcon icon={ShareAltOutlined} size="large" />
-                </Flexbox>
-              </Flexbox>
-            </div>
-          </div>
-
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '16px',
-            }}
-          >
-            <div style={{ maxWidth: 800, margin: '0 auto' }}>
-              {messages.length === 0 && !loading ? (
-                <Flexbox
-                  gap={16}
-                  align="center"
-                  justify="center"
-                  style={{ height: '60vh' }}
-                >
-                  <Avatar avatar="🤖" size={64} background="var(--lobe-color-primary)" />
-                  <Text type="secondary" style={{ fontSize: 16 }}>
-                    开始对话，让 AI 帮助你完成工作
-                  </Text>
-                </Flexbox>
-              ) : (
-                <>
-                  {messages.map((msg) => {
-                    const isUser = msg.role === 'user';
-                    return (
-                      <ChatItem
-                        key={msg.id}
-                        avatar={isUser ? USER_META : ASSISTANT_META}
-                        placement={isUser ? 'right' : 'left'}
-                        message={msg.content}
-                        loading={loading && msg.id === messages[messages.length - 1]?.id}
-                        showAvatar
-                        variant="bubble"
-                        markdownProps={{
-                          variant: 'chat',
-                          enableMermaid: true,
-                          enableGithubAlert: true,
-                          enableLatex: true,
-                        }}
-                      />
-                    );
-                  })}
-                  {loading && (
-                    <ChatItem
-                      avatar={ASSISTANT_META}
-                      placement="left"
-                      message={<LoadingDots />}
-                      showAvatar
-                      variant="bubble"
-                    />
-                  )}
-                  <div ref={messagesEndRef} />
-                </>
-              )}
-            </div>
-          </div>
-
-          <div
-            style={{
-              borderTop: '1px solid var(--color-border)',
-              background: 'var(--color-bg-container)',
-            }}
-          >
-            <div style={{ padding: '12px 16px 16px' }}>
-              <div style={{ maxWidth: 800, margin: '0 auto' }}>
-                <ChatInputActionBar
-                  leftAddons={
-                    <Flexbox gap={4} horizontal>
-                      <ActionIcon icon={GlobalOutlined} size={{ blockSize: 20 }} />
-                      <ActionIcon icon={PaperClipOutlined} size={{ blockSize: 20 }} />
-                      <ActionIcon icon={PictureOutlined} size={{ blockSize: 20 }} />
-                      <ActionIcon icon={SettingOutlinedIcon} size={{ blockSize: 20 }} />
-                    </Flexbox>
-                  }
-                />
-                <ChatInputArea.Inner
-                  value={inputValue}
-                  onChange={handleTextAreaChange}
-                  onSend={handleInputSend}
-                  loading={loading}
-                  placeholder="从任何想法开始..."
-                  autoSize={{ minRows: 2, maxRows: 8 }}
-                />
-                <Flexbox justify="center" style={{ marginTop: 8 }}>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    按 Ctrl+Enter 换行
-                  </Text>
-                </Flexbox>
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
+      children: renderChatTab(),
     },
     {
       key: 'terminal',
