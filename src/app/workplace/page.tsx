@@ -10,7 +10,14 @@ export default function WorkplacePage() {
 
   return (
     <AppLayout>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 16,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24,
+      }}>
         <Text strong style={{ fontSize: 20, margin: 0 }}>
           {t('workplace.title')}
         </Text>
