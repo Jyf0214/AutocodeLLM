@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * 数据库迁移脚本
- * 运行 Prisma migrate deploy 并初始化默认数据
+ * 数据库同步脚本
+ * 使用 Prisma db push 同步 schema 并初始化默认数据
  */
 
 import { execSync } from 'node:child_process';
