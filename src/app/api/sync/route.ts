@@ -29,22 +29,24 @@ export async function POST(request: Request) {
     const action = body.action as string;
 
     if (action === 'save') {
-      const { url, username, password, remotePath, enabled } = body as Record<string, string>;
+      const data = body as { url: string; username: string; password: string; remotePath: string; enabled: string };
+      const { url, username, password, remotePath, enabled } = data;
       const existing = await prisma.webdavConfig.findFirst();
+      const isEnabled = enabled === 'true';
       if (existing) {
         await prisma.webdavConfig.update({
           where: { id: existing.id },
-          data: { url, username, password, remotePath, enabled: enabled === 'true' },
+          data: { url, username, password, remotePath, enabled: isEnabled },
         });
       } else {
-        await prisma.webdavConfig.create({ data: { url, username, password, remotePath, enabled: enabled === 'true' } });
+        await prisma.webdavConfig.create({ data: { url, username, password, remotePath, enabled: isEnabled } });
       }
       return NextResponse.json({ success: true, message: '配置已保存' });
     }
 
     if (action === 'test') {
-      const { url, username, password } = body as Record<string, string>;
-      const ok = await testConnection(url, username, password);
+      const data = body as { url: string; username: string; password: string };
+      const ok = await testConnection(data.url, data.username, data.password);
       return NextResponse.json({ success: ok, message: ok ? '连接成功' : '连接失败' });
     }
 
