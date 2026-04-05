@@ -1,12 +1,36 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Button, Text, Empty, Modal, Form, Input } from '@lobehub/ui';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { Table, Tag, Space, Popconfirm, Switch, message, Input as AntdInput } from 'antd';
+import { useCallback, useMemo, useState, useEffect } from 'react';
+import { Button, Text, Modal, Form, Input } from '@lobehub/ui';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+  ApiOutlined,
+  CheckOutlined,
+} from '@ant-design/icons';
+import {
+  Table,
+  Tag,
+  Space,
+  Popconfirm,
+  Switch,
+  message,
+  Input as AntdInput,
+  Checkbox,
+  Select,
+  Spin,
+  Alert,
+  Divider,
+  Empty,
+} from 'antd';
 import { useTranslations } from 'next-intl';
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import AppLayout from '@/components/layout/AppLayout';
 import type { ModelConfig } from '@/lib/api/model-types';
+import { getProviderIcon, getProviderOptions } from '@/lib/model-icons';
+import type { DiscoveredModel, DiscoverResponse } from '@/app/api/models/discover/route';
 
 interface ModelFormData {
   name: string;
@@ -16,20 +40,35 @@ interface ModelFormData {
   enabled: boolean;
 }
 
+interface QuickAddFormData {
+  baseUrl: string;
+  apiKey: string;
+}
+
 export default function ModelPage() {
   const t = useTranslations('models');
   const [models, setModels] = useState<ModelConfig[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<ModelConfig | null>(null);
   const [form] = Form.useForm();
+  const [quickAddForm] = Form.useForm();
+
+  // 快速添加相关状态
+  const [discovering, setDiscovering] = useState(false);
+  const [discoveredModels, setDiscoveredModels] = useState<DiscoveredModel[]>([]);
+  const [selectedModelIds, setSelectedModelIds] = useState(() => new Set<string>());
+  const [addingModels, setAddingModels] = useState(false);
+  const [discoverError, setDiscoverError] = useState<string | null>(null);
+
+  const providerOptions = useMemo(() => getProviderOptions(), []);
 
   const fetchModels = useCallback(async () => {
     try {
       const response = await fetch('/api/models');
-       
-      const result: { success: boolean; data?: ModelConfig[]; error?: { message: string } } = await response.json();
+      const result = await response.json() as { success: boolean; data?: ModelConfig[]; error?: { message: string } };
 
       if (result.success) {
         setModels(result.data ?? []);
@@ -74,11 +113,9 @@ export default function ModelPage() {
   const handleSubmit = async (values: ModelFormData) => {
     setLoading(true);
     try {
-      const url = editingModel ? '/api/models' : '/api/models';
+      const url = '/api/models';
       const method = editingModel ? 'PUT' : 'POST';
-      const body = editingModel
-        ? { id: editingModel.id, ...values }
-        : values;
+      const body = editingModel ? { id: editingModel.id, ...values } : values;
 
       const response = await fetch(url, {
         method,
@@ -86,7 +123,6 @@ export default function ModelPage() {
         body: JSON.stringify(body),
       });
 
-       
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -109,7 +145,6 @@ export default function ModelPage() {
         method: 'DELETE',
       });
 
-       
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {
@@ -123,24 +158,151 @@ export default function ModelPage() {
     }
   };
 
+  // 快速添加相关函数
+  const handleOpenQuickAdd = () => {
+    setQuickAddOpen(true);
+    setDiscoveredModels([]);
+    setSelectedModelIds(new Set());
+    setDiscoverError(null);
+    quickAddForm.resetFields();
+    quickAddForm.setFieldValue('baseUrl', 'https://api.openai.com/v1');
+  };
+
+  const handleCloseQuickAdd = () => {
+    setQuickAddOpen(false);
+    setDiscoveredModels([]);
+    setSelectedModelIds(new Set());
+    setDiscoverError(null);
+    quickAddForm.resetFields();
+  };
+
+  const handleDiscover = async (values: QuickAddFormData) => {
+    setDiscovering(true);
+    setDiscoverError(null);
+    setDiscoveredModels([]);
+    setSelectedModelIds(new Set());
+
+    try {
+      const response = await fetch('/api/models/discover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
+
+      const result = (await response.json()) as DiscoverResponse;
+
+      if (result.success && result.data) {
+        setDiscoveredModels(result.data);
+        message.success(t('discoverSuccess').replace('{count}', String(result.data.length)));
+      } else {
+        const errorMsg = result.error?.message ?? t('discoverFailed').replace('{message}', '');
+        setDiscoverError(errorMsg);
+        message.error(errorMsg);
+      }
+    } catch (error) {
+      const errorMsg = t('discoverFailed').replace(
+        '{message}',
+        error instanceof Error ? error.message : '未知错误',
+      );
+      setDiscoverError(errorMsg);
+      message.error(errorMsg);
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
+  const handleSelectAll = (e: CheckboxChangeEvent) => {
+    if (e.target.checked) {
+      setSelectedModelIds(new Set(discoveredModels.map((m) => m.id)));
+    } else {
+      setSelectedModelIds(new Set());
+    }
+  };
+
+  const handleSelectModel = (id: string, checked: boolean) => {
+    const newSet = new Set(selectedModelIds);
+    if (checked) {
+      newSet.add(id);
+    } else {
+      newSet.delete(id);
+    }
+    setSelectedModelIds(newSet);
+  };
+
+  const handleAddSelected = async () => {
+    if (selectedModelIds.size === 0) {
+      message.warning(t('selectModels'));
+      return;
+    }
+
+    const quickAddValues = quickAddForm.getFieldsValue() as QuickAddFormData;
+    const selectedModels = discoveredModels.filter((m) => selectedModelIds.has(m.id));
+
+    setAddingModels(true);
+    try {
+      const response = await fetch('/api/models/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          models: selectedModels.map((m) => ({
+            name: m.name,
+            provider: m.owner ?? 'Unknown',
+            apiKey: quickAddValues.apiKey,
+            baseUrl: quickAddValues.baseUrl,
+          })),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        const { added, skipped } = result.data;
+        message.success(
+          t('bulkAddSuccess')
+            .replace('{added}', String(added))
+            .replace('{skipped}', String(skipped)),
+        );
+        handleCloseQuickAdd();
+        fetchModels();
+      } else {
+        message.error(result.error?.message ?? t('bulkAddFailed'));
+      }
+    } catch {
+      message.error(t('bulkAddFailed'));
+    } finally {
+      setAddingModels(false);
+    }
+  };
+
+  const renderProviderIcon = useCallback(
+    (providerName: string) => {
+      const { icon: Icon, label } = getProviderIcon(providerName);
+      return (
+        <Space>
+          <Icon style={{ fontSize: 20 }} />
+          <span>{label}</span>
+        </Space>
+      );
+    },
+    [],
+  );
+
   const columns = [
     {
       title: t('modelName'),
       dataIndex: 'name',
       key: 'name',
-      
     },
     {
       title: t('provider'),
       dataIndex: 'provider',
       key: 'provider',
-      
+      render: (provider: string) => renderProviderIcon(provider),
     },
     {
       title: t('status'),
       dataIndex: 'enabled',
       key: 'enabled',
-      
       render: (enabled: boolean) => (
         <Tag color={enabled ? 'green' : 'default'}>{enabled ? t('enabled') : t('disabled')}</Tag>
       ),
@@ -148,7 +310,6 @@ export default function ModelPage() {
     {
       title: t('actions'),
       key: 'actions',
-      
       render: (_: unknown, record: ModelConfig) => (
         <Space>
           <Button
@@ -178,6 +339,20 @@ export default function ModelPage() {
     },
   ];
 
+  const ProviderOption = useMemo(
+    () =>
+      providerOptions.map((opt) => ({
+        value: opt.value,
+        label: (
+          <Space>
+            <opt.icon style={{ fontSize: 16 }} />
+            <span>{opt.label}</span>
+          </Space>
+        ),
+      })),
+    [providerOptions],
+  );
+
   return (
     <AppLayout>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -186,11 +361,16 @@ export default function ModelPage() {
           <Text strong style={{ fontSize: 20 }}>
             {t('title')}
           </Text>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => {
-            handleOpenModal();
-          }}>
-            {t('addModel')}
-          </Button>
+          <Space>
+            <Button icon={<SearchOutlined />} onClick={handleOpenQuickAdd}>
+              {t('quickAdd')}
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => {
+              handleOpenModal();
+            }}>
+              {t('addModel')}
+            </Button>
+          </Space>
         </div>
 
         <Text type="secondary">{t('description')}</Text>
@@ -233,7 +413,11 @@ export default function ModelPage() {
             label={t('provider')}
             rules={[{ required: true, message: t('providerRequired') }]}
           >
-            <Input placeholder={t('providerPlaceholder')} />
+            <Select
+              placeholder={t('selectProvider')}
+              showSearch={{ optionFilterProp: 'label' }}
+              options={ProviderOption}
+            />
           </Form.Item>
 
           <Form.Item
@@ -261,6 +445,136 @@ export default function ModelPage() {
             </Space>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* 快速添加模型弹窗 */}
+      <Modal
+        title={t('quickAddTitle')}
+        open={quickAddOpen}
+        onCancel={handleCloseQuickAdd}
+        footer={null}
+        width={720}
+        destroyOnHidden
+      >
+        <Text type="secondary">{t('quickAddDesc')}</Text>
+        <Divider />
+
+        <Form form={quickAddForm} onFinish={handleDiscover} layout="vertical">
+          <Form.Item
+            name="baseUrl"
+            label={t('apiBaseUrl')}
+            rules={[{ required: true, message: t('apiBaseUrlRequired') }]}
+          >
+            <Input
+              placeholder={t('apiBaseUrlPlaceholder')}
+              prefix={<ApiOutlined />}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="apiKey"
+            label={t('apiKeyDiscover')}
+            rules={[{ required: true, message: t('apiKeyDiscoverRequired') }]}
+          >
+            <AntdInput.Password placeholder={t('apiKeyDiscoverPlaceholder')} />
+          </Form.Item>
+
+          <Form.Item>
+            <Button
+              type="primary"
+              icon={<SearchOutlined />}
+              htmlType="submit"
+              loading={discovering}
+              block
+            >
+              {discovering ? t('discoverLoading') : t('discover')}
+            </Button>
+          </Form.Item>
+        </Form>
+
+        {discoverError && (
+          <Alert title={discoverError} type="error" showIcon style={{ marginBottom: 16 }} />
+        )}
+
+        {discoveredModels.length > 0 && (
+          <>
+            <Divider>{t('selectModels')}</Divider>
+
+            <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+              <Checkbox
+                indeterminate={
+                  selectedModelIds.size > 0 && selectedModelIds.size < discoveredModels.length
+                }
+                checked={
+                  selectedModelIds.size === discoveredModels.length && discoveredModels.length > 0
+                }
+                onChange={handleSelectAll}
+              >
+                {t('selectAll')}
+              </Checkbox>
+
+              <Divider style={{ margin: '8px 0' }} />
+
+              {discoveredModels.map((model) => {
+                const { icon: Icon } = getProviderIcon(model.owner ?? '');
+                return (
+                  <div
+                    key={model.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '8px 0',
+                    }}
+                  >
+                    <Checkbox
+                      checked={selectedModelIds.has(model.id)}
+                      onChange={(e) => {
+                        handleSelectModel(model.id, e.target.checked);
+                      }}
+                    />
+                    <Icon style={{ fontSize: 18, flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Text strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {model.name}
+                      </Text>
+                      {model.owner && (
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          {model.owner}
+                        </Text>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <Divider />
+
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              onClick={handleAddSelected}
+              loading={addingModels}
+              disabled={selectedModelIds.size === 0}
+              block
+            >
+              {addingModels
+                ? t('addingModels')
+                : t('addSelected').replace('{count}', String(selectedModelIds.size))}
+            </Button>
+          </>
+        )}
+
+        {discoveredModels.length === 0 && !discovering && !discoverError && (
+          <Empty description={t('noModelsFound')} style={{ marginTop: 24 }} />
+        )}
+
+        {discovering && (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Spin size="large" />
+          </div>
+        )}
       </Modal>
     </AppLayout>
   );
