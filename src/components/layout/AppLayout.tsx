@@ -27,7 +27,7 @@ import {
   PlayCircleOutlined,
   MenuOutlined,
 } from '@ant-design/icons';
-import { Drawer } from 'antd';
+import { Drawer, Typography } from 'antd';
 
 const menuItems = [
   { key: '/', icon: HomeOutlined, labelKey: 'common.appName' },
@@ -138,36 +138,30 @@ export default function AppLayout({ children }: AppLayoutProps) {
         placement="left"
         onClose={() => { setMobileOpen(false); }}
         open={mobileOpen}
-        size={300}
+        size="280"
         destroyOnHidden
-        styles={{ body: { padding: 0 } }}
-      >
-        <SideNav
-          avatar={<span style={{ fontSize: 14, fontWeight: 600 }}>AutocodeLLM</span>}
-          bottomActions={
-            <ThemeSwitch
-              themeMode={themeModeMap[theme ?? 'system'] ?? 'auto'}
-              onThemeSwitch={handleThemeSwitch}
-              labels={{ auto: '跟随系统', dark: '深色模式', light: '浅色模式' }}
-            />
-          }
-        >
-          <Menu
-            items={translatedMenuItems}
-            selectedKeys={[selectedKey]}
-            onClick={({ key }) => { handleNavigate(key); }}
-            variant="borderless"
-          />
-        </SideNav>
-      </Drawer>
-
-      <style>{`
-        @media (min-width: 768px) {
-          [class*="mobile-menu-btn"] {
-            display: none !important;
-          }
+        title={
+          <Typography.Title level={5} style={{ margin: 0 }}>
+            AutocodeLLM
+          </Typography.Title>
         }
-      `}</style>
+        styles={{ body: { padding: '8px 0' } }}
+        extra={
+          <ThemeSwitch
+            themeMode={themeModeMap[theme ?? 'system'] ?? 'auto'}
+            onThemeSwitch={handleThemeSwitch}
+            labels={{ auto: '跟随系统', dark: '深色模式', light: '浅色模式' }}
+          />
+        }
+      >
+        <Menu
+          items={translatedMenuItems}
+          selectedKeys={[selectedKey]}
+          onClick={({ key }) => { handleNavigate(key); }}
+          variant="borderless"
+          style={{ borderInlineEnd: 'none' }}
+        />
+      </Drawer>
     </Layout>
   );
 }
