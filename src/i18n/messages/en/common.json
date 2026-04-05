@@ -67,10 +67,18 @@
   "demo": {
     "title": "Feature Demo",
     "description": "Experience the core features of AutocodeLLM",
+    "start": "Start Demo",
     "scenarios": {
       "office": "Office Scenarios",
+      "officeDesc": "Document generation, data processing, email writing and other office automation scenarios",
       "coding": "Coding Assistance",
-      "analysis": "Data Analysis"
+      "codingDesc": "Code generation, bug fixing, refactoring suggestions and other coding assistance scenarios",
+      "analysis": "Data Analysis",
+      "analysisDesc": "Data visualization, statistical analysis, report generation and other data analysis scenarios"
+    },
+    "limitations": {
+      "title": "Demo Limitations",
+      "description": "Demo mode supports up to {maxAgents} agents, with \"Read Only\" and \"Yolo Mode\" execution modes available."
     }
   }
 }

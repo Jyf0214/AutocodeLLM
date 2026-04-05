@@ -10,20 +10,20 @@ const scenarios = [
   {
     icon: <Icon icon={ApartmentOutlined} />,
     key: 'office',
-    titleKey: 'demo:scenarios.office',
-    description: '文档生成、数据处理、邮件撰写等办公自动化场景',
+    titleKey: 'demo.scenarios.office',
+    descriptionKey: 'demo.scenarios.officeDesc',
   },
   {
     icon: <Icon icon={CodeOutlined} />,
     key: 'coding',
-    titleKey: 'demo:scenarios.coding',
-    description: '代码生成、Bug 修复、重构建议等编码辅助场景',
+    titleKey: 'demo.scenarios.coding',
+    descriptionKey: 'demo.scenarios.codingDesc',
   },
   {
     icon: <Icon icon={BarChartOutlined} />,
     key: 'analysis',
-    titleKey: 'demo:scenarios.analysis',
-    description: '数据可视化、统计分析、报告生成等数据分析场景',
+    titleKey: 'demo.scenarios.analysis',
+    descriptionKey: 'demo.scenarios.analysisDesc',
   },
 ];
 
@@ -45,16 +45,16 @@ export default function DemoPage() {
             style={{ textAlign: 'center' }}
             actions={[
               <Button key="start" type="primary">
-                开始演示
+                {t('demo.start')}
               </Button>,
             ]}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
               {scenario.icon}
               <Text strong style={{ fontSize: 16, margin: 0 }}>
-                {scenario.titleKey}
+                {t(scenario.titleKey)}
               </Text>
-              <Text type="secondary">{scenario.description}</Text>
+              <Text type="secondary">{t(scenario.descriptionKey)}</Text>
             </div>
           </Card>
         ))}
@@ -62,11 +62,10 @@ export default function DemoPage() {
 
       <Card style={{ marginTop: 32 }}>
         <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 12 }}>
-          演示限制
+          {t('demo.limitations.title')}
         </Text>
         <Text>
-          Demo 模式下最多可调用 <strong>5 个</strong>代理，仅支持 <strong>仅读取</strong> 和{' '}
-          <strong>Yolo 模式</strong>两种执行模式。
+          {t('demo.limitations.description', { maxAgents: 5 })}
         </Text>
       </Card>
     </AppLayout>

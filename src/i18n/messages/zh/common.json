@@ -67,10 +67,18 @@
   "demo": {
     "title": "功能演示",
     "description": "体验 AutocodeLLM 的核心功能",
+    "start": "开始演示",
     "scenarios": {
       "office": "办公场景",
+      "officeDesc": "文档生成、数据处理、邮件撰写等办公自动化场景",
       "coding": "编码辅助",
-      "analysis": "数据分析"
+      "codingDesc": "代码生成、Bug 修复、重构建议等编码辅助场景",
+      "analysis": "数据分析",
+      "analysisDesc": "数据可视化、统计分析、报告生成等数据分析场景"
+    },
+    "limitations": {
+      "title": "演示限制",
+      "description": "Demo 模式下最多可调用 {maxAgents} 个代理，仅支持「仅读取」和「Yolo 模式」两种执行模式。"
     }
   }
 }
