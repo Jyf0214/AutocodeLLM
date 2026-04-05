@@ -80,19 +80,4 @@ export default tseslint.config(
       '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
     },
   },
-  // 外部库类型问题：xterm、chokidar、webdav 类型在 CI 中无法正确解析
-  {
-    files: [
-      'src/components/features/TerminalPanel.tsx',
-      'src/lib/sync/watcher.ts',
-      'src/lib/sync/webdav.ts',
-    ],
-    rules: {
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-redundant-type-constituents': 'off',
-      '@typescript-eslint/restrict-plus-operands': 'off',
-    },
-  },
 );

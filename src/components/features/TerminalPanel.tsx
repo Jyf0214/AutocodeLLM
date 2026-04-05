@@ -71,7 +71,7 @@ export default function TerminalPanel({ workspaceId }: TerminalPanelProps) {
       term.write('\r\n\x1b[1;34muser@autocodellm\x1b[0m:\x1b[1;36m~\x1b[0m$ ');
     };
 
-    term.onKey(({ domEvent }) => {
+    term.onKey(({ domEvent }: { domEvent: KeyboardEvent }) => {
       const printable = !domEvent.altKey && !domEvent.ctrlKey && !domEvent.metaKey;
 
       if (domEvent.key === 'Enter') {
@@ -145,8 +145,9 @@ export default function TerminalPanel({ workspaceId }: TerminalPanelProps) {
           prompt();
         }
       } else if (printable) {
-        commandBuffer += domEvent.key;
-        term.write(domEvent.key);
+        const key = domEvent.key;
+        commandBuffer += key;
+        term.write(key);
       }
     });
 
