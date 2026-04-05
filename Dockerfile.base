@@ -35,11 +35,7 @@ RUN apt-get update && apt-get install -y sudo \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装 Bun（全局安装方式，UID 1000 可直接调用）
-RUN curl -fsSL https://bun.sh/install | bash && \
-    # 把 Bun 二进制移动到全局路径（所有用户默认 PATH 里都有 /usr/local/bin）
-    mv /root/.bun/bin/bun /usr/local/bin/bun && \
-    rm -rf /root/.bun && \
-    chmod 755 /usr/local/bin/bun
+RUN curl -fsSL https://bun.sh/install | bash
 
 # 安装 nvm（Node 版本管理器）
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
@@ -54,6 +50,9 @@ RUN npx playwright install-deps
 
 # 确保所有工具对 uid 1000 可用
 RUN chown -R 1000:1000 /app 
+
+USER node
+RUN curl -fsSL https://bun.sh/install | bash
 
 # 标记此镜像为基础镜像
 ENV BASE_IMAGE=true
