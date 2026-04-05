@@ -108,8 +108,39 @@ export async function initAdminAccount() {
       console.log(`  🔑 密码: ${defaultPassword}`);
       console.log('  ⚠️  首次登录后将强制修改密码');
     } else {
-      // 情况 4：正常运行，isInitialPassword 为 true（首次启动后已打印过密码）
-      console.log('  ⏭️  管理员账户已存在，等待首次登录修改密码');
+      // 情况 4：isInitialPassword 为 true，始终打印密码
+      // 即使之前打印过也要再次打印，防止上次日志丢失
+      const passwordHash = existingUser.passwordHash;
+
+      if (isHashedPassword(passwordHash)) {
+        // 密码是哈希值，无法还原，强制删除重建
+        console.log('  ⚠️  检测到初始密码无法还原，重新生成管理员账户...');
+
+        await prisma.user.delete({
+          where: { username: 'admin' },
+        });
+
+        const defaultPassword = generateNumericPassword(40);
+        const newPasswordHash = createHash('sha256').update(defaultPassword).digest('hex');
+
+        await prisma.user.create({
+          data: {
+            username: 'admin',
+            passwordHash: newPasswordHash,
+            forceChangePassword: true,
+            isInitialPassword: true,
+          },
+        });
+
+        console.log('  ✅ 重新生成管理员账户');
+        console.log('  ⚠️  用户名: admin');
+        console.log(`  🔑 密码: ${defaultPassword}`);
+        console.log('  ⚠️  首次登录后将强制修改密码');
+      } else {
+        // 理论上不应该走到这里（数据库只存哈希），但保留防御逻辑
+        console.log('  ⚠️  管理员账户已存在，但密码无法还原');
+        console.log('  ⚠️  请检查数据库状态或手动重置密码');
+      }
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
