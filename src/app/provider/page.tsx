@@ -35,6 +35,11 @@ import { PRESET_PROVIDERS } from '@/lib/providers';
 import type { PresetProvider } from '@/lib/providers';
 void PRESET_PROVIDERS;
 
+interface PresetProviderWithStatus extends PresetProvider {
+  isAdded: boolean;
+  dbId?: string;
+}
+
 const PROVIDER_ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
   openai: OpenAI,
   anthropic: Anthropic,
@@ -73,11 +78,6 @@ interface ProviderFormValues {
   presetId?: string;
 }
 
-interface PresetProviderWithStatus extends PresetProvider {
-  isAdded: boolean;
-  dbId?: string;
-}
-
 /**
  * API 提供商配置页
  */
@@ -89,6 +89,7 @@ export default function ProviderPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [form] = Form.useForm<ProviderFormValues>();
 
   // OAuth 状态
@@ -140,16 +141,35 @@ export default function ProviderPage() {
       } else {
         setEditingProvider(null);
         form.resetFields();
-        form.setFieldsValue({ authType: 'apiKey', enabled: true });
+        form.setFieldsValue({ authType: 'apiKey', enabled: true, baseUrl: '' });
       }
       setModalOpen(true);
     },
     [form]
   );
 
+  // 选择预置提供商时自动填充
+  const handlePresetChange = useCallback(
+    (presetId: string | undefined) => {
+      if (!presetId) {
+        form.setFieldsValue({ name: '', baseUrl: '' });
+        return;
+      }
+      const preset = presets.find((p) => p.id === presetId);
+      if (preset) {
+        form.setFieldsValue({
+          name: preset.name,
+          baseUrl: preset.baseUrl ?? '',
+        });
+      }
+    },
+    [presets, form]
+  );
+
   // 保存提供商
   const handleSave = useCallback(async () => {
     try {
+      setSaving(true);
       const values = await form.validateFields();
       const payload: Record<string, unknown> = {
         name: values.name,
@@ -166,37 +186,35 @@ export default function ProviderPage() {
         payload.apiKey = values.apiKey;
       }
 
-      if (editingProvider) {
-        const res = await fetch('/api/providers', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editingProvider.id, ...payload }),
-        });
-        const data: ProviderResponse = await res.json();
-        if (data.success) {
-          message.success('提供商更新成功');
-          setModalOpen(false);
-          fetchProviders();
-        } else {
-          message.error(data.error?.message ?? '更新失败');
-        }
-      } else {
-        const res = await fetch('/api/providers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        const data: ProviderResponse = await res.json();
-        if (data.success) {
-          message.success('提供商创建成功');
-          setModalOpen(false);
-          fetchProviders();
-        } else {
-          message.error(data.error?.message ?? '创建失败');
-        }
+      const url = '/api/providers';
+      const method = editingProvider ? 'PUT' : 'POST';
+      const body = editingProvider ? { id: editingProvider.id, ...payload } : payload;
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data: ProviderResponse = await res.json();
+
+      if (!res.ok || !data.success) {
+        message.error(data.error?.message ?? (editingProvider ? '更新失败' : '创建失败'));
+        return;
       }
-    } catch {
+
+      message.success(editingProvider ? '提供商更新成功' : '提供商创建成功');
+      setModalOpen(false);
+      fetchProviders();
+    } catch (error: unknown) {
+      // 区分 Ant Design 表单验证错误和网络错误
+      if (error && typeof error === 'object' && 'errorFields' in error) {
+        // 表单验证错误，Ant Design 会自动显示错误信息，不需要额外处理
+        return;
+      }
       message.error(editingProvider ? '更新提供商失败' : '创建提供商失败');
+    } finally {
+      setSaving(false);
     }
   }, [editingProvider, form, fetchProviders]);
 
@@ -278,27 +296,47 @@ export default function ProviderPage() {
   // 启动 Qwen OAuth 登录
   const handleQwenOAuthStart = useCallback(async () => {
     setOauthLoading(true);
+    setOauthVerificationUri('');
+    setOauthUserCode('');
     try {
       const res = await fetch('/api/providers/qwen-oauth/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
       });
-      const data: { success: boolean; data?: { verificationUri: string; userCode: string; deviceCode: string; interval: number }; error?: { message: string } } = await res.json();
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        message.error(errorData.error?.message ?? '启动 OAuth 失败');
+        return;
+      }
+
+      const data: { success: boolean; data?: { verificationUri: string; userCode: string; deviceCode: string; interval: number; codeVerifier: string }; error?: { message: string } } = await res.json();
+
       if (data.success && data.data) {
-        const { verificationUri, userCode, deviceCode, interval } = data.data;
+        const { verificationUri, userCode, deviceCode, interval, codeVerifier } = data.data;
         setOauthVerificationUri(verificationUri);
         setOauthUserCode(userCode);
         setOauthPolling(true);
         window.open(verificationUri, '_blank');
 
+        // 轮询获取 Token
+        const pollStartTime = Date.now();
+        const maxPollTime = 5 * 60 * 1000; // 5 分钟超时
+
         const poll = async () => {
+          if (Date.now() - pollStartTime > maxPollTime) {
+            setOauthPolling(false);
+            message.error('OAuth 授权超时，请重试');
+            return;
+          }
+
           try {
             const pollRes = await fetch('/api/providers/qwen-oauth/poll', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ deviceCode }),
+              body: JSON.stringify({ deviceCode, codeVerifier }),
             });
+
             const pollData: { success: boolean; data?: { providerId: string; expiresIn: number }; error?: { code: string; message: string } } = await pollRes.json();
 
             if (pollData.success && pollData.data) {
@@ -309,19 +347,22 @@ export default function ProviderPage() {
               message.success('Qwen OAuth 登录成功');
               fetchProviders();
             } else if (pollData.error?.code === 'AUTHORIZATION_PENDING') {
+              // 用户尚未授权，继续轮询
               setTimeout(poll, interval * 1000);
             } else if (pollData.error?.code === 'SLOW_DOWN') {
+              // 请求过于频繁，增加间隔
               setTimeout(poll, (interval + 2) * 1000);
             } else {
               setOauthPolling(false);
               message.error(pollData.error?.message ?? '获取 Token 失败');
             }
           } catch {
-            setOauthPolling(false);
-            message.error('获取 Token 失败');
+            // 网络错误，继续轮询
+            setTimeout(poll, interval * 1000);
           }
         };
 
+        // 开始轮询
         setTimeout(poll, interval * 1000);
       } else {
         message.error(data.error?.message ?? '启动 OAuth 失败');
@@ -580,29 +621,41 @@ export default function ProviderPage() {
         onCancel={() => { setModalOpen(false); }}
         destroyOnHidden
         width={520}
+        okText="保存"
+        cancelText="取消"
+        confirmLoading={saving}
       >
         <Form form={form} layout="vertical">
-          <Form.Item name="authType" label="认证方式" initialValue="apiKey">
-            <Select options={[
-              { value: 'apiKey', label: 'API Key' },
-              { value: 'oauth', label: 'OAuth' },
-            ]} />
-          </Form.Item>
+          {!editingProvider && (
+            <Form.Item name="presetId" label="选择预置提供商（可选）">
+              <Select
+                placeholder="选择预置提供商可自动填充配置"
+                allowClear
+                onChange={handlePresetChange}
+                options={presets.map((p) => ({
+                  value: p.id,
+                  label: p.name,
+                }))}
+              />
+            </Form.Item>
+          )}
 
           <Form.Item
             name="name"
-            label="名称"
+            label="提供商名称"
             rules={[{ required: true, message: '请输入提供商名称' }]}
           >
             <Input placeholder="例如：OpenAI, DeepSeek" />
           </Form.Item>
+
           <Form.Item
             name="baseUrl"
-            label="基础 URL"
-            rules={[{ required: true, message: '请输入基础 URL' }, { type: 'url', message: '请输入有效的 URL' }]}
+            label="Base URL"
+            rules={[{ required: true, message: '请输入 Base URL' }, { type: 'url', message: '请输入有效的 URL' }]}
           >
             <Input placeholder="https://api.openai.com/v1" />
           </Form.Item>
+
           <Form.Item
             noStyle
             shouldUpdate={(prev, curr) => prev.authType !== curr.authType}
@@ -612,7 +665,7 @@ export default function ProviderPage() {
                 <Form.Item
                   name="apiKey"
                   label="API Key"
-                  tooltip="留空则不修改（编辑时）"
+                  tooltip={editingProvider ? '留空则不修改' : undefined}
                   rules={[{ required: !editingProvider, message: '请输入 API Key' }]}
                 >
                   <Input.Password placeholder="sk-..." />
@@ -620,11 +673,13 @@ export default function ProviderPage() {
               ) : null
             }
           </Form.Item>
-          <Form.Item name="databaseUrl" label="数据库 URL">
+
+          <Form.Item name="databaseUrl" label="数据库 URL（可选）">
             <Input placeholder="可选" />
           </Form.Item>
-          <Form.Item name="enabled" label="启用" valuePropName="checked">
-            <Switch />
+
+          <Form.Item name="enabled" label="启用" valuePropName="checked" initialValue={true}>
+            <Switch checkedChildren="启用" unCheckedChildren="禁用" />
           </Form.Item>
         </Form>
       </Modal>
