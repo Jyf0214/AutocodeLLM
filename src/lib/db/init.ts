@@ -4,7 +4,22 @@
  */
 
 import { prisma } from './prisma';
-import { hash } from 'node:crypto';
+import { randomBytes, createHash } from 'node:crypto';
+
+/**
+ * 生成 40 位数字密码
+ */
+function generateNumericPassword(length = 40) {
+  const bytes = randomBytes(length);
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    const byte = bytes[i];
+    if (byte !== undefined) {
+      password += (byte % 10).toString();
+    }
+  }
+  return password;
+}
 
 async function main() {
   console.log('开始初始化数据库...');
@@ -15,9 +30,9 @@ async function main() {
   });
 
   if (!existingUser) {
-    // 使用 SHA-256 哈希密码（生产环境应使用 bcrypt）
-    const defaultPassword = 'admin123';
-    const passwordHash = hash('sha256', defaultPassword);
+    // 生成 40 位数字密码
+    const defaultPassword = generateNumericPassword(40);
+    const passwordHash = createHash('sha256').update(defaultPassword).digest('hex');
 
     await prisma.user.create({
       data: {
@@ -27,7 +42,9 @@ async function main() {
         isInitialPassword: true,
       },
     });
-    console.log('✅ 创建默认管理员账户 (username: admin, password: admin123)');
+    console.log('✅ 创建默认管理员账户 (username: admin)');
+    console.log(`🔑 密码: ${defaultPassword}`);
+    console.log('⚠️  首次登录后将强制修改密码');
   } else {
     console.log('⏭️  管理员账户已存在');
   }
