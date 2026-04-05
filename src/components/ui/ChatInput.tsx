@@ -41,7 +41,7 @@ export default function ChatInput({
   );
 
   const handleInput = useCallback(
-    (_e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    (_e: React.InputEvent<HTMLTextAreaElement>) => {
       // 输入事件处理，保留以备将来扩展
     },
     [],
