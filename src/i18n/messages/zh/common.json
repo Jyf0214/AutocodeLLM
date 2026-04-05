@@ -114,7 +114,12 @@
     "createdAt": "创建时间",
     "all": "全部",
     "noLogs": "暂无日志记录",
-    "fetchLogsFailed": "获取日志失败"
+    "fetchLogsFailed": "获取日志失败",
+    "verifyPassword": "验证密码",
+    "verifyPasswordDesc": "此工作区需要访问密码",
+    "verifyPasswordFailed": "验证密码失败",
+    "settings": "工作区设置",
+    "settingsTab": "设置"
   },
   "agents": {
     "title": "任务代理管理",
