@@ -470,7 +470,7 @@ export async function POST(request: Request) {
 
   if (lastSegment === 'poll') {
     const body = await request.json() as Record<string, unknown>;
-    return handleQwenOAuthPoll(body.deviceCode as string);
+    return handleQwenOAuthPoll(body.deviceCode as string, body.codeVerifier as string);
   }
 
   if (lastSegment === 'refresh') {
@@ -499,6 +499,7 @@ async function handleQwenOAuthStart() {
         verificationUriComplete: result.verificationUriComplete,
         expiresIn: result.expiresIn,
         interval: result.interval,
+        codeVerifier: result.codeVerifier,
       },
     } as QwenOAuthStartResponse);
   } catch (error: unknown) {
@@ -516,7 +517,7 @@ async function handleQwenOAuthStart() {
   }
 }
 
-async function handleQwenOAuthPoll(deviceCode: string) {
+async function handleQwenOAuthPoll(deviceCode: string, codeVerifier: string) {
   try {
     if (!deviceCode) {
       return NextResponse.json(
@@ -531,7 +532,20 @@ async function handleQwenOAuthPoll(deviceCode: string) {
       );
     }
 
-    const result = await pollQwenToken(deviceCode);
+    if (!codeVerifier) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: '缺少 codeVerifier',
+            code: 'MISSING_CODE_VERIFIER',
+          },
+        } as QwenOAuthPollResponse,
+        { status: 400 }
+      );
+    }
+
+    const result = await pollQwenToken(deviceCode, codeVerifier);
 
     const providerName = '通义千问';
     let provider = await prisma.provider.findUnique({
@@ -584,6 +598,32 @@ async function handleQwenOAuthPoll(deviceCode: string) {
           code: 'SLOW_DOWN',
         },
       } as QwenOAuthPollResponse);
+    }
+
+    if (errorMessage === 'DEVICE_CODE_EXPIRED') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: 'Device Code 已过期，请重新开始认证',
+            code: 'DEVICE_CODE_EXPIRED',
+          },
+        } as QwenOAuthPollResponse,
+        { status: 401 }
+      );
+    }
+
+    if (errorMessage === 'RATE_LIMITED') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: '请求过于频繁，请稍后重试',
+            code: 'RATE_LIMITED',
+          },
+        } as QwenOAuthPollResponse,
+        { status: 429 }
+      );
     }
 
     return NextResponse.json(

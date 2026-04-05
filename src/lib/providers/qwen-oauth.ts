@@ -4,6 +4,16 @@ import { isTokenExpiring, refreshQwenToken } from '@/lib/auth/qwen/oauth';
 export { startQwenDeviceFlow, pollQwenToken, refreshQwenToken, isTokenExpiring } from '@/lib/auth/qwen/oauth';
 
 /**
+ * Device Flow 会话数据（存储在内存或前端）
+ */
+export interface DeviceFlowSession {
+  deviceCode: string;
+  codeVerifier: string;
+  expiresAt: number;
+  interval: number;
+}
+
+/**
  * AES-256-CBC 加密 Token
  */
 function encryptToken(token: string): string {
@@ -45,6 +55,7 @@ export async function saveQwenOAuthCredentials(
     refreshToken: string;
     resourceUrl: string;
     expiresIn: number;
+    tokenType?: string;
   }
 ): Promise<void> {
   const expiresAt = new Date(Date.now() + credentials.expiresIn * 1000);
@@ -53,7 +64,11 @@ export async function saveQwenOAuthCredentials(
     where: { id: providerId },
   });
 
-  const existingMetadata: string = provider?.metadata ?? '{}';
+  if (!provider) {
+    throw new Error('提供商不存在');
+  }
+
+  const existingMetadata = provider.metadata ?? '{}';
   let parsedMetadata: Record<string, unknown>;
   try {
     parsedMetadata = JSON.parse(existingMetadata) as Record<string, unknown>;
@@ -70,6 +85,7 @@ export async function saveQwenOAuthCredentials(
       metadata: JSON.stringify({
         ...parsedMetadata,
         resourceUrl: credentials.resourceUrl,
+        tokenType: credentials.tokenType ?? 'Bearer',
       }),
     },
   });
@@ -95,7 +111,8 @@ export async function getValidQwenToken(providerId: string): Promise<string> {
     throw new Error('未找到 OAuth 凭证，请先完成认证');
   }
 
-  if (!isTokenExpiring(expiresAt)) {
+  // 检查 token 是否即将过期（5 分钟缓冲）
+  if (!isTokenExpiring(expiresAt, 300)) {
     return decryptToken(accessToken);
   }
 
@@ -120,7 +137,22 @@ export async function getValidQwenToken(providerId: string): Promise<string> {
     });
 
     return refreshed.accessToken;
-  } catch {
-    throw new Error('Token 刷新失败，请重新认证');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
+    
+    // 如果是 refresh token 过期，清除凭证并要求重新认证
+    if (errorMessage.includes('过期') || errorMessage.includes('invalid')) {
+      await prisma.provider.update({
+        where: { id: providerId },
+        data: {
+          oauthAccessToken: null,
+          oauthRefreshToken: null,
+          oauthExpiresAt: null,
+        },
+      });
+      throw new Error('刷新凭证已过期，请重新认证');
+    }
+    
+    throw new Error(`Token 刷新失败：${errorMessage}`);
   }
 }

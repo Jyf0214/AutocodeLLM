@@ -92,6 +92,7 @@ export interface QwenOAuthStartResponse {
     verificationUriComplete: string;
     expiresIn: number;
     interval: number;
+    codeVerifier: string;
   };
   error?: {
     message: string;

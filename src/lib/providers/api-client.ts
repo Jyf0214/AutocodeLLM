@@ -425,23 +425,30 @@ async function fetchWithRetry(
       });
 
       // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-      if (provider != null && provider.oauthRefreshToken != null && provider.oauthClientId != null) {
-        const refreshed = await refreshOAuthToken({
-          id: provider.id,
-          oauthRefreshToken: provider.oauthRefreshToken,
-          oauthClientId: provider.oauthClientId,
-          authType: provider.authType,
-        });
-        if (refreshed) {
-          const newHeaders = { ...(headers ?? {}) };
-          if (headers?.Authorization) {
-            newHeaders.Authorization = `Bearer ${refreshed}`;
-          } else if (headers?.['x-api-key']) {
-            newHeaders['x-api-key'] = refreshed;
-          } else if (headers?.['api-key']) {
-            newHeaders['api-key'] = refreshed;
+      if (provider != null && provider.oauthRefreshToken != null && provider.authType === 'oauth') {
+        try {
+          // 尝试刷新 token
+          const refreshed = await refreshOAuthToken({
+            id: provider.id,
+            oauthRefreshToken: provider.oauthRefreshToken,
+            oauthClientId: provider.oauthClientId,
+            authType: provider.authType,
+          });
+          
+          if (refreshed) {
+            const newHeaders = { ...(headers ?? {}) };
+            if (headers?.Authorization) {
+              newHeaders.Authorization = `Bearer ${refreshed}`;
+            } else if (headers?.['x-api-key']) {
+              newHeaders['x-api-key'] = refreshed;
+            } else if (headers?.['api-key']) {
+              newHeaders['api-key'] = refreshed;
+            }
+            return await fetchWithRetry(url, { ...init, headers: newHeaders }, true);
           }
-          return fetchWithRetry(url, { ...init, headers: newHeaders }, true);
+        } catch {
+          // 刷新失败，返回原始响应
+          return response;
         }
       }
     }
@@ -477,7 +484,7 @@ async function refreshOAuthToken(provider: {
       newRefreshToken = refreshed.refreshToken;
       expiresIn = refreshed.expiresIn;
     } else {
-      // Generic OAuth: use the refresh token endpoint with provider's client_id
+      // 不支持其他 OAuth 提供商
       return null;
     }
 
