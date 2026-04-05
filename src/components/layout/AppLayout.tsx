@@ -18,6 +18,7 @@ import {
   FolderOutlined,
   SettingOutlined,
   EnvironmentOutlined,
+  UserOutlined,
   CloudServerOutlined,
   TeamOutlined,
   SyncOutlined,
@@ -32,6 +33,7 @@ import { Drawer, Typography } from 'antd';
 const menuItems = [
   { key: '/', icon: HomeOutlined, labelKey: 'common.appName' },
   { key: '/workplace', icon: FolderOutlined, labelKey: 'common.workplace' },
+  { key: '/account', icon: UserOutlined, labelKey: 'common.account' },
   { key: '/setting/mcp', icon: SettingOutlined, labelKey: 'common.mcp' },
   { key: '/env', icon: EnvironmentOutlined, labelKey: 'common.env' },
   { key: '/workers', icon: CloudServerOutlined, labelKey: 'common.workers' },

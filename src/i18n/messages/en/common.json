@@ -14,6 +14,7 @@
     "providers": "API Providers",
     "docs": "Documentation",
     "demo": "Demo",
+    "account": "Account",
     "landing": {
       "subtitle": "AI Coding Agent Platform — Full toolchain for function calling, task agents, file operations, and web search",
       "startUsing": "Get Started",
