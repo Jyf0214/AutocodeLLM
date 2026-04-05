@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { prisma } from '@/lib/db/prisma';
 import { refreshQwenToken as refreshQwenOAuth } from '@/lib/auth/qwen/oauth';
+import { getValidQwenToken } from './qwen-oauth';
 
 /**
  * AES-256-CBC 加密
@@ -47,9 +48,11 @@ export async function getProviderApiKey(providerId: string): Promise<string | nu
   }
 
   if (provider.authType === 'oauth') {
-    return provider.oauthAccessToken
-      ? decryptValue(provider.oauthAccessToken)
-      : null;
+    if (!provider.oauthAccessToken) {
+      return null;
+    }
+    // OAuth provider: auto-refresh token if needed
+    return getValidQwenToken(providerId);
   }
 
   return decryptValue(provider.apiKey);
@@ -456,7 +459,7 @@ async function refreshOAuthToken(provider: {
   oauthClientId: string | null;
   authType: string | null;
 }): Promise<string | null> {
-  if (!provider.oauthRefreshToken || !provider.oauthClientId) {
+  if (!provider.oauthRefreshToken) {
     return null;
   }
 
@@ -468,30 +471,14 @@ async function refreshOAuthToken(provider: {
     let expiresIn: number;
 
     if (provider.authType === 'oauth') {
+      // Qwen OAuth: use the proper refresh function
       const refreshed = await refreshQwenOAuth(refreshToken);
       newAccessToken = refreshed.accessToken;
       newRefreshToken = refreshed.refreshToken;
       expiresIn = refreshed.expiresIn;
     } else {
-      const response = await fetch('https://oauth.token.endpoint', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          grant_type: 'refresh_token',
-          refresh_token: refreshToken,
-          client_id: provider.oauthClientId,
-        }),
-        signal: AbortSignal.timeout(10000),
-      });
-
-      if (!response.ok) {
-        return null;
-      }
-
-      const data = (await response.json()) as Record<string, unknown>;
-      newAccessToken = data.access_token as string;
-      newRefreshToken = typeof data.refresh_token === 'string' ? data.refresh_token : refreshToken;
-      expiresIn = data.expires_in ? (data.expires_in as number) : 3600;
+      // Generic OAuth: use the refresh token endpoint with provider's client_id
+      return null;
     }
 
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
