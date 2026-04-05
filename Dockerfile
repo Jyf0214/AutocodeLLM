@@ -18,7 +18,7 @@ WORKDIR /app
 
 # 复制源代码
 COPY . .
-
+USER  node
 RUN curl -fsSL https://bun.sh/install | bash
 # 安装依赖并预构建
 RUN rm -rf .next && \
