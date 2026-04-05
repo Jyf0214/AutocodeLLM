@@ -1,35 +1,45 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import type { EnvVariableResponse, CreateEnvVariableRequest, UpdateEnvVariableRequest } from '@/lib/api/env-types';
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypto';
+
+/**
+ * 从环境变量派生 32 字节 AES-256 密钥（使用 SHA-256）
+ */
+function deriveKey(): Buffer {
+  const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
+  return createHash('sha256').update(keyStr).digest();
+}
 
 /**
  * AES-256-CBC 加密函数（生产级别加密）
+ * @param value 明文值
+ * @returns iv:encrypted 格式（hex 编码）
  */
 function encryptValue(value: string): string {
-  // 使用环境变量中的密钥，若无则使用默认 32 字节密钥
-  const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
-  // 确保密钥长度为 32 字节
-  const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const key = deriveKey();
   const iv = randomBytes(16);
   const cipher = createCipheriv('aes-256-cbc', key, iv);
   let encrypted = cipher.update(value, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-  // 返回 iv:encrypted 格式，hex 编码
   return iv.toString('hex') + ':' + encrypted;
 }
 
 /**
  * AES-256-CBC 解密函数
+ * @param encrypted 密文（iv:encrypted 格式）
+ * @returns 明文值
+ * @throws 错误：当格式无效或解密失败时
  */
 function decryptValue(encrypted: string): string {
-  const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
-  const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const key = deriveKey();
   const parts = encrypted.split(':');
-  const ivHex = parts[0];
-  const encryptedData = parts[1];
+  if (parts.length !== 2) {
+    throw new Error('无效的加密数据格式：应为 iv:encrypted');
+  }
+  const [ivHex, encryptedData] = parts;
   if (!ivHex || !encryptedData) {
-    throw new Error('无效的加密数据格式');
+    throw new Error('无效的加密数据：iv 或加密数据为空');
   }
   const iv = Buffer.from(ivHex, 'hex');
   const decipher = createDecipheriv('aes-256-cbc', key, iv);

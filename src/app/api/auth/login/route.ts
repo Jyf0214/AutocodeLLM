@@ -145,7 +145,7 @@ export async function POST(request: Request) {
       console.log('========================================\n');
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         userId: user.id,
@@ -153,6 +153,17 @@ export async function POST(request: Request) {
         forceChangePassword: user.forceChangePassword,
       },
     });
+
+    // 设置认证 cookie（httponly 增强安全性）
+    response.cookies.set('userId', user.id, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
+
+    return response;
   } catch {
     return NextResponse.json(
       { success: false, error: { message: '登录失败', code: 'LOGIN_ERROR' } },

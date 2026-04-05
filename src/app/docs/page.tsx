@@ -16,7 +16,7 @@ export default function DocsPage() {
   const t = useTranslations();
   const [docs, setDocs] = useState<DocFile[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<DocFile | null>(null);
-  const [content, setContent] = useState<string>('');
+  const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [contentLoading, setContentLoading] = useState(false);
 

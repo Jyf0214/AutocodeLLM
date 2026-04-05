@@ -5,15 +5,10 @@ import { ArrowRightOutlined, CodeOutlined, ApiOutlined, TeamOutlined, PlayCircle
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Card } from 'antd';
-import { useState, useEffect } from 'react';
 
 export default function LandingPage() {
   const t = useTranslations('common.landing');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    setIsLoggedIn(!!sessionStorage.getItem('userId'));
-  }, []);
+  const isLoggedIn = typeof window !== 'undefined' && !!sessionStorage.getItem('userId');
 
   const handleLogout = () => {
     sessionStorage.clear();

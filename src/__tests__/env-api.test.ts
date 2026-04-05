@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createCipheriv, randomBytes } from 'crypto';
+import { createCipheriv, randomBytes, createHash } from 'crypto';
 
 // Mock Prisma
 const mockFindMany = vi.fn();
@@ -21,11 +21,11 @@ vi.mock('@/lib/db/prisma', () => ({
 }));
 
 /**
- * AES-256-CBC 加密（与 route.ts 保持一致）
+ * AES-256-CBC 加密（与 route.ts 保持一致，使用 SHA-256 派生密钥）
  */
 function encryptValue(value: string): string {
   const keyStr = 'autocodellm-encryption-key-32b!';
-  const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const key = createHash('sha256').update(keyStr).digest();
   const iv = randomBytes(16);
   const cipher = createCipheriv('aes-256-cbc', key, iv);
   let encrypted = cipher.update(value, 'utf8', 'hex');

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import AppLayout from '@/components/layout/AppLayout';
 import { Button, Text, Icon } from '@lobehub/ui';
 import { Flex } from 'antd';
@@ -43,6 +44,12 @@ const scenarios = [
   },
 ];
 
+const scenarioNames: Record<string, string> = {
+  office: '办公助手',
+  coding: '编程助手',
+  analysis: '数据分析',
+};
+
 // 模拟 AI 回复
 const mockAIResponses: Record<string, string> = {
   office: '您好！我是办公助手，可以帮您处理文档、安排日程、撰写邮件等。请告诉我您的需求。',
@@ -67,22 +74,24 @@ function simulateAIResponse(content: string): Promise<string> {
   });
 }
 
-export default function DemoPage() {
-  const t = useTranslations();
-  const [modalOpen, setModalOpen] = useState(false);
+/**
+ * 检查用户是否已登录
+ */
+function checkIsLoggedIn(): boolean {
+  if (typeof window === 'undefined') return false;
+  return !!sessionStorage.getItem('userId');
+}
+
+/**
+ * 聊天演示组件（可复用）
+ */
+function ChatDemo({ scenarioKey }: { scenarioKey: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
-  const [currentScenario, setCurrentScenario] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 开始演示
-  const handleStartDemo = useCallback((scenarioKey: string) => {
-    setCurrentScenario(scenarioKey);
-    setMessages([]);
-    setModalOpen(true);
-
-    // 添加欢迎消息
+  useEffect(() => {
     const welcomeContent = mockAIResponses[scenarioKey] ?? '您好！我是 AI 助手，很高兴为您服务。';
     setMessages([
       {
@@ -92,9 +101,8 @@ export default function DemoPage() {
         timestamp: new Date(),
       },
     ]);
-  }, []);
+  }, [scenarioKey]);
 
-  // 发送消息
   const handleSend = useCallback(async () => {
     if (!inputValue.trim()) {
       message.warning('请输入消息内容');
@@ -129,7 +137,6 @@ export default function DemoPage() {
     }
   }, [inputValue]);
 
-  // 按键发送
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -138,6 +145,86 @@ export default function DemoPage() {
       }
     },
     [handleSend]
+  );
+
+  return (
+    <Flex vertical gap={16} style={{ height: '100%' }}>
+      <Flex vertical gap={12} style={{ flex: 1, overflow: 'auto' }}>
+        {messages.map((msg) => (
+          <Flex
+            key={msg.id}
+            gap={8}
+            align="flex-start"
+            justify={msg.role === 'user' ? 'flex-end' : 'flex-start'}
+          >
+            {msg.role === 'assistant' && (
+              <Avatar icon={<RobotOutlined />} style={{ backgroundColor: '#1677ff' }} />
+            )}
+            <Card
+              size="small"
+              style={{
+                maxWidth: '70%',
+                backgroundColor: msg.role === 'user' ? '#e6f4ff' : '#f5f5f5',
+              }}
+            >
+              <Text style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</Text>
+            </Card>
+            {msg.role === 'user' && (
+              <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#52c41a' }} />
+            )}
+          </Flex>
+        ))}
+        {loading && (
+          <Flex gap={8} align="center">
+            <Avatar icon={<RobotOutlined />} style={{ backgroundColor: '#1677ff' }} />
+            <Spin size="small" description="AI 正在思考..." />
+          </Flex>
+        )}
+        <div ref={messagesEndRef} />
+      </Flex>
+
+      <Flex gap={8} align="flex-end">
+        <Input.TextArea
+          value={inputValue}
+          onChange={(e) => { setInputValue(e.target.value); }}
+          onKeyDown={handleKeyPress}
+          placeholder="输入消息... (Enter 发送，Shift+Enter 换行)"
+          autoSize={{ minRows: 2, maxRows: 4 }}
+          disabled={loading}
+        />
+        <Button
+          type="primary"
+          icon={<SendOutlined />}
+          onClick={() => { void handleSend(); }}
+          loading={loading}
+        >
+          发送
+        </Button>
+      </Flex>
+    </Flex>
+  );
+}
+
+export default function DemoPage() {
+  const t = useTranslations();
+  const searchParams = useSearchParams();
+  const loggedIn = checkIsLoggedIn();
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
+  const [currentScenario, setCurrentScenario] = useState('');
+
+  // 开始演示
+  const handleStartDemo = useCallback(
+    (scenarioKey: string) => {
+      setCurrentScenario(scenarioKey);
+      if (checkIsLoggedIn()) {
+        // 已登录：直接更新 URL 参数（带菜单栏的完整页面）
+        window.history.pushState({}, '', `/demo?scenario=${scenarioKey}`);
+      } else {
+        // 未登录：弹出全屏 Modal 显示演示内容（无菜单栏）
+        setDemoModalOpen(true);
+      }
+    },
+    []
   );
 
   return (
@@ -195,71 +282,32 @@ export default function DemoPage() {
       </Flex>
 
       <Modal
-        title={`演示场景 - ${currentScenario}`}
-        open={modalOpen}
-        onCancel={() => { setModalOpen(false); }}
+        title={
+          scenarioNames[currentScenario]
+            ? `演示场景 - ${scenarioNames[currentScenario]}`
+            : '演示场景'
+        }
+        open={demoModalOpen}
+        onCancel={() => {
+          setDemoModalOpen(false);
+          setCurrentScenario('');
+        }}
         footer={null}
-        width={700}
-        styles={{ body: { maxHeight: '70vh', overflow: 'auto' } }}
+        width="100%"
+        styles={{
+          body: { height: 'calc(100vh - 120px)', padding: 24 },
+        }}
         destroyOnHidden
+        centered
       >
-        <Flex vertical gap={16} style={{ minHeight: 400 }}>
-          {/* 消息列表 */}
-          <Flex vertical gap={12} style={{ flex: 1 }}>
-            {messages.map((msg) => (
-              <Flex
-                key={msg.id}
-                gap={8}
-                align="flex-start"
-                justify={msg.role === 'user' ? 'flex-end' : 'flex-start'}
-              >
-                {msg.role === 'assistant' && (
-                  <Avatar icon={<RobotOutlined />} style={{ backgroundColor: '#1677ff' }} />
-                )}
-                <Card
-                  size="small"
-                  style={{
-                    maxWidth: '70%',
-                    backgroundColor: msg.role === 'user' ? '#e6f4ff' : '#f5f5f5',
-                  }}
-                >
-                  <Text style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</Text>
-                </Card>
-                {msg.role === 'user' && (
-                  <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#52c41a' }} />
-                )}
-              </Flex>
-            ))}
-            {loading && (
-              <Flex gap={8} align="center">
-                <Avatar icon={<RobotOutlined />} style={{ backgroundColor: '#1677ff' }} />
-                <Spin size="small" description="AI 正在思考..." />
-              </Flex>
-            )}
-            <div ref={messagesEndRef} />
-          </Flex>
-
-          {/* 输入区域 */}
-          <Flex gap={8} align="flex-end">
-            <Input.TextArea
-              value={inputValue}
-              onChange={(e) => { setInputValue(e.target.value); }}
-              onKeyDown={handleKeyPress}
-              placeholder="输入消息... (Enter 发送，Shift+Enter 换行)"
-              autoSize={{ minRows: 2, maxRows: 4 }}
-              disabled={loading}
-            />
-            <Button
-              type="primary"
-              icon={<SendOutlined />}
-              onClick={() => { void handleSend(); }}
-              loading={loading}
-            >
-              发送
-            </Button>
-          </Flex>
-        </Flex>
+        {currentScenario && <ChatDemo scenarioKey={currentScenario} />}
       </Modal>
+
+      {loggedIn && searchParams.get('scenario') && (
+        <div style={{ marginTop: 24, padding: 16, background: 'var(--color-bg-container)', borderRadius: 8 }}>
+          <ChatDemo scenarioKey={searchParams.get('scenario') ?? ''} />
+        </div>
+      )}
     </AppLayout>
   );
 }

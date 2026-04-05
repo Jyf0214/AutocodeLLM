@@ -11,16 +11,16 @@ interface DocFile {
 
 function extractTitleFromMarkdown(content: string): string {
   // 尝试从 frontmatter 提取标题
-  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  const frontmatterMatch = /^---\n([\s\S]*?)\n---/.exec(content);
   if (frontmatterMatch?.[1]) {
-    const titleMatch = frontmatterMatch[1].match(/^title:\s*(.+)$/m);
+    const titleMatch = /^title:\s*(.+)$/m.exec(frontmatterMatch[1]);
     if (titleMatch?.[1]) {
       return titleMatch[1].trim();
     }
   }
 
   // 尝试从第一个 h1 标题提取
-  const h1Match = content.match(/^#\s+(.+)$/m);
+  const h1Match = /^#\s+(.+)$/m.exec(content);
   if (h1Match?.[1]) {
     return h1Match[1].trim();
   }
