@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Text, Empty, Modal, Form, Input, InputNumber } from '@lobehub/ui';
+import { Button, Text, Empty, Modal, Form, Input as LobeInput, InputNumber } from '@lobehub/ui';
 import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, PauseCircleOutlined, EyeOutlined } from '@ant-design/icons';
-import { Table, Tag, Space, Popconfirm, Progress, Collapse, Select as AntdSelect } from 'antd';
+import { Table, Tag, Space, Popconfirm, Progress, Collapse, Select as AntdSelect, Input as AntdInput } from 'antd';
 import { useTranslations } from 'next-intl';
 import { message } from 'antd';
 import AppLayout from '@/components/layout/AppLayout';
@@ -352,11 +352,11 @@ export default function AgentsPage() {
             label={t('agentName')}
             rules={[{ required: true, message: t('agentNameRequired') }]}
           >
-            <Input placeholder={t('agentNamePlaceholder')} />
+            <LobeInput placeholder={t('agentNamePlaceholder')} />
           </Form.Item>
 
           <Form.Item name="description" label={t('agentDescription')}>
-            <Input.TextArea
+            <AntdInput.TextArea
               rows={3}
               placeholder={t('descriptionPlaceholder')}
             />

@@ -7,15 +7,17 @@ import type { EnvVariableResponse, CreateEnvVariableRequest, UpdateEnvVariableRe
  */
 function encryptValue(value: string): string {
   const key = 0x5a;
-  return Buffer.from(value)
+  return btoa(Buffer.from(value)
     .map((byte) => byte ^ key)
-    .toString('base64');
+    .toString());
 }
 
 function decryptValue(encrypted: string): string {
   const key = 0x5a;
-  const decoded = Buffer.from(encrypted, 'base64');
-  return decoded.map((byte) => byte ^ key).toString('utf-8');
+  const decoded = atob(encrypted);
+  return Buffer.from(decoded)
+    .map((byte) => byte ^ key)
+    .toString();
 }
 
 /**

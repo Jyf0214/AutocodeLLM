@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button, Text, Empty, Modal, Form, Input } from '@lobehub/ui';
+import { Button, Text, Empty, Modal, Form, Input as LobeInput } from '@lobehub/ui';
 import {
   PlusOutlined,
   EditOutlined,
@@ -11,7 +11,7 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
 } from '@ant-design/icons';
-import { Table, Tag, Space, Popconfirm, Switch, message } from 'antd';
+import { Table, Tag, Space, Popconfirm, Switch, message, Input as AntdInput } from 'antd';
 import { useTranslations } from 'next-intl';
 import AppLayout from '@/components/layout/AppLayout';
 
@@ -244,14 +244,14 @@ export default function EnvPage() {
       title: t('key'),
       dataIndex: 'key',
       key: 'key',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
+      
       render: (text: string) => <Text strong>{text}</Text>,
     },
     {
       title: t('value'),
       dataIndex: 'value',
       key: 'value',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
+      
       render: (text: string, record: EnvVariable) => {
         const isVisible = visibleKeys.has(record.id);
         return (
@@ -275,14 +275,14 @@ export default function EnvPage() {
       title: t('description'),
       dataIndex: 'description',
       key: 'description',
-      responsive: ['md', 'lg', 'xl'] as const,
+      
       ellipsis: true,
     },
     {
       title: t('status'),
       dataIndex: 'enabled',
       key: 'enabled',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
+      
       render: (enabled: boolean) => (
         <Tag color={enabled ? 'green' : 'default'}>{enabled ? t('enabled') : t('disabled')}</Tag>
       ),
@@ -290,7 +290,7 @@ export default function EnvPage() {
     {
       title: t('actions'),
       key: 'actions',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
+      
       render: (_: unknown, record: EnvVariable) => (
         <Space>
           <Button
@@ -377,7 +377,7 @@ export default function EnvPage() {
             label={t('key')}
             rules={[{ required: true, message: t('keyRequired') }]}
           >
-            <Input placeholder={t('keyPlaceholder')} disabled={!!editingEnv} />
+            <LobeInput placeholder={t('keyPlaceholder')} disabled={!!editingEnv} />
           </Form.Item>
 
           <Form.Item
@@ -385,11 +385,11 @@ export default function EnvPage() {
             label={t('value')}
             rules={[{ required: !editingEnv, message: t('valueRequired') }]}
           >
-            <Input.Password placeholder={t('valuePlaceholder')} />
+            <AntdInput.Password placeholder={t('valuePlaceholder')} />
           </Form.Item>
 
           <Form.Item name="description" label={t('description')}>
-            <Input.TextArea placeholder={t('descriptionPlaceholder')} rows={2} />
+            <AntdInput.TextArea placeholder={t('descriptionPlaceholder')} rows={2} />
           </Form.Item>
 
           <Form.Item name="enabled" label={t('status')} valuePropName="checked">
@@ -424,7 +424,7 @@ export default function EnvPage() {
             label={t('importData')}
             rules={[{ required: true, message: t('importDataRequired') }]}
           >
-            <Input.TextArea
+            <AntdInput.TextArea
               placeholder={t('importDataPlaceholder')}
               rows={8}
               style={{ fontFamily: 'monospace' }}

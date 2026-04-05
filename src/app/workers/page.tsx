@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Text, Empty, Modal, Form, Input } from '@lobehub/ui';
+import { Button, Text, Empty, Modal, Form, Input as LobeInput } from '@lobehub/ui';
 import { PlusOutlined, EditOutlined, DeleteOutlined, HeartOutlined } from '@ant-design/icons';
-import { Table, Tag, Space, Popconfirm, Select as AntSelect, Switch, message } from 'antd';
+import { Table, Tag, Space, Popconfirm, Select as AntSelect, Switch, message, Input as AntdInput } from 'antd';
 import { useTranslations } from 'next-intl';
 import AppLayout from '@/components/layout/AppLayout';
 import type { Worker } from '@/lib/api/worker-types';
@@ -172,13 +172,13 @@ export default function WorkersPage() {
       title: t('workerName'),
       dataIndex: 'name',
       key: 'name',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
+      
     },
     {
       title: t('workerType'),
       dataIndex: 'type',
       key: 'type',
-      responsive: ['sm', 'md', 'lg', 'xl'] as const,
+      
       render: (type: keyof typeof TYPE_LABELS) => (
         <Tag>{t(TYPE_LABELS[type])}</Tag>
       ),
@@ -187,7 +187,7 @@ export default function WorkersPage() {
       title: t('status'),
       dataIndex: 'status',
       key: 'status',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
+      
       render: (status: keyof typeof STATUS_COLORS) => (
         <Tag color={STATUS_COLORS[status]}>{t(status)}</Tag>
       ),
@@ -196,13 +196,13 @@ export default function WorkersPage() {
       title: t('lastHeartbeat'),
       dataIndex: 'lastHeartbeat',
       key: 'lastHeartbeat',
-      responsive: ['md', 'lg', 'xl'] as const,
+      
       render: (heartbeat: string | null) => formatHeartbeat(heartbeat),
     },
     {
       title: t('actions'),
       key: 'actions',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
+      
       render: (_: unknown, record: Worker) => (
         <Space>
           <Button
@@ -286,7 +286,7 @@ export default function WorkersPage() {
             label={t('workerName')}
             rules={[{ required: true, message: t('workerNameRequired') }]}
           >
-            <Input placeholder={t('workerNamePlaceholder')} />
+            <LobeInput placeholder={t('workerNamePlaceholder')} />
           </Form.Item>
 
           <Form.Item
@@ -309,11 +309,11 @@ export default function WorkersPage() {
             label={t('url')}
             rules={[{ required: true, message: t('urlRequired') }]}
           >
-            <Input placeholder={t('urlPlaceholder')} />
+            <LobeInput placeholder={t('urlPlaceholder')} />
           </Form.Item>
 
           <Form.Item name="metadata" label={t('metadata')}>
-            <Input.TextArea
+            <AntdInput.TextArea
               rows={4}
               placeholder={t('metadataPlaceholder')}
               style={{ fontFamily: 'monospace' }}

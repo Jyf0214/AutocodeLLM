@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import type { Worker, WorkerListResponse, CreateWorkerRequest, UpdateWorkerRequest } from '@/lib/api/worker-types';
+import type { Worker, WorkerListResponse, WorkerResponse, CreateWorkerRequest, UpdateWorkerRequest } from '@/lib/api/worker-types';
 
 const VALID_TYPES = ['compute', 'storage', 'inference'] as const;
 const VALID_STATUSES = ['online', 'offline', 'busy', 'error'] as const;
@@ -21,7 +21,7 @@ export async function GET() {
       status: worker.status as Worker['status'],
       url: worker.url,
       lastHeartbeat: worker.lastHeartbeat ? worker.lastHeartbeat.toISOString() : null,
-      metadata: worker.metadata ? (worker.metadata as Record<string, unknown>) : null,
+      metadata: worker.metadata ? (JSON.parse(worker.metadata) as Record<string, unknown>) : null,
       enabled: worker.enabled,
       createdAt: worker.createdAt.toISOString(),
       updatedAt: worker.updatedAt.toISOString(),
@@ -104,12 +104,12 @@ export async function POST(request: Request) {
         type,
         url,
         status: 'offline',
-        ...(metadata !== undefined ? { metadata } : {}),
+        metadata: metadata !== undefined ? JSON.stringify(metadata) : null,
         enabled: enabled ?? true,
       },
     });
 
-    const response: WorkerListResponse = {
+    const response: WorkerResponse = {
       success: true,
       data: {
         id: newWorker.id,
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
         status: newWorker.status as Worker['status'],
         url: newWorker.url,
         lastHeartbeat: newWorker.lastHeartbeat ? newWorker.lastHeartbeat.toISOString() : null,
-        metadata: newWorker.metadata ?? null,
+        metadata: newWorker.metadata ? JSON.parse(newWorker.metadata) : null,
         enabled: newWorker.enabled,
         createdAt: newWorker.createdAt.toISOString(),
         updatedAt: newWorker.updatedAt.toISOString(),
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
           message: '创建工作节点失败',
           code: 'CREATE_FAILED',
         },
-      } as WorkerListResponse,
+      } as WorkerResponse,
       { status: 500 }
     );
   }
@@ -234,7 +234,7 @@ export async function PUT(request: Request) {
       },
     });
 
-    const response: WorkerListResponse = {
+    const response: WorkerResponse = {
       success: true,
       data: {
         id: updatedWorker.id,
@@ -243,7 +243,7 @@ export async function PUT(request: Request) {
         status: updatedWorker.status as Worker['status'],
         url: updatedWorker.url,
         lastHeartbeat: updatedWorker.lastHeartbeat ? updatedWorker.lastHeartbeat.toISOString() : null,
-        metadata: updatedWorker.metadata ?? null,
+        metadata: updatedWorker.metadata ? JSON.parse(updatedWorker.metadata) : null,
         enabled: updatedWorker.enabled,
         createdAt: updatedWorker.createdAt.toISOString(),
         updatedAt: updatedWorker.updatedAt.toISOString(),
@@ -258,7 +258,7 @@ export async function PUT(request: Request) {
           message: '更新工作节点失败',
           code: 'UPDATE_FAILED',
         },
-      } as WorkerListResponse,
+      } as WorkerResponse,
       { status: 500 }
     );
   }
@@ -308,7 +308,7 @@ export async function DELETE(request: Request) {
 
     const response: WorkerListResponse = {
       success: true,
-      data: { id },
+      data: [],
     };
     return NextResponse.json(response);
   } catch {

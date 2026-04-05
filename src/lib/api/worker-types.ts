@@ -11,9 +11,18 @@ export interface Worker {
   updatedAt: string;
 }
 
+export interface WorkerResponse {
+  success: boolean;
+  data?: Worker;
+  error?: {
+    message: string;
+    code: string;
+  };
+}
+
 export interface WorkerListResponse {
   success: boolean;
-  data?: Worker[] | { id: string };
+  data?: Worker[];
   error?: {
     message: string;
     code: string;

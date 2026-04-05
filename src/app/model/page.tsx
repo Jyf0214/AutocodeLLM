@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button, Text, Empty, Modal, Form, Input } from '@lobehub/ui';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { Table, Tag, Space, Popconfirm, Switch, message } from 'antd';
+import { Table, Tag, Space, Popconfirm, Switch, message, Input as AntdInput } from 'antd';
 import { useTranslations } from 'next-intl';
 import AppLayout from '@/components/layout/AppLayout';
 import type { ModelConfig } from '@/lib/api/model-types';
@@ -128,19 +128,19 @@ export default function ModelPage() {
       title: t('modelName'),
       dataIndex: 'name',
       key: 'name',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
+      
     },
     {
       title: t('provider'),
       dataIndex: 'provider',
       key: 'provider',
-      responsive: ['sm', 'md', 'lg', 'xl'] as const,
+      
     },
     {
       title: t('status'),
       dataIndex: 'enabled',
       key: 'enabled',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
+      
       render: (enabled: boolean) => (
         <Tag color={enabled ? 'green' : 'default'}>{enabled ? t('enabled') : t('disabled')}</Tag>
       ),
@@ -148,7 +148,7 @@ export default function ModelPage() {
     {
       title: t('actions'),
       key: 'actions',
-      responsive: ['xs', 'sm', 'md', 'lg', 'xl'] as const,
+      
       render: (_: unknown, record: ModelConfig) => (
         <Space>
           <Button
@@ -241,7 +241,7 @@ export default function ModelPage() {
             label={t('apiKey')}
             rules={[{ required: true, message: t('apiKeyRequired') }]}
           >
-            <Input.Password placeholder={t('apiKeyPlaceholder')} />
+            <AntdInput.Password placeholder={t('apiKeyPlaceholder')} />
           </Form.Item>
 
           <Form.Item name="baseUrl" label={t('baseUrl')}>

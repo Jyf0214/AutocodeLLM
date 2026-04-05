@@ -34,7 +34,7 @@ describe('工作节点 API (/api/workers)', () => {
           status: 'online',
           url: 'http://192.168.1.100:8080',
           lastHeartbeat: new Date('2024-01-01'),
-          metadata: { gpu: 'A100' },
+          metadata: JSON.stringify({ gpu: 'A100' }),
           enabled: true,
           createdAt: new Date('2024-01-01'),
           updatedAt: new Date('2024-01-01'),
@@ -103,7 +103,7 @@ describe('工作节点 API (/api/workers)', () => {
         type: 'compute',
         status: 'offline',
         url: 'http://192.168.1.100:8080',
-        metadata: { gpu: 'A100' },
+        metadata: JSON.stringify({ gpu: 'A100' }),
         enabled: true,
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-01'),
@@ -295,7 +295,7 @@ describe('工作节点 API (/api/workers)', () => {
         type: 'compute',
         status: 'online',
         url: 'http://192.168.1.100:8080',
-        metadata: { gpu: 'A100' },
+        metadata: JSON.stringify({ gpu: 'A100' }),
         enabled: true,
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-02'),
@@ -533,7 +533,7 @@ describe('工作节点 API (/api/workers)', () => {
 
       const body = await response.json();
       expect(body.success).toBe(true);
-      expect(body.data.id).toBe('worker-1');
+      expect(body.data).toEqual([]);
     });
 
     it('应该拒绝缺少 ID 的请求', async () => {
