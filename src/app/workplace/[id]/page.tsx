@@ -38,49 +38,7 @@ interface Message {
   };
 }
 
-const MOCK_MESSAGES: Message[] = [
-  {
-    id: '1',
-    role: 'user',
-    content: '调用函数写入 hello world',
-    timestamp: '10:30',
-  },
-  {
-    id: '2',
-    role: 'assistant',
-    thinkingProcess: {
-      content: '用户要求创建一个文件并写入 "hello world"。我需要：\n1. 使用文件写入工具\n2. 指定文件路径为 hello.txt\n3. 写入内容为 "hello world"',
-      duration: 3,
-    },
-    toolCalls: [
-      {
-        id: 'tool-1',
-        name: 'writeFile',
-        description: '写入文件 hello.txt',
-        status: 'success',
-        duration: '1.2s',
-      },
-    ],
-    content: '已成功创建 hello.txt 并写入 "hello world"。',
-    timestamp: '10:30',
-  },
-  {
-    id: '3',
-    role: 'assistant',
-    toolCalls: [
-      {
-        id: 'tool-2',
-        name: 'readFile',
-        description: '读取文件验证内容',
-        status: 'error',
-        error: 'Error: File not found at specified path\n    at readFile (file:123:45)\n    at processTicksAndRejections (internal:90:12)',
-        duration: '0.5s',
-      },
-    ],
-    content: '读取文件时遇到错误，请检查路径是否正确。',
-    timestamp: '10:31',
-  },
-];
+const MOCK_MESSAGES: Message[] = [];
 
 const MOCK_MODELS = [
   { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', isDefault: true },
