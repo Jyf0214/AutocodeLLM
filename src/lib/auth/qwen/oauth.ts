@@ -30,8 +30,8 @@ function generatePKCEPair(): { codeVerifier: string; codeChallenge: string } {
  * 将对象转换为 URL-encoded 字符串
  */
 function objectToUrlEncoded(data: Record<string, string>): string {
-  return Object.keys(data)
-    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(data[key] as string)}`)
+  return Object.entries(data)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join('&');
 }
 
@@ -184,14 +184,15 @@ export async function pollQwenToken(
     throw new Error(`获取 Token 失败：${errorData.error} - ${errorData.error_description}`);
   }
 
-  const tokenData = responseData as TokenResponse;
+  // responseData 在这里已经被 TypeScript 缩小类型为 TokenResponse
+  const tokenData = responseData;
 
   return {
     accessToken: tokenData.access_token,
     refreshToken: tokenData.refresh_token ?? '',
     resourceUrl: tokenData.resource_url ?? QWEN_OAUTH_CONFIG.defaultApiUrl,
     expiresIn: tokenData.expires_in,
-    tokenType: tokenData.token_type ?? 'Bearer',
+    tokenType: tokenData.token_type,
   };
 }
 
@@ -239,7 +240,8 @@ export async function refreshQwenToken(refreshToken: string): Promise<{
     throw new Error(`刷新 Token 失败：${errorData.error} - ${errorData.error_description}`);
   }
 
-  const tokenData = responseData as TokenResponse;
+  // responseData 在这里已经被 TypeScript 缩小类型为 TokenResponse
+  const tokenData = responseData;
 
   return {
     accessToken: tokenData.access_token,
