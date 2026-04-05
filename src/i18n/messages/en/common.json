@@ -35,8 +35,10 @@
       "cta": {
         "title": "Ready to Get Started?",
         "desc": "Log in to your account and experience the full AI coding agent features",
-        "loginBtn": "Sign In Now"
+        "loginBtn": "Sign In Now",
+        "logoutBtn": "Logout"
       },
+      "logout": "Logout",
       "footer": "AutocodeLLM — AI Coding Agent Platform"
     }
   },
@@ -51,6 +53,15 @@
     "title": "Workspace",
     "create": "Create Workspace",
     "empty": "No workspaces yet",
+    "emptyDesc": "Click the button above to create your first workspace",
+    "workspaceName": "Workspace Name",
+    "workspaceNameRequired": "Please enter a workspace name",
+    "workspaceNamePlaceholder": "e.g., My Project",
+    "workspaceDescription": "Description",
+    "workspaceDescriptionPlaceholder": "Optional, describe the purpose of this workspace",
+    "createSuccess": "Workspace created successfully",
+    "createFailed": "Failed to create workspace",
+    "fetchFailed": "Failed to fetch workspace list",
     "fileOperations": "File Operations",
     "readFile": "Read File",
     "writeFile": "Write File",

@@ -35,8 +35,10 @@
       "cta": {
         "title": "准备好开始了吗？",
         "desc": "登录你的账户，体验完整的 AI 编码代理功能",
-        "loginBtn": "立即登录"
+        "loginBtn": "立即登录",
+        "logoutBtn": "退出账户"
       },
+      "logout": "退出账户",
       "footer": "AutocodeLLM — AI 编码代理平台"
     }
   },
@@ -51,6 +53,15 @@
     "title": "工作空间",
     "create": "创建工作空间",
     "empty": "暂无工作空间",
+    "emptyDesc": "点击上方按钮创建第一个工作空间",
+    "workspaceName": "工作空间名称",
+    "workspaceNameRequired": "请输入工作空间名称",
+    "workspaceNamePlaceholder": "例如：我的项目",
+    "workspaceDescription": "描述",
+    "workspaceDescriptionPlaceholder": "可选，描述此工作空间的用途",
+    "createSuccess": "工作空间创建成功",
+    "createFailed": "工作空间创建失败",
+    "fetchFailed": "获取工作空间列表失败",
     "fileOperations": "文件操作",
     "readFile": "读取文件",
     "writeFile": "写入文件",
