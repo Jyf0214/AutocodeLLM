@@ -306,10 +306,12 @@ export default function WorkplaceDetailPage({
                     }}
                     size="large"
                   />
-                  <ModelSelector
-                    currentModel={{ id: currentModel.id, name: currentModel.name }}
-                    onSelect={handleModelSelect}
-                  />
+                  {currentModel != null && (
+                    <ModelSelector
+                      currentModel={{ id: currentModel.id, name: currentModel.name }}
+                      onSelect={handleModelSelect}
+                    />
+                  )}
                 </Flexbox>
                 <Flexbox gap={4} horizontal>
                   <ActionIcon icon={ShareAltOutlined} size="large" />
