@@ -29,9 +29,10 @@ export async function initAdminAccount() {
       });
       console.log('  ✅ 已创建默认管理员账户（admin）');
     } else {
-      // 账户已存在，不做任何操作
+      // 账户已存在，诊断输出
       console.log('  ℹ️  管理员账户（admin）已存在');
-      console.log('  💡 忘记密码请使用验证码登录');
+      console.log(`  📊 当前状态: forceChangePassword=${existingUser.forceChangePassword}, isInitialPassword=${existingUser.isInitialPassword}`);
+      console.log('  ⚠️  此代码不会修改已有账户的密码');
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

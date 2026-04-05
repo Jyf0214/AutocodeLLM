@@ -92,7 +92,6 @@ export default function ProviderPage() {
   const handleSave = useCallback(async () => {
     try {
       const values = await form.validateFields();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const payload: Record<string, unknown> = {
         name: values.name,
         baseUrl: values.baseUrl,
