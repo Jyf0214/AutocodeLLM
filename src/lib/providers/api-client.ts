@@ -95,8 +95,8 @@ export async function callProviderAPI(params: {
     messages,
     model,
     stream: stream ?? false,
-    temperature,
-    maxTokens,
+    ...(temperature !== undefined && { temperature }),
+    ...(maxTokens !== undefined && { maxTokens }),
     sdkType: provider.sdkType,
   });
 
@@ -363,12 +363,11 @@ function parseResponse(
     const content = (data.content as { type: string; text: string }[] | undefined) ?? [];
     const text = content.map((c) => c.text).join('');
     const usage = data.usage as Record<string, number> | undefined;
-    return {
-      content: text,
-      usage: usage
-        ? { tokens: (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0) }
-        : undefined,
-    };
+    const result: { content: string; usage?: { tokens: number } } = { content: text };
+    if (usage) {
+      result.usage = { tokens: (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0) };
+    }
+    return result;
   }
 
   if (sdkType === 'google') {
@@ -378,24 +377,22 @@ function parseResponse(
     const parts = (content?.parts as { text: string }[] | undefined) ?? [];
     const text = parts.map((p) => p.text).join('');
     const usageMetadata = data.usageMetadata as Record<string, number> | undefined;
-    return {
-      content: text,
-      usage: usageMetadata
-        ? { tokens: usageMetadata.totalTokenCount ?? 0 }
-        : undefined,
-    };
+    const result: { content: string; usage?: { tokens: number } } = { content: text };
+    if (usageMetadata) {
+      result.usage = { tokens: usageMetadata.totalTokenCount ?? 0 };
+    }
+    return result;
   }
 
   const choices = (data.choices as Record<string, unknown>[] | undefined) ?? [];
   const first = choices[0];
   const message = first?.message as Record<string, string> | undefined;
   const usage = data.usage as Record<string, number> | undefined;
-  return {
-    content: message?.content ?? '',
-    usage: usage
-      ? { tokens: usage.total_tokens ?? 0 }
-      : undefined,
-  };
+  const result: { content: string; usage?: { tokens: number } } = { content: message?.content ?? '' };
+  if (usage) {
+    result.usage = { tokens: usage.total_tokens ?? 0 };
+  }
+  return result;
 }
 
 /**
