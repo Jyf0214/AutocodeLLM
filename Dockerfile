@@ -19,8 +19,9 @@ WORKDIR /app
 # 复制源代码
 COPY . .
 
-# 确保 bun 可用（创建符号链接）
-RUN ln -sf /home/node/.bun/bin/bun /usr/local/bin/bun 2>/dev/null || true
+# 确保 bun 和 bunx 可用（创建符号链接）
+RUN ln -sf /home/node/.bun/bin/bun /usr/local/bin/bun 2>/dev/null || true && \
+    ln -sf /home/node/.bun/bin/bunx /usr/local/bin/bunx 2>/dev/null || true
 
 # 安装依赖并预构建
 RUN rm -rf .next && \
