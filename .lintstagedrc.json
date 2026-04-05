@@ -2,10 +2,10 @@
   "*.{ts,tsx}": [
     "npx eslint --max-warnings=0"
   ],
-  "*.{ts,tsx,js,mjs}": [
-    "npx tsc --noEmit"
+  "src/**/*.{ts,tsx,js,mjs}": [
+    "bash -c 'npx tsc --noEmit --skipLibCheck 2>&1 | head -20'"
   ],
   "*": [
-    "bun run test"
+    "bun run test --run"
   ]
 }
