@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback } from 'react';
-import { Drawer, List, Typography, Tag } from 'antd';
+import { Drawer, Flexbox, Text } from '@lobehub/ui';
+import { Tag } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
+import { ModelIcon } from '@lobehub/icons';
 
 interface Model {
   id: string;
@@ -36,58 +38,64 @@ export default function ModelSwitcher({
 
   return (
     <Drawer
+      open={open}
+      onClose={onClose}
       title="切换模型"
       placement="bottom"
-      onClose={onClose}
-      open={open}
       size="50%"
-      styles={{
-        body: { padding: 0 },
-        mask: { backgroundColor: 'rgba(0, 0, 0, 0.45)' },
-      }}
       destroyOnHidden
     >
-      <List
-        dataSource={models}
-        renderItem={(model) => (
-          <List.Item
-            onClick={() => { handleSelect(model.id); }}
-            style={{
-              padding: '12px 16px',
-              cursor: 'pointer',
-              background: model.id === currentModelId ? 'var(--color-fill-alternate)' : 'transparent',
-              transition: 'background 200ms',
-            }}
-            onMouseEnter={(e) => {
-              if (model.id !== currentModelId) {
-                (e.currentTarget as HTMLElement).style.background = 'var(--color-hover-bg)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (model.id !== currentModelId) {
-                (e.currentTarget as HTMLElement).style.background = 'transparent';
-              }
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-              {model.id === currentModelId && (
-                <CheckOutlined style={{ color: 'var(--lobe-color-primary, #1677ff)' }} />
-              )}
-              <div style={{ flex: 1 }}>
-                <Typography.Text strong>{model.name}</Typography.Text>
-                {model.isDefault != null && model.isDefault && (
-                  <Tag color="blue" style={{ marginLeft: 8 }}>
-                    默认
-                  </Tag>
+      <Flexbox gap={4}>
+        {models.map((model) => {
+          const isSelected = model.id === currentModelId;
+
+          return (
+            <div
+              key={model.id}
+              onClick={() => {
+                handleSelect(model.id);
+              }}
+              style={{
+                padding: '12px 16px',
+                borderRadius: 8,
+                cursor: 'pointer',
+                background: isSelected ? 'var(--color-hover-bg)' : 'transparent',
+                transition: 'background 200ms',
+              }}
+              onMouseEnter={(e: React.MouseEvent) => {
+                if (!isSelected) {
+                  (e.currentTarget as HTMLElement).style.background = 'var(--color-hover-bg)';
+                }
+              }}
+              onMouseLeave={(e: React.MouseEvent) => {
+                if (!isSelected) {
+                  (e.currentTarget as HTMLElement).style.background = 'transparent';
+                }
+              }}
+            >
+              <Flexbox gap={12} horizontal align="center">
+                {isSelected && (
+                  <CheckOutlined style={{ color: 'var(--lobe-color-primary)' }} />
                 )}
-              </div>
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                {model.provider}
-              </Typography.Text>
+                <ModelIcon model={model.id} size={24} />
+                <Flexbox flex={1}>
+                  <Flexbox gap={8} horizontal align="center">
+                    <Text strong>{model.name}</Text>
+                    {model.isDefault != null && model.isDefault && (
+                      <Tag color="blue" style={{ margin: 0, fontSize: 10 }}>
+                        默认
+                      </Tag>
+                    )}
+                  </Flexbox>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {model.provider}
+                  </Text>
+                </Flexbox>
+              </Flexbox>
             </div>
-          </List.Item>
-        )}
-      />
+          );
+        })}
+      </Flexbox>
     </Drawer>
   );
 }
