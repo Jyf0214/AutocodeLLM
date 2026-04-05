@@ -8,14 +8,12 @@
   display: none;
   width: 280px;
   flex-shrink: 0;
-  border-right: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
-  overflow-y: auto;
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
   z-index: 10;
+  overflow: hidden;
 }
 
 @media (min-width: 1024px) {
@@ -24,102 +22,13 @@
   }
 }
 
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-}
-
-.sidebar-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.sidebar-menu {
-  flex: 1;
-  background: transparent;
-  border-right: none;
-  overflow-y: auto;
-}
-
-/* Menu item base styles */
-.sidebar-menu .ant-menu-item {
-  margin: 4px 8px;
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  position: relative;
-  transition: all 200ms ease-out;
-}
-
-/* Hover state */
-.sidebar-menu .ant-menu-item:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-/* Active/click state */
-.sidebar-menu .ant-menu-item:active {
-  transform: scale(0.98);
-  background: var(--bg-tertiary);
-}
-
-/* Selected state */
-.sidebar-menu .ant-menu-item-selected {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.sidebar-menu .ant-menu-item-selected::after {
-  display: none;
-}
-
-.sidebar-menu .ant-menu-item-selected::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 60%;
-  background: var(--border-strong);
-  border-radius: 0 2px 2px 0;
-}
-
-.sidebar-menu .ant-menu-item-icon {
-  font-size: 20px;
-  stroke-width: 1.5;
-  transition: transform 200ms ease-out;
-}
-
-.sidebar-menu .ant-menu-item:hover .ant-menu-item-icon {
-  transform: scale(1.1);
-}
-
-.sidebar-menu .ant-menu-item-title {
-  transition: color 200ms ease-out;
-}
-
-/* Sidebar footer for theme toggle */
-.sidebar-footer {
-  padding: 12px 16px;
-  border-top: 1px solid var(--border-primary);
-  display: flex;
-  justify-content: center;
-  background: var(--bg-secondary);
-}
-
-/* Header */
 .app-header {
-  display: flex;
-  align-items: center;
-  height: 56px;
-  padding: 0 16px;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-primary);
   position: sticky;
   top: 0;
   z-index: 5;
+  padding: 0 16px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 @media (min-width: 1024px) {
@@ -128,23 +37,12 @@
   }
 }
 
-.menu-toggle {
+.mobile-menu-btn {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 200ms ease-out;
-}
-
-.menu-toggle:hover {
-  background: var(--bg-tertiary);
-}
-
-.menu-toggle:active {
-  transform: scale(0.9);
 }
 
 @media (min-width: 1024px) {
-  .menu-toggle {
+  .mobile-menu-btn {
     display: none;
   }
 }

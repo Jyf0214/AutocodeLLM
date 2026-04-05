@@ -27,7 +27,7 @@ export default async function RootLayout({
               <ConfigProvider
                 theme={{
                   token: {
-                    colorPrimary: '#000000',
+                    colorPrimary: 'var(--border-strong)',
                     colorBgContainer: 'var(--bg-primary)',
                     colorBgLayout: 'var(--bg-primary)',
                     colorBgElevated: 'var(--bg-secondary)',
@@ -43,6 +43,7 @@ export default async function RootLayout({
                     Button: {
                       borderRadius: 6,
                       controlHeight: 36,
+                      colorBgContainerDisabled: 'var(--bg-tertiary)',
                     },
                     Card: {
                       borderRadius: 8,
@@ -53,12 +54,21 @@ export default async function RootLayout({
                     },
                     Menu: {
                       itemBorderRadius: 6,
+                      itemBg: 'transparent',
+                      itemColor: 'var(--text-secondary)',
+                      itemSelectedBg: 'var(--bg-tertiary)',
+                      itemSelectedColor: 'var(--text-primary)',
+                      itemHoverBg: 'var(--bg-tertiary)',
+                      itemHoverColor: 'var(--text-primary)',
                     },
                     Tabs: {
                       borderRadius: 8,
                     },
                     Collapse: {
                       borderRadius: 8,
+                    },
+                    Empty: {
+                      colorTextDescription: 'var(--text-tertiary)',
                     },
                   },
                 }}

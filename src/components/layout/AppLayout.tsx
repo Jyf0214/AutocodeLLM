@@ -1,7 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Layout, Menu, Typography, Button, Drawer } from 'antd';
+import { useMemo, useState, useCallback } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
+import { SideNav, Header, Menu, ActionIcon, ThemeSwitch, Icon } from '@lobehub/ui';
 import {
   HomeOutlined,
   FolderOutlined,
@@ -16,27 +19,28 @@ import {
   PlayCircleOutlined,
   MenuOutlined,
 } from '@ant-design/icons';
-import { usePathname, useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
-import ThemeToggle from '@/components/ui/ThemeToggle';
+import { Drawer } from 'antd';
 import '@/styles/AppLayout.css';
 
-const { Content, Header } = Layout;
-const { Title } = Typography;
-
 const menuItems = [
-  { key: '/', icon: <HomeOutlined />, label: 'common.appName' },
-  { key: '/workplace', icon: <FolderOutlined />, label: 'common.workplace' },
-  { key: '/setting/mcp', icon: <SettingOutlined />, label: 'common.mcp' },
-  { key: '/env', icon: <EnvironmentOutlined />, label: 'common.env' },
-  { key: '/workers', icon: <CloudServerOutlined />, label: 'common.workers' },
-  { key: '/agents', icon: <TeamOutlined />, label: 'common.agents' },
-  { key: '/sync', icon: <SyncOutlined />, label: 'common.sync' },
-  { key: '/model', icon: <AppstoreOutlined />, label: 'common.models' },
-  { key: '/openai/provider', icon: <ApiOutlined />, label: 'common.providers' },
-  { key: '/docs', icon: <BookOutlined />, label: 'common.docs' },
-  { key: '/demo', icon: <PlayCircleOutlined />, label: 'common.demo' },
+  { key: '/', icon: HomeOutlined, label: 'common.appName' },
+  { key: '/workplace', icon: FolderOutlined, label: 'common.workplace' },
+  { key: '/setting/mcp', icon: SettingOutlined, label: 'common.mcp' },
+  { key: '/env', icon: EnvironmentOutlined, label: 'common.env' },
+  { key: '/workers', icon: CloudServerOutlined, label: 'common.workers' },
+  { key: '/agents', icon: TeamOutlined, label: 'common.agents' },
+  { key: '/sync', icon: SyncOutlined, label: 'common.sync' },
+  { key: '/model', icon: AppstoreOutlined, label: 'common.models' },
+  { key: '/openai/provider', icon: ApiOutlined, label: 'common.providers' },
+  { key: '/docs', icon: BookOutlined, label: 'common.docs' },
+  { key: '/demo', icon: PlayCircleOutlined, label: 'common.demo' },
 ];
+
+const themeModeMap: Record<string, 'auto' | 'light' | 'dark'> = {
+  system: 'auto',
+  light: 'light',
+  dark: 'dark',
+};
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -47,30 +51,60 @@ function SidebarContent({
   selectedKey,
   onNavigate,
 }: {
-  items: { key: string; icon: React.ReactNode; label: string }[];
+  items: { key: string; icon: typeof HomeOutlined; label: string }[];
   selectedKey: string;
   onNavigate: (key: string) => void;
 }) {
+  const { theme, setTheme } = useTheme();
+
+  const handleThemeSwitch = useCallback(
+    (mode: 'auto' | 'light' | 'dark') => {
+      const themeMap: Record<string, string> = {
+        auto: 'system',
+        light: 'light',
+        dark: 'dark',
+      };
+      setTheme(themeMap[mode] ?? 'system');
+    },
+    [setTheme],
+  );
+
+  const lobeMenuItems = items.map((item) => ({
+    key: item.key,
+    icon: <Icon icon={item.icon} />,
+    label: item.label,
+  }));
+
   return (
-    <div className="sidebar">
-      <div className="sidebar-header">
-        <Title level={4} style={{ margin: 0, color: 'var(--text-primary)', fontWeight: 600 }}>
+    <SideNav
+      avatar={
+        <span style={{ fontSize: 16, fontWeight: 600 }}>
           AutocodeLLM
-        </Title>
-      </div>
+        </span>
+      }
+      bottomActions={
+        <ThemeSwitch
+          themeMode={themeModeMap[theme ?? 'system'] ?? 'auto'}
+          onThemeSwitch={handleThemeSwitch}
+          labels={{
+            auto: '跟随系统',
+            dark: '深色模式',
+            light: '浅色模式',
+          }}
+        />
+      }
+      style={{ width: '100%', borderRight: 'none' }}
+    >
       <Menu
-        mode="inline"
+        items={lobeMenuItems}
         selectedKeys={[selectedKey]}
-        items={items}
         onClick={({ key }) => {
           onNavigate(key);
         }}
-        className="sidebar-menu"
+        variant="borderless"
+        style={{ width: '100%' }}
       />
-      <div className="sidebar-footer">
-        <ThemeToggle />
-      </div>
-    </div>
+    </SideNav>
   );
 }
 
@@ -105,7 +139,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   };
 
   return (
-    <Layout className="app-layout">
+    <div className="app-layout">
       <div className="desktop-sider">
         <SidebarContent
           items={translatedMenuItems}
@@ -113,24 +147,27 @@ export default function AppLayout({ children }: AppLayoutProps) {
           onNavigate={handleNavigate}
         />
       </div>
-      <Header className="app-header">
-        <Button
-          type="text"
-          icon={<MenuOutlined />}
-          className="menu-toggle"
-          onClick={() => {
-            setMobileOpen(true);
-          }}
-        />
-        <Title level={5} style={{ margin: 0, color: 'var(--text-primary)', fontWeight: 600 }}>
-          AutocodeLLM
-        </Title>
-      </Header>
-      <Layout className="main-layout">
-        <Content className="app-content">
-          {children}
-        </Content>
-      </Layout>
+      <Header
+        logo={
+          <span style={{ fontSize: 16, fontWeight: 600 }}>
+            AutocodeLLM
+          </span>
+        }
+        actions={
+          <ActionIcon
+            icon={MenuOutlined}
+            size="large"
+            onClick={() => {
+              setMobileOpen(true);
+            }}
+            className="mobile-menu-btn"
+          />
+        }
+        className="app-header"
+      />
+      <main className="main-layout">
+        <div className="app-content">{children}</div>
+      </main>
       <Drawer
         placement="left"
         onClose={() => {
@@ -147,6 +184,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
           onNavigate={handleNavigate}
         />
       </Drawer>
-    </Layout>
+    </div>
   );
 }

@@ -186,20 +186,57 @@ button:active,
   transform: scale(0.96);
 }
 
-/* Ripple-like effect on click for interactive elements */
+/* Primary button — light mode: black bg, dark mode: white bg */
 .ant-btn-primary {
   box-shadow: none;
   transition: all var(--transition-fast);
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg-primary);
 }
 
 .ant-btn-primary:hover {
   box-shadow: var(--shadow-hover);
   transform: translateY(-1px);
+  opacity: 0.85;
 }
 
 .ant-btn-primary:active {
   transform: translateY(0) scale(0.96);
   box-shadow: none;
+  opacity: 1;
+}
+
+/* Default/secondary button */
+.ant-btn-default {
+  background: transparent;
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+.ant-btn-default:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+/* Text button */
+.ant-btn-text {
+  color: var(--text-secondary);
+}
+
+.ant-btn-text:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* Empty state icon — adapt to dark mode */
+.ant-empty-img-default path,
+.ant-empty-img-simple path {
+  transition: fill 200ms ease-out;
+}
+
+.dark .ant-empty .ant-empty-img-default {
+  filter: brightness(0.7) saturate(0.5);
 }
 
 /* Card hover feedback */
