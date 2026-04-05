@@ -4,7 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { Grid, Button, Text, Icon } from '@lobehub/ui';
 import { CodeOutlined, BarChartOutlined, ApartmentOutlined } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
-import { Card } from 'antd';
+import { Card, message } from 'antd';
 
 const scenarios = [
   {
@@ -30,6 +30,10 @@ const scenarios = [
 export default function DemoPage() {
   const t = useTranslations();
 
+  const handleStartDemo = () => {
+    message.info('🚧 演示场景正在紧张施工中，敬请期待！');
+  };
+
   return (
     <AppLayout>
       <Text strong style={{ fontSize: 20, display: 'block', marginBottom: 8 }}>
@@ -44,7 +48,7 @@ export default function DemoPage() {
             hoverable
             style={{ textAlign: 'center' }}
             actions={[
-              <Button key="start" type="primary">
+              <Button key="start" type="primary" onClick={handleStartDemo}>
                 {t('demo.start')}
               </Button>,
             ]}
