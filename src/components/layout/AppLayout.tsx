@@ -110,7 +110,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <Menu
             items={translatedMenuItems}
             selectedKeys={[selectedKey]}
-            onClick={({ key }) => handleNavigate(key)}
+            onClick={({ key }) => { handleNavigate(key); }}
             variant="borderless"
           />
         </SideNav>
@@ -122,7 +122,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <ActionIcon
               icon={MenuOutlined}
               size="large"
-              onClick={() => setMobileOpen(true)}
+              onClick={() => { setMobileOpen(true); }}
             />
           }
         />
@@ -136,7 +136,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       <Drawer
         placement="left"
-        onClose={() => setMobileOpen(false)}
+        onClose={() => { setMobileOpen(false); }}
         open={mobileOpen}
         size={300}
         destroyOnHidden
@@ -155,7 +155,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <Menu
             items={translatedMenuItems}
             selectedKeys={[selectedKey]}
-            onClick={({ key }) => handleNavigate(key)}
+            onClick={({ key }) => { handleNavigate(key); }}
             variant="borderless"
           />
         </SideNav>
