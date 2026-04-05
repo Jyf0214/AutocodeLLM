@@ -19,6 +19,7 @@ WORKDIR /app
 # 复制源代码
 COPY . .
 
+RUN 
 # 安装依赖并预构建
 RUN rm -rf .next && \
     bun install --ignore-scripts && \
