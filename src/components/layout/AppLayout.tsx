@@ -29,6 +29,7 @@ import {
   MenuOutlined,
 } from '@ant-design/icons';
 import { Drawer, Typography } from 'antd';
+import { useIsMobile } from '@/hooks/useMediaQuery';
 
 const menuItems = [
   { key: '/', icon: HomeOutlined, labelKey: 'common.appName' },
@@ -60,6 +61,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const router = useRouter();
   const t = useTranslations();
   const { theme, setTheme } = useTheme();
+  const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const selectedKey = useMemo(() => {
@@ -96,58 +98,46 @@ export default function AppLayout({ children }: AppLayoutProps) {
     [setTheme],
   );
 
-  return (
-    <Layout
-      sidebar={
-        <SideNav
-          avatar={<span style={{ fontSize: 14, fontWeight: 600 }}>AutocodeLLM</span>}
-          bottomActions={
-            <ThemeSwitch
-              themeMode={themeModeMap[theme ?? 'system'] ?? 'auto'}
-              onThemeSwitch={handleThemeSwitch}
-              labels={{ auto: '跟随系统', dark: '深色模式', light: '浅色模式' }}
-            />
-          }
-        >
-          <Menu
-            items={translatedMenuItems}
-            selectedKeys={[selectedKey]}
-            onClick={({ key }) => { handleNavigate(key); }}
-            variant="borderless"
+  const sidebarContent = useMemo(
+    () => (
+      <SideNav
+        avatar={<span style={{ fontSize: 14, fontWeight: 600 }}>AutocodeLLM</span>}
+        bottomActions={
+          <ThemeSwitch
+            themeMode={themeModeMap[theme ?? 'system'] ?? 'auto'}
+            onThemeSwitch={handleThemeSwitch}
+            labels={{ auto: '跟随系统', dark: '深色模式', light: '浅色模式' }}
           />
-        </SideNav>
-      }
-      header={
-        <Header
-          logo={<span style={{ fontSize: 14, fontWeight: 600 }}>AutocodeLLM</span>}
-          actions={
-            <ActionIcon
-              icon={MenuOutlined}
-              size="large"
-              onClick={() => { setMobileOpen(true); }}
-            />
-          }
+        }
+      >
+        <Menu
+          items={translatedMenuItems}
+          selectedKeys={[selectedKey]}
+          onClick={({ key }) => { handleNavigate(key); }}
+          variant="borderless"
         />
-      }
-    >
-      <LayoutMain>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
-          {children}
-        </div>
-      </LayoutMain>
+      </SideNav>
+    ),
+    [theme, handleThemeSwitch, translatedMenuItems, selectedKey, handleNavigate],
+  );
 
+  const mobileDrawer = useMemo(
+    () => (
       <Drawer
         placement="left"
         onClose={() => { setMobileOpen(false); }}
         open={mobileOpen}
-        size="280"
+        size="85%"
+        styles={{
+          body: { padding: '8px 0' },
+          mask: { backgroundColor: 'rgba(0, 0, 0, 0.45)' },
+        }}
         destroyOnHidden
         title={
           <Typography.Title level={5} style={{ margin: 0 }}>
             AutocodeLLM
           </Typography.Title>
         }
-        styles={{ body: { padding: '8px 0' } }}
         extra={
           <ThemeSwitch
             themeMode={themeModeMap[theme ?? 'system'] ?? 'auto'}
@@ -164,6 +154,35 @@ export default function AppLayout({ children }: AppLayoutProps) {
           style={{ borderInlineEnd: 'none' }}
         />
       </Drawer>
+    ),
+    [mobileOpen, theme, handleThemeSwitch, translatedMenuItems, selectedKey, handleNavigate],
+  );
+
+  return (
+    <Layout
+      sidebar={isMobile ? undefined : sidebarContent}
+      header={
+        <Header
+          logo={<span style={{ fontSize: 14, fontWeight: 600 }}>AutocodeLLM</span>}
+          actions={
+            isMobile ? (
+              <ActionIcon
+                icon={MenuOutlined}
+                size="large"
+                onClick={() => { setMobileOpen(true); }}
+              />
+            ) : undefined
+          }
+        />
+      }
+    >
+      <LayoutMain>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
+          {children}
+        </div>
+      </LayoutMain>
+
+      {isMobile && mobileDrawer}
     </Layout>
   );
 }
