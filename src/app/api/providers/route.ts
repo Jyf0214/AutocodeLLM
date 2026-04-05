@@ -1,12 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { PRESET_PROVIDERS } from '@/lib/providers';
+import {
+  startQwenDeviceFlow,
+  pollQwenToken,
+  refreshQwenToken,
+  saveQwenOAuthCredentials,
+} from '@/lib/providers/qwen-oauth';
 import type {
   ProviderResponse,
   CreateProviderRequest,
   UpdateProviderRequest,
   TestProviderRequest,
   TestProviderResponse,
+  QwenOAuthStartResponse,
+  QwenOAuthPollResponse,
+  QwenOAuthRefreshResponse,
+  AddPresetProviderResponse,
 } from '@/lib/api/provider-types';
 
 /**
@@ -50,7 +61,7 @@ function maskApiKey(apiKey: string): string {
 }
 
 /**
- * GET /api/providers - 获取所有提供商列表
+ * GET /api/providers - 获取所有提供商列表（预置 + 自定义）
  */
 export async function GET() {
   try {
@@ -58,21 +69,41 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    const data = providers.map((provider) => ({
+    const customData = providers.map((provider) => ({
       id: provider.id,
       name: provider.name,
       baseUrl: provider.baseUrl,
-      apiKey: maskApiKey(decryptApiKey(provider.apiKey)),
+      apiKey: provider.authType === 'oauth' ? 'oauth' : maskApiKey(decryptApiKey(provider.apiKey)),
       databaseUrl: provider.databaseUrl,
       enabled: provider.enabled,
+      providerType: provider.providerType,
+      sdkType: provider.sdkType,
+      authType: provider.authType,
+      oauthAccessToken: provider.oauthAccessToken ? '****' : null,
+      oauthRefreshToken: provider.oauthRefreshToken ? '****' : null,
+      oauthExpiresAt: provider.oauthExpiresAt?.toISOString() ?? null,
+      oauthClientId: provider.oauthClientId,
+      oauthDeviceCode: provider.oauthDeviceCode,
+      metadata: provider.metadata,
       createdAt: provider.createdAt.toISOString(),
       updatedAt: provider.updatedAt.toISOString(),
     }));
 
+    // 合并预置提供商信息
+    const presetWithStatus = PRESET_PROVIDERS.map((preset) => {
+      const dbProvider = providers.find((p) => p.name === preset.name || p.name === preset.nameEn);
+      return {
+        ...preset,
+        isAdded: !!dbProvider,
+        dbId: dbProvider?.id,
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      data,
-    } as ProviderResponse);
+      data: customData,
+      presets: presetWithStatus,
+    } as ProviderResponse & { presets: typeof presetWithStatus });
   } catch {
     return NextResponse.json(
       {
@@ -88,19 +119,26 @@ export async function GET() {
 }
 
 /**
- * POST /api/providers - 创建提供商
+ * POST /api/providers - 创建提供商（支持 API Key 和 OAuth 类型）
  */
-export async function POST(request: Request) {
+async function createProvider(request: Request) {
   try {
-    const body = (await request.json()) as CreateProviderRequest;
-    const { name, baseUrl, apiKey, databaseUrl, enabled } = body;
+    const body = (await request.json()) as CreateProviderRequest & {
+      providerType?: string;
+      sdkType?: string;
+      authType?: string;
+    };
+    const { name, baseUrl, apiKey, databaseUrl, enabled, providerType, sdkType, authType } = body;
 
-    if (!name || !baseUrl || !apiKey) {
+    // OAuth 类型不需要 apiKey
+    const isOAuth = authType === 'oauth';
+
+    if (!name || !baseUrl || (!apiKey && !isOAuth)) {
       return NextResponse.json(
         {
           success: false,
           error: {
-            message: '缺少必填字段：name, baseUrl, apiKey',
+            message: isOAuth ? '缺少必填字段：name, baseUrl' : '缺少必填字段：name, baseUrl, apiKey',
             code: 'MISSING_FIELDS',
           },
         } as ProviderResponse,
@@ -129,9 +167,12 @@ export async function POST(request: Request) {
       data: {
         name,
         baseUrl,
-        apiKey: encryptApiKey(apiKey),
+        apiKey: isOAuth ? '' : encryptApiKey(apiKey),
         databaseUrl: databaseUrl ?? null,
         enabled: enabled ?? true,
+        providerType: providerType ?? 'custom',
+        sdkType: sdkType ?? 'openai',
+        authType: authType ?? 'apiKey',
       },
     });
 
@@ -142,9 +183,18 @@ export async function POST(request: Request) {
           id: newProvider.id,
           name: newProvider.name,
           baseUrl: newProvider.baseUrl,
-          apiKey: maskApiKey(decryptApiKey(newProvider.apiKey)),
+          apiKey: isOAuth ? 'oauth' : maskApiKey(decryptApiKey(newProvider.apiKey)),
           databaseUrl: newProvider.databaseUrl,
           enabled: newProvider.enabled,
+          providerType: newProvider.providerType,
+          sdkType: newProvider.sdkType,
+          authType: newProvider.authType,
+          oauthAccessToken: newProvider.oauthAccessToken ? '****' : null,
+          oauthRefreshToken: newProvider.oauthRefreshToken ? '****' : null,
+          oauthExpiresAt: newProvider.oauthExpiresAt?.toISOString() ?? null,
+          oauthClientId: newProvider.oauthClientId,
+          oauthDeviceCode: newProvider.oauthDeviceCode,
+          metadata: newProvider.metadata,
           createdAt: newProvider.createdAt.toISOString(),
           updatedAt: newProvider.updatedAt.toISOString(),
         },
@@ -401,3 +451,350 @@ export async function testProvider(request: Request) {
     );
   }
 }
+
+/**
+ * POST /api/providers/qwen-oauth/start - 启动 Qwen Device Flow
+ * POST /api/providers/qwen-oauth/poll - 轮询获取 token
+ * POST /api/providers/qwen-oauth/refresh - 刷新 token
+ * POST /api/providers/preset - 从预置配置添加提供商
+ * 注意：此函数通过 URL 路径区分处理不同的 OAuth 和预置提供商请求
+ */
+export async function POST(request: Request) {
+  const url = new URL(request.url);
+  const pathSegments = url.pathname.split('/');
+  const lastSegment = pathSegments[pathSegments.length - 1];
+
+  if (lastSegment === 'start') {
+    return handleQwenOAuthStart();
+  }
+
+  if (lastSegment === 'poll') {
+    const body = await request.json() as Record<string, unknown>;
+    return handleQwenOAuthPoll(body.deviceCode as string);
+  }
+
+  if (lastSegment === 'refresh') {
+    const body = await request.json() as Record<string, unknown>;
+    return handleQwenOAuthRefresh(body.providerId as string);
+  }
+
+  if (lastSegment === 'preset') {
+    const body = await request.json() as Record<string, unknown>;
+    return handleAddPresetProvider(body);
+  }
+
+  return createProvider(request);
+}
+
+async function handleQwenOAuthStart() {
+  try {
+    const result = await startQwenDeviceFlow();
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        deviceCode: result.deviceCode,
+        userCode: result.userCode,
+        verificationUri: result.verificationUri,
+        verificationUriComplete: result.verificationUriComplete,
+        expiresIn: result.expiresIn,
+        interval: result.interval,
+      },
+    } as QwenOAuthStartResponse);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          message: errorMessage,
+          code: 'OAUTH_START_FAILED',
+        },
+      } as QwenOAuthStartResponse,
+      { status: 500 }
+    );
+  }
+}
+
+async function handleQwenOAuthPoll(deviceCode: string) {
+  try {
+    if (!deviceCode) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: '缺少 deviceCode',
+            code: 'MISSING_DEVICE_CODE',
+          },
+        } as QwenOAuthPollResponse,
+        { status: 400 }
+      );
+    }
+
+    const result = await pollQwenToken(deviceCode);
+
+    const providerName = '通义千问';
+    let provider = await prisma.provider.findUnique({
+      where: { name: providerName },
+    });
+
+    provider ??= await prisma.provider.create({
+      data: {
+        name: providerName,
+        baseUrl: result.resourceUrl,
+        apiKey: '',
+        enabled: true,
+        providerType: 'preset',
+        sdkType: 'openai',
+        authType: 'oauth',
+        oauthDeviceCode: deviceCode,
+      },
+    });
+
+    await saveQwenOAuthCredentials(provider.id, result);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        resourceUrl: result.resourceUrl,
+        expiresIn: result.expiresIn,
+        providerId: provider.id,
+      },
+    } as QwenOAuthPollResponse);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
+
+    if (errorMessage === 'AUTHORIZATION_PENDING') {
+      return NextResponse.json({
+        success: false,
+        error: {
+          message: '等待用户授权',
+          code: 'AUTHORIZATION_PENDING',
+        },
+      } as QwenOAuthPollResponse);
+    }
+
+    if (errorMessage === 'SLOW_DOWN') {
+      return NextResponse.json({
+        success: false,
+        error: {
+          message: '请求过于频繁，请降低轮询频率',
+          code: 'SLOW_DOWN',
+        },
+      } as QwenOAuthPollResponse);
+    }
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          message: errorMessage,
+          code: 'OAUTH_POLL_FAILED',
+        },
+      } as QwenOAuthPollResponse,
+      { status: 500 }
+    );
+  }
+}
+
+async function handleQwenOAuthRefresh(providerId: string) {
+  try {
+    if (!providerId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: '缺少 providerId',
+            code: 'MISSING_PROVIDER_ID',
+          },
+        } as QwenOAuthRefreshResponse,
+        { status: 400 }
+      );
+    }
+
+    const provider = await prisma.provider.findUnique({
+      where: { id: providerId },
+    });
+
+    if (provider?.oauthRefreshToken == null) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: '未找到有效的刷新凭证',
+            code: 'NO_REFRESH_TOKEN',
+          },
+        } as QwenOAuthRefreshResponse,
+        { status: 400 }
+      );
+    }
+
+    const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
+    const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+    const parts = provider.oauthRefreshToken.split(':');
+    const ivHex = parts[0];
+    const encryptedData = parts[1];
+    if (!ivHex || !encryptedData) {
+      throw new Error('无效的加密数据格式');
+    }
+    const iv = Buffer.from(ivHex, 'hex');
+    const decipher = createDecipheriv('aes-256-cbc', key, iv);
+    let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    const result = await refreshQwenToken(decrypted);
+    const expiresAt = new Date(Date.now() + result.expiresIn * 1000);
+
+    const encryptToken = (token: string): string => {
+      const newIv = randomBytes(16);
+      const cipher = createCipheriv('aes-256-cbc', key, newIv);
+      let encrypted = cipher.update(token, 'utf8', 'hex');
+      encrypted += cipher.final('hex');
+      return newIv.toString('hex') + ':' + encrypted;
+    };
+
+    await prisma.provider.update({
+      where: { id: providerId },
+      data: {
+        oauthAccessToken: encryptToken(result.accessToken),
+        oauthRefreshToken: result.refreshToken ? encryptToken(result.refreshToken) : provider.oauthRefreshToken,
+        oauthExpiresAt: expiresAt,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        expiresIn: result.expiresIn,
+        expiresAt: expiresAt.toISOString(),
+      },
+    } as QwenOAuthRefreshResponse);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          message: errorMessage,
+          code: 'OAUTH_REFRESH_FAILED',
+        },
+      } as QwenOAuthRefreshResponse,
+      { status: 500 }
+    );
+  }
+}
+
+async function handleAddPresetProvider(body: Record<string, unknown>) {
+  try {
+    const presetId = body.presetId as string;
+
+    if (!presetId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: '缺少 presetId',
+            code: 'MISSING_PRESET_ID',
+          },
+        } as AddPresetProviderResponse,
+        { status: 400 }
+      );
+    }
+
+    const preset = PRESET_PROVIDERS.find((p) => p.id === presetId);
+
+    if (!preset) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: '预置提供商不存在',
+            code: 'PRESET_NOT_FOUND',
+          },
+        } as AddPresetProviderResponse,
+        { status: 404 }
+      );
+    }
+
+    const existing = await prisma.provider.findFirst({
+      where: {
+        OR: [
+          { name: preset.name },
+          ...(preset.nameEn ? [{ name: preset.nameEn }] : []),
+        ],
+      },
+    });
+
+    if (existing) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: '该提供商已添加',
+            code: 'ALREADY_EXISTS',
+          },
+        } as AddPresetProviderResponse,
+        { status: 409 }
+      );
+    }
+
+    const newProvider = await prisma.provider.create({
+      data: {
+        name: preset.name,
+        baseUrl: preset.baseUrl ?? '',
+        apiKey: '',
+        enabled: true,
+        providerType: 'preset',
+        sdkType: preset.sdkType,
+        authType: preset.authType,
+        metadata: JSON.stringify({
+          checkModel: preset.checkModel,
+          openaiCompatible: preset.openaiCompatible,
+          apiKeyUrl: preset.apiKeyUrl,
+        }),
+      },
+    });
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          id: newProvider.id,
+          name: newProvider.name,
+          baseUrl: newProvider.baseUrl,
+          apiKey: '',
+          databaseUrl: newProvider.databaseUrl,
+          enabled: newProvider.enabled,
+          providerType: newProvider.providerType,
+          sdkType: newProvider.sdkType,
+          authType: newProvider.authType,
+          oauthAccessToken: null,
+          oauthRefreshToken: null,
+          oauthExpiresAt: null,
+          oauthClientId: newProvider.oauthClientId,
+          oauthDeviceCode: newProvider.oauthDeviceCode,
+          metadata: newProvider.metadata,
+          createdAt: newProvider.createdAt.toISOString(),
+          updatedAt: newProvider.updatedAt.toISOString(),
+        },
+      } as AddPresetProviderResponse,
+      { status: 201 }
+    );
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          message: '添加预置提供商失败',
+          code: 'ADD_PRESET_FAILED',
+        },
+      } as AddPresetProviderResponse,
+      { status: 500 }
+    );
+  }
+}
+
