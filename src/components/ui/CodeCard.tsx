@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { Button, Tooltip } from 'antd';
 import { CopyOutlined, DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import styles from './CodeCard.module.css';
+import '@/styles/CodeCard.css';
 
 interface CodeCardProps {
   code: string;
@@ -33,20 +33,22 @@ export default function CodeCard({
   const lines = code.split('\n');
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(code).catch(() => {});
+    void navigator.clipboard.writeText(code);
     setCopied(true);
     onCopy?.();
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   }, [code, onCopy]);
 
   return (
-    <div className={`${styles.card} ${className ?? ''}`}>
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <span className={styles.languageTag}>{language}</span>
-          {filename && <span className={styles.filename}>{filename}</span>}
+    <div className={`code-card ${className ?? ''}`}>
+      <div className="code-card-header">
+        <div className="code-card-header-left">
+          <span className="code-card-lang">{language}</span>
+          {filename != null && <span className="code-card-filename">{filename}</span>}
         </div>
-        <div className={styles.headerActions}>
+        <div className="code-card-actions">
           {actions}
           <Tooltip title={copied ? '已复制' : '复制代码'}>
             <Button
@@ -54,44 +56,48 @@ export default function CodeCard({
               size="small"
               icon={<CopyOutlined />}
               onClick={handleCopy}
-              className={styles.actionBtn!}
+              className="code-card-action-btn"
             />
           </Tooltip>
-          {onDownload && (
+          {onDownload != null && (
             <Tooltip title="下载">
               <Button
                 type="text"
                 size="small"
                 icon={<DownloadOutlined />}
-                onClick={onDownload}
-                className={styles.actionBtn!}
+                onClick={() => {
+                  onDownload();
+                }}
+                className="code-card-action-btn"
               />
             </Tooltip>
           )}
-          {onRun && (
+          {onRun != null && (
             <Tooltip title="运行">
               <Button
                 type="text"
                 size="small"
                 icon={<PlayCircleOutlined />}
-                onClick={onRun}
-                className={styles.actionBtn!}
+                onClick={() => {
+                  onRun();
+                }}
+                className="code-card-action-btn"
               />
             </Tooltip>
           )}
         </div>
       </div>
-      <div className={styles.codeContainer}>
-        <pre className={styles.codeBlock}>
+      <div className="code-card-body">
+        <pre className="code-card-code">
           {lines.map((line, index) => (
-            <div key={index} className={styles.codeLine}>
+            <div key={String(index)} className="code-card-line">
               {showLineNumbers && (
-                <span className={styles.lineNumber}>
-                  {index + 1}
+                <span className="code-card-line-number">
+                  {String(index + 1)}
                 </span>
               )}
-              <code className={styles.codeContent}>
-                {line || '\n'}
+              <code className="code-card-content">
+                {line.length === 0 ? '\n' : line}
               </code>
             </div>
           ))}

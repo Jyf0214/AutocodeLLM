@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Button, Tooltip } from 'antd';
 import { SendOutlined, StopOutlined } from '@ant-design/icons';
-import styles from './ChatInput.module.css';
+import '@/styles/ChatInput.css';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -27,7 +27,9 @@ export default function ChatInput({
 
   const handleSubmit = useCallback(() => {
     const trimmed = value.trim();
-    if (!trimmed || disabled || loading) return;
+    if (!trimmed || disabled || loading) {
+      return;
+    }
     onSend(trimmed);
     setValue('');
     if (textareaRef.current) {
@@ -49,7 +51,8 @@ export default function ChatInput({
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+      const height = Math.min(textarea.scrollHeight, 200);
+      textarea.style.height = String(height) + 'px';
     }
   }, []);
 
@@ -62,28 +65,32 @@ export default function ChatInput({
   const canSend = value.trim().length > 0 && !disabled && !loading;
 
   return (
-    <div className={`${styles.container} ${className ?? ''}`}>
-      <div className={styles.inputWrapper}>
+    <div className={`chat-input ${className ?? ''}`}>
+      <div className="chat-input-wrapper">
         <textarea
           ref={textareaRef}
-          className={styles.textarea}
+          className="chat-input-textarea"
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => {
+            setValue(e.target.value);
+          }}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
           placeholder={placeholder}
           disabled={disabled}
           rows={1}
         />
-        <div className={styles.actions}>
+        <div className="chat-input-actions">
           {loading ? (
             <Tooltip title="停止生成">
               <Button
                 type="primary"
                 danger
                 icon={<StopOutlined />}
-                onClick={onStop}
-                className={styles.stopBtn!}
+                onClick={() => {
+                  onStop?.();
+                }}
+                className="chat-input-stop-btn"
               />
             </Tooltip>
           ) : (
@@ -93,7 +100,7 @@ export default function ChatInput({
                 icon={<SendOutlined />}
                 onClick={handleSubmit}
                 disabled={!canSend}
-                className={`${styles.sendBtn!} ${!canSend ? styles.sendBtnDisabled : ''}`}
+                className={canSend ? 'chat-input-send-btn' : 'chat-input-send-btn chat-input-send-btn-disabled'}
               />
             </Tooltip>
           )}

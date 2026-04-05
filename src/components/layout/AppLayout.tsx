@@ -18,7 +18,7 @@ import {
 } from '@ant-design/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import styles from './AppLayout.module.css';
+import '@/styles/AppLayout.css';
 
 const { Content, Header } = Layout;
 const { Title } = Typography;
@@ -39,6 +39,35 @@ const menuItems = [
 
 interface AppLayoutProps {
   children: React.ReactNode;
+}
+
+function SidebarContent({
+  items,
+  selectedKey,
+  onNavigate,
+}: {
+  items: { key: string; icon: React.ReactNode; label: string }[];
+  selectedKey: string;
+  onNavigate: (key: string) => void;
+}) {
+  return (
+    <div className="sidebar">
+      <div className="sidebar-header">
+        <Title level={4} style={{ margin: 0, color: 'var(--text-primary)', fontWeight: 600 }}>
+          AutocodeLLM
+        </Title>
+      </div>
+      <Menu
+        mode="inline"
+        selectedKeys={[selectedKey]}
+        items={items}
+        onClick={({ key }) => {
+          onNavigate(key);
+        }}
+        className="sidebar-menu"
+      />
+    </div>
+  );
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
@@ -66,56 +95,53 @@ export default function AppLayout({ children }: AppLayoutProps) {
     [t],
   );
 
-  const SidebarContent = () => (
-    <div className={styles.sidebar}>
-      <div className={styles.sidebarHeader}>
-        <Title level={4} className={styles.sidebarTitle!}>
-          {t('common:appName')}
-        </Title>
-      </div>
-      <Menu
-        mode="inline"
-        selectedKeys={[selectedKey]}
-        items={translatedMenuItems}
-        onClick={({ key }) => {
-          router.push(key);
-          setMobileOpen(false);
-        }}
-        className={styles.sidebarMenu!}
-      />
-    </div>
-  );
+  const handleNavigate = (key: string) => {
+    router.push(key);
+    setMobileOpen(false);
+  };
 
   return (
-    <Layout className={styles.layout!}>
-      <div className={styles.desktopSider!}>
-        <SidebarContent />
+    <Layout className="app-layout">
+      <div className="desktop-sider">
+        <SidebarContent
+          items={translatedMenuItems}
+          selectedKey={selectedKey}
+          onNavigate={handleNavigate}
+        />
       </div>
-      <Header className={styles.header!}>
+      <Header className="app-header">
         <Button
           type="text"
           icon={<MenuOutlined />}
-          className={styles.menuToggle!}
-          onClick={() => setMobileOpen(true)}
+          className="menu-toggle"
+          onClick={() => {
+            setMobileOpen(true);
+          }}
         />
-        <Title level={5} className={styles.headerTitle!}>
-          {t('common:appName')}
+        <Title level={5} style={{ margin: 0, color: 'var(--text-primary)', fontWeight: 600 }}>
+          AutocodeLLM
         </Title>
       </Header>
-      <Layout className={styles.mainLayout!}>
-        <Content className={styles.content!}>
+      <Layout className="main-layout">
+        <Content className="app-content">
           {children}
         </Content>
       </Layout>
       <Drawer
         placement="left"
-        onClose={() => setMobileOpen(false)}
+        onClose={() => {
+          setMobileOpen(false);
+        }}
         open={mobileOpen}
-        width={280}
-        destroyOnClose
+        size="large"
+        destroyOnHidden
         styles={{ body: { padding: 0 } }}
       >
-        <SidebarContent />
+        <SidebarContent
+          items={translatedMenuItems}
+          selectedKey={selectedKey}
+          onNavigate={handleNavigate}
+        />
       </Drawer>
     </Layout>
   );

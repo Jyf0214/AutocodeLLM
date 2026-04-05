@@ -1,10 +1,10 @@
-.layout {
+.app-layout {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
 
-.desktopSider {
+.desktop-sider {
   display: none;
   width: 280px;
   flex-shrink: 0;
@@ -19,7 +19,7 @@
 }
 
 @media (min-width: 1024px) {
-  .desktopSider {
+  .desktop-sider {
     display: block;
   }
 }
@@ -30,50 +30,43 @@
   min-height: 100%;
 }
 
-.sidebarHeader {
+.sidebar-header {
   padding: 16px 24px;
   border-bottom: 1px solid var(--border-primary);
 }
 
-.sidebarTitle {
-  margin: 0;
-  color: var(--text-primary);
-  font-weight: 600;
-  font-size: 18px;
-}
-
-.sidebarMenu {
+.sidebar-menu {
   flex: 1;
   background: transparent;
   border-right: none;
 }
 
-.sidebarMenu :global(.ant-menu-item) {
+.sidebar-menu .ant-menu-item {
   margin: 4px 8px;
   border-radius: var(--radius-md);
   color: var(--text-secondary);
 }
 
-.sidebarMenu :global(.ant-menu-item:hover) {
+.sidebar-menu .ant-menu-item:hover {
   background: var(--bg-tertiary);
 }
 
-.sidebarMenu :global(.ant-menu-item-selected) {
+.sidebar-menu .ant-menu-item-selected {
   background: var(--bg-tertiary);
   color: var(--text-primary);
   border-left: 2px solid var(--border-strong);
 }
 
-.sidebarMenu :global(.ant-menu-item-selected::after) {
+.sidebar-menu .ant-menu-item-selected::after {
   display: none;
 }
 
-.sidebarMenu :global(.ant-menu-item-icon) {
+.sidebar-menu .ant-menu-item-icon {
   font-size: 20px;
   stroke-width: 1.5;
 }
 
-.header {
+.app-header {
   display: flex;
   align-items: center;
   height: 56px;
@@ -86,49 +79,43 @@
 }
 
 @media (min-width: 1024px) {
-  .header {
+  .app-header {
     padding-left: 296px;
   }
 }
 
-.menuToggle {
+.menu-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 @media (min-width: 1024px) {
-  .menuToggle {
+  .menu-toggle {
     display: none;
   }
 }
 
-.headerTitle {
-  margin: 0;
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.mainLayout {
+.main-layout {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
 @media (min-width: 1024px) {
-  .mainLayout {
+  .main-layout {
     margin-left: 280px;
   }
 }
 
-.content {
+.app-content {
   padding: 24px;
   background: var(--bg-primary);
   flex: 1;
 }
 
 @media (max-width: 767px) {
-  .content {
+  .app-content {
     padding: 16px;
   }
 }

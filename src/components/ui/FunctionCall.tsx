@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Tag } from 'antd';
 import { RightOutlined } from '@ant-design/icons';
-import styles from './FunctionCall.module.css';
+import '@/styles/FunctionCall.css';
 
 interface FunctionCallProps {
   functionName: string;
@@ -14,10 +14,10 @@ interface FunctionCallProps {
 }
 
 const statusMap = {
-  pending: { color: 'default', text: '等待中' },
-  running: { color: 'processing', text: '运行中' },
-  success: { color: 'default', text: '成功' },
-  error: { color: 'default', text: '失败' },
+  pending: { color: 'default' as const, text: '等待中' },
+  running: { color: 'processing' as const, text: '运行中' },
+  success: { color: 'default' as const, text: '成功' },
+  error: { color: 'default' as const, text: '失败' },
 };
 
 export default function FunctionCall({
@@ -36,10 +36,12 @@ export default function FunctionCall({
   const paramEntries = Object.entries(parameters);
 
   return (
-    <div className={`${styles.container} ${className ?? ''}`}>
+    <div className={`function-call ${className ?? ''}`}>
       <div
-        className={styles.header}
-        onClick={() => setExpanded(!expanded)}
+        className="function-call-header"
+        onClick={() => {
+          setExpanded(!expanded);
+        }}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -49,31 +51,31 @@ export default function FunctionCall({
         }}
       >
         <RightOutlined
-          className={`${styles.chevron} ${expanded ? styles.chevronExpanded : ''}`}
+          className={`function-call-chevron ${expanded ? 'function-call-chevron-expanded' : ''}`}
         />
-        <code className={styles.functionName}>{functionName}</code>
-        <Tag className={styles.statusTag!} color={statusInfo.color as 'default' | 'processing'}>
+        <code className="function-call-name">{functionName}</code>
+        <Tag className="function-call-status" color={statusInfo.color}>
           {statusInfo.text}
         </Tag>
       </div>
       {expanded && (
-        <div className={styles.content}>
+        <div className="function-call-content">
           {paramEntries.length > 0 && (
-            <div className={styles.paramsTable}>
+            <div className="function-call-params">
               {paramEntries.map(([key, value]) => (
-                <div key={key} className={styles.paramRow}>
-                  <span className={styles.paramKey}>{key}</span>
-                  <span className={styles.paramValue}>
-                    {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                <div key={key} className="function-call-param-row">
+                  <span className="function-call-param-key">{key}</span>
+                  <span className="function-call-param-value">
+                    {typeof value === 'object' && value !== null ? JSON.stringify(value, null, 2) : String(value)}
                   </span>
                 </div>
               ))}
             </div>
           )}
-          {result && (
-            <div className={`${styles.resultCard} ${isSuccess ? styles.resultSuccess : ''} ${isError ? styles.resultError : ''}`}>
-              <div className={styles.resultHeader}>执行结果</div>
-              <pre className={styles.resultContent}>{result}</pre>
+          {result != null && (
+            <div className={`function-call-result ${isSuccess ? 'function-call-result-success' : ''} ${isError ? 'function-call-result-error' : ''}`}>
+              <div className="function-call-result-header">执行结果</div>
+              <pre className="function-call-result-content">{result}</pre>
             </div>
           )}
         </div>

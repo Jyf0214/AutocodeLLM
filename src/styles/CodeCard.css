@@ -1,11 +1,11 @@
-.card {
+.code-card {
   background: var(--bg-secondary);
   border-radius: var(--radius-card);
   border: 1px solid var(--border-primary);
   overflow: hidden;
 }
 
-.header {
+.code-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -14,13 +14,13 @@
   background: var(--bg-secondary);
 }
 
-.headerLeft {
+.code-card-header-left {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.languageTag {
+.code-card-lang {
   font-size: 12px;
   color: var(--text-tertiary);
   padding: 2px 8px;
@@ -29,34 +29,34 @@
   font-family: var(--font-mono);
 }
 
-.filename {
+.code-card-filename {
   font-size: 12px;
   color: var(--text-tertiary);
 }
 
-.headerActions {
+.code-card-actions {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.actionBtn {
+.code-card-action-btn {
   color: var(--text-tertiary);
   padding: 4px;
   height: auto;
 }
 
-.actionBtn:hover {
+.code-card-action-btn:hover {
   color: var(--text-primary);
   background: var(--bg-tertiary);
 }
 
-.codeContainer {
+.code-card-body {
   overflow-x: auto;
   padding: 16px;
 }
 
-.codeBlock {
+.code-card-code {
   margin: 0;
   font-family: var(--font-mono);
   font-size: 13px;
@@ -65,12 +65,12 @@
   white-space: pre;
 }
 
-.codeLine {
+.code-card-line {
   display: flex;
   min-height: 20px;
 }
 
-.lineNumber {
+.code-card-line-number {
   display: inline-block;
   width: 40px;
   text-align: right;
@@ -80,7 +80,7 @@
   flex-shrink: 0;
 }
 
-.codeContent {
+.code-card-content {
   flex: 1;
   white-space: pre;
 }
