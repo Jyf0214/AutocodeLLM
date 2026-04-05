@@ -218,7 +218,7 @@ export default function DemoScenarioPage({
     const userDelay = 1000;
     timeoutsRef.current.push(setTimeout(() => {
       const userMsg: DemoMessage = {
-        id: `user-${stepIndex}`,
+        id: `user-${String(stepIndex)}`,
         role: 'user',
         content: config.simulatedMessages[0]?.content ?? '',
       };
@@ -240,13 +240,14 @@ export default function DemoScenarioPage({
       setIsProcessingTool(true);
 
       assistantMsg.toolCalls.forEach((tool, toolIndex) => {
-        const toolDelay = toolCallDelay + toolIndex * 1200;
+        const toolIndexNum = toolIndex;
+        const toolDelay = toolCallDelay + toolIndexNum * 1200;
         timeoutsRef.current.push(setTimeout(() => {
           const toolMsg: DemoMessage = {
-            id: `tool-${toolIndex}`,
+            id: `tool-${String(toolIndexNum)}`,
             role: 'assistant',
             toolCalls: [{
-              id: `tool-${toolIndex}`,
+              id: `tool-${String(toolIndexNum)}`,
               name: tool.name,
               description: tool.description,
               status: tool.status,
