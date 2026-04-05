@@ -257,17 +257,18 @@ export default function ProviderPage() {
       });
       const data: { success: boolean; data?: { verificationUri: string; userCode: string; deviceCode: string; interval: number }; error?: { message: string } } = await res.json();
       if (data.success && data.data) {
-        setOauthVerificationUri(data.data.verificationUri);
-        setOauthUserCode(data.data.userCode);
+        const { verificationUri, userCode, deviceCode, interval } = data.data;
+        setOauthVerificationUri(verificationUri);
+        setOauthUserCode(userCode);
         setOauthPolling(true);
-        window.open(data.data.verificationUri, '_blank');
+        window.open(verificationUri, '_blank');
 
         const poll = async () => {
           try {
             const pollRes = await fetch('/api/providers', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ deviceCode: data.data.deviceCode }),
+              body: JSON.stringify({ deviceCode }),
             });
             const pollData: { success: boolean; data?: { providerId: string; expiresIn: number }; error?: { code: string; message: string } } = await pollRes.json();
 
@@ -279,9 +280,9 @@ export default function ProviderPage() {
               message.success('Qwen OAuth 登录成功');
               fetchProviders();
             } else if (pollData.error?.code === 'AUTHORIZATION_PENDING') {
-              setTimeout(poll, data.data.interval * 1000);
+              setTimeout(poll, interval * 1000);
             } else if (pollData.error?.code === 'SLOW_DOWN') {
-              setTimeout(poll, (data.data.interval + 2) * 1000);
+              setTimeout(poll, (interval + 2) * 1000);
             } else {
               setOauthPolling(false);
               message.error(pollData.error?.message ?? '获取 Token 失败');
@@ -292,7 +293,7 @@ export default function ProviderPage() {
           }
         };
 
-        setTimeout(poll, data.data.interval * 1000);
+        setTimeout(poll, interval * 1000);
       } else {
         message.error(data.error?.message ?? '启动 OAuth 失败');
       }
