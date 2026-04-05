@@ -10,6 +10,10 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     # Node.js 24（基础镜像已包含）
     # npm（随 Node.js 安装）
+    # C++ 编译器（node-pty 编译需要）
+    build-essential \
+    # node-pty vte 依赖（可选但推荐）
+    libvte-2.91-dev \
     # Python 3.13
     python3-full \
     python3-pip \

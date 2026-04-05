@@ -29,10 +29,39 @@ import {
   ReloadOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
+import { OpenAI, Anthropic, Google, DeepSeek, Nvidia, Zhipu, Moonshot, Groq, Mistral, OpenRouter, Ollama, Azure, Cohere, Fireworks, Perplexity, ZeroOne, Alibaba, Tencent, IFlyTekCloud, SiliconCloud, Together, XAI, Minimax } from '@lobehub/icons';
 import type { Provider, ProviderResponse, TestProviderResponse } from '@/lib/api/provider-types';
 import { PRESET_PROVIDERS } from '@/lib/providers';
 import type { PresetProvider } from '@/lib/providers';
 void PRESET_PROVIDERS;
+
+const PROVIDER_ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
+  openai: OpenAI,
+  anthropic: Anthropic,
+  google: Google,
+  deepseek: DeepSeek,
+  nvidia: Nvidia,
+  qwen: Alibaba,
+  zhipu: Zhipu,
+  moonshot: Moonshot,
+  minimax: Minimax,
+  groq: Groq,
+  mistral: Mistral,
+  openrouter: OpenRouter,
+  siliconcloud: SiliconCloud,
+  together: Together,
+  ollama: Ollama,
+  azure: Azure,
+  xai: XAI,
+  cohere: Cohere,
+  fireworks: Fireworks,
+  perplexity: Perplexity,
+  yi: ZeroOne,
+  baichuan: Alibaba,
+  hunyuan: Tencent,
+  spark: IFlyTekCloud,
+  stepfun: Moonshot,
+};
 
 interface ProviderFormValues {
   name: string;
@@ -227,7 +256,7 @@ export default function ProviderPage() {
   const handleAddPreset = useCallback(
     async (preset: PresetProviderWithStatus) => {
       try {
-        const res = await fetch('/api/providers', {
+        const res = await fetch('/api/providers/preset', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ presetId: preset.id }),
@@ -250,7 +279,7 @@ export default function ProviderPage() {
   const handleQwenOAuthStart = useCallback(async () => {
     setOauthLoading(true);
     try {
-      const res = await fetch('/api/providers', {
+      const res = await fetch('/api/providers/qwen-oauth/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -265,7 +294,7 @@ export default function ProviderPage() {
 
         const poll = async () => {
           try {
-            const pollRes = await fetch('/api/providers', {
+            const pollRes = await fetch('/api/providers/qwen-oauth/poll', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ deviceCode }),
@@ -463,7 +492,10 @@ export default function ProviderPage() {
             onClick={() => { if (!preset.isAdded) handleAddPreset(preset); }}
           >
             <Flexbox align="center" gap={8}>
-              <Avatar avatar={preset.icon ?? <GlobalOutlined />} size={32} />
+              {(() => {
+                const IconComponent = PROVIDER_ICON_MAP[preset.id];
+                return IconComponent ? <IconComponent size={32} /> : <Avatar avatar={preset.icon ?? <GlobalOutlined />} size={32} />;
+              })()}
               <Flexbox flex={1}>
                 <Text strong style={{ fontSize: 14 }}>{preset.name}</Text>
                 <Text type="secondary" style={{ fontSize: 12 }}>
