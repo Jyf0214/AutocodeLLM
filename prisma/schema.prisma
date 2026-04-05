@@ -3,6 +3,7 @@
 generator client {
   provider      = "prisma-client-js"
   engineType    = "library"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -20,7 +21,29 @@ model User {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
+  passwordAudits    PasswordAudit[]
+
   @@map("users")
+}
+
+// 密码审计日志
+model PasswordAudit {
+  id              String   @id @default(uuid())
+  userId          String
+  action          String   // PASSWORD_CHANGED, LOGIN_ATTEMPT, LOGIN_SUCCESS, LOGIN_FAILED
+  submittedHash   String?  // 用户提交的密码哈希（用于登录尝试）
+  storedHash      String?  // 当时系统存储的哈希值
+  ipAddress       String?
+  userAgent       String?
+  success         Boolean  @default(true)
+  message         String?
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("password_audits")
 }
 
 // API 提供商配置

@@ -64,6 +64,12 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
+      // 记录登录失败 - 用户不存在
+      console.log(`\n🔐 登录审计 [${new Date().toISOString()}]`);
+      console.log(`  用户名: ${username}`);
+      console.log(`  结果: FAILED (用户不存在)`);
+      console.log('========================================\n');
+
       return NextResponse.json(
         { success: false, error: { message: '用户不存在', code: 'USER_NOT_FOUND' } },
         { status: 401 },
@@ -82,11 +88,61 @@ export async function POST(request: Request) {
       const passwordHash = createHash('sha256').update(password).digest('hex');
 
       if (user.passwordHash !== passwordHash) {
+        // 记录登录失败 - 密码错误（可选）
+        try {
+          
+          await prisma.passwordAudit.create({
+          data: {
+            userId: user.id,
+            action: 'LOGIN_FAILED',
+            submittedHash: passwordHash,
+            storedHash: user.passwordHash,
+            success: false,
+            message: '密码错误',
+          },
+        });
+        } catch {
+          // 审计表不存在，忽略
+        }
+
+        console.log(`\n🔐 登录审计 [${new Date().toISOString()}]`);
+        console.log(`  用户: ${user.username} (${user.id})`);
+        console.log(`  结果: FAILED (密码错误)`);
+        console.log(`  提交哈希: ${passwordHash}`);
+        console.log(`  系统哈希: ${user.passwordHash}`);
+        console.log(`  匹配: ${passwordHash === user.passwordHash ? '✅' : '❌'}`);
+        console.log('========================================\n');
+
         return NextResponse.json(
           { success: false, error: { message: '密码错误', code: 'INVALID_CREDENTIALS' } },
           { status: 401 },
         );
       }
+
+      // 记录登录成功（可选）
+      try {
+        
+        await prisma.passwordAudit.create({
+        data: {
+          userId: user.id,
+          action: 'LOGIN_SUCCESS',
+          submittedHash: passwordHash,
+          storedHash: user.passwordHash,
+          success: true,
+          message: '登录成功',
+        },
+      });
+      } catch {
+        // 审计表不存在，忽略
+      }
+
+      console.log(`\n🔐 登录审计 [${new Date().toISOString()}]`);
+      console.log(`  用户: ${user.username} (${user.id})`);
+      console.log(`  结果: SUCCESS`);
+      console.log(`  提交哈希: ${passwordHash}`);
+      console.log(`  系统哈希: ${user.passwordHash}`);
+      console.log(`  匹配: ✅`);
+      console.log('========================================\n');
     }
 
     return NextResponse.json({
