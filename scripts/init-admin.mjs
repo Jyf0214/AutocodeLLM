@@ -1,6 +1,8 @@
 /**
  * 初始化管理员账户
- * - 始终使用默认密码: admin123
+ * - 无管理员账户时自动创建
+ * - 已存在时提示"忘记密码请使用验证码登录"
+ * - 始终使用默认密码: admin123（不打印）
  * - 存储哈希，登录时强制修改密码
  * - 旧版本升级：强制删除旧账户，重新创建
  */
@@ -35,13 +37,10 @@ export async function initAdminAccount() {
           isInitialPassword: true,
         },
       });
-      console.log('  ✅ 创建默认管理员账户');
-      console.log('  ⚠️  用户名: admin');
-      console.log(`  🔑 密码: ${DEFAULT_PASSWORD}`);
-      console.log('  ⚠️  首次登录后将强制修改密码');
+      console.log('  ✅ 已创建默认管理员账户（admin）');
     } else if (!existingUser.isInitialPassword || existingUser.isInitialPassword === false) {
       // 情况 2：旧版本升级 - 没有 isInitialPassword 标志
-      console.log('  ⚠️  检测到旧版本管理员账户，强制重建...');
+      console.log('  ⚠️  检测到旧版本管理员账户，正在重建...');
 
       await prisma.user.delete({
         where: { username: 'admin' },
@@ -56,16 +55,11 @@ export async function initAdminAccount() {
         },
       });
 
-      console.log('  ✅ 重建管理员账户');
-      console.log('  ⚠️  用户名: admin');
-      console.log(`  🔑 密码: ${DEFAULT_PASSWORD}`);
-      console.log('  ⚠️  首次登录后将强制修改密码');
+      console.log('  ✅ 已重建管理员账户（admin）');
     } else {
-      // 情况 3：isInitialPassword 为 true，始终打印默认密码
-      console.log('  ⚠️  管理员账户存在（初始密码状态）');
-      console.log('  ⚠️  用户名: admin');
-      console.log(`  🔑 密码: ${DEFAULT_PASSWORD}`);
-      console.log('  ⚠️  首次登录后将强制修改密码');
+      // 情况 3：管理员账户已存在
+      console.log('  ℹ️  管理员账户（admin）已存在');
+      console.log('  💡 忘记密码请使用验证码登录');
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
