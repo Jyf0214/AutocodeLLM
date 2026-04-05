@@ -1,10 +1,19 @@
 'use client';
 
-import { useMemo, useState, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
-import { SideNav, Header, Menu, ActionIcon, ThemeSwitch, Icon } from '@lobehub/ui';
+import {
+  SideNav,
+  Header,
+  Menu,
+  ActionIcon,
+  ThemeSwitch,
+  Icon,
+  Layout,
+  LayoutMain,
+} from '@lobehub/ui';
 import {
   HomeOutlined,
   FolderOutlined,
@@ -20,20 +29,19 @@ import {
   MenuOutlined,
 } from '@ant-design/icons';
 import { Drawer } from 'antd';
-import '@/styles/AppLayout.css';
 
 const menuItems = [
-  { key: '/', icon: HomeOutlined, label: 'common.appName' },
-  { key: '/workplace', icon: FolderOutlined, label: 'common.workplace' },
-  { key: '/setting/mcp', icon: SettingOutlined, label: 'common.mcp' },
-  { key: '/env', icon: EnvironmentOutlined, label: 'common.env' },
-  { key: '/workers', icon: CloudServerOutlined, label: 'common.workers' },
-  { key: '/agents', icon: TeamOutlined, label: 'common.agents' },
-  { key: '/sync', icon: SyncOutlined, label: 'common.sync' },
-  { key: '/model', icon: AppstoreOutlined, label: 'common.models' },
-  { key: '/openai/provider', icon: ApiOutlined, label: 'common.providers' },
-  { key: '/docs', icon: BookOutlined, label: 'common.docs' },
-  { key: '/demo', icon: PlayCircleOutlined, label: 'common.demo' },
+  { key: '/', icon: HomeOutlined, labelKey: 'common.appName' },
+  { key: '/workplace', icon: FolderOutlined, labelKey: 'common.workplace' },
+  { key: '/setting/mcp', icon: SettingOutlined, labelKey: 'common.mcp' },
+  { key: '/env', icon: EnvironmentOutlined, labelKey: 'common.env' },
+  { key: '/workers', icon: CloudServerOutlined, labelKey: 'common.workers' },
+  { key: '/agents', icon: TeamOutlined, labelKey: 'common.agents' },
+  { key: '/sync', icon: SyncOutlined, labelKey: 'common.sync' },
+  { key: '/model', icon: AppstoreOutlined, labelKey: 'common.models' },
+  { key: '/openai/provider', icon: ApiOutlined, labelKey: 'common.providers' },
+  { key: '/docs', icon: BookOutlined, labelKey: 'common.docs' },
+  { key: '/demo', icon: PlayCircleOutlined, labelKey: 'common.demo' },
 ];
 
 const themeModeMap: Record<string, 'auto' | 'light' | 'dark'> = {
@@ -51,7 +59,7 @@ function SidebarContent({
   selectedKey,
   onNavigate,
 }: {
-  items: { key: string; icon: typeof HomeOutlined; label: string }[];
+  items: { key: string; icon: React.ReactNode; label: string }[];
   selectedKey: string;
   onNavigate: (key: string) => void;
 }) {
@@ -69,40 +77,24 @@ function SidebarContent({
     [setTheme],
   );
 
-  const lobeMenuItems = items.map((item) => ({
-    key: item.key,
-    icon: <Icon icon={item.icon} />,
-    label: item.label,
-  }));
-
   return (
     <SideNav
-      avatar={
-        <span style={{ fontSize: 16, fontWeight: 600 }}>
-          AutocodeLLM
-        </span>
-      }
+      avatar={<span style={{ fontSize: 14, fontWeight: 600 }}>AutocodeLLM</span>}
       bottomActions={
         <ThemeSwitch
           themeMode={themeModeMap[theme ?? 'system'] ?? 'auto'}
           onThemeSwitch={handleThemeSwitch}
-          labels={{
-            auto: '跟随系统',
-            dark: '深色模式',
-            light: '浅色模式',
-          }}
+          labels={{ auto: '跟随系统', dark: '深色模式', light: '浅色模式' }}
         />
       }
-      style={{ width: '100%', borderRight: 'none' }}
     >
       <Menu
-        items={lobeMenuItems}
+        items={items}
         selectedKeys={[selectedKey]}
         onClick={({ key }) => {
           onNavigate(key);
         }}
         variant="borderless"
-        style={{ width: '100%' }}
       />
     </SideNav>
   );
@@ -120,39 +112,49 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   const translatedMenuItems = useMemo(
     () =>
-      menuItems.map((item) => {
-        const parts = item.label.split('.');
-        const namespace = parts[0] ?? '';
-        const key = parts[1] ?? '';
-        return {
-          key: item.key,
-          icon: item.icon,
-          label: t(`${namespace}.${key}`),
-        };
-      }),
+      menuItems.map((item) => ({
+        key: item.key,
+        icon: <Icon icon={item.icon} />,
+        label: t(item.labelKey),
+      })),
     [t],
   );
 
-  const handleNavigate = (key: string) => {
-    router.push(key);
-    setMobileOpen(false);
-  };
+  const handleNavigate = useCallback(
+    (key: string) => {
+      router.push(key);
+      setMobileOpen(false);
+    },
+    [router],
+  );
 
   return (
-    <div className="app-layout">
-      <div className="desktop-sider">
-        <SidebarContent
-          items={translatedMenuItems}
-          selectedKey={selectedKey}
-          onNavigate={handleNavigate}
-        />
+    <Layout>
+      {/* Desktop sidebar */}
+      <div
+        style={{
+          display: 'none',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: 100,
+          borderRight: '1px solid var(--border-primary)',
+        }}
+        className="desktop-sider"
+      >
+        <div style={{ width: 240, height: '100%', overflow: 'auto' }}>
+          <SidebarContent
+            items={translatedMenuItems}
+            selectedKey={selectedKey}
+            onNavigate={handleNavigate}
+          />
+        </div>
       </div>
+
+      {/* Header */}
       <Header
-        logo={
-          <span style={{ fontSize: 16, fontWeight: 600 }}>
-            AutocodeLLM
-          </span>
-        }
+        logo={<span style={{ fontSize: 14, fontWeight: 600 }}>AutocodeLLM</span>}
         actions={
           <ActionIcon
             icon={MenuOutlined}
@@ -160,21 +162,25 @@ export default function AppLayout({ children }: AppLayoutProps) {
             onClick={() => {
               setMobileOpen(true);
             }}
-            className="mobile-menu-btn"
           />
         }
-        className="app-header"
       />
-      <main className="main-layout">
-        <div className="app-content">{children}</div>
-      </main>
+
+      {/* Main content */}
+      <LayoutMain style={{ marginTop: 48, paddingLeft: 0 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
+          {children}
+        </div>
+      </LayoutMain>
+
+      {/* Mobile drawer */}
       <Drawer
         placement="left"
         onClose={() => {
           setMobileOpen(false);
         }}
         open={mobileOpen}
-        size="large"
+        size={300}
         destroyOnHidden
         styles={{ body: { padding: 0 } }}
       >
@@ -184,6 +190,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
           onNavigate={handleNavigate}
         />
       </Drawer>
-    </div>
+
+      {/* Responsive styles via inline style tag */}
+      <style>{`
+        @media (min-width: 768px) {
+          .desktop-sider {
+            display: block !important;
+          }
+          .mobile-menu-btn {
+            display: none !important;
+          }
+        }
+      `}</style>
+    </Layout>
   );
 }

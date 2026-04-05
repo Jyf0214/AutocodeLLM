@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { Button, Tooltip } from 'antd';
+import { useCallback, useState } from 'react';
+import { Button, Tooltip, TextArea } from '@lobehub/ui';
 import { SendOutlined, StopOutlined } from '@ant-design/icons';
-import '@/styles/ChatInput.css';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -23,18 +22,12 @@ export default function ChatInput({
   className,
 }: ChatInputProps) {
   const [value, setValue] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = useCallback(() => {
     const trimmed = value.trim();
-    if (!trimmed || disabled || loading) {
-      return;
-    }
+    if (!trimmed || disabled || loading) return;
     onSend(trimmed);
     setValue('');
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
   }, [value, disabled, loading, onSend]);
 
   const handleKeyDown = useCallback(
@@ -47,29 +40,14 @@ export default function ChatInput({
     [handleSubmit],
   );
 
-  const handleInput = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      const height = Math.min(textarea.scrollHeight, 200);
-      textarea.style.height = String(height) + 'px';
-    }
-  }, []);
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
-  }, []);
+  const handleInput = useCallback(() => {}, []);
 
   const canSend = value.trim().length > 0 && !disabled && !loading;
 
   return (
-    <div className={`chat-input ${className ?? ''}`}>
-      <div className="chat-input-wrapper">
-        <textarea
-          ref={textareaRef}
-          className="chat-input-textarea"
+    <div className={className} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+      <div style={{ flex: 1 }}>
+        <TextArea
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
@@ -79,33 +57,23 @@ export default function ChatInput({
           placeholder={placeholder}
           disabled={disabled}
           rows={1}
+          resize={false}
+          style={{ minHeight: 36, maxHeight: 200 }}
         />
-        <div className="chat-input-actions">
-          {loading ? (
-            <Tooltip title="停止生成">
-              <Button
-                type="primary"
-                danger
-                icon={<StopOutlined />}
-                onClick={() => {
-                  onStop?.();
-                }}
-                className="chat-input-stop-btn"
-              />
-            </Tooltip>
-          ) : (
-            <Tooltip title="发送">
-              <Button
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={handleSubmit}
-                disabled={!canSend}
-                className={canSend ? 'chat-input-send-btn' : 'chat-input-send-btn chat-input-send-btn-disabled'}
-              />
-            </Tooltip>
-          )}
-        </div>
       </div>
+      {loading ? (
+        <Tooltip title="停止生成">
+          <Button type="primary" danger onClick={() => { onStop?.(); }}>
+            <StopOutlined />
+          </Button>
+        </Tooltip>
+      ) : (
+        <Tooltip title="发送">
+          <Button type="primary" onClick={handleSubmit} disabled={!canSend}>
+            <SendOutlined />
+          </Button>
+        </Tooltip>
+      )}
     </div>
   );
 }

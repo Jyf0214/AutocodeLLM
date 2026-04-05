@@ -1,6 +1,7 @@
 'use client';
 
-import '@/styles/MessageBubble.css';
+import { Avatar, Text } from '@lobehub/ui';
+import { UserOutlined, RobotOutlined } from '@ant-design/icons';
 
 interface MessageBubbleProps {
   content: string;
@@ -21,36 +22,52 @@ export default function MessageBubble({
 
   return (
     <div
-      className={`message-bubble ${isUser ? 'message-user' : 'message-assistant'} ${className ?? ''}`}
+      className={className}
+      style={{
+        display: 'flex',
+        gap: 12,
+        flexDirection: isUser ? 'row-reverse' : 'row',
+        alignItems: 'flex-start',
+      }}
     >
-      {!isUser && (
-        <div className="message-avatar">
-          {avatar ?? (
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12 2a7 7 0 0 1 7 7c0 3-2 5.5-4 7l-3 3.5L9 16c-2-1.5-4-4-4-7a7 7 0 0 1 7-7z" />
-              <circle cx="12" cy="9" r="2" />
-            </svg>
-          )}
-        </div>
-      )}
-      <div className="message-wrapper">
-        <div className={`message-text ${isUser ? 'message-user-text' : 'message-assistant-text'}`}>
+      <Avatar
+        title={isUser ? '用户' : '助手'}
+        avatar={
+          avatar ?? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+              {isUser ? <UserOutlined /> : <RobotOutlined />}
+            </div>
+          )
+        }
+        size={32}
+      />
+      <div
+        style={{
+          maxWidth: '70%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+          alignItems: isUser ? 'flex-end' : 'flex-start',
+        }}
+      >
+        <div
+          style={{
+            padding: '10px 14px',
+            borderRadius: 12,
+            background: isUser ? 'var(--lobe-color-primary)' : 'var(--bg-secondary)',
+            color: isUser ? '#fff' : 'var(--text-primary)',
+            lineHeight: 1.6,
+            fontSize: 14,
+          }}
+        >
           {content}
         </div>
         {timestamp != null && (
-          <span className="message-timestamp">{timestamp}</span>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {timestamp}
+          </Text>
         )}
       </div>
-      {isUser && (
-        <div className="message-avatar">
-          {avatar ?? (
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 20c0-4 4-7 8-7s8 3 8 7" />
-            </svg>
-          )}
-        </div>
-      )}
     </div>
   );
 }

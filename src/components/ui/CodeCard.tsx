@@ -1,15 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Button, Tooltip } from 'antd';
-import { CopyOutlined, DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import '@/styles/CodeCard.css';
+import { useCallback, useState } from 'react';
+import { Button, Tooltip, CodeEditor, CopyButton } from '@lobehub/ui';
+import { DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 
 interface CodeCardProps {
   code: string;
   language?: string;
   filename?: string;
-  showLineNumbers?: boolean;
   onCopy?: () => void;
   onDownload?: () => void;
   onRun?: () => void;
@@ -21,7 +19,6 @@ export default function CodeCard({
   code,
   language = 'text',
   filename,
-  showLineNumbers = true,
   onCopy,
   onDownload,
   onRun,
@@ -30,79 +27,74 @@ export default function CodeCard({
 }: CodeCardProps) {
   const [copied, setCopied] = useState(false);
 
-  const lines = code.split('\n');
-
   const handleCopy = useCallback(() => {
-    void navigator.clipboard.writeText(code);
     setCopied(true);
     onCopy?.();
     setTimeout(() => {
       setCopied(false);
     }, 2000);
-  }, [code, onCopy]);
+  }, [onCopy]);
+
+  const lineCount = code.split('\n').length;
 
   return (
-    <div className={`code-card ${className ?? ''}`}>
-      <div className="code-card-header">
-        <div className="code-card-header-left">
-          <span className="code-card-lang">{language}</span>
-          {filename != null && <span className="code-card-filename">{filename}</span>}
+    <div
+      className={className}
+      style={{
+        border: '1px solid var(--border-primary)',
+        borderRadius: 8,
+        overflow: 'hidden',
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '8px 12px',
+          background: 'var(--bg-secondary)',
+          borderBottom: '1px solid var(--border-primary)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+            {language}
+          </span>
+          {filename != null && (
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{filename}</span>
+          )}
         </div>
-        <div className="code-card-actions">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           {actions}
           <Tooltip title={copied ? '已复制' : '复制代码'}>
-            <Button
-              type="text"
-              size="small"
-              icon={<CopyOutlined />}
-              onClick={handleCopy}
-              className="code-card-action-btn"
-            />
+            <CopyButton content={code} onClick={handleCopy} />
           </Tooltip>
           {onDownload != null && (
             <Tooltip title="下载">
-              <Button
-                type="text"
-                size="small"
-                icon={<DownloadOutlined />}
-                onClick={() => {
-                  onDownload();
-                }}
-                className="code-card-action-btn"
-              />
+              <Button type="text" size="small" onClick={() => { onDownload(); }}>
+                <DownloadOutlined />
+              </Button>
             </Tooltip>
           )}
           {onRun != null && (
             <Tooltip title="运行">
-              <Button
-                type="text"
-                size="small"
-                icon={<PlayCircleOutlined />}
-                onClick={() => {
-                  onRun();
-                }}
-                className="code-card-action-btn"
-              />
+              <Button type="text" size="small" onClick={() => { onRun(); }}>
+                <PlayCircleOutlined />
+              </Button>
             </Tooltip>
           )}
         </div>
       </div>
-      <div className="code-card-body">
-        <pre className="code-card-code">
-          {lines.map((line, index) => (
-            <div key={String(index)} className="code-card-line">
-              {showLineNumbers && (
-                <span className="code-card-line-number">
-                  {String(index + 1)}
-                </span>
-              )}
-              <code className="code-card-content">
-                {line.length === 0 ? '\n' : line}
-              </code>
-            </div>
-          ))}
-        </pre>
-      </div>
+
+      {/* Code body */}
+      <CodeEditor
+        value={code}
+        onValueChange={() => {}}
+        language={language}
+        height={Math.max(lineCount * 24 + 24, 120)}
+        variant="borderless"
+      />
     </div>
   );
 }

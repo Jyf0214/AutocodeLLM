@@ -1,88 +1,141 @@
 'use client';
 
-import { Button } from 'antd';
+import { Button, Grid, Text, Icon } from '@lobehub/ui';
 import { ArrowRightOutlined, CodeOutlined, ApiOutlined, TeamOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import '@/styles/Landing.css';
+import { Card } from 'antd';
 
 export default function LandingPage() {
   const t = useTranslations('common.landing');
 
   const features = [
     {
-      icon: <CodeOutlined />,
+      icon: <Icon icon={CodeOutlined} />,
       title: t('featureAI.title'),
       description: t('featureAI.desc'),
     },
     {
-      icon: <ApiOutlined />,
+      icon: <Icon icon={ApiOutlined} />,
       title: t('featureModels.title'),
       description: t('featureModels.desc'),
     },
     {
-      icon: <TeamOutlined />,
+      icon: <Icon icon={TeamOutlined} />,
       title: t('featureTasks.title'),
       description: t('featureTasks.desc'),
     },
   ];
 
   return (
-    <div className="landing">
-      <section className="landing-hero">
-        <div className="landing-hero-content">
-          <h1 className="landing-title">AutocodeLLM</h1>
-          <p className="landing-subtitle">
-            {t('subtitle')}
-          </p>
-          <div className="landing-actions">
-            <Link href="/login">
-              <Button type="primary" size="large" className="landing-btn-primary">
-                {t('startUsing')}
-                <ArrowRightOutlined />
-              </Button>
-            </Link>
-            <Link href="/demo">
-              <Button size="large" className="landing-btn-secondary">
-                <PlayCircleOutlined />
-                {t('onlineDemo')}
-              </Button>
-            </Link>
-          </div>
+    <div style={{ minHeight: '100dvh' }}>
+      {/* Hero section */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          textAlign: 'center',
+          padding: '48px 16px',
+        }}
+      >
+        <Text
+          strong
+          style={{
+            fontSize: 48,
+            fontWeight: 700,
+            marginBottom: 16,
+          }}
+        >
+          AutocodeLLM
+        </Text>
+        <Text
+          type="secondary"
+          style={{ fontSize: 18, maxWidth: 600, marginBottom: 32 }}
+        >
+          {t('subtitle')}
+        </Text>
+        <div style={{ display: 'flex', gap: 16 }}>
+          <Link href="/login">
+            <Button type="primary" size="large">
+              {t('startUsing')}
+              <Icon icon={ArrowRightOutlined} />
+            </Button>
+          </Link>
+          <Link href="/demo">
+            <Button size="large">
+              <Icon icon={PlayCircleOutlined} />
+              {t('onlineDemo')}
+            </Button>
+          </Link>
         </div>
-      </section>
+      </div>
 
-      <section className="landing-features">
-        <h2 className="landing-section-title">{t('coreFeatures')}</h2>
-        <div className="landing-features-grid">
+      {/* Features section */}
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '48px 16px' }}>
+        <Text
+          strong
+          style={{ fontSize: 24, textAlign: 'center', marginBottom: 32, display: 'block' }}
+        >
+          {t('coreFeatures')}
+        </Text>
+        <Grid rows={1} maxItemWidth={320} gap={24}>
           {features.map((feature, index) => (
-            <div key={String(index)} className="landing-feature-card">
-              <div className="landing-feature-icon">
+            <Card key={String(index)} style={{ textAlign: 'center' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                  alignItems: 'center',
+                }}
+              >
                 {feature.icon}
+                <Text strong style={{ fontSize: 16, margin: 0 }}>
+                  {feature.title}
+                </Text>
+                <Text type="secondary">{feature.description}</Text>
               </div>
-              <h3 className="landing-feature-title">{feature.title}</h3>
-              <p className="landing-feature-desc">{feature.description}</p>
-            </div>
+            </Card>
           ))}
-        </div>
-      </section>
+        </Grid>
+      </div>
 
-      <section className="landing-cta">
-        <h2 className="landing-cta-title">{t('cta.title')}</h2>
-        <p className="landing-cta-desc">
+      {/* CTA section */}
+      <div
+        style={{
+          maxWidth: 600,
+          margin: '0 auto',
+          padding: '48px 16px',
+          textAlign: 'center',
+        }}
+      >
+        <Text strong style={{ fontSize: 20, marginBottom: 12, display: 'block' }}>
+          {t('cta.title')}
+        </Text>
+        <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
           {t('cta.desc')}
-        </p>
+        </Text>
         <Link href="/login">
-          <Button type="primary" size="large" className="landing-cta-btn">
+          <Button type="primary" size="large">
             {t('cta.loginBtn')}
-            <ArrowRightOutlined />
+            <Icon icon={ArrowRightOutlined} />
           </Button>
         </Link>
-      </section>
+      </div>
 
-      <footer className="landing-footer">
-        <p>{t('footer')}</p>
-      </footer>
+      {/* Footer */}
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '24px 16px',
+          borderTop: '1px solid var(--border-primary)',
+        }}
+      >
+        <Text type="secondary">{t('footer')}</Text>
+      </div>
     </div>
   );
 }

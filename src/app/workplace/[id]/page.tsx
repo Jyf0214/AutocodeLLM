@@ -2,10 +2,8 @@
 
 import React from 'react';
 import AppLayout from '@/components/layout/AppLayout';
-import { Typography, Tabs } from 'antd';
+import { Tabs, Text } from '@lobehub/ui';
 import { useTranslations } from 'next-intl';
-
-const { Title } = Typography;
 
 export default function WorkplaceDetailPage({
   params,
@@ -16,17 +14,29 @@ export default function WorkplaceDetailPage({
   const { id } = React.use(params);
 
   const tabItems = [
-    { key: 'read', label: t('workplace.readFile'), children: <p>文件读取功能开发中...</p> },
-    { key: 'write', label: t('workplace.writeFile'), children: <p>文件写入功能开发中...</p> },
-    { key: 'edit', label: t('workplace.editFile'), children: <p>文件编辑功能开发中...</p> },
+    {
+      key: 'read',
+      label: t('workplace.readFile'),
+      children: <Text>文件读取功能开发中...</Text>,
+    },
+    {
+      key: 'write',
+      label: t('workplace.writeFile'),
+      children: <Text>文件写入功能开发中...</Text>,
+    },
+    {
+      key: 'edit',
+      label: t('workplace.editFile'),
+      children: <Text>文件编辑功能开发中...</Text>,
+    },
   ];
 
   return (
     <AppLayout>
-      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <Title level={3}>工作空间: {id}</Title>
-        <Tabs items={tabItems} defaultActiveKey="read" />
-      </div>
+      <Text strong style={{ fontSize: 20, display: 'block', marginBottom: 24 }}>
+        工作空间: {id}
+      </Text>
+      <Tabs items={tabItems} defaultActiveKey="read" />
     </AppLayout>
   );
 }

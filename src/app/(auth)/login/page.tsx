@@ -1,13 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Form, Input, Typography, Card, message } from 'antd';
+import { Button, Form, Input, InputPassword, Text } from '@lobehub/ui';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import type { LoginResponse } from '@/lib/api/types';
-
-const { Title, Text } = Typography;
+import { message, Card } from 'antd';
 
 export default function LoginPage() {
   const t = useTranslations();
@@ -26,12 +25,10 @@ export default function LoginPage() {
       const result = (await response.json()) as LoginResponse;
 
       if (result.success) {
-        // 存储用户信息到 sessionStorage
         sessionStorage.setItem('userId', result.data?.userId ?? '');
         sessionStorage.setItem('username', result.data?.username ?? '');
         sessionStorage.setItem('forceChangePassword', String(result.data?.forceChangePassword));
 
-        // 如果需要强制修改密码
         if (result.data?.forceChangePassword) {
           message.warning('首次登录，请修改初始密码');
           router.push('/change-password');
@@ -56,38 +53,38 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--bg-primary)',
       }}
     >
-      <Card
-        style={{
-          width: 400,
-          boxShadow: 'var(--shadow-modal)',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Title level={3} style={{ marginBottom: 8 }}>
+      <Card style={{ width: 400 }} variant="borderless">
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <Text strong style={{ fontSize: 20, display: 'block', marginBottom: 8 }}>
             {t('login.title')}
-          </Title>
+          </Text>
           <Text type="secondary">{t('login.subtitle')}</Text>
         </div>
-        <Form name="login" onFinish={onFinish} size="large">
+
+        <Form name="login" onFinish={onFinish} size="large" layout="vertical">
           <Form.Item
             name="username"
             rules={[{ required: true, message: '请输入用户名' }]}
           >
-            <Input prefix={<UserOutlined />} placeholder={t('login.username')} />
+            <Input
+              prefix={<UserOutlined />}
+              placeholder={t('login.username')}
+            />
           </Form.Item>
+
           <Form.Item
             name="password"
             rules={[{ required: true, message: '请输入密码' }]}
           >
-            <Input.Password
+            <InputPassword
               prefix={<LockOutlined />}
               placeholder={t('login.password')}
             />
           </Form.Item>
-          <Form.Item>
+
+          <Form.Item style={{ marginBottom: 0 }}>
             <Button type="primary" htmlType="submit" loading={loading} block>
               {t('login.submit')}
             </Button>
