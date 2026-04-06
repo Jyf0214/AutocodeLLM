@@ -11,7 +11,7 @@ import {
   CopyOutlined,
   SwapOutlined,
   CloudServerOutlined,
-  BrowserOutlined,
+  LaptopOutlined,
 } from '@ant-design/icons';
 
 // Qwen OAuth 配置（与后端一致）
@@ -501,7 +501,7 @@ export default function QwenOAuthTestPage() {
               {polling ? '轮询中...' : tokenInfo ? '已登录' : '未登录'}
             </Tag>
             <Tag color={authMode === 'backend' ? 'blue' : 'green'}>
-              <Icon icon={authMode === 'backend' ? CloudServerOutlined : BrowserOutlined} />
+              <Icon icon={authMode === 'backend' ? CloudServerOutlined : LaptopOutlined} />
               {authMode === 'backend' ? '后端模式' : '前端模式'}
             </Tag>
             <Button
