@@ -57,11 +57,11 @@ model Provider {
   providerType      String   @default("custom")  // preset（预置）或 custom（自定义）
   sdkType           String   @default("openai")  // openai, anthropic, google, ollama, azure 等
   authType          String   @default("apiKey")  // apiKey, oauth
-  oauthAccessToken  String?  // OAuth access token（加密存储）
-  oauthRefreshToken String?  // OAuth refresh token（加密存储）
+  oauthAccessToken  String?  @db.Text  // OAuth access token（加密存储）
+  oauthRefreshToken String?  @db.Text  // OAuth refresh token（加密存储）
   oauthExpiresAt    DateTime? // OAuth token 过期时间
   oauthClientId     String?  // OAuth client ID
-  oauthDeviceCode   String?  // OAuth device code（用于轮询）
+  oauthDeviceCode   String?  @db.Text  // OAuth device code（用于轮询）
   metadata          String?  @default("{}")  // 额外配置信息（JSON 字符串）
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

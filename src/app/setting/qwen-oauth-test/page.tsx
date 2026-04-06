@@ -42,6 +42,7 @@ export default function QwenOAuthTestPage() {
   const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [debugVisible, setDebugVisible] = useState(false);
+  const [errorCollapsed, setErrorCollapsed] = useState(true);
   const startPollingRef = useRef<((deviceCode: string, codeVerifier: string) => void) | null>(null);
 
   // 启动 OAuth Device Flow
@@ -284,7 +285,47 @@ export default function QwenOAuthTestPage() {
                 <Alert
                   type="error"
                   title="错误信息"
-                  description={<pre style={{ margin: 0, fontSize: 12, whiteSpace: 'pre-wrap' }}>{debugInfo.error}</pre>}
+                  description={
+                    <Flexbox gap={8}>
+                      <Button
+                        size="small"
+                        onClick={() => { setErrorCollapsed(!errorCollapsed); }}
+                      >
+                        {errorCollapsed ? '展开详情' : '收起详情'}
+                      </Button>
+                      {!errorCollapsed && (
+                        <Flexbox gap={8}>
+                          <pre
+                            style={{
+                              margin: 0,
+                              fontSize: 12,
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              background: 'var(--ant-color-fill-quaternary)',
+                              padding: 12,
+                              borderRadius: 6,
+                              maxHeight: 300,
+                              overflow: 'auto',
+                            }}
+                          >
+                            {debugInfo.error}
+                          </pre>
+                          <Button
+                            size="small"
+                            icon={<CopyOutlined />}
+                            onClick={() => {
+                              if (debugInfo.error) {
+                                void navigator.clipboard.writeText(debugInfo.error);
+                                message.success('错误信息已复制');
+                              }
+                            }}
+                          >
+                            复制错误信息
+                          </Button>
+                        </Flexbox>
+                      )}
+                    </Flexbox>
+                  }
                 />
               )}
               <Tag color={debugInfo.pollingActive ? 'processing' : 'default'}>
