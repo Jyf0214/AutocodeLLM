@@ -5,6 +5,7 @@ import { ArrowRightOutlined, CodeOutlined, ApiOutlined, TeamOutlined, PlayCircle
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Card } from 'antd';
+import OrbitalBackground from '@/components/ui/OrbitalBackground';
 
 export default function LandingPage() {
   const t = useTranslations('common.landing');
@@ -34,7 +35,10 @@ export default function LandingPage() {
   ];
 
   return (
-    <div style={{ minHeight: '100dvh' }}>
+    <div style={{ minHeight: '100dvh', position: 'relative' }}>
+      <OrbitalBackground />
+
+      <div style={{ position: 'relative', zIndex: 1 }}>
       {/* Hero section */}
       <div
         style={{
@@ -150,6 +154,7 @@ export default function LandingPage() {
         }}
       >
         <Text type="secondary">{t('footer')}</Text>
+      </div>
       </div>
     </div>
   );
