@@ -89,23 +89,15 @@ export async function startQwenDeviceFlow(): Promise<{
 
   const requestBody = objectToUrlEncoded(bodyData);
 
-  // 调试日志：打印请求详情
-  console.log('[Qwen OAuth] 启动 Device Flow:');
-  console.log('[Qwen OAuth]   URL:', QWEN_OAUTH_CONFIG.deviceCodeUrl);
-  console.log('[Qwen OAuth]   Method: POST');
-  console.log('[Qwen OAuth]   Body:', requestBody);
-
   const response = await fetch(QWEN_OAUTH_CONFIG.deviceCodeUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Accept': 'application/json',
+      'x-request-id': crypto.randomUUID(),
     },
     body: requestBody,
   });
-
-  console.log('[Qwen OAuth]   Response Status:', response.status, response.statusText);
-  console.log('[Qwen OAuth]   Response Headers:', Object.fromEntries(response.headers.entries()));
 
   if (!response.ok) {
     const errorText = await response.text();
