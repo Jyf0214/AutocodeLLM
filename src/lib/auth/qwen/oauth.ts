@@ -204,6 +204,7 @@ export async function refreshQwenToken(refreshToken: string): Promise<{
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
+  resourceUrl?: string;
 }> {
   const bodyData = {
     grant_type: 'refresh_token',
@@ -244,11 +245,23 @@ export async function refreshQwenToken(refreshToken: string): Promise<{
   // responseData 在这里已经被 TypeScript 缩小类型为 TokenResponse
   const tokenData = responseData;
 
-  return {
+  const result: {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    resourceUrl?: string;
+  } = {
     accessToken: tokenData.access_token,
     refreshToken: tokenData.refresh_token ?? refreshToken,
     expiresIn: tokenData.expires_in,
   };
+
+  // 仅在 resource_url 存在时添加到结果中
+  if (tokenData.resource_url) {
+    result.resourceUrl = tokenData.resource_url;
+  }
+
+  return result;
 }
 
 /**

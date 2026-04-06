@@ -116,32 +116,55 @@ export async function getValidQwenToken(providerId: string): Promise<string> {
 
     const newExpiresAt = new Date(Date.now() + refreshed.expiresIn * 1000);
 
+    // 构建更新的元数据，保留现有字段并更新 resourceUrl
+    const existingMetadata = provider.metadata ?? '{}';
+    let parsedMetadata: Record<string, unknown>;
+    try {
+      parsedMetadata = JSON.parse(existingMetadata) as Record<string, unknown>;
+    } catch {
+      parsedMetadata = {};
+    }
+
     await prisma.provider.update({
       where: { id: providerId },
       data: {
         oauthAccessToken: encryptToken(refreshed.accessToken),
         oauthRefreshToken: refreshed.refreshToken ? encryptToken(refreshed.refreshToken) : null,
         oauthExpiresAt: newExpiresAt,
+        // 如果刷新响应包含新的 resourceUrl，更新到元数据中
+        metadata: refreshed.resourceUrl
+          ? JSON.stringify({ ...parsedMetadata, resourceUrl: refreshed.resourceUrl })
+          : existingMetadata,
       },
     });
 
     return refreshed.accessToken;
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : '未知错误';
-    
-    // 如果是 refresh token 过期，清除凭证并要求重新认证
-    if (errorMessage.includes('过期') || errorMessage.includes('invalid')) {
-      await prisma.provider.update({
-        where: { id: providerId },
-        data: {
-          oauthAccessToken: null,
-          oauthRefreshToken: null,
-          oauthExpiresAt: null,
-        },
-      });
-      throw new Error('刷新凭证已过期，请重新认证');
+    // 使用 HTTP 状态码和 OAuth 标准错误码进行判断，避免字符串匹配
+    if (error instanceof Error) {
+      const errorMessage = error.message;
+      // 检测 token 过期的标准错误码
+      const isTokenExpired =
+        errorMessage.includes('400') ||
+        errorMessage.includes('invalid_grant') ||
+        errorMessage.includes('expired_token') ||
+        errorMessage.includes('已过期');
+
+      // 如果是 token 过期，清除凭证并要求重新认证
+      if (isTokenExpired) {
+        await prisma.provider.update({
+          where: { id: providerId },
+          data: {
+            oauthAccessToken: null,
+            oauthRefreshToken: null,
+            oauthExpiresAt: null,
+          },
+        });
+        throw new Error('刷新凭证已过期，请重新认证');
+      }
     }
-    
+
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
     throw new Error(`Token 刷新失败：${errorMessage}`);
   }
 }

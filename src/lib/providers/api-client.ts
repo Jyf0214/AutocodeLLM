@@ -85,8 +85,21 @@ export async function callProviderAPI(params: {
     throw new Error(`无法获取提供商 ${providerId} 的认证信息`);
   }
 
+  // OAuth 模式下从元数据中获取 resourceUrl，否则使用数据库中的 baseUrl
+  let effectiveBaseUrl = provider.baseUrl;
+  if (provider.authType === 'oauth' && provider.metadata) {
+    try {
+      const metadata = JSON.parse(provider.metadata) as Record<string, unknown>;
+      if (typeof metadata.resourceUrl === 'string' && metadata.resourceUrl) {
+        effectiveBaseUrl = metadata.resourceUrl;
+      }
+    } catch {
+      // 元数据解析失败，使用默认 baseUrl
+    }
+  }
+
   const config = buildRequestConfig({
-    baseUrl: provider.baseUrl,
+    baseUrl: effectiveBaseUrl,
     apiKey,
     sdkType: provider.sdkType,
     authType: provider.authType,
@@ -138,8 +151,21 @@ export async function fetchProviderModels(providerId: string): Promise<{ id: str
     throw new Error(`无法获取提供商 ${providerId} 的认证信息`);
   }
 
+  // OAuth 模式下从元数据中获取 resourceUrl，否则使用数据库中的 baseUrl
+  let effectiveBaseUrl = provider.baseUrl;
+  if (provider.authType === 'oauth' && provider.metadata) {
+    try {
+      const metadata = JSON.parse(provider.metadata) as Record<string, unknown>;
+      if (typeof metadata.resourceUrl === 'string' && metadata.resourceUrl) {
+        effectiveBaseUrl = metadata.resourceUrl;
+      }
+    } catch {
+      // 元数据解析失败，使用默认 baseUrl
+    }
+  }
+
   const config = buildRequestConfig({
-    baseUrl: provider.baseUrl,
+    baseUrl: effectiveBaseUrl,
     apiKey,
     sdkType: provider.sdkType,
     authType: provider.authType,
@@ -148,9 +174,8 @@ export async function fetchProviderModels(providerId: string): Promise<{ id: str
       : null,
   });
 
-  const modelsUrl = provider.baseUrl.endsWith('/')
-    ? `${provider.baseUrl}models`
-    : `${provider.baseUrl}/models`;
+  // 使用标准化的 URL 构造逻辑
+  const modelsUrl = normalizeModelUrl(effectiveBaseUrl);
 
   const response = await fetch(modelsUrl, {
     method: 'GET',
@@ -207,8 +232,21 @@ export async function testProviderConnection(providerId: string): Promise<{ conn
   const startTime = Date.now();
 
   try {
+    // OAuth 模式下从元数据中获取 resourceUrl
+    let effectiveBaseUrl = provider.baseUrl;
+    if (provider.authType === 'oauth' && provider.metadata) {
+      try {
+        const metadata = JSON.parse(provider.metadata) as Record<string, unknown>;
+        if (typeof metadata.resourceUrl === 'string' && metadata.resourceUrl) {
+          effectiveBaseUrl = metadata.resourceUrl;
+        }
+      } catch {
+        // 元数据解析失败，使用默认 baseUrl
+      }
+    }
+
     const config = buildRequestConfig({
-      baseUrl: provider.baseUrl,
+      baseUrl: effectiveBaseUrl,
       apiKey,
       sdkType: provider.sdkType,
       authType: provider.authType,
@@ -217,9 +255,7 @@ export async function testProviderConnection(providerId: string): Promise<{ conn
         : null,
     });
 
-    const modelsUrl = provider.baseUrl.endsWith('/')
-      ? `${provider.baseUrl}models`
-      : `${provider.baseUrl}/models`;
+    const modelsUrl = normalizeModelUrl(effectiveBaseUrl);
 
     const response = await fetch(modelsUrl, {
       method: 'GET',
@@ -255,49 +291,81 @@ export async function testProviderConnection(providerId: string): Promise<{ conn
 }
 
 /**
+ * 标准化模型列表 URL
+ * 参考 discover/route.ts 中的 URL 标准化逻辑
+ */
+function normalizeModelUrl(baseUrl: string): string {
+  const url = baseUrl.replace(/\/+$/, '');
+  if (url.endsWith('/v1')) {
+    return `${url}/models`;
+  }
+  if (url.includes('/v1/models')) {
+    return url;
+  }
+  return `${url}/v1/models`;
+}
+
+/**
  * 构建请求头和 URL（根据 sdkType）
  */
-function buildRequestConfig(provider: {
+function buildRequestConfig(params: {
   baseUrl: string;
   apiKey: string;
   sdkType: string;
   authType: string;
   oauthAccessToken?: string | null;
-}): { url: string; headers: Record<string, string>; body: Record<string, unknown> } {
+}): { url: string; headers: Record<string, string> } {
+  const { baseUrl, apiKey, sdkType, authType, oauthAccessToken } = params;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
-  let url = provider.baseUrl;
-  if (!url.endsWith('/')) {
-    url += '/';
-  }
+  // OAuth 模式下使用 access token，否则使用 API Key
+  const effectiveKey = oauthAccessToken ?? apiKey;
 
-  const effectiveKey = provider.oauthAccessToken ?? provider.apiKey;
-
-  switch (provider.sdkType) {
+  // 根据 SDK 类型构建正确的 URL 和请求头
+  switch (sdkType) {
     case 'anthropic':
       headers['x-api-key'] = effectiveKey;
       headers['anthropic-version'] = '2023-06-01';
-      url += 'v1/messages';
-      break;
+      return {
+        url: baseUrl.endsWith('/') ? `${baseUrl}v1/messages` : `${baseUrl}/v1/messages`,
+        headers,
+      };
 
     case 'google':
-      url += 'v1beta/models/' + '{model}' + ':generateContent?key=' + effectiveKey;
-      break;
+      return {
+        url: baseUrl.endsWith('/')
+          ? `${baseUrl}v1beta/models/{model}:generateContent?key=${effectiveKey}`
+          : `${baseUrl}/v1beta/models/{model}:generateContent?key=${effectiveKey}`,
+        headers,
+      };
 
     case 'azure':
       headers['api-key'] = effectiveKey;
-      url += 'openai/deployments/{deploymentId}/chat/completions?api-version=2024-02-01';
-      break;
+      return {
+        url: baseUrl.endsWith('/')
+          ? `${baseUrl}openai/deployments/{deploymentId}/chat/completions?api-version=2024-02-01`
+          : `${baseUrl}/openai/deployments/{deploymentId}/chat/completions?api-version=2024-02-01`,
+        headers,
+      };
 
-    default:
+    default: {
+      // OpenAI 兼容格式（包括 DashScope）
       headers.Authorization = `Bearer ${effectiveKey}`;
-      url += 'chat/completions';
-      break;
-  }
 
-  return { url, headers, body: {} };
+      // DashScope 专属请求头（OAuth 模式下）
+      if (authType === 'oauth' && baseUrl.includes('dashscope')) {
+        headers['X-DashScope-CacheControl'] = 'enable';
+        headers['X-DashScope-AuthType'] = 'oauth';
+      }
+
+      return {
+        url: baseUrl.endsWith('/') ? `${baseUrl}chat/completions` : `${baseUrl}/chat/completions`,
+        headers,
+      };
+    }
+  }
 }
 
 /**
