@@ -25,21 +25,14 @@ function decryptValue(encrypted: string): string {
   const parts = encrypted.split(':');
   const ivHex = parts[0];
   const encryptedData = parts[1];
-  // 检查是否是有效的加密格式（IV 应为 32 个 hex 字符）
-  if (ivHex && encryptedData && ivHex.length === 32) {
-    try {
-      const iv = Buffer.from(ivHex, 'hex');
-      const decipher = createDecipheriv('aes-256-cbc', key, iv);
-      let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
-      decrypted += decipher.final('utf8');
-      return decrypted;
-    } catch {
-      // 解密失败，尝试返回原始值（兼容未加密数据）
-      return encrypted;
-    }
+  if (!ivHex || !encryptedData) {
+    throw new Error('无效的加密数据格式');
   }
-  // 不是加密格式，直接返回原始值
-  return encrypted;
+  const iv = Buffer.from(ivHex, 'hex');
+  const decipher = createDecipheriv('aes-256-cbc', key, iv);
+  let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
 }
 
 /**

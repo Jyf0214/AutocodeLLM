@@ -24,6 +24,19 @@ function encryptApiKey(apiKey: string): string {
 }
 
 /**
+ * AES-256-CBC 加密（通用值）
+ */
+function encryptValue(value: string): string {
+  const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
+  const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const iv = randomBytes(16);
+  const cipher = createCipheriv('aes-256-cbc', key, iv);
+  let encrypted = cipher.update(value, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  return iv.toString('hex') + ':' + encrypted;
+}
+
+/**
  * AES-256-CBC 解密 API Key
  */
 function decryptApiKey(encrypted: string): string {
@@ -117,8 +130,13 @@ export async function POST(request: Request) {
       providerType?: string;
       sdkType?: string;
       authType?: string;
+      oauthAccessToken?: string;
+      oauthRefreshToken?: string;
+      oauthDeviceCode?: string;
+      oauthExpiresAt?: string;
+      metadata?: string;
     };
-    const { name, baseUrl, apiKey, databaseUrl, enabled, providerType, sdkType, authType } = body;
+    const { name, baseUrl, apiKey, databaseUrl, enabled, providerType, sdkType, authType, oauthAccessToken, oauthRefreshToken, oauthDeviceCode, oauthExpiresAt, metadata } = body;
 
     const isOAuth = authType === 'oauth';
 
@@ -162,6 +180,11 @@ export async function POST(request: Request) {
         providerType: providerType ?? 'custom',
         sdkType: sdkType ?? 'openai',
         authType: authType ?? 'apiKey',
+        oauthAccessToken: oauthAccessToken ? encryptValue(oauthAccessToken) : null,
+        oauthRefreshToken: oauthRefreshToken ? encryptValue(oauthRefreshToken) : null,
+        oauthDeviceCode: oauthDeviceCode ? encryptValue(oauthDeviceCode) : null,
+        oauthExpiresAt: oauthExpiresAt ? new Date(oauthExpiresAt) : null,
+        metadata: metadata ?? null,
       },
     });
 
@@ -209,8 +232,16 @@ export async function POST(request: Request) {
  */
 export async function PUT(request: Request) {
   try {
-    const body = (await request.json()) as UpdateProviderRequest;
-    const { id, name, baseUrl, apiKey, databaseUrl, enabled } = body;
+    const body = (await request.json()) as UpdateProviderRequest & {
+      authType?: string;
+      sdkType?: string;
+      oauthAccessToken?: string;
+      oauthRefreshToken?: string;
+      oauthDeviceCode?: string;
+      oauthExpiresAt?: string;
+      metadata?: string;
+    };
+    const { id, name, baseUrl, apiKey, databaseUrl, enabled, authType, sdkType, oauthAccessToken, oauthRefreshToken, oauthDeviceCode, oauthExpiresAt, metadata } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -269,6 +300,13 @@ export async function PUT(request: Request) {
         ...(apiKey !== undefined && { apiKey: encryptApiKey(apiKey) }),
         ...(databaseUrl !== undefined && { databaseUrl }),
         ...(enabled !== undefined && { enabled }),
+        ...(authType !== undefined && { authType }),
+        ...(sdkType !== undefined && { sdkType }),
+        ...(oauthAccessToken !== undefined && { oauthAccessToken: oauthAccessToken ? encryptValue(oauthAccessToken) : null }),
+        ...(oauthRefreshToken !== undefined && { oauthRefreshToken: oauthRefreshToken ? encryptValue(oauthRefreshToken) : null }),
+        ...(oauthDeviceCode !== undefined && { oauthDeviceCode: oauthDeviceCode ? encryptValue(oauthDeviceCode) : null }),
+        ...(oauthExpiresAt !== undefined && { oauthExpiresAt: oauthExpiresAt ? new Date(oauthExpiresAt) : null }),
+        ...(metadata !== undefined && { metadata }),
       },
     });
 
