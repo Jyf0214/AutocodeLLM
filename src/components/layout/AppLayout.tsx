@@ -24,8 +24,6 @@ import {
   SyncOutlined,
   AppstoreOutlined,
   ApiOutlined,
-  BookOutlined,
-  PlayCircleOutlined,
   LinkOutlined,
   MenuOutlined,
 } from '@ant-design/icons';
@@ -44,8 +42,6 @@ const menuItems = [
   { key: '/model', icon: AppstoreOutlined, labelKey: 'common.models' },
   { key: '/provider', icon: ApiOutlined, labelKey: 'common.providers' },
   { key: '/setting/qwen-oauth-test', icon: LinkOutlined, labelKey: 'common.qwenOAuthTest' },
-  { key: '/docs', icon: BookOutlined, labelKey: 'common.docs' },
-  { key: '/demo', icon: PlayCircleOutlined, labelKey: 'common.demo' },
 ];
 
 const themeModeMap: Record<string, 'auto' | 'light' | 'dark'> = {
