@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Text, Flexbox, Button, Icon } from '@lobehub/ui';
 import { message, Card, Alert, Tag } from 'antd';
@@ -42,6 +42,7 @@ export default function QwenOAuthTestPage() {
   const [tokenInfo, setTokenInfo] = useState<TokenInfo | null>(null);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [debugVisible, setDebugVisible] = useState(false);
+  const startPollingRef = useRef<((deviceCode: string, codeVerifier: string) => void) | null>(null);
 
   // 启动 OAuth Device Flow
   const handleStartOAuth = useCallback(async () => {
@@ -68,7 +69,7 @@ export default function QwenOAuthTestPage() {
         });
 
         // 自动开始轮询
-        startPolling(data.data.deviceCode, data.data.codeVerifier);
+        startPollingRef.current?.(data.data.deviceCode, data.data.codeVerifier);
       } else {
         const errMsg = data.error?.message ?? '启动 OAuth 失败';
         message.error(errMsg);
@@ -94,7 +95,7 @@ export default function QwenOAuthTestPage() {
   }, []);
 
   // 轮询获取 Token
-  const startPolling = useCallback(async (deviceCode: string, codeVerifier: string) => {
+  const startPolling = useCallback((deviceCode: string, codeVerifier: string) => {
     setPolling(true);
     const pollStartTime = Date.now();
     const maxPollTime = 5 * 60 * 1000;
@@ -160,6 +161,9 @@ export default function QwenOAuthTestPage() {
     setTimeout(poll, 2000);
   }, []);
 
+  // 设置 ref
+  startPollingRef.current = startPolling;
+
   // 复制完整登录链接
   const copyLink = useCallback(() => {
     if (oauthStatus?.verificationUriComplete) {
@@ -198,7 +202,7 @@ export default function QwenOAuthTestPage() {
               size="large"
               icon={<ReloadOutlined />}
               loading={loading}
-              onClick={() => { void handleStartOAuth(); }}
+              onClick={() => { { handleStartOAuth(); }; }}
               disabled={polling}
             >
               {polling ? '等待授权...' : loading ? '启动中...' : '启动 Qwen OAuth 登录'}
@@ -261,7 +265,7 @@ export default function QwenOAuthTestPage() {
                 title="OAuth 状态"
                 description={
                   <pre style={{ margin: 0, fontSize: 12, whiteSpace: 'pre-wrap' }}>
-                    {JSON.stringify(debugInfo.oauthStatus, null, 2) ?? '无'}
+                    {debugInfo.oauthStatus ? JSON.stringify(debugInfo.oauthStatus, null, 2) : '无'}
                   </pre>
                 }
               />
