@@ -25,10 +25,9 @@ import {
   ChatInputArea,
   ChatInputActionBar,
   LoadingDots,
-  TokenTag,
   type MetaData,
 } from '@lobehub/ui/chat';
-import { Button, Tabs, message, Dropdown, Tag, Spin } from 'antd';
+import { Tabs, message, Dropdown, Button, Tag, Spin } from 'antd';
 import {
   ArrowLeftOutlined,
   ShareAltOutlined,
@@ -37,8 +36,7 @@ import {
   FileTextOutlined,
   DesktopOutlined,
   SendOutlined,
-  PlusOutlined,
-  WarningOutlined,
+  CloudServerOutlined,
 } from '@ant-design/icons';
 import { ModelIcon } from '@lobehub/icons';
 import WorkspacePasswordModal from '@/components/features/WorkspacePasswordModal';
@@ -46,8 +44,18 @@ import WorkspaceSettings from '@/components/features/WorkspaceSettings';
 import WorkspaceLogs from '@/components/features/WorkspaceLogs';
 import TerminalPanel from '@/components/features/TerminalPanel';
 import type { WorkspaceListItem } from '@/lib/api/workspace-types';
-import type { ModelConfig } from '@/lib/api/model-types';
-import type { Provider } from '@/lib/api/provider-types';
+
+const USER_META: MetaData = {
+  title: '用户',
+  avatar: 'user',
+};
+
+function createAssistantMeta(modelName?: string): MetaData {
+  return {
+    title: modelName ? `AI · ${modelName}` : 'AI 助手',
+    avatar: '🤖',
+  };
+}
 
 interface ModelSelectorItem {
   id: string;
@@ -71,18 +79,8 @@ interface WorkspaceChatMessage {
     outputTokens: number;
     totalTokens: number;
   };
-}
-
-const USER_META: MetaData = {
-  title: '用户',
-  avatar: 'user',
-};
-
-function createAssistantMeta(modelName?: string): MetaData {
-  return {
-    title: modelName ? `AI · ${modelName}` : 'AI 助手',
-    avatar: '🤖',
-  };
+  providerId?: string;
+  model?: string;
 }
 
 /**
@@ -98,158 +96,34 @@ function EmptyModelGuide({ onGoToConfig }: { onGoToConfig: () => void }) {
       <Flexbox
         align="center"
         gap={24}
-        style={{ maxWidth: 480, textAlign: 'center' }}
+        style={{ maxWidth: 480 }}
       >
-        <Avatar
-          avatar="🧠"
-          size={80}
-          background="var(--lobe-color-primary)"
-          style={{ boxShadow: '0 8px 24px var(--lobe-color-primary-bg)' }}
-        />
-        <Flexbox gap={8} align="center">
-          <Text style={{ fontSize: 20, fontWeight: 600 }}>
-            尚未配置 AI 模型
+        <Avatar avatar="🤖" size={80} />
+        <Flexbox align="center" gap={12}>
+          <Text strong style={{ fontSize: 20 }}>
+            配置 AI 模型后即可开始对话
           </Text>
-          <Text type="secondary" style={{ fontSize: 14 }}>
-            请先添加一个 AI 提供商（如通义千问、NVIDIA 等），即可开始对话
+          <Text type="secondary" style={{ textAlign: 'center', lineHeight: 1.6 }}>
+            您需要先配置至少一个 AI 模型（OpenAI 兼容 API 或 OAuth 登录），才能使用聊天功能。
           </Text>
         </Flexbox>
-
         <Flexbox gap={12} horizontal>
           <Button
             type="primary"
             size="large"
-            icon={<PlusOutlined />}
+            icon={<CloudServerOutlined />}
             onClick={onGoToConfig}
           >
             去配置模型
           </Button>
         </Flexbox>
-
-        <Flexbox gap={16} style={{ marginTop: 16, width: '100%' }}>
-          <Flexbox
-            horizontal
-            gap={12}
-            justify="center"
-            style={{ width: '100%' }}
-          >
-            <Tag icon={<ApiOutlined />} color="blue">
-              支持 OpenAI 兼容 API
-            </Tag>
-            <Tag icon={<WarningOutlined />} color="orange">
-              支持 OAuth 登录
-            </Tag>
-          </Flexbox>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            当前支持通义千问、NVIDIA 等主流提供商
-          </Text>
+        <Flexbox gap={8} horizontal wrap="wrap" justify="center">
+          <Tag color="blue">OpenAI 兼容 API</Tag>
+          <Tag color="purple">OAuth 登录</Tag>
+          <Tag color="green">Anthropic</Tag>
+          <Tag color="orange">Google</Tag>
         </Flexbox>
       </Flexbox>
-    </Flexbox>
-  );
-}
-
-/**
- * 模型选择器组件：从动态加载的模型列表中选择
- */
-function ModelSelector({
-  models,
-  currentModel,
-  onSelect,
-}: {
-  models: ModelSelectorItem[];
-  currentModel: ModelSelectorItem | null;
-  onSelect: (model: ModelSelectorItem) => void;
-}) {
-  if (!currentModel || models.length === 0) return null;
-
-  const menuItems = models.map((model) => ({
-    key: model.id,
-    label: (
-      <Flexbox gap={8} horizontal align="center">
-        <ModelIcon model={model.id} size={20} />
-        <Text>{model.name}</Text>
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          {model.providerName}
-        </Text>
-        {model.authType === 'oauth' && (
-          <Tag color="green" style={{ fontSize: 10, padding: '0 4px', margin: 0 }}>
-            OAuth
-          </Tag>
-        )}
-      </Flexbox>
-    ),
-    onClick: () => {
-      onSelect(model);
-    },
-  }));
-
-  return (
-    <Dropdown menu={{ items: menuItems }} placement="bottomLeft" arrow>
-      <Flexbox
-        gap={6}
-        horizontal
-        align="center"
-        style={{
-          padding: '4px 8px',
-          borderRadius: 8,
-          cursor: 'pointer',
-          transition: 'background 0.2s',
-        }}
-      >
-        <ModelIcon model={currentModel.id} size={18} />
-        <Text style={{ fontSize: 14 }}>{currentModel.name}</Text>
-      </Flexbox>
-    </Dropdown>
-  );
-}
-
-/**
- * Token 统计显示组件
- */
-function TokenStats({
-  inputTokens,
-  outputTokens,
-  totalTokens,
-}: {
-  inputTokens: number;
-  outputTokens: number;
-  totalTokens: number;
-}) {
-  return (
-    <Flexbox
-      horizontal
-      gap={12}
-      style={{ fontSize: 11, color: 'var(--color-text-secondary)', padding: '4px 0' }}
-    >
-      <Text type="secondary" style={{ fontSize: 11 }}>
-        输入: {inputTokens.toLocaleString()} tokens
-      </Text>
-      <Text type="secondary" style={{ fontSize: 11 }}>
-        输出: {outputTokens.toLocaleString()} tokens
-      </Text>
-      <Text type="secondary" style={{ fontSize: 11 }}>
-        总计: {totalTokens.toLocaleString()} tokens
-      </Text>
-    </Flexbox>
-  );
-}
-
-/**
- * 累计 Token 统计栏
- */
-function CumulativeTokenStats({ total }: { total: number }) {
-  return (
-    <Flexbox
-      horizontal
-      justify="center"
-      style={{
-        padding: '6px 0',
-        borderBottom: '1px solid var(--color-border-secondary)',
-        background: 'var(--color-fill-tertiary)',
-      }}
-    >
-      <TokenTag value={total} maxValue={128000} showInfo mode="used" />
     </Flexbox>
   );
 }
@@ -265,32 +139,84 @@ export default function WorkplaceDetailPage({
   const [messages, setMessages] = useState<WorkspaceChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // 模型配置状态
-  const [models, setModels] = useState<ModelSelectorItem[]>([]);
-  const [modelsLoading, setModelsLoading] = useState(true);
-  const [currentModel, setCurrentModel] = useState<ModelSelectorItem | null>(null);
-
-  // 工作区状态
   const [workspace, setWorkspace] = useState<WorkspaceListItem | null>(null);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [verified, setVerified] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
 
-  // 累计 token 统计
-  const [cumulativeTokens, setCumulativeTokens] = useState(0);
+  // 模型和提供商状态
+  const [modelList, setModelList] = useState<ModelSelectorItem[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const selectedModel = modelList.find((m) => m.id === selectedModelId) ?? null;
 
-  /**
-   * 加载工作区信息
-   */
+  // 加载模型和提供商列表
+  const loadModelsAndProviders = useCallback(async () => {
+    setModelsLoading(true);
+    try {
+      const [modelsRes, providersRes] = await Promise.all([
+        fetch('/api/models'),
+        fetch('/api/providers'),
+      ]);
+
+      const modelsData: { success: boolean; data?: { id: string; name: string; provider: string; enabled: boolean }[] } = await modelsRes.json();
+      const providersData: { success: boolean; data?: { id: string; name: string; sdkType: string; authType: string; enabled: boolean }[] } = await providersRes.json();
+
+      const items: ModelSelectorItem[] = [];
+
+      // 合并模型配置
+      if (modelsData.success && modelsData.data) {
+        for (const m of modelsData.data) {
+          if (m.enabled) {
+            items.push({
+              id: m.id,
+              name: m.name,
+              providerName: m.provider,
+              providerId: m.id,
+              enabled: m.enabled,
+              sdkType: 'openai',
+              authType: 'apiKey',
+            });
+          }
+        }
+      }
+
+      // 合并提供商（包括 OAuth）
+      if (providersData.success && providersData.data) {
+        for (const p of providersData.data) {
+          if (p.enabled && !items.find((i) => i.providerId === p.id)) {
+            items.push({
+              id: p.id,
+              name: p.name,
+              providerName: p.name,
+              providerId: p.id,
+              enabled: p.enabled,
+              sdkType: p.sdkType,
+              authType: p.authType,
+            });
+          }
+        }
+      }
+
+      setModelList(items);
+      if (items.length > 0) {
+        setSelectedModelId(items[0]?.id ?? null);
+      }
+    } catch {
+      message.error('获取模型列表失败');
+    } finally {
+      setModelsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchWorkspace = async () => {
       try {
         const response = await fetch('/api/workspaces');
-        const result: { success: boolean; data?: WorkspaceListItem[] } =
-          await response.json();
+        const result: { success: boolean; data?: WorkspaceListItem[] } = await response.json();
         if (result.success) {
           const ws = result.data?.find((w) => w.id === id);
           if (ws) {
@@ -313,119 +239,33 @@ export default function WorkplaceDetailPage({
     fetchWorkspace();
   }, [id, router]);
 
-  /**
-   * 加载已启用的模型列表（合并 models 和 providers API）
-   */
   useEffect(() => {
-    const fetchModels = async () => {
-      setModelsLoading(true);
-      try {
-        // 并行获取模型和提供商列表
-        const [modelsRes, providersRes] = await Promise.all([
-          fetch('/api/models'),
-          fetch('/api/providers'),
-        ]);
+    if (verified) {
+      void loadModelsAndProviders();
+    }
+  }, [verified, loadModelsAndProviders]);
 
-        const modelsData: { success: boolean; data?: ModelConfig[] } =
-          await modelsRes.json();
-        const providersData: {
-          success: boolean;
-          data?: Provider[];
-          presets?: { id: string; name: string; isAdded: boolean; dbId?: string }[];
-        } = await providersRes.json();
-
-        const selectorModels: ModelSelectorItem[] = [];
-
-        // 从 models API 获取已启用的配置
-        if (modelsData.success && modelsData.data) {
-          for (const model of modelsData.data) {
-            if (model.enabled) {
-              selectorModels.push({
-                id: model.name,
-                name: model.name,
-                providerName: model.provider,
-                providerId: model.id,
-                enabled: model.enabled,
-                sdkType: 'openai',
-                authType: 'apiKey',
-              });
-            }
-          }
-        }
-
-        // 从 providers API 获取已启用的提供商（包括 OAuth）
-        if (providersData.success && providersData.data) {
-          for (const provider of providersData.data) {
-            if (provider.enabled) {
-              // 避免与 models API 重复
-              const exists = selectorModels.some((m) => m.providerId === provider.id);
-              if (!exists) {
-                selectorModels.push({
-                  id: provider.name,
-                  name: provider.name,
-                  providerName: provider.name,
-                  providerId: provider.id,
-                  enabled: provider.enabled,
-                  sdkType: provider.sdkType,
-                  authType: provider.authType,
-                });
-              }
-            }
-          }
-        }
-
-        setModels(selectorModels);
-
-        // 默认选择第一个已启用的模型
-        if (selectorModels.length > 0 && !currentModel) {
-          const firstModel = selectorModels[0];
-          if (firstModel) {
-            setCurrentModel(firstModel);
-          }
-        }
-      } catch {
-        message.error('获取模型列表失败');
-      } finally {
-        setModelsLoading(false);
-      }
-    };
-
-    fetchModels();
-  }, [currentModel]);
-
-  /**
-   * 密码验证回调
-   */
   const handleVerified = useCallback(() => {
     setVerified(true);
     setPasswordModalOpen(false);
   }, []);
 
-  /**
-   * 密码取消回调
-   */
   const handlePasswordCancel = useCallback(() => {
     setPasswordModalOpen(false);
     router.push('/workplace');
   }, [router]);
 
-  /**
-   * 自动滚动到底部
-   */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  /**
-   * 发送消息
-   */
   const handleSend = useCallback(
     async (value: string) => {
       const trimmed = value.trim();
       if (!trimmed || loading) return;
 
-      // 必须有已配置的模型
-      if (!currentModel) {
+      // 没有配置模型时不允许发送
+      if (!selectedModel) {
         message.warning('请先配置 AI 模型');
         return;
       }
@@ -437,6 +277,8 @@ export default function WorkplaceDetailPage({
         createAt: Date.now(),
         updateAt: Date.now(),
         meta: USER_META,
+        providerId: selectedModel.providerId,
+        model: selectedModel.name,
       };
 
       setMessages((prev) => [...prev, userMessage]);
@@ -452,81 +294,48 @@ export default function WorkplaceDetailPage({
               role: m.role,
               content: m.content,
             })),
-            model: currentModel.id,
-            providerId: currentModel.providerId,
+            model: selectedModel.name,
+            providerId: selectedModel.providerId,
           }),
         });
 
-        const result: {
-          success: boolean;
-          data?: {
-            content: string;
-            usage?: { inputTokens: number; outputTokens: number; totalTokens: number };
-            usedProvider?: boolean;
-          };
-          error?: { message: string; code: string };
-        } = await response.json();
+        const result: { success: boolean; data?: { content: string; usage?: { inputTokens: number; outputTokens: number; totalTokens: number } }; error?: { message: string } } = await response.json();
 
-        if (response.ok && result.success && result.data) {
-          const usage = result.data.usage ?? {
-            inputTokens: 0,
-            outputTokens: 0,
-            totalTokens: 0,
-          };
-
+        if (result.success && result.data) {
           const assistantMessage: WorkspaceChatMessage = {
             id: `assistant-${Date.now().toString()}`,
             role: 'assistant',
             content: result.data.content,
             createAt: Date.now(),
             updateAt: Date.now(),
-            meta: createAssistantMeta(currentModel.name),
-            usage,
+            meta: createAssistantMeta(selectedModel.name),
+            providerId: selectedModel.providerId,
+            model: selectedModel.name,
           };
-
+          if (result.data.usage) {
+            assistantMessage.usage = {
+              inputTokens: result.data.usage.inputTokens,
+              outputTokens: result.data.usage.outputTokens,
+              totalTokens: result.data.usage.totalTokens,
+            };
+          }
           setMessages((prev) => [...prev, assistantMessage]);
-          setCumulativeTokens((prev) => prev + usage.totalTokens);
         } else {
-          const errorMsg = result.error?.message ?? '发送消息失败';
-          message.error(errorMsg);
-
-          // 添加错误提示消息
-          const errorMessage: WorkspaceChatMessage = {
-            id: `error-${Date.now().toString()}`,
-            role: 'assistant',
-            content: `⚠️ ${errorMsg}`,
-            createAt: Date.now(),
-            updateAt: Date.now(),
-            meta: createAssistantMeta(),
-          };
-          setMessages((prev) => [...prev, errorMessage]);
+          message.error(result.error?.message ?? '发送消息失败');
         }
       } catch {
-        message.error('网络错误，发送消息失败');
+        message.error('发送消息失败');
       } finally {
         setLoading(false);
       }
     },
-    [loading, messages, currentModel, id],
+    [loading, messages, selectedModel, id],
   );
 
-  /**
-   * 模型选择回调
-   */
-  const handleModelSelect = useCallback((model: ModelSelectorItem) => {
-    setCurrentModel(model);
+  const handleModelSelect = useCallback((modelId: string) => {
+    setSelectedModelId(modelId);
   }, []);
 
-  /**
-   * 前往配置页面
-   */
-  const handleGoToConfig = useCallback(() => {
-    router.push('/provider');
-  }, [router]);
-
-  /**
-   * 输入框文本变化
-   */
   const handleTextAreaChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setInputValue(e.target.value);
@@ -534,209 +343,177 @@ export default function WorkplaceDetailPage({
     [],
   );
 
-  /**
-   * 输入框发送
-   */
   const handleInputSend = useCallback(() => {
     handleSend(inputValue);
   }, [handleSend, inputValue]);
 
-  /**
-   * 密码验证中的 Loading 页面
-   */
+  // 累计 Token 统计
+  const totalUsage = React.useMemo(() => {
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let totalTokens = 0;
+    for (const msg of messages) {
+      if (msg.usage) {
+        inputTokens += msg.usage.inputTokens;
+        outputTokens += msg.usage.outputTokens;
+        totalTokens += msg.usage.totalTokens;
+      }
+    }
+    return { inputTokens, outputTokens, totalTokens };
+  }, [messages]);
+
   if (!verified) {
     return (
       <Flexbox align="center" justify="center" style={{ height: '100dvh' }}>
-        <Spin size="large" />
-        <Text type="secondary" style={{ marginTop: 16 }}>
-          验证中...
-        </Text>
+        <Text type="secondary">验证中...</Text>
       </Flexbox>
     );
   }
 
-  /**
-   * 聊天 Tab 内容
-   */
-  const renderChatTab = () => {
-    // 模型加载中
-    if (modelsLoading) {
-      return (
-        <Flexbox align="center" justify="center" style={{ height: 'calc(100dvh - 46px)' }}>
-          <Spin size="large" />
-          <Text type="secondary" style={{ marginTop: 16 }}>
-            加载模型配置...
-          </Text>
-        </Flexbox>
-      );
-    }
-
-    // 无已启用模型：显示引导页面
-    if (models.length === 0) {
-      return <EmptyModelGuide onGoToConfig={handleGoToConfig} />;
-    }
-
+  // 模型加载中
+  if (modelsLoading) {
     return (
-      <Flexbox style={{ height: 'calc(100dvh - 46px)' }}>
-        {/* 顶部栏 */}
-        <Flexbox
-          horizontal
-          justify="space-between"
-          align="center"
-          style={{
-            borderBottom: '1px solid var(--color-border)',
-            padding: '8px 16px',
-            background: 'var(--color-bg-container)',
-          }}
-        >
-          <Flexbox gap={8} horizontal align="center">
-            <ActionIcon
-              icon={ArrowLeftOutlined}
-              onClick={() => {
-                router.push('/workplace');
-              }}
-              size="large"
-            />
-            <ModelSelector
-              models={models}
-              currentModel={currentModel}
-              onSelect={handleModelSelect}
-            />
-          </Flexbox>
-          <ActionIcon icon={ShareAltOutlined} size="large" />
+      <Flexbox align="center" justify="center" style={{ height: 'calc(100dvh - 46px)' }}>
+        <Spin size="large" />
+      </Flexbox>
+    );
+  }
+
+  // 无模型配置：显示引导
+  if (modelList.length === 0) {
+    return (
+      <EmptyModelGuide
+        onGoToConfig={() => {
+          router.push('/provider');
+        }}
+      />
+    );
+  }
+
+  const renderChatTab = () => (
+    <Flexbox style={{ height: 'calc(100dvh - 46px)' }}>
+      {/* 顶部栏 */}
+      <Flexbox
+        horizontal
+        justify="space-between"
+        align="center"
+        style={{
+          borderBottom: '1px solid var(--color-border)',
+          padding: '8px 16px',
+          background: 'var(--color-bg-container)',
+        }}
+      >
+        <Flexbox gap={8} horizontal align="center">
+          <ActionIcon
+            icon={ArrowLeftOutlined}
+            onClick={() => {
+              router.push('/workplace');
+            }}
+            size="large"
+          />
+          <ModelSelector
+            items={modelList}
+            currentModelId={selectedModelId}
+            onSelect={handleModelSelect}
+          />
+          {totalUsage.totalTokens > 0 && (
+            <Tag color="blue">
+              累计: {String(totalUsage.inputTokens)} 输入 / {String(totalUsage.outputTokens)} 输出 / {String(totalUsage.totalTokens)} 总计
+            </Tag>
+          )}
         </Flexbox>
+        <ActionIcon icon={ShareAltOutlined} size="large" />
+      </Flexbox>
 
-        {/* 累计 Token 统计 */}
-        {cumulativeTokens > 0 && <CumulativeTokenStats total={cumulativeTokens} />}
-
-        {/* 消息列表 */}
-        <Flexbox
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '16px',
-          }}
-        >
-          <Flexbox style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
-            {messages.length === 0 && !loading ? (
-              <Flexbox
-                gap={16}
-                align="center"
-                justify="center"
-                style={{ height: '60vh' }}
-              >
-                <Avatar
-                  avatar="🤖"
-                  size={64}
-                  background="var(--lobe-color-primary)"
-                />
-                <Text type="secondary" style={{ fontSize: 16 }}>
-                  开始对话，让 AI 帮助你完成工作
-                </Text>
-                {currentModel && (
-                  <Flexbox horizontal gap={8}>
-                    <Tag color="blue">
-                      {currentModel.name}
-                    </Tag>
-                    <Tag>
-                      {currentModel.providerName}
-                    </Tag>
-                  </Flexbox>
-                )}
-              </Flexbox>
-            ) : (
-              <>
-                {messages.map((msg) => {
-                  const isUser = msg.role === 'user';
-                  const isLast = msg.id === messages[messages.length - 1]?.id;
-
-                  return (
-                    <React.Fragment key={msg.id}>
-                      <ChatItem
-                        avatar={isUser ? USER_META : (msg.meta ?? createAssistantMeta())}
-                        placement={isUser ? 'right' : 'left'}
-                        message={msg.content}
-                        loading={loading && isLast}
-                        showAvatar
-                        variant="bubble"
-                        markdownProps={{
-                          variant: 'chat',
-                          enableMermaid: true,
-                          enableGithubAlert: true,
-                          enableLatex: true,
-                        }}
-                      />
-                      {/* AI 回复下方显示 Token 统计 */}
-                      {!isUser && msg.usage && (
-                        <Flexbox style={{ paddingLeft: 48, marginBottom: 8 }}>
-                          <TokenStats
-                            inputTokens={msg.usage.inputTokens}
-                            outputTokens={msg.usage.outputTokens}
-                            totalTokens={msg.usage.totalTokens}
-                          />
-                        </Flexbox>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-                {loading && (
-                  <ChatItem
-                    avatar={createAssistantMeta(currentModel?.name)}
-                    placement="left"
-                    message={<LoadingDots />}
-                    showAvatar
-                    variant="bubble"
-                  />
-                )}
-                <div ref={messagesEndRef} />
-              </>
-            )}
-          </Flexbox>
-        </Flexbox>
-
-        {/* 输入区域 */}
-        <Flexbox
-          style={{
-            borderTop: '1px solid var(--color-border)',
-            background: 'var(--color-bg-container)',
-            padding: '12px 16px 16px',
-          }}
-        >
-          <Flexbox style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
-            <ChatInputActionBar
-              leftAddons={
-                <Flexbox gap={4} horizontal>
-                  <ActionIcon icon={ApiOutlined} size={{ blockSize: 20 }} />
-                </Flexbox>
-              }
-              rightAddons={
-                <ActionIcon
-                  icon={SendOutlined}
-                  onClick={handleInputSend}
-                  loading={loading}
-                  disabled={!inputValue.trim() || loading}
-                  size={{ blockSize: 24 }}
-                />
-              }
-            />
-            <ChatInputArea.Inner
-              value={inputValue}
-              onChange={handleTextAreaChange}
-              onSend={handleInputSend}
-              loading={loading}
-              placeholder="从任何想法开始..."
-              autoSize={{ minRows: 2, maxRows: 8 }}
-            />
-            <Flexbox justify="center" style={{ marginTop: 8 }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                按 Ctrl+Enter 发送
+      {/* 消息列表 */}
+      <Flexbox style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
+        <Flexbox style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
+          {messages.length === 0 ? (
+            <Flexbox gap={16} align="center" justify="center" style={{ height: '60vh' }}>
+              <Avatar avatar="🤖" size={64} />
+              <Text type="secondary" style={{ fontSize: 16 }}>
+                从任何想法开始，让 AI 帮助你完成工作
               </Text>
             </Flexbox>
+          ) : (
+            <>
+              {messages.map((msg) => {
+                const isUser = msg.role === 'user';
+                return (
+                  <React.Fragment key={msg.id}>
+                    <ChatItem
+                      avatar={isUser ? USER_META : createAssistantMeta(msg.model)}
+                      placement={isUser ? 'right' : 'left'}
+                      message={msg.content}
+                      showAvatar
+                      variant="bubble"
+                      markdownProps={{
+                        variant: 'chat',
+                        enableMermaid: true,
+                        enableGithubAlert: true,
+                        enableLatex: true,
+                      }}
+                    />
+                    {/* AI 回复的 Token 统计 */}
+                    {!isUser && msg.usage && (
+                      <Flexbox
+                        justify="flex-end"
+                        style={{ padding: '4px 12px 8px 48px', marginBottom: 8 }}
+                      >
+                        <Tag>
+                          {String(msg.usage.inputTokens)} 输入 / {String(msg.usage.outputTokens)} 输出 / {String(msg.usage.totalTokens)} 总计
+                        </Tag>
+                      </Flexbox>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+              {loading && (
+                <ChatItem
+                  avatar={createAssistantMeta(selectedModel?.name)}
+                  placement="left"
+                  message={<LoadingDots />}
+                  showAvatar
+                  variant="bubble"
+                />
+              )}
+              <div ref={messagesEndRef} />
+            </>
+          )}
+        </Flexbox>
+      </Flexbox>
+
+      {/* 输入区域 */}
+      <Flexbox style={{ borderTop: '1px solid var(--color-border)', background: 'var(--color-bg-container)', padding: '12px 16px 16px' }}>
+        <Flexbox style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
+          <ChatInputActionBar
+            rightAddons={
+              <ActionIcon
+                icon={SendOutlined}
+                onClick={handleInputSend}
+                loading={loading}
+                disabled={!inputValue.trim() || loading || !selectedModel}
+                size={{ blockSize: 24 }}
+              />
+            }
+          />
+          <ChatInputArea.Inner
+            value={inputValue}
+            onChange={handleTextAreaChange}
+            onSend={handleInputSend}
+            loading={loading}
+            placeholder={selectedModel ? '从任何想法开始...' : '请先配置模型'}
+            autoSize={{ minRows: 2, maxRows: 8 }}
+          />
+          <Flexbox justify="center" style={{ marginTop: 8 }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              按 Ctrl+Enter 换行
+            </Text>
           </Flexbox>
         </Flexbox>
       </Flexbox>
-    );
-  };
+    </Flexbox>
+  );
 
   const tabItems = [
     {
@@ -819,5 +596,57 @@ export default function WorkplaceDetailPage({
         />
       )}
     </div>
+  );
+}
+
+/**
+ * 模型选择器组件
+ */
+function ModelSelector({
+  items,
+  currentModelId,
+  onSelect,
+}: {
+  items: ModelSelectorItem[];
+  currentModelId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const current = items.find((m) => m.id === currentModelId);
+
+  const menuItems = items.map((model) => ({
+    key: model.id,
+    label: (
+      <Flexbox gap={8} horizontal align="center">
+        <ModelIcon model={model.sdkType} size={20} />
+        <Text>{model.name}</Text>
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          {model.providerName}
+        </Text>
+        {model.authType === 'oauth' && (
+          <Tag color="purple" style={{ margin: 0 }}>OAuth</Tag>
+        )}
+      </Flexbox>
+    ),
+    onClick: () => {
+      onSelect(model.id);
+    },
+  }));
+
+  return (
+    <Dropdown menu={{ items: menuItems }} placement="bottomLeft" arrow>
+      <Flexbox
+        gap={6}
+        horizontal
+        align="center"
+        style={{
+          padding: '4px 8px',
+          borderRadius: 8,
+          cursor: 'pointer',
+        }}
+      >
+        <ModelIcon model={current?.sdkType ?? 'openai'} size={18} />
+        <Text style={{ fontSize: 14 }}>{current?.name ?? '选择模型'}</Text>
+      </Flexbox>
+    </Dropdown>
   );
 }
