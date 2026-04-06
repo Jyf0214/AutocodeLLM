@@ -17,6 +17,8 @@ import {
   Tooltip,
   Card,
   Select,
+  Collapse,
+  Alert,
 } from 'antd';
 import {
   PlusOutlined,
@@ -28,6 +30,7 @@ import {
   LockOutlined,
   ReloadOutlined,
   CheckCircleOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import { OpenAI, Anthropic, Google, DeepSeek, Nvidia, Zhipu, Moonshot, Groq, Mistral, OpenRouter, Ollama, Azure, Cohere, Fireworks, Perplexity, ZeroOne, Alibaba, Tencent, IFlyTekCloud, SiliconCloud, Together, XAI, Minimax } from '@lobehub/icons';
 import type { Provider, ProviderResponse, TestProviderResponse } from '@/lib/api/provider-types';
@@ -99,6 +102,7 @@ export default function ProviderPage() {
   const [oauthUserCode, setOauthUserCode] = useState('');
   const [oauthProviderId, setOauthProviderId] = useState<string | null>(null);
   const [oauthExpiresAt, setOauthExpiresAt] = useState<string | null>(null);
+  const [oauthErrorDetail, setOauthErrorDetail] = useState<{ message: string; code: string; rawResponse: string } | null>(null);
 
   // 获取提供商列表
   const fetchProviders = useCallback(async () => {
@@ -306,7 +310,13 @@ export default function ProviderPage() {
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        message.error(errorData.error?.message ?? '启动 OAuth 失败');
+        const errMsg = errorData.error?.message ?? '启动 OAuth 失败';
+        message.error(errMsg);
+        setOauthErrorDetail({
+          message: errMsg,
+          code: errorData.error?.code ?? 'UNKNOWN',
+          rawResponse: JSON.stringify(errorData, null, 2),
+        });
         return;
       }
 
@@ -590,6 +600,49 @@ export default function ProviderPage() {
             </Flexbox>
           )}
         </Flexbox>
+
+        {/* OAuth 错误详情（可折叠 + 一键复制） */}
+        {oauthErrorDetail != null && (
+          <div style={{ marginTop: 16 }}>
+            <Collapse
+              size="small"
+              defaultActiveKey={[]}
+              items={[{
+                key: 'error',
+                label: (
+                  <Flexbox gap={8} horizontal align="center">
+                    <Tag color="red" style={{ margin: 0 }}>OAuth 错误详情</Tag>
+                    <Text type="secondary" style={{ fontSize: 12 }}>{oauthErrorDetail.message}</Text>
+                  </Flexbox>
+                ),
+                children: (
+                  <div>
+                    <Flexbox justify="space-between" align="center" style={{ marginBottom: 8 }}>
+                      <Text type="secondary" style={{ fontSize: 12 }}>错误代码: {oauthErrorDetail.code}</Text>
+                      <Button
+                        size="small"
+                        icon={<CopyOutlined />}
+                        onClick={() => {
+                          const text = `错误信息: ${oauthErrorDetail.message}\n错误代码: ${oauthErrorDetail.code}\n\n原始响应:\n${oauthErrorDetail.rawResponse}`;
+                          void navigator.clipboard.writeText(text);
+                          message.success('已复制到剪贴板');
+                        }}
+                      >
+                        复制全部
+                      </Button>
+                    </Flexbox>
+                    <Alert
+                      type="error"
+                      title={oauthErrorDetail.message}
+                      description={<pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 12 }}>{oauthErrorDetail.rawResponse}</pre>}
+                      showIcon
+                    />
+                  </div>
+                ),
+              }]}
+            />
+          </div>
+        )}
       </Card>
 
       {/* 自定义提供商表格 */}
