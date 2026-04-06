@@ -31,12 +31,48 @@ import {
   ReloadOutlined,
   CheckCircleOutlined,
   CopyOutlined,
+  SwapOutlined,
+  CloudOutlined,
+  LaptopOutlined,
 } from '@ant-design/icons';
 import { OpenAI, Anthropic, Google, DeepSeek, Nvidia, Zhipu, Moonshot, Groq, Mistral, OpenRouter, Ollama, Azure, Cohere, Fireworks, Perplexity, ZeroOne, Alibaba, Tencent, IFlyTekCloud, SiliconCloud, Together, XAI, Minimax } from '@lobehub/icons';
 import type { Provider, ProviderResponse, TestProviderResponse } from '@/lib/api/provider-types';
 import { PRESET_PROVIDERS } from '@/lib/providers';
 import type { PresetProvider } from '@/lib/providers';
 void PRESET_PROVIDERS;
+
+type AuthMode = 'backend' | 'frontend';
+
+// Qwen OAuth 配置（与后端一致）
+const QWEN_OAUTH_CONFIG = {
+  clientId: 'f0304373b74a44d2b584a3fb70ca9e56',
+  deviceCodeUrl: 'https://chat.qwen.ai/api/v1/oauth2/device/code',
+  tokenUrl: 'https://chat.qwen.ai/api/v1/oauth2/token',
+  scope: 'openid profile email model.completion',
+};
+
+function objectToUrlEncoded(data: Record<string, string>): string {
+  return Object.entries(data)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+}
+
+async function generateCodeVerifierAndChallenge(): Promise<{ codeVerifier: string; codeChallenge: string }> {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  const codeVerifier = btoa(String.fromCharCode(...array))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+  const data = new TextEncoder().encode(codeVerifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = new Uint8Array(digest);
+  const codeChallenge = btoa(String.fromCharCode(...hashArray))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+  return { codeVerifier, codeChallenge };
+}
 
 interface PresetProviderWithStatus extends PresetProvider {
   isAdded: boolean;
@@ -103,6 +139,8 @@ export default function ProviderPage() {
   const [oauthProviderId, setOauthProviderId] = useState<string | null>(null);
   const [oauthExpiresAt, setOauthExpiresAt] = useState<string | null>(null);
   const [oauthErrorDetail, setOauthErrorDetail] = useState<{ message: string; code: string; rawResponse: string } | null>(null);
+  const [oauthAuthMode, setOauthAuthMode] = useState<AuthMode>('backend');
+  const [oauthFrontendPolling, setOauthFrontendPolling] = useState(false);
 
   // 获取提供商列表
   const fetchProviders = useCallback(async () => {
@@ -297,8 +335,154 @@ export default function ProviderPage() {
     [fetchProviders]
   );
 
-  // 启动 Qwen OAuth 登录
+  // 保存 OAuth token 到数据库
+  const saveOAuthTokenToDb = useCallback(async (tokenData: {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    resourceUrl?: string;
+    codeVerifier: string;
+  }): Promise<string> => {
+    const expiresAt = new Date(Date.now() + tokenData.expiresIn * 1000).toISOString();
+    const providerData = {
+      name: 'Qwen (OAuth)',
+      baseUrl: tokenData.resourceUrl ?? 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      apiKey: tokenData.accessToken,
+      authType: 'oauth',
+      sdkType: 'openai',
+      enabled: true,
+      oauthAccessToken: tokenData.accessToken,
+      oauthRefreshToken: tokenData.refreshToken,
+      oauthExpiresAt: expiresAt,
+      oauthDeviceCode: tokenData.codeVerifier,
+      metadata: JSON.stringify({ authMode: 'frontend' }),
+    };
+
+    // 检查是否已有 Qwen provider
+    const res = await fetch('/api/providers');
+    const data: ProviderResponse & { data?: { id: string; name: string }[] } = await res.json();
+    const existing = data.data?.find((p) => p.name === 'Qwen (OAuth)');
+
+    let saveRes: Response;
+    if (existing) {
+      saveRes = await fetch(`/api/providers?id=${existing.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: existing.id, ...providerData }),
+      });
+    } else {
+      saveRes = await fetch('/api/providers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(providerData),
+      });
+    }
+
+    const saveData: ProviderResponse = await saveRes.json();
+    if (!saveData.success) {
+      throw new Error(saveData.error?.message ?? '保存 token 失败');
+    }
+    return (saveData.data as { id?: string } | undefined)?.id ?? existing?.id ?? 'unknown';
+  }, []);
+
+  // 前端模式 OAuth
+  const handleFrontendOAuthStart = useCallback(async () => {
+    setOauthLoading(true);
+    setOauthVerificationUri('');
+    setOauthUserCode('');
+    setOauthErrorDetail(null);
+    try {
+      const { codeVerifier, codeChallenge } = await generateCodeVerifierAndChallenge();
+      const bodyData = {
+        client_id: QWEN_OAUTH_CONFIG.clientId,
+        scope: QWEN_OAUTH_CONFIG.scope,
+        code_challenge: codeChallenge,
+        code_challenge_method: 'S256',
+      };
+
+      const deviceCodeRes = await fetch(QWEN_OAUTH_CONFIG.deviceCodeUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+        body: objectToUrlEncoded(bodyData),
+      });
+
+      if (!deviceCodeRes.ok) {
+        const errorText = await deviceCodeRes.text();
+        throw new Error(`HTTP ${String(deviceCodeRes.status)} - ${errorText.slice(0, 300)}`);
+      }
+
+      const deviceData: { device_code: string; user_code: string; verification_uri_complete: string; expires_in: number; interval?: number } = await deviceCodeRes.json();
+      setOauthVerificationUri(deviceData.verification_uri_complete);
+      setOauthUserCode(deviceData.user_code);
+      setOauthFrontendPolling(true);
+      window.open(deviceData.verification_uri_complete, '_blank');
+
+      const poll = async () => {
+        try {
+          const pollRes = await fetch(QWEN_OAUTH_CONFIG.tokenUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+            body: objectToUrlEncoded({
+              grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+              client_id: QWEN_OAUTH_CONFIG.clientId,
+              device_code: deviceData.device_code,
+              code_verifier: codeVerifier,
+            }),
+          });
+
+          const pollData: { access_token?: string; refresh_token?: string; expires_in?: number; resource_url?: string; error?: string; error_description?: string } = await pollRes.json();
+
+          if (pollData.access_token) {
+            setOauthFrontendPolling(false);
+            message.success('授权成功，正在保存...');
+            try {
+              const providerId = await saveOAuthTokenToDb({
+                accessToken: pollData.access_token,
+                refreshToken: pollData.refresh_token ?? '',
+                expiresIn: pollData.expires_in ?? 3600,
+                resourceUrl: pollData.resource_url ?? '',
+                codeVerifier,
+              });
+              setOauthProviderId(providerId);
+              const expiresAt = new Date(Date.now() + (pollData.expires_in ?? 3600) * 1000).toISOString();
+              setOauthExpiresAt(expiresAt);
+              message.success('Qwen OAuth 登录成功，Token 已保存！');
+              fetchProviders();
+            } catch (saveError: unknown) {
+              const errMsg = saveError instanceof Error ? saveError.message : '保存失败';
+              message.error(`Token 获取成功，但保存到数据库失败：${errMsg}`);
+            }
+          } else if (pollData.error === 'authorization_pending') {
+            setTimeout(poll, 2000);
+          } else if (pollData.error === 'slow_down') {
+            setTimeout(poll, 4000);
+          } else {
+            setOauthFrontendPolling(false);
+            const errMsg = pollData.error_description ?? pollData.error ?? '获取 Token 失败';
+            message.error(errMsg);
+          }
+        } catch {
+          setTimeout(poll, 2000);
+        }
+      };
+
+      setTimeout(poll, 2000);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : '前端 OAuth 启动失败';
+      message.error(errMsg);
+      setOauthErrorDetail({ message: errMsg, code: 'FRONTEND_START_FAILED', rawResponse: '' });
+    } finally {
+      setOauthLoading(false);
+    }
+  }, [fetchProviders, saveOAuthTokenToDb]);
+
+  // 启动 Qwen OAuth 登录（后端模式）
   const handleQwenOAuthStart = useCallback(async () => {
+    if (oauthAuthMode === 'frontend') {
+      void handleFrontendOAuthStart();
+      return;
+    }
+
     setOauthLoading(true);
     setOauthVerificationUri('');
     setOauthUserCode('');
@@ -311,11 +495,23 @@ export default function ProviderPage() {
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         const errMsg = errorData.error?.message ?? '启动 OAuth 失败';
-        message.error(errMsg);
         setOauthErrorDetail({
           message: errMsg,
           code: errorData.error?.code ?? 'UNKNOWN',
           rawResponse: JSON.stringify(errorData, null, 2),
+        });
+
+        // 后端失败，提示切换前端模式
+        Modal.confirm({
+          title: '后端启动失败',
+          content: '后端调用 Qwen OAuth API 失败，可能是网络或安全策略限制。是否切换到前端模式？前端模式将直接从浏览器调用 Qwen OAuth 接口。',
+          okText: '切换到前端模式',
+          cancelText: '保持后端模式',
+          onOk: () => {
+            setOauthAuthMode('frontend');
+            message.info('已切换到前端模式，正在重新启动 OAuth...');
+            setTimeout(() => { void handleFrontendOAuthStart(); }, 300);
+          },
         });
         return;
       }
@@ -329,9 +525,8 @@ export default function ProviderPage() {
         setOauthPolling(true);
         window.open(verificationUri, '_blank');
 
-        // 轮询获取 Token
         const pollStartTime = Date.now();
-        const maxPollTime = 5 * 60 * 1000; // 5 分钟超时
+        const maxPollTime = 5 * 60 * 1000;
 
         const poll = async () => {
           if (Date.now() - pollStartTime > maxPollTime) {
@@ -357,22 +552,18 @@ export default function ProviderPage() {
               message.success('Qwen OAuth 登录成功');
               fetchProviders();
             } else if (pollData.error?.code === 'AUTHORIZATION_PENDING') {
-              // 用户尚未授权，继续轮询
               setTimeout(poll, interval * 1000);
             } else if (pollData.error?.code === 'SLOW_DOWN') {
-              // 请求过于频繁，增加间隔
               setTimeout(poll, (interval + 2) * 1000);
             } else {
               setOauthPolling(false);
               message.error(pollData.error?.message ?? '获取 Token 失败');
             }
           } catch {
-            // 网络错误，继续轮询
             setTimeout(poll, interval * 1000);
           }
         };
 
-        // 开始轮询
         setTimeout(poll, interval * 1000);
       } else {
         message.error(data.error?.message ?? '启动 OAuth 失败');
@@ -382,7 +573,7 @@ export default function ProviderPage() {
     } finally {
       setOauthLoading(false);
     }
-  }, [fetchProviders]);
+  }, [fetchProviders, oauthAuthMode, handleFrontendOAuthStart]);
 
   // 获取 OAuth 状态文本
   const getOAuthStatusText = () => {
@@ -570,16 +761,47 @@ export default function ProviderPage() {
         <Icon icon={LockOutlined} /> Qwen OAuth 登录
       </Text>
       <Card style={{ marginBottom: 32 }}>
-        <Flexbox align="center" gap={16}>
+        <Flexbox gap={16}>
+          <Flexbox gap={8} horizontal align="center">
+            <Tag color={oauthAuthMode === 'backend' ? 'blue' : 'green'}>
+              <Icon icon={oauthAuthMode === 'backend' ? CloudOutlined : LaptopOutlined} />
+              {oauthAuthMode === 'backend' ? '后端模式' : '前端模式'}
+            </Tag>
+            <Button
+              size="small"
+              icon={<SwapOutlined />}
+              onClick={() => {
+                const newMode = oauthAuthMode === 'backend' ? 'frontend' : 'backend';
+                setOauthAuthMode(newMode);
+                message.info(`已切换到${newMode === 'backend' ? '后端' : '前端'}模式`);
+              }}
+            >
+              切换模式
+            </Button>
+          </Flexbox>
+
+          {oauthAuthMode === 'frontend' && (
+            <Alert
+              type="info"
+              showIcon
+              title="前端授权模式"
+              description="浏览器将直接调用 Qwen OAuth 接口，获取的 token 会自动保存到后端数据库。"
+            />
+          )}
+
           <Button
             type="primary"
             size="large"
             icon={<LockOutlined />}
-            loading={oauthLoading || oauthPolling}
+            loading={oauthLoading || oauthPolling || oauthFrontendPolling}
             onClick={() => { void handleQwenOAuthStart(); }}
-            disabled={oauthPolling}
+            disabled={oauthPolling || oauthFrontendPolling}
           >
-            {oauthPolling ? '等待授权...' : oauthLoading ? '启动中...' : '使用 Qwen 账号登录'}
+            {oauthPolling || oauthFrontendPolling
+              ? '等待授权...'
+              : oauthLoading
+                ? '启动中...'
+                : '使用 Qwen 账号登录'}
           </Button>
           {oauthVerificationUri && (
             <Text type="secondary" style={{ fontSize: 12 }}>
