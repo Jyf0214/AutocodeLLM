@@ -1,3 +1,11 @@
+/**
+ * API 提供商配置页
+ *
+ * 职责：管理 API 提供商连接（OpenAI, Anthropic, Qwen OAuth 等）
+ * - 显示已配置的提供商，点击可配置/测试
+ * - 支持添加自定义提供商
+ * - OAuth 登录入口
+ */
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
@@ -19,24 +27,23 @@ import {
   Select,
   Collapse,
   Alert,
+  Empty,
+  Spin,
 } from 'antd';
 import {
   PlusOutlined,
-  EditOutlined,
   DeleteOutlined,
   ThunderboltOutlined,
-  CloudOutlined,
   GlobalOutlined,
   LockOutlined,
   ReloadOutlined,
   CheckCircleOutlined,
   CopyOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { OpenAI, Anthropic, Google, DeepSeek, Nvidia, Zhipu, Moonshot, Groq, Mistral, OpenRouter, Ollama, Azure, Cohere, Fireworks, Perplexity, ZeroOne, Alibaba, Tencent, IFlyTekCloud, SiliconCloud, Together, XAI, Minimax } from '@lobehub/icons';
 import type { Provider, ProviderResponse, TestProviderResponse } from '@/lib/api/provider-types';
-import { PRESET_PROVIDERS } from '@/lib/providers';
 import type { PresetProvider } from '@/lib/providers';
-void PRESET_PROVIDERS;
 
 interface PresetProviderWithStatus extends PresetProvider {
   isAdded: boolean;
@@ -81,9 +88,6 @@ interface ProviderFormValues {
   presetId?: string;
 }
 
-/**
- * API 提供商配置页
- */
 export default function ProviderPage() {
   const t = useTranslations();
   const [dataSource, setDataSource] = useState<Provider[]>([]);
@@ -104,7 +108,6 @@ export default function ProviderPage() {
   const [oauthExpiresAt, setOauthExpiresAt] = useState<string | null>(null);
   const [oauthErrorDetail, setOauthErrorDetail] = useState<{ message: string; code: string; rawResponse: string } | null>(null);
 
-  // 获取提供商列表
   const fetchProviders = useCallback(async () => {
     setLoading(true);
     try {
@@ -129,7 +132,6 @@ export default function ProviderPage() {
     fetchProviders();
   }, [fetchProviders]);
 
-  // 打开新增/编辑弹窗
   const handleOpenModal = useCallback(
     (provider?: Provider) => {
       if (provider) {
@@ -152,7 +154,6 @@ export default function ProviderPage() {
     [form]
   );
 
-  // 选择预置提供商时自动填充
   const handlePresetChange = useCallback(
     (presetId: string | undefined) => {
       if (!presetId) {
@@ -170,7 +171,6 @@ export default function ProviderPage() {
     [presets, form]
   );
 
-  // 保存提供商
   const handleSave = useCallback(async () => {
     try {
       setSaving(true);
@@ -211,9 +211,7 @@ export default function ProviderPage() {
       setModalOpen(false);
       fetchProviders();
     } catch (error: unknown) {
-      // 区分 Ant Design 表单验证错误和网络错误
       if (error && typeof error === 'object' && 'errorFields' in error) {
-        // 表单验证错误，Ant Design 会自动显示错误信息，不需要额外处理
         return;
       }
       message.error(editingProvider ? '更新提供商失败' : '创建提供商失败');
@@ -222,7 +220,6 @@ export default function ProviderPage() {
     }
   }, [editingProvider, form, fetchProviders]);
 
-  // 删除提供商
   const handleDelete = useCallback(
     async (id: string) => {
       try {
@@ -241,12 +238,11 @@ export default function ProviderPage() {
     [fetchProviders]
   );
 
-  // 测试 API Key 连通性
   const handleTest = useCallback(
     async (provider: Provider) => {
       setTestingId(provider.id);
       try {
-        const res = await fetch('/api/providers', {
+        const res = await fetch('/api/providers/test', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -274,7 +270,6 @@ export default function ProviderPage() {
     []
   );
 
-  // 添加预置提供商
   const handleAddPreset = useCallback(
     async (preset: PresetProviderWithStatus) => {
       try {
@@ -379,7 +374,6 @@ export default function ProviderPage() {
     }
   }, [fetchProviders]);
 
-  // 获取 OAuth 状态文本
   const getOAuthStatusText = () => {
     if (oauthExpiresAt == null) return '未登录';
     const expires = new Date(oauthExpiresAt);
@@ -392,11 +386,10 @@ export default function ProviderPage() {
     return `剩余 ${String(hours)} 小时 ${String(minutes % 60)} 分钟`;
   };
 
-  // 刷新 OAuth Token
   const handleQwenOAuthRefresh = useCallback(async () => {
     if (!oauthProviderId) return;
     try {
-      const res = await fetch('/api/providers', {
+      const res = await fetch('/api/providers/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ providerId: oauthProviderId }),
@@ -419,6 +412,15 @@ export default function ProviderPage() {
       title: '名称',
       dataIndex: 'name',
       key: 'name',
+      render: (name: string, record: Provider) => (
+        <Space>
+          {(() => {
+            const IconComponent = PROVIDER_ICON_MAP[record.sdkType] ?? GlobalOutlined;
+            return <IconComponent size={20} />;
+          })()}
+          <Text strong>{name}</Text>
+        </Space>
+      ),
     },
     {
       title: '基础 URL',
@@ -433,16 +435,6 @@ export default function ProviderPage() {
       render: (authType: string) => (
         <Tag color={authType === 'oauth' ? 'purple' : 'blue'}>
           {authType === 'oauth' ? 'OAuth' : 'API Key'}
-        </Tag>
-      ),
-    },
-    {
-      title: 'API Key',
-      dataIndex: 'apiKey',
-      key: 'apiKey',
-      render: (apiKey: string, record: Provider) => (
-        <Tag color={record.authType === 'oauth' ? 'purple' : 'blue'}>
-          {record.authType === 'oauth' ? 'OAuth' : apiKey}
         </Tag>
       ),
     },
@@ -473,6 +465,21 @@ export default function ProviderPage() {
       key: 'action',
       render: (_: unknown, record: Provider) => (
         <Space>
+          <Tooltip title="配置">
+            <Button
+              type="text"
+              icon={<SettingOutlined />}
+              onClick={() => { handleOpenModal(record); }}
+            />
+          </Tooltip>
+          <Tooltip title="测试连通性">
+            <Button
+              type="text"
+              icon={<ThunderboltOutlined />}
+              onClick={() => { void handleTest(record); }}
+              loading={testingId === record.id}
+            />
+          </Tooltip>
           {record.authType === 'oauth' && record.oauthRefreshToken && (
             <Tooltip title="刷新 Token">
               <Button
@@ -482,21 +489,6 @@ export default function ProviderPage() {
               />
             </Tooltip>
           )}
-          <Tooltip title="测试 API Key">
-            <Button
-              type="text"
-              icon={<ThunderboltOutlined />}
-              onClick={() => { handleTest(record); }}
-              loading={testingId === record.id}
-            />
-          </Tooltip>
-          <Tooltip title="编辑">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => { handleOpenModal(record); }}
-            />
-          </Tooltip>
           <Popconfirm
             title="确定删除此提供商吗？"
             onConfirm={() => { void handleDelete(record.id); }}
@@ -518,47 +510,8 @@ export default function ProviderPage() {
         {t('common.providers')}
       </Text>
       <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
-        配置和管理 OpenAI 兼容的 API 提供商连接。
+        配置和管理 API 提供商连接。添加提供商后，前往「模型管理」页面添加具体模型。
       </Text>
-
-      {/* 预置提供商网格 */}
-      <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 12 }}>
-        <Icon icon={CloudOutlined} /> 预置提供商
-      </Text>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 32 }}>
-        {presets.map((preset) => (
-          <Card
-            key={preset.id}
-            size="small"
-            hoverable
-            style={{
-              opacity: preset.isAdded ? 0.6 : 1,
-              cursor: preset.isAdded ? 'default' : 'pointer',
-            }}
-            onClick={() => { if (!preset.isAdded) handleAddPreset(preset); }}
-          >
-            <Flexbox align="center" gap={8}>
-              {(() => {
-                const IconComponent = PROVIDER_ICON_MAP[preset.id];
-                return IconComponent ? <IconComponent size={32} /> : <Avatar avatar={preset.icon ?? <GlobalOutlined />} size={32} />;
-              })()}
-              <Flexbox flex={1}>
-                <Text strong style={{ fontSize: 14 }}>{preset.name}</Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {preset.description?.substring(0, 20)}...
-                </Text>
-              </Flexbox>
-              {preset.isAdded ? (
-                <Tag color="green" icon={<CheckCircleOutlined />}>已添加</Tag>
-              ) : (
-                <Button type="primary" size="small" icon={<PlusOutlined />}>
-                  添加
-                </Button>
-              )}
-            </Flexbox>
-          </Card>
-        ))}
-      </div>
 
       {/* Qwen OAuth 登录 */}
       <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 12 }}>
@@ -596,7 +549,6 @@ export default function ProviderPage() {
           )}
         </Flexbox>
 
-        {/* OAuth 错误详情（可折叠 + 一键复制） */}
         {oauthErrorDetail != null && (
           <div style={{ marginTop: 16 }}>
             <Collapse
@@ -640,10 +592,10 @@ export default function ProviderPage() {
         )}
       </Card>
 
-      {/* 自定义提供商表格 */}
+      {/* 已配置的提供商列表 */}
       <Flexbox justify="space-between" align="center" style={{ marginBottom: 16 }}>
         <Text strong style={{ fontSize: 16 }}>
-          <Icon icon={GlobalOutlined} /> 自定义提供商
+          <Icon icon={GlobalOutlined} /> 已配置提供商
         </Text>
         <Button
           type="primary"
@@ -654,13 +606,59 @@ export default function ProviderPage() {
         </Button>
       </Flexbox>
 
-      <Table
-        columns={columns}
-        dataSource={dataSource}
-        rowKey="id"
-        loading={loading}
-        pagination={false}
-      />
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 40 }}><Spin /></div>
+      ) : dataSource.length === 0 ? (
+        <Empty description="暂无已配置的提供商，点击上方按钮添加" style={{ marginBottom: 32 }} />
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={dataSource}
+          rowKey="id"
+          loading={false}
+          pagination={false}
+          style={{ marginBottom: 32 }}
+        />
+      )}
+
+      {/* 预置提供商网格 */}
+      <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 12 }}>
+        <Icon icon={GlobalOutlined} /> 快速添加预置提供商
+      </Text>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 32 }}>
+        {presets.map((preset) => (
+          <Card
+            key={preset.id}
+            size="small"
+            hoverable
+            style={{
+              opacity: preset.isAdded ? 0.6 : 1,
+              cursor: preset.isAdded ? 'default' : 'pointer',
+            }}
+            onClick={() => { if (!preset.isAdded) void handleAddPreset(preset); }}
+          >
+            <Flexbox align="center" gap={8}>
+              {(() => {
+                const IconComponent = PROVIDER_ICON_MAP[preset.id];
+                return IconComponent ? <IconComponent size={32} /> : <Avatar avatar={preset.icon ?? <GlobalOutlined />} size={32} />;
+              })()}
+              <Flexbox flex={1}>
+                <Text strong style={{ fontSize: 14 }}>{preset.name}</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {preset.description?.substring(0, 20)}...
+                </Text>
+              </Flexbox>
+              {preset.isAdded ? (
+                <Tag color="green" icon={<CheckCircleOutlined />}>已添加</Tag>
+              ) : (
+                <Button type="primary" size="small" icon={<PlusOutlined />}>
+                  添加
+                </Button>
+              )}
+            </Flexbox>
+          </Card>
+        ))}
+      </div>
 
       <Modal
         title={editingProvider ? '编辑提供商' : '添加提供商'}

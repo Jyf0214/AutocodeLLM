@@ -1,6 +1,15 @@
+/**
+ * 模型管理页
+ *
+ * 职责：管理具体 AI 模型（如 gpt-4, claude-3-sonnet 等）
+ * - 从已配置的提供商中选择
+ * - 添加/编辑/删除模型
+ * - 快速批量探测并添加模型
+ */
 'use client';
 
 import { useCallback, useMemo, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button, Text, Modal, Form, Input } from '@lobehub/ui';
 import {
   PlusOutlined,
@@ -45,8 +54,16 @@ interface QuickAddFormData {
   apiKey: string;
 }
 
+interface ProviderOption {
+  id: string;
+  name: string;
+  baseUrl: string;
+  enabled: boolean;
+}
+
 export default function ModelPage() {
   const t = useTranslations('models');
+  const router = useRouter();
   const [models, setModels] = useState<ModelConfig[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -55,6 +72,9 @@ export default function ModelPage() {
   const [editingModel, setEditingModel] = useState<ModelConfig | null>(null);
   const [form] = Form.useForm();
   const [quickAddForm] = Form.useForm();
+
+  // 已配置的提供商列表（用于选择）
+  const [configuredProviders, setConfiguredProviders] = useState<ProviderOption[]>([]);
 
   // 快速添加相关状态
   const [discovering, setDiscovering] = useState(false);
@@ -65,15 +85,25 @@ export default function ModelPage() {
 
   const providerOptions = useMemo(() => getProviderOptions(), []);
 
+  // 加载模型列表和已配置提供商
   const fetchModels = useCallback(async () => {
     try {
-      const response = await fetch('/api/models');
-      const result = await response.json() as { success: boolean; data?: ModelConfig[]; error?: { message: string } };
+      const [modelsRes, providersRes] = await Promise.all([
+        fetch('/api/models'),
+        fetch('/api/providers'),
+      ]);
 
-      if (result.success) {
-        setModels(result.data ?? []);
+      const modelsData: { success: boolean; data?: ModelConfig[]; error?: { message: string } } = await modelsRes.json();
+      const providersData: { success: boolean; data?: { id: string; name: string; baseUrl: string; enabled: boolean }[] } = await providersRes.json();
+
+      if (modelsData.success) {
+        setModels(modelsData.data ?? []);
       } else {
-        message.error(result.error?.message ?? t('fetchFailed'));
+        message.error(modelsData.error?.message ?? t('fetchFailed'));
+      }
+
+      if (providersData.success && providersData.data) {
+        setConfiguredProviders(providersData.data.filter((p) => p.enabled));
       }
     } catch {
       message.error(t('fetchFailed'));
@@ -100,6 +130,11 @@ export default function ModelPage() {
       setEditingModel(null);
       form.resetFields();
       form.setFieldValue('enabled', true);
+      // 如果有已配置的提供商，自动选择第一个
+      if (configuredProviders.length > 0) {
+        form.setFieldValue('provider', configuredProviders[0]?.name ?? '');
+        form.setFieldValue('baseUrl', configuredProviders[0]?.baseUrl ?? '');
+      }
     }
     setModalOpen(true);
   };
@@ -158,14 +193,18 @@ export default function ModelPage() {
     }
   };
 
-  // 快速添加相关函数
   const handleOpenQuickAdd = () => {
     setQuickAddOpen(true);
     setDiscoveredModels([]);
     setSelectedModelIds(new Set());
     setDiscoverError(null);
     quickAddForm.resetFields();
-    quickAddForm.setFieldValue('baseUrl', 'https://api.openai.com/v1');
+    // 默认使用第一个已配置提供商的 base URL
+    if (configuredProviders.length > 0) {
+      quickAddForm.setFieldValue('baseUrl', configuredProviders[0]?.baseUrl ?? 'https://api.openai.com/v1');
+    } else {
+      quickAddForm.setFieldValue('baseUrl', 'https://api.openai.com/v1');
+    }
   };
 
   const handleCloseQuickAdd = () => {
@@ -231,7 +270,7 @@ export default function ModelPage() {
 
   const handleAddSelected = async () => {
     if (selectedModelIds.size === 0) {
-      message.warning(t('selectModels'));
+      message.warning('请选择要添加的模型');
       return;
     }
 
@@ -339,7 +378,7 @@ export default function ModelPage() {
     },
   ];
 
-  const ProviderOption = useMemo(
+  const ProviderSelectOption = useMemo(
     () =>
       providerOptions.map((opt) => ({
         value: opt.value,
@@ -365,21 +404,57 @@ export default function ModelPage() {
             <Button icon={<SearchOutlined />} onClick={handleOpenQuickAdd}>
               {t('quickAdd')}
             </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => {
-              handleOpenModal();
-            }}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                if (configuredProviders.length === 0) {
+                  message.warning('请先前往「API 提供商」页面配置提供商');
+                  router.push('/provider');
+                  return;
+                }
+                handleOpenModal();
+              }}
+            >
               {t('addModel')}
             </Button>
           </Space>
         </div>
 
-        <Text type="secondary">{t('description')}</Text>
+        <Text type="secondary">
+          {configuredProviders.length === 0
+            ? '暂无已配置的提供商，请先前往「API 提供商」页面配置后再添加模型。'
+            : '管理可用的 AI 模型及其对应的提供商配置。'}
+        </Text>
 
         {/* 模型列表 */}
         {fetching ? (
           <Empty description="加载中..." />
         ) : models.length === 0 ? (
-          <Empty description={t('noModelsDesc')} />
+          configuredProviders.length === 0 ? (
+            <Empty
+              description="暂无已配置的提供商"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            >
+              <Button
+                type="primary"
+                onClick={() => {
+                  router.push('/provider');
+                }}
+              >
+                去配置提供商
+              </Button>
+            </Empty>
+          ) : (
+            <Empty
+              description={t('noModelsDesc')}
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            >
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => { handleOpenModal(); }}>
+                添加第一个模型
+              </Button>
+            </Empty>
+          )
         ) : (
           <Table
             columns={columns}
@@ -401,14 +476,6 @@ export default function ModelPage() {
       >
         <Form form={form} onFinish={handleSubmit} layout="vertical">
           <Form.Item
-            name="name"
-            label={t('modelName')}
-            rules={[{ required: true, message: t('modelNameRequired') }]}
-          >
-            <Input placeholder={t('modelNamePlaceholder')} />
-          </Form.Item>
-
-          <Form.Item
             name="provider"
             label={t('provider')}
             rules={[{ required: true, message: t('providerRequired') }]}
@@ -416,8 +483,22 @@ export default function ModelPage() {
             <Select
               placeholder={t('selectProvider')}
               showSearch={{ optionFilterProp: 'label' }}
-              options={ProviderOption}
+              options={ProviderSelectOption}
+              onChange={(value: string) => {
+                const selected = configuredProviders.find((p) => p.name === value);
+                if (selected) {
+                  form.setFieldValue('baseUrl', selected.baseUrl);
+                }
+              }}
             />
+          </Form.Item>
+
+          <Form.Item
+            name="name"
+            label={t('modelName')}
+            rules={[{ required: true, message: t('modelNameRequired') }]}
+          >
+            <Input placeholder={t('modelNamePlaceholder')} />
           </Form.Item>
 
           <Form.Item
@@ -456,7 +537,7 @@ export default function ModelPage() {
         width={720}
         destroyOnHidden
       >
-        <Text type="secondary">{t('quickAddDesc')}</Text>
+        <Text type="secondary">通过 OpenAI 兼容接口自动探测并批量添加模型。</Text>
         <Divider />
 
         <Form form={quickAddForm} onFinish={handleDiscover} layout="vertical">
