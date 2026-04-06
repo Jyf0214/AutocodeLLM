@@ -50,6 +50,8 @@ export default function OrbitalBackground() {
     };
   }, []);
 
+  // 默认浅色，避免 hydration 不匹配导致黑屏
+  // 在 SSR 时 theme 为 undefined，统一使用浅色配色
   const isDark = theme === 'dark';
   const orbitColor = isDark ? 'rgba(140, 160, 200, 0.18)' : 'rgba(60, 80, 120, 0.15)';
   const nodeColor = isDark ? 'rgba(180, 200, 240, 0.6)' : 'rgba(40, 60, 100, 0.5)';

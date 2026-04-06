@@ -106,7 +106,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         avatar={<span style={{ fontSize: 14, fontWeight: 600 }}>AutocodeLLM</span>}
         bottomActions={
           <ThemeSwitch
-            themeMode={themeModeMap[theme ?? 'system'] ?? 'auto'}
+            themeMode={themeModeMap[theme ?? 'light'] ?? 'light'}
             onThemeSwitch={handleThemeSwitch}
             labels={{ auto: '跟随系统', dark: '深色模式', light: '浅色模式' }}
           />
@@ -142,7 +142,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         }
         extra={
           <ThemeSwitch
-            themeMode={themeModeMap[theme ?? 'system'] ?? 'auto'}
+            themeMode={themeModeMap[theme ?? 'light'] ?? 'light'}
             onThemeSwitch={handleThemeSwitch}
             labels={{ auto: '跟随系统', dark: '深色模式', light: '浅色模式' }}
           />

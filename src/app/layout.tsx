@@ -21,7 +21,7 @@ export default async function RootLayout({
   return (
     <html lang="zh" suppressHydrationWarning>
       <body>
-        <ThemeProvider themeMode="auto">
+        <ThemeProvider themeMode="light">
           <NextIntlClientProvider messages={messages}>
             <AntdRegistry>
               <ConfigProvider

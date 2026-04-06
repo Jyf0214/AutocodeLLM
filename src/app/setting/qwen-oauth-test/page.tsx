@@ -216,7 +216,7 @@ export default function QwenOAuthTestPage() {
                 description={
                   <Flexbox gap={12}>
                     <Text>请在浏览器中访问以下链接并输入验证码：</Text>
-                    <Text strong copyable={{ text: oauthStatus.verificationUriComplete }}>
+                    <Text strong>
                       <a href={oauthStatus.verificationUriComplete} target="_blank" rel="noopener noreferrer">
                         {oauthStatus.verificationUriComplete}
                       </a>
