@@ -26,6 +26,7 @@ import {
   ApiOutlined,
   BookOutlined,
   PlayCircleOutlined,
+  LinkOutlined,
   MenuOutlined,
 } from '@ant-design/icons';
 import { Drawer, Typography } from 'antd';
@@ -42,6 +43,7 @@ const menuItems = [
   { key: '/sync', icon: SyncOutlined, labelKey: 'common.sync' },
   { key: '/model', icon: AppstoreOutlined, labelKey: 'common.models' },
   { key: '/provider', icon: ApiOutlined, labelKey: 'common.providers' },
+  { key: '/setting/qwen-oauth-test', icon: LinkOutlined, labelKey: 'common.qwenOAuthTest' },
   { key: '/docs', icon: BookOutlined, labelKey: 'common.docs' },
   { key: '/demo', icon: PlayCircleOutlined, labelKey: 'common.demo' },
 ];
