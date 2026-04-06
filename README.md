@@ -1,2 +1,4 @@
 # AutocodeLLM
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FJyf0214%2FAutocodeLLM.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2FJyf0214%2FAutocodeLLM?ref=badge_small)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FJyf0214%2FAutocodeLLM.svg?type=shield&issueType=security)](https://app.fossa.com/projects/git%2Bgithub.com%2FJyf0214%2FAutocodeLLM?ref=badge_shield&issueType=security)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FJyf0214%2FAutocodeLLM.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2FJyf0214%2FAutocodeLLM?ref=badge_large&issueType=license)
