@@ -85,7 +85,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onKeyDown={handleKeyDown}
           onSend={onSend}
           loading={loading}
-          placeholder="从任何想法开始... 按 Ctrl+Enter 发送..."
+          placeholder="输入消息... (Ctrl+Enter 发送)"
           autoSize={{ minRows: 1, maxRows: 8 }}
           disabled={disabled}
         />

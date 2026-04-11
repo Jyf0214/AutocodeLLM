@@ -365,6 +365,12 @@ export default function ProviderPage() {
 
   // 保存提供商
   const handleSubmit = async (values: Record<string, string>) => {
+    // 验证 baseURL 格式
+    if (!values.baseUrl || (!values.baseUrl.startsWith('http://') && !values.baseUrl.startsWith('https://'))) {
+      message.error('API 地址必须以 http:// 或 https:// 开头，例如：https://api.openai.com/v1');
+      return;
+    }
+
     setSaving(true);
     try {
       const isOAuth = values.authType === 'oauth';
@@ -787,9 +793,16 @@ export default function ProviderPage() {
           <Form.Item
             name="baseUrl"
             label="API 地址"
-            rules={[{ required: true, message: '请输入 Base URL' }]}
+            rules={[
+              { required: true, message: '请输入 Base URL' },
+              {
+                pattern: /^https?:\/\/.+/i,
+                message: 'API 地址必须以 http:// 或 https:// 开头',
+              },
+            ]}
+            extra="格式：https://api.example.com/v1（必须包含协议前缀）"
           >
-            <LobeInput placeholder="https://api.openai.com" size="large" />
+            <LobeInput placeholder="https://api.openai.com/v1" size="large" />
           </Form.Item>
 
           <Form.Item name="apiKey" label="API Key">
