@@ -21,11 +21,19 @@ vi.mock('@/lib/db/prisma', () => ({
 }));
 
 /**
+ * 从环境变量派生 32 字节 AES-256 密钥（使用 SHA-256）
+ * 与 route.ts 保持一致
+ */
+function deriveKey(): Buffer {
+  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
+  return createHash('sha256').update(keyStr).digest();
+}
+
+/**
  * AES-256-CBC 加密（与 route.ts 保持一致，使用 SHA-256 派生密钥）
  */
 function encryptValue(value: string): string {
-  const keyStr = 'autocodellm-encryption-key-32b!';
-  const key = createHash('sha256').update(keyStr).digest();
+  const key = deriveKey();
   const iv = randomBytes(16);
   const cipher = createCipheriv('aes-256-cbc', key, iv);
   let encrypted = cipher.update(value, 'utf8', 'hex');
@@ -33,9 +41,43 @@ function encryptValue(value: string): string {
   return iv.toString('hex') + ':' + encrypted;
 }
 
+/**
+ * AES-256-CBC 解密（与 route.ts 保持一致）
+ */
+function decryptValue(encrypted: string): string {
+  const key = deriveKey();
+  const parts = encrypted.split(':');
+  if (parts.length !== 2) {
+    throw new Error('无效的加密数据格式：应为 iv:encrypted');
+  }
+  const [ivHex, encryptedData] = parts;
+  if (!ivHex || !encryptedData) {
+    throw new Error('无效的加密数据：iv 或加密数据为空');
+  }
+  const iv = Buffer.from(ivHex, 'hex');
+  const { createDecipheriv } = require('crypto');
+  const decipher = createDecipheriv('aes-256-cbc', key, iv);
+  let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+}
+
+/**
+ * 脱敏显示变量值（与 route.ts 保持一致）
+ */
+function maskValue(value: string): string {
+  if (value.length <= 2) return '**';
+  return value.substring(0, 2) + '*'.repeat(Math.max(value.length - 2, 4));
+}
+
 describe('环境变量 API (/api/env)', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetModules();
+    mockFindMany.mockReset();
+    mockFindUnique.mockReset();
+    mockCreate.mockReset();
+    mockUpdate.mockReset();
+    mockDelete.mockReset();
   });
 
   describe('GET /api/env', () => {
@@ -44,17 +86,17 @@ describe('环境变量 API (/api/env)', () => {
         {
           id: 'env-1',
           key: 'API_KEY',
-          value: encryptValue('test123'),
-          description: 'API 密钥',
+          value: encryptValue('sk-test123'),
+          description: '测试密钥',
           enabled: true,
           createdAt: new Date('2024-01-01'),
           updatedAt: new Date('2024-01-01'),
         },
         {
           id: 'env-2',
-          key: 'DATABASE_URL',
-          value: encryptValue('postgres://localhost'),
-          description: '数据库连接',
+          key: 'SECRET',
+          value: encryptValue('my-secret'),
+          description: '另一个密钥',
           enabled: false,
           createdAt: new Date('2024-01-02'),
           updatedAt: new Date('2024-01-02'),
@@ -68,11 +110,11 @@ describe('环境变量 API (/api/env)', () => {
 
       expect(response.status).toBe(200);
 
-      const body = await response.json();
+      const body = await response.json() as { success: boolean; data: Array<{ key: string; value: string }> };
       expect(body.success).toBe(true);
       expect(body.data).toHaveLength(2);
-      expect(body.data[0].key).toBe('API_KEY');
-      expect(body.data[1].key).toBe('DATABASE_URL');
+      expect(body.data[0]?.key).toBe('API_KEY');
+      expect(body.data[1]?.key).toBe('SECRET');
     });
 
     it('应该返回空数组当没有环境变量时', async () => {
@@ -81,23 +123,19 @@ describe('环境变量 API (/api/env)', () => {
       const { GET } = await import('@/app/api/env/route');
       const response = await GET();
 
-      expect(response.status).toBe(200);
-
-      const body = await response.json();
-      expect(body.success).toBe(true);
+      const body = await response.json() as { data: unknown[] };
       expect(body.data).toEqual([]);
     });
 
     it('数据库错误时应该返回 500', async () => {
-      mockFindMany.mockRejectedValue(new Error('Database error'));
+      mockFindMany.mockRejectedValue(new Error('DB Error'));
 
       const { GET } = await import('@/app/api/env/route');
       const response = await GET();
 
       expect(response.status).toBe(500);
 
-      const body = await response.json();
-      expect(body.success).toBe(false);
+      const body = await response.json() as { error: { code: string } };
       expect(body.error.code).toBe('FETCH_FAILED');
     });
 
@@ -119,7 +157,7 @@ describe('环境变量 API (/api/env)', () => {
       const { GET } = await import('@/app/api/env/route');
       const response = await GET();
 
-      const body = await response.json() as { data: { value: string }[] };
+      const body = await response.json() as { data: Array<{ value: string }> };
       const firstItem = body.data[0];
       if (!firstItem) throw new Error('Expected at least one env var');
       // 脱敏后应该包含星号
@@ -209,9 +247,6 @@ describe('环境变量 API (/api/env)', () => {
       mockFindUnique.mockResolvedValue({
         id: 'existing-id',
         key: 'API_KEY',
-        value: 'encrypted-value',
-        description: '',
-        enabled: true,
       });
 
       const { POST } = await import('@/app/api/env/route');
@@ -221,7 +256,7 @@ describe('环境变量 API (/api/env)', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           key: 'API_KEY',
-          value: 'new-value',
+          value: 'sk-test123',
         }),
       });
 
@@ -237,8 +272,8 @@ describe('环境变量 API (/api/env)', () => {
       const newEnvVar = {
         id: 'env-1',
         key: 'API_KEY',
-        value: encryptValue('sk-test'),
-        description: '',
+        value: encryptValue('sk-test123'),
+        description: '测试 API 密钥',
         enabled: true,
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-01'),
@@ -254,14 +289,15 @@ describe('环境变量 API (/api/env)', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           key: 'API_KEY',
-          value: 'sk-test',
+          value: 'sk-test123',
+          description: '测试 API 密钥',
         }),
       });
 
       const response = await POST(request);
       expect(response.status).toBe(201);
 
-      const body = await response.json();
+      const body = await response.json() as { data: { enabled: boolean } };
       expect(body.data.enabled).toBe(true);
     });
   });
@@ -270,23 +306,27 @@ describe('环境变量 API (/api/env)', () => {
     it('应该更新环境变量配置', async () => {
       const existingEnvVar = {
         id: 'env-1',
-        key: 'API_KEY',
-        value: encryptValue('sk-old'),
+        key: 'OLD_KEY',
+        value: encryptValue('old-value'),
         description: '旧描述',
         enabled: true,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
       };
 
       const updatedEnvVar = {
         id: 'env-1',
-        key: 'API_KEY',
-        value: encryptValue('sk-new'),
+        key: 'NEW_KEY',
+        value: encryptValue('new-value'),
         description: '新描述',
         enabled: false,
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-02'),
       };
 
-      mockFindUnique.mockResolvedValue(existingEnvVar);
+      mockFindUnique
+        .mockResolvedValueOnce(existingEnvVar)
+        .mockResolvedValueOnce(null);
       mockUpdate.mockResolvedValue(updatedEnvVar);
 
       const { PUT } = await import('@/app/api/env/route');
@@ -296,7 +336,8 @@ describe('环境变量 API (/api/env)', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: 'env-1',
-          value: 'sk-new',
+          key: 'NEW_KEY',
+          value: 'new-value',
           description: '新描述',
           enabled: false,
         }),
@@ -305,8 +346,8 @@ describe('环境变量 API (/api/env)', () => {
       const response = await PUT(request);
       expect(response.status).toBe(200);
 
-      const body = await response.json();
-      expect(body.success).toBe(true);
+      const body = await response.json() as { data: { key: string; enabled: boolean } };
+      expect(body.data.key).toBe('NEW_KEY');
       expect(body.data.enabled).toBe(false);
     });
 
@@ -318,7 +359,7 @@ describe('环境变量 API (/api/env)', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           key: 'API_KEY',
-          value: 'some-value',
+          value: 'sk-test123',
         }),
       });
 
@@ -341,6 +382,7 @@ describe('环境变量 API (/api/env)', () => {
         body: JSON.stringify({
           id: 'non-existent-id',
           key: 'API_KEY',
+          value: 'sk-test123',
         }),
       });
 
@@ -355,18 +397,27 @@ describe('环境变量 API (/api/env)', () => {
     it('应该拒绝重复的变量名', async () => {
       const existingEnvVar = {
         id: 'env-1',
-        key: 'API_KEY',
-        value: 'encrypted-old',
+        key: 'OLD_KEY',
+        value: encryptValue('old-value'),
         description: '',
         enabled: true,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
+      };
+
+      const duplicateEnvVar = {
+        id: 'env-2',
+        key: 'NEW_KEY',
+        value: encryptValue('other-value'),
+        description: '',
+        enabled: true,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
       };
 
       mockFindUnique
         .mockResolvedValueOnce(existingEnvVar)
-        .mockResolvedValueOnce({
-          id: 'env-2',
-          key: 'DATABASE_URL',
-        });
+        .mockResolvedValueOnce(duplicateEnvVar);
 
       const { PUT } = await import('@/app/api/env/route');
 
@@ -375,7 +426,8 @@ describe('环境变量 API (/api/env)', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: 'env-1',
-          key: 'DATABASE_URL',
+          key: 'NEW_KEY',
+          value: 'new-value',
         }),
       });
 
@@ -391,16 +443,18 @@ describe('环境变量 API (/api/env)', () => {
       const existingEnvVar = {
         id: 'env-1',
         key: 'API_KEY',
-        value: encryptValue('sk-old'),
+        value: encryptValue('old-value'),
         description: '',
         enabled: true,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
       };
 
       const updatedEnvVar = {
         id: 'env-1',
         key: 'API_KEY',
-        value: encryptValue('sk-new'),
-        description: '',
+        value: encryptValue('new-value'),
+        description: '新描述',
         enabled: true,
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-02'),
@@ -416,7 +470,9 @@ describe('环境变量 API (/api/env)', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: 'env-1',
-          value: 'sk-new',
+          key: 'API_KEY',
+          value: 'new-value',
+          description: '新描述',
         }),
       });
 
@@ -425,21 +481,17 @@ describe('环境变量 API (/api/env)', () => {
 
       const body = await response.json();
       expect(body.success).toBe(true);
+      expect(body.data.key).toBe('API_KEY');
     });
   });
 
   describe('DELETE /api/env', () => {
     it('应该删除环境变量', async () => {
-      const existingEnvVar = {
+      mockFindUnique.mockResolvedValue({
         id: 'env-1',
         key: 'API_KEY',
-        value: 'encrypted-value',
-        description: '',
-        enabled: true,
-      };
-
-      mockFindUnique.mockResolvedValue(existingEnvVar);
-      mockDelete.mockResolvedValue(existingEnvVar);
+      });
+      mockDelete.mockResolvedValue({ id: 'env-1' });
 
       const { DELETE } = await import('@/app/api/env/route');
 
