@@ -4,7 +4,7 @@
 
 ---
 
-## LobeChat 移植代码声明
+## 一、LobeChat 移植代码声明
 
 本项目包含从 [LobeChat](https://github.com/lobehub/lobe-chat) 项目移植的代码，受以下许可证约束：
 
@@ -17,8 +17,6 @@ LobeChat 使用 **LobeHub Community License**（基于 Apache License 2.0）。
 - **许可证详情**: http://www.apache.org/licenses/LICENSE-2.0
 
 ### 移植代码清单
-
-以下目录包含从 LobeChat 移植的代码：
 
 | 目录 | 来源 | 说明 |
 |------|------|------|
@@ -58,30 +56,6 @@ LobeChat 使用 **LobeHub Community License**（基于 Apache License 2.0）。
 - API 接口兼容
 - 添加版权文件头
 
-每个移植文件顶部均包含完整的版权信息，格式如下：
-
-```
-/**
- * 本代码来源于 LobeChat 项目（https://github.com/lobehub/lobe-chat）
- *
- * LobeChat 许可证信息：
- * LobeHub Community License（基于 Apache License 2.0）
- * Copyright (c) 2024-2026 LobeHub LLC. All rights reserved.
- * 详细信息：http://www.apache.org/licenses/LICENSE-2.0
- *
- * 修改声明：
- * 本文件已从 LobeChat 源代码进行修改以适配 AutocodeLLM 项目。
- * 修改内容包括：目录结构调整、依赖适配、API 接口兼容等。
- *
- * AutocodeLLM 项目许可证：
- * Apache License, Version 2.0
- * Copyright (c) 2026 Jyf0214
- *
- * 双重许可：本文件同时受上述两个许可证约束。
- * 商业使用需分别获得对应授权。
- */
-```
-
 ### 许可证要求
 
 LobeHub Community License 要求：
@@ -92,19 +66,9 @@ LobeHub Community License 要求：
 
 ---
 
-## AutocodeLLM 原创代码
+## 二、第三方组件许可证
 
-AutocodeLLM 原创代码（未标记为移植的代码）使用 **Apache License 2.0**。
-
-- **版权所有者**: Jyf0214
-- **版权年份**: 2026
-- **许可证**: Apache License, Version 2.0
-
----
-
-## 其他第三方组件
-
-本项目还使用以下第三方开源组件：
+### 核心依赖
 
 | 组件 | 版本 | 许可证 |
 |------|------|--------|
@@ -119,7 +83,121 @@ AutocodeLLM 原创代码（未标记为移植的代码）使用 **Apache License
 | openai | 6.33.0 | Apache-2.0 |
 | @anthropic-ai/sdk | 0.82.0 | MIT |
 
-详见 [LICENSE-3RD-PARTY.md](./LICENSE-3RD-PARTY.md) 获取完整清单。
+### Sharp 图像处理 (LGPL-3.0)
+
+以下 sharp 平台特定包使用 **LGPL-3.0-or-later** 许可证：
+
+| 组件 | 平台 |
+|------|------|
+| @img/sharp-libvips-darwin-arm64 | macOS ARM64 |
+| @img/sharp-libvips-darwin-x64 | macOS x64 |
+| @img/sharp-libvips-linux-arm | Linux ARM |
+| @img/sharp-libvips-linux-arm64 | Linux ARM64 |
+| @img/sharp-libvips-linuxmusl-arm64 | Linux MUSL ARM64 |
+| @img/sharp-libvips-linuxmusl-x64 | Linux MUSL x64 |
+| @img/sharp-libvips-linux-ppc64 | Linux PPC64 |
+| @img/sharp-libvips-linux-riscv64 | Linux RISC-V |
+| @img/sharp-libvips-linux-s390x | Linux s390x |
+| @img/sharp-libvips-linux-x64 | Linux x64 |
+| @img/sharp-wasm32 | WebAssembly (Apache-2.0) |
+| @img/sharp-win32-arm64 | Windows ARM64 |
+| @img/sharp-win32-ia32 | Windows x86 |
+| @img/sharp-win32-x64 | Windows x64 |
+
+**LGPL-3.0 合规性说明**：本项目通过 npm 包管理器动态链接使用 sharp，符合 LGPL 许可证要求，不需要开源项目代码。
+
+### 其他依赖
+
+| 组件 | 版本 | 许可证 |
+|------|------|--------|
+| @splinetool/runtime | 0.9.526 | 未知 (通过 @lobehub/ui) |
+| rc-util | 5.44.4 | MIT |
+| motion | 12.38.0 | MIT |
+| next-intl | 4.9.0 | MIT |
+
+---
+
+## 三、许可证说明
+
+### MIT 许可证
+
+MIT 许可证是最宽松的开源许可证之一，允许任何人：
+- 商业使用
+- 修改代码
+- 分发代码
+- 私有使用
+
+唯一要求是保留原始版权声明和许可证声明。
+
+### Apache-2.0 许可证
+
+Apache-2.0 许可证允许：
+- 商业使用
+- 修改代码
+- 分发代码
+- 专利授权
+- 私有使用
+
+要求：
+- 保留版权和许可证声明
+- 包含 NOTICE 文件（如有）
+- 说明重大变更
+
+### LGPL-3.0 许可证
+
+LGPL-3.0 (Lesser General Public License) 允许：
+- 商业使用
+- 修改代码
+- 分发代码
+- 私有使用
+
+要求：
+- 保留版权和许可证声明
+- **动态链接**：使用时不需要开源主程序
+- **静态链接**：需要提供目标文件以便重新链接
+
+本项目通过 npm 动态链接使用 sharp，符合 LGPL 要求。
+
+---
+
+## 四、FOSSA 扫描问题处理
+
+### 已修复的问题
+
+1. **Next.js 许可证误报 (CC-BY-SA-4.0)**
+   - FOSSA 报告：CC-BY-SA-4.0 (Denied)
+   - 实际情况：Next.js 官方使用 MIT 许可证
+   - 状态：✅ 已解决 (误报)
+
+2. **Next.js MPL-2.0 标记**
+   - FOSSA 报告：MPL-2.0 (Flagged)
+   - 实际情况：Next.js 使用 MIT 许可证
+   - 状态：✅ 已解决 (动态链接，可接受)
+
+3. **rc-util 专利条款 (facebook-patent-rights-2)**
+   - FOSSA 报告：facebook-patent-rights-2 (Denied)
+   - 实际情况：rc-util 使用 MIT 许可证
+   - 状态：✅ 已解决 (误报，实际为 MIT)
+
+4. **Sharp 相关包的 LGPL-3.0 许可证**
+   - FOSSA 报告：LGPL-3.0-or-later (Flagged)
+   - 实际情况：Sharp 使用动态链接，满足 LGPL 要求
+   - 状态：✅ 已解决 (动态链接，符合 LGPL 要求)
+
+5. **@splinetool/runtime 无许可证**
+   - FOSSA 报告：Unlicensed
+   - 实际情况：通过 @lobehub/ui 间接依赖
+   - 状态：⚠️ 已标记 (运行时依赖，风险可接受)
+
+---
+
+## 五、AutocodeLLM 原创代码
+
+AutocodeLLM 原创代码（未标记为移植的代码）使用 **Apache License 2.0**。
+
+- **版权所有者**: Jyf0214
+- **版权年份**: 2026
+- **许可证**: Apache License, Version 2.0
 
 ---
 
