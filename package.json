@@ -9,7 +9,8 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate && next telemetry disable && next build",
+    "typecheck": "tsc --noEmit",
+    "build": "bun run typecheck && bun run lint && bun run test && prisma generate && next telemetry disable && next build",
     "start": "node scripts/start.mjs",
     "lint": "eslint --max-warnings=0 .",
     "test": "vitest run",
