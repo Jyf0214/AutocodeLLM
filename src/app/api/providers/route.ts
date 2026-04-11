@@ -72,25 +72,51 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    const customData = providers.map((provider) => ({
-      id: provider.id,
-      name: provider.name,
-      baseUrl: provider.baseUrl,
-      apiKey: provider.authType === 'oauth' ? 'oauth' : maskApiKey(decryptApiKey(provider.apiKey)),
-      databaseUrl: provider.databaseUrl,
-      enabled: provider.enabled,
-      providerType: provider.providerType,
-      sdkType: provider.sdkType,
-      authType: provider.authType,
-      oauthAccessToken: provider.oauthAccessToken ? '****' : null,
-      oauthRefreshToken: provider.oauthRefreshToken ? '****' : null,
-      oauthExpiresAt: provider.oauthExpiresAt?.toISOString() ?? null,
-      oauthClientId: provider.oauthClientId,
-      oauthDeviceCode: provider.oauthDeviceCode,
-      metadata: provider.metadata,
-      createdAt: provider.createdAt.toISOString(),
-      updatedAt: provider.updatedAt.toISOString(),
-    }));
+    const customData = providers.map((provider) => {
+      try {
+        return {
+          id: provider.id,
+          name: provider.name,
+          baseUrl: provider.baseUrl,
+          apiKey: provider.authType === 'oauth' ? 'oauth' : maskApiKey(decryptApiKey(provider.apiKey)),
+          databaseUrl: provider.databaseUrl,
+          enabled: provider.enabled,
+          providerType: provider.providerType,
+          sdkType: provider.sdkType,
+          authType: provider.authType,
+          oauthAccessToken: provider.oauthAccessToken ? '****' : null,
+          oauthRefreshToken: provider.oauthRefreshToken ? '****' : null,
+          oauthExpiresAt: provider.oauthExpiresAt?.toISOString() ?? null,
+          oauthClientId: provider.oauthClientId,
+          oauthDeviceCode: provider.oauthDeviceCode,
+          metadata: provider.metadata,
+          createdAt: provider.createdAt.toISOString(),
+          updatedAt: provider.updatedAt.toISOString(),
+        };
+      } catch (decryptError) {
+        // 如果解密失败，返回脱敏的原始值
+        console.error(`[Provider] 解密apiKey失败 for provider ${provider.id}:`, decryptError);
+        return {
+          id: provider.id,
+          name: provider.name,
+          baseUrl: provider.baseUrl,
+          apiKey: '****', // 解密失败时返回脱敏显示
+          databaseUrl: provider.databaseUrl,
+          enabled: provider.enabled,
+          providerType: provider.providerType,
+          sdkType: provider.sdkType,
+          authType: provider.authType,
+          oauthAccessToken: provider.oauthAccessToken ? '****' : null,
+          oauthRefreshToken: provider.oauthRefreshToken ? '****' : null,
+          oauthExpiresAt: provider.oauthExpiresAt?.toISOString() ?? null,
+          oauthClientId: provider.oauthClientId,
+          oauthDeviceCode: provider.oauthDeviceCode,
+          metadata: provider.metadata,
+          createdAt: provider.createdAt.toISOString(),
+          updatedAt: provider.updatedAt.toISOString(),
+        };
+      }
+    });
 
     // 合并预置提供商信息
     const presetWithStatus = PRESET_PROVIDERS.map((preset) => {
@@ -107,13 +133,17 @@ export async function GET() {
       data: customData,
       presets: presetWithStatus,
     } as ProviderResponse & { presets: typeof presetWithStatus });
-  } catch {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : '未知错误';
+    console.error('[Provider] 获取提供商列表失败:', errorMessage);
+    
     return NextResponse.json(
       {
         success: false,
         error: {
-          message: '获取提供商列表失败',
+          message: `获取提供商列表失败: ${errorMessage}`,
           code: 'FETCH_FAILED',
+          details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
         },
       } as ProviderResponse,
       { status: 500 }
