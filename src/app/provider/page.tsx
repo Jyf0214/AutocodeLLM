@@ -315,14 +315,15 @@ export default function ProviderPage() {
         return;
       }
 
-      const data: { success: boolean; data?: { verificationUri: string; userCode: string; deviceCode: string; interval: number; codeVerifier: string }; error?: { message: string } } = await res.json();
+      const data: { success: boolean; data?: { verificationUri: string; userCode: string; authorizationUrl: string; deviceCode: string; interval: number; codeVerifier: string }; error?: { message: string } } = await res.json();
 
       if (data.success && data.data) {
-        const { verificationUri, userCode, deviceCode, interval, codeVerifier } = data.data;
+        const { verificationUri, userCode, authorizationUrl, deviceCode, interval, codeVerifier } = data.data;
         setOauthVerificationUri(verificationUri);
         setOauthUserCode(userCode);
         setOauthPolling(true);
-        window.open(verificationUri, '_blank');
+        // 使用自动组合的URL格式
+        window.open(authorizationUrl, '_blank');
 
         const pollStartTime = Date.now();
         const maxPollTime = 5 * 60 * 1000;

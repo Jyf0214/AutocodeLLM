@@ -51,6 +51,7 @@ describe('Qwen OAuth 模块', () => {
         verificationUri: 'https://chat.qwen.ai/oauth/authorize',
         verificationUriComplete:
           'https://chat.qwen.ai/oauth/authorize?user_code=ABCD1234',
+        authorizationUrl: 'https://chat.qwen.ai/authorize?user_code=ABCD1234&client=qwen-code',
         expiresIn: 900,
         interval: 2,
         codeVerifier: expect.any(String),

@@ -16,6 +16,7 @@ export async function POST() {
         userCode: result.userCode,
         verificationUri: result.verificationUri,
         verificationUriComplete: result.verificationUriComplete,
+        authorizationUrl: result.authorizationUrl, // 新增: 自动组合的授权URL
         expiresIn: result.expiresIn,
         interval: result.interval,
         codeVerifier: result.codeVerifier,

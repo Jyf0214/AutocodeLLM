@@ -90,6 +90,7 @@ export interface QwenOAuthStartResponse {
     userCode: string;
     verificationUri: string;
     verificationUriComplete: string;
+    authorizationUrl: string; // 新增: 自动组合的授权URL
     expiresIn: number;
     interval: number;
     codeVerifier: string;

@@ -74,6 +74,7 @@ export async function startQwenDeviceFlow(): Promise<{
   userCode: string;
   verificationUri: string;
   verificationUriComplete: string;
+  authorizationUrl: string; // 新增: 自动组合的授权URL
   expiresIn: number;
   interval: number;
   codeVerifier: string;
@@ -113,11 +114,15 @@ export async function startQwenDeviceFlow(): Promise<{
 
   const data = (await response.json()) as DeviceCodeResponse;
 
+  // 自动组合URL格式: https://chat.qwen.ai/authorize?user_code=XXX&client=qwen-code
+  const authorizationUrl = `https://chat.qwen.ai/authorize?user_code=${encodeURIComponent(data.user_code)}&client=qwen-code`;
+
   return {
     deviceCode: data.device_code,
     userCode: data.user_code,
     verificationUri: data.verification_uri,
     verificationUriComplete: data.verification_uri_complete,
+    authorizationUrl, // 新增: 自动组合的授权URL
     expiresIn: data.expires_in,
     interval: data.interval ?? 2, // Qwen Code 官方使用 2 秒
     codeVerifier,
