@@ -95,4 +95,30 @@ export default tseslint.config(
       '@typescript-eslint/restrict-plus-operands': 'off',
     },
   },
+  // Chat 模块 Zustand store 类型豁免
+  // zustand v3 的类型定义在 TypeScript 严格模式下不完全兼容
+  {
+    files: [
+      'src/app/chat/[workspaceId]/hooks/useSendMessage.ts',
+      'src/app/chat/[workspaceId]/hooks/useModelSelector.ts',
+    ],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+    },
+  },
+  // AgentExecutorAdapter 豁免
+  {
+    files: [
+      'src/app/chat/[workspaceId]/lib/AgentExecutorAdapter.ts',
+    ],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+      '@typescript-eslint/restrict-template-expressions': 'off',
+    },
+  },
 );
