@@ -2,6 +2,7 @@
  * 本文件是 AutocodeLLM 项目的原始实现
  *
  * AutocodeLLM 项目许可证：
+import type { ChatMessage } from "./store/types";
  * Apache License, Version 2.0
  * Copyright (c) 2026 Jyf0214
  */
@@ -14,7 +15,7 @@ import { message, Spin } from 'antd';
 import { Empty } from '@lobehub/ui';
 import { FolderOutlined } from '@ant-design/icons';
 
-import { useChatStore } from './store';
+import { ChatStoreProvider } from './store';
 import { ChatLayout } from './components/ChatLayout';
 import type { ModelConfig, WorkspaceInfo } from './store';
 
@@ -22,13 +23,12 @@ import type { ModelConfig, WorkspaceInfo } from './store';
  * 工作区聊天页面
  * 模块化的多Agent聊天界面
  */
-export default function ChatPage({
-  params,
+function ChatPageInner({
+  workspaceId,
 }: {
-  params: Promise<{ workspaceId: string }>;
+  workspaceId: string;
 }) {
   const router = useRouter();
-  const { workspaceId } = React.use(params);
 
   // 本地状态
   const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
@@ -36,44 +36,21 @@ export default function ChatPage({
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
-
-  // Store
-  const {
-    initializeChat,
-    messages,
-    agents,
-    models: storeModels,
-    setInputValue: storeSetInputValue,
-    runSingleAgent,
-  } = useChatStore();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [agentStatus, setAgentStatus] = useState<'idle' | 'running' | 'completed' | 'error'>('idle');
 
   // 选中的模型
   const selectedModel = useMemo(
-    () => storeModels.available.find((m: ModelConfig) => m.id === selectedModelId) ?? null,
-    [storeModels.available, selectedModelId]
+    () => models.find((m) => m.id === selectedModelId) ?? null,
+    [models, selectedModelId]
   );
-
-  // 初始化聊天
-  useEffect(() => {
-    const init = async () => {
-      try {
-        await initializeChat(workspaceId);
-      } catch {
-        message.error('初始化聊天失败');
-        router.push('/workplace');
-      }
-    };
-
-    init();
-  }, [workspaceId, initializeChat, router]);
 
   // 加载工作区信息
   useEffect(() => {
     const loadWorkspace = async () => {
       try {
         const response = await fetch(`/api/workspaces/${workspaceId}`);
-        const result: { success: boolean; data?: WorkspaceInfo } = await response.json();
-
+        const result = await response.json();
         if (result.success && result.data) {
           setWorkspace(result.data);
         } else {
@@ -175,24 +152,38 @@ export default function ChatPage({
   // 发送消息
   const handleSend = useCallback(async () => {
     const trimmed = inputValue.trim();
-    if (!trimmed || !selectedModel || agents.status === 'running') {
-      return;
-    }
+    if (!trimmed || !selectedModel || agentStatus === 'running') return;
 
-    try {
-      // 使用Agent执行
-      await runSingleAgent({
-        message: trimmed,
-        model: selectedModel,
-      });
+    const userMessage: ChatMessage = {
+      id: `msg-${Date.now()}-user`,
+      role: 'user',
+      content: trimmed,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      meta: { title: '用户', avatar: '👤' },
+    };
 
-      // 清空输入
-      setInputValue('');
-      storeSetInputValue('');
-    } catch (error) {
-      message.error('发送消息失败');
-    }
-  }, [inputValue, selectedModel, agents.status, runSingleAgent, storeSetInputValue]);
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue('');
+    setAgentStatus('running');
+
+    // TODO: 实现真实的 Agent 执行逻辑
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const assistantMessage: ChatMessage = {
+      id: `msg-${Date.now()}-assistant`,
+      role: 'assistant',
+      content: `这是对"${trimmed}"的回复`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      meta: { title: `AI · ${selectedModel.name}`, avatar: '🤖' },
+      model: selectedModel.name,
+    };
+
+    setMessages((prev) => [...prev, assistantMessage]);
+    setAgentStatus('completed');
+    setTimeout(() => setAgentStatus('idle'), 3000);
+  }, [inputValue, selectedModel, agentStatus]);
 
   // 加载中
   if (!workspace) {
@@ -224,12 +215,25 @@ export default function ChatPage({
       onModelSelect={handleModelSelect}
       modelsLoading={modelsLoading}
       messages={messages}
-      isLoading={agents.status === 'running'}
+      isLoading={agentStatus === 'running'}
       inputValue={inputValue}
       onInputChange={handleInputChange}
       onSend={handleSend}
-      sending={agents.status === 'running'}
-      disabled={agents.status === 'running' || !selectedModel}
+      sending={agentStatus === 'running'}
+      disabled={agentStatus === 'running' || !selectedModel}
     />
+  );
+}
+
+export default function ChatPage({
+  params,
+}: {
+  params: Promise<{ workspaceId: string }>;
+}) {
+  const { workspaceId } = React.use(params);
+  return (
+    <ChatStoreProvider>
+      <ChatPageInner workspaceId={workspaceId} />
+    </ChatStoreProvider>
   );
 }

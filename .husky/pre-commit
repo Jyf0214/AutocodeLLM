@@ -1,4 +1,25 @@
 #!/usr/bin/env bash
+
+echo "🔍 检测代码中的 TODO 标记..."
+
+# 检测 TODO、todo、Todo 等大小写变体
+# 排除 node_modules、.next、.git 等目录
+TODO_COUNT=$(grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents "TODO" . | wc -l | tr -d ' ')
+
+if [ "$TODO_COUNT" -gt 0 ]; then
+  echo ""
+  echo "❌ 检测到代码中存在 $TODO_COUNT 个 TODO 标记"
+  echo ""
+  echo "📋 检测到以下 TODO 位置："
+  grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents "TODO" . | head -20
+  echo ""
+  echo "⚠️  提示：请完整实现项目内容后再提交代码。"
+  echo "   所有 TODO 项都需要被实现或移除后才能通过 pre-commit 检查。"
+  echo ""
+  exit 1
+fi
+
+echo "✅ 未检测到 TODO 标记"
 echo "🔨 运行完整构建验证..."
 bun run build || { echo "❌ 构建失败，提交中止！"; exit 1; }
 echo "✅ 构建成功，继续执行代码检查..."
