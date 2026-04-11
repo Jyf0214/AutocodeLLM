@@ -9,7 +9,8 @@
 import { useCallback } from 'react';
 import { message } from 'antd';
 import { useChatStore } from '../store';
-import type { ChatStore, ModelConfig } from '../store/types';
+import type { ModelConfig } from '../store/types';
+import type { ChatStore } from '../store';
 
 /**
  * 发送消息Hook
