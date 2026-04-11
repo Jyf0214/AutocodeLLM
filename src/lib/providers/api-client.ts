@@ -360,8 +360,19 @@ function buildRequestConfig(params: {
         headers['X-DashScope-AuthType'] = 'oauth';
       }
 
+      // 确保 baseUrl 包含协议前缀
+      let normalizedBaseUrl = baseUrl;
+      if (!normalizedBaseUrl.startsWith('http://') && !normalizedBaseUrl.startsWith('https://')) {
+        normalizedBaseUrl = `https://${normalizedBaseUrl}`;
+      }
+
+      // 避免重复拼接 /chat/completions
+      if (normalizedBaseUrl.endsWith('/chat/completions') || normalizedBaseUrl.endsWith('/chat/completions/')) {
+        normalizedBaseUrl = normalizedBaseUrl.replace(/\/chat\/completions\/?$/, '');
+      }
+
       return {
-        url: baseUrl.endsWith('/') ? `${baseUrl}chat/completions` : `${baseUrl}/chat/completions`,
+        url: normalizedBaseUrl.endsWith('/') ? `${normalizedBaseUrl}chat/completions` : `${normalizedBaseUrl}/chat/completions`,
         headers,
       };
     }
