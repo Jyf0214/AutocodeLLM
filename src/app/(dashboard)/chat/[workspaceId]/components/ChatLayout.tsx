@@ -56,7 +56,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
   disabled,
 }) => {
   return (
-    <Flexbox style={{ height: '100dvh' }}>
+    <Flexbox style={{ height: '100%', overflow: 'hidden' }}>
       {/* 顶部导航栏 */}
       <ChatHeader
         workspaceName={workspaceName}
@@ -66,13 +66,13 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
         modelsLoading={modelsLoading}
       />
 
-      {/* 消息列表区 */}
+      {/* 消息列表区 - 自动填充剩余空间 */}
       <MessageList
         messages={messages}
         isLoading={isLoading}
       />
 
-      {/* 底部输入区 */}
+      {/* 底部输入区 - 固定在底部 */}
       <ChatInput
         value={inputValue}
         onChange={onInputChange}
