@@ -173,7 +173,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
       }
     >
       <LayoutMain>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
+        <div style={
+          pathname.startsWith('/chat/')
+            ? { height: '100%' }
+            : { maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }
+        }>
           {children}
         </div>
       </LayoutMain>

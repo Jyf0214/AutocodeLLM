@@ -222,7 +222,7 @@ function ChatPageInner({
   // 加载中
   if (!workspace) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100dvh' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
         <Spin size="large" />
       </div>
     );
@@ -231,7 +231,7 @@ function ChatPageInner({
   // 无模型配置
   if (models.length === 0 && !modelsLoading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100dvh' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
         <Empty
           icon={<FolderOutlined />}
           title="配置 AI 模型后即可开始对话"
