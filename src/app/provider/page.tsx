@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
-import { message, Spin, Tag, Modal as AntdModal } from 'antd';
+import { message, Tag, Modal as AntdModal } from 'antd';
 import {
   Button,
   Text,
@@ -13,8 +11,6 @@ import {
   Input as LobeInput,
   Flexbox,
   Icon,
-  Avatar,
-  TextArea,
   Skeleton,
   Card,
 } from '@lobehub/ui';
@@ -24,17 +20,14 @@ import {
   DeleteOutlined,
   EditOutlined,
   CheckCircleOutlined,
-  CloseCircleOutlined,
   SyncOutlined,
   LockOutlined,
   ThunderboltOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
-  AppstoreOutlined,
   LinkOutlined,
 } from '@ant-design/icons';
 import { ModelIcon } from '@lobehub/icons';
-import type { WorkspaceListItem } from '@/lib/api/workspace-types';
 
 /**
  * 提供商类型
@@ -50,18 +43,6 @@ interface Provider {
   oauthAccessToken?: string | null;
   oauthRefreshToken?: string | null;
   oauthExpiresAt?: string | null;
-}
-
-/**
- * 模型配置类型
- */
-interface ModelConfig {
-  id: string;
-  name: string;
-  provider: string;
-  enabled: boolean;
-  baseUrl?: string;
-  apiKey?: string;
 }
 
 /**
@@ -97,16 +78,16 @@ function ProviderCard({
   const [showKey, setShowKey] = useState(false);
 
   const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
-    openai: ({ size }) => <ModelIcon model="openai" size={size || 20} />,
-    anthropic: ({ size }) => <ModelIcon model="anthropic" size={size || 20} />,
-    google: ({ size }) => <ModelIcon model="gemini" size={size || 20} />,
-    deepseek: ({ size }) => <ModelIcon model="deepseek" size={size || 20} />,
-    qwen: ({ size }) => <ModelIcon model="qwen" size={size || 20} />,
-    zhipu: ({ size }) => <ModelIcon model="zhipu" size={size || 20} />,
-    moonshot: ({ size }) => <ModelIcon model="moonshot" size={size || 20} />,
+    openai: ({ size }) => <ModelIcon model="openai" size={size ?? 20} />,
+    anthropic: ({ size }) => <ModelIcon model="anthropic" size={size ?? 20} />,
+    google: ({ size }) => <ModelIcon model="gemini" size={size ?? 20} />,
+    deepseek: ({ size }) => <ModelIcon model="deepseek" size={size ?? 20} />,
+    qwen: ({ size }) => <ModelIcon model="qwen" size={size ?? 20} />,
+    zhipu: ({ size }) => <ModelIcon model="zhipu" size={size ?? 20} />,
+    moonshot: ({ size }) => <ModelIcon model="moonshot" size={size ?? 20} />,
   };
 
-  const IconComponent = iconMap[provider.sdkType] || iconMap.openai;
+  const IconComponent = iconMap[provider.sdkType] ?? iconMap.openai;
 
   return (
     <Card
@@ -231,16 +212,16 @@ function PresetCard({
   adding: boolean;
 }) {
   const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
-    openai: ({ size }) => <ModelIcon model="openai" size={size || 24} />,
-    anthropic: ({ size }) => <ModelIcon model="anthropic" size={size || 24} />,
-    google: ({ size }) => <ModelIcon model="gemini" size={size || 24} />,
-    deepseek: ({ size }) => <ModelIcon model="deepseek" size={size || 24} />,
-    qwen: ({ size }) => <ModelIcon model="qwen" size={size || 24} />,
-    zhipu: ({ size }) => <ModelIcon model="zhipu" size={size || 24} />,
-    moonshot: ({ size }) => <ModelIcon model="moonshot" size={size || 24} />,
+    openai: ({ size }) => <ModelIcon model="openai" size={size ?? 24} />,
+    anthropic: ({ size }) => <ModelIcon model="anthropic" size={size ?? 24} />,
+    google: ({ size }) => <ModelIcon model="gemini" size={size ?? 24} />,
+    deepseek: ({ size }) => <ModelIcon model="deepseek" size={size ?? 24} />,
+    qwen: ({ size }) => <ModelIcon model="qwen" size={size ?? 24} />,
+    zhipu: ({ size }) => <ModelIcon model="zhipu" size={size ?? 24} />,
+    moonshot: ({ size }) => <ModelIcon model="moonshot" size={size ?? 24} />,
   };
 
-  const IconComponent = iconMap[preset.sdkType] || iconMap.openai;
+  const IconComponent = iconMap[preset.sdkType] ?? iconMap.openai;
 
   return (
     <div
@@ -295,9 +276,6 @@ function PresetCard({
  * 主页面
  */
 export default function ProviderPage() {
-  const t = useTranslations('common');
-  const router = useRouter();
-
   const [dataSource, setDataSource] = useState<Provider[]>([]);
   const [presets, setPresets] = useState<PresetProvider[]>([]);
   const [loading, setLoading] = useState(true);
@@ -310,6 +288,7 @@ export default function ProviderPage() {
   // OAuth 状态
   const [oauthLoading, setOauthLoading] = useState(false);
   const [oauthPolling, setOauthPolling] = useState(false);
+  const [oauthAuthorizationUrl, setOauthAuthorizationUrl] = useState<string | null>(null);
   const [oauthProviderId, setOauthProviderId] = useState<string | null>(null);
   const [oauthExpiresAt, setOauthExpiresAt] = useState<string | null>(null);
 
@@ -435,7 +414,7 @@ export default function ProviderPage() {
         });
         const data = await res.json();
         if (data.success && data.data?.connected) {
-          message.success(`连接成功，延迟 ${data.data.latency}ms`);
+          message.success(`连接成功，延迟 ${String(data.data.latency)}ms`);
         } else {
           message.error(data.data?.message ?? '连接失败');
         }
@@ -479,6 +458,7 @@ export default function ProviderPage() {
   // Qwen OAuth 登录
   const handleQwenOAuthStart = useCallback(async () => {
     setOauthLoading(true);
+    setOauthAuthorizationUrl(null);
     try {
       const res = await fetch('/api/providers/qwen-oauth/start', {
         method: 'POST',
@@ -491,8 +471,10 @@ export default function ProviderPage() {
       if (data.success && data.data) {
         const { authorizationUrl, deviceCode, codeVerifier, interval } = data.data;
 
+        // 保存授权 URL 以便显示和复制
         if (authorizationUrl) {
-          // 直接打开组合好的授权 URL
+          setOauthAuthorizationUrl(authorizationUrl);
+          // 尝试自动打开，但可能被浏览器拦截
           window.open(authorizationUrl, '_blank');
         }
 
@@ -509,6 +491,7 @@ export default function ProviderPage() {
             const pollData = await pollRes.json();
             if (pollData.success && pollData.data) {
               setOauthPolling(false);
+              setOauthAuthorizationUrl(null); // 登录成功后清除 URL
               setOauthProviderId(pollData.data.providerId);
               setOauthExpiresAt(new Date(Date.now() + pollData.data.expiresIn * 1000).toISOString());
               message.success('Qwen OAuth 登录成功');
@@ -538,9 +521,9 @@ export default function ProviderPage() {
     const diff = expires.getTime() - Date.now();
     if (diff <= 0) return '已过期';
     const minutes = Math.floor(diff / 60000);
-    if (minutes < 60) return `剩余 ${minutes} 分钟`;
+    if (minutes < 60) return `剩余 ${String(minutes)} 分钟`;
     const hours = Math.floor(minutes / 60);
-    return `剩余 ${hours} 小时 ${minutes % 60} 分钟`;
+    return `剩余 ${String(hours)} 小时 ${String(minutes % 60)} 分钟`;
   };
 
   const handleQwenOAuthRefresh = useCallback(async () => {
@@ -606,7 +589,7 @@ export default function ProviderPage() {
                 </Text>
                 <Text type="secondary" style={{ fontSize: 13 }}>
                   {configuredProviders.length > 0
-                    ? `${configuredProviders.length} 个已配置提供商`
+                    ? `${String(configuredProviders.length)} 个已配置提供商`
                     : '添加提供商以开始使用 AI 模型'}
                 </Text>
               </div>
@@ -663,6 +646,63 @@ export default function ProviderPage() {
               </Button>
             )}
           </Flexbox>
+
+          {/* OAuth 授权 URL 显示（防止浏览器拦截弹窗） */}
+          {oauthPolling && oauthAuthorizationUrl && (
+            <div
+              style={{
+                marginTop: 16,
+                padding: '12px 14px',
+                background: 'var(--color-fill-quaternary)',
+                borderRadius: 10,
+                border: '1px solid var(--color-border)',
+              }}
+            >
+              <Flexbox gap={8} horizontal align="center" style={{ marginBottom: 8 }}>
+                <Icon icon={LinkOutlined} size={14} color="var(--lobe-color-primary)" />
+                <Text strong style={{ fontSize: 13 }}>
+                  授权链接（如浏览器未自动弹出，请点击下方链接或复制链接手动打开）
+                </Text>
+              </Flexbox>
+              <Flexbox gap={8} horizontal>
+                <div
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    background: 'var(--color-bg)',
+                    borderRadius: 8,
+                    border: '1px solid var(--color-border)',
+                    fontSize: 12,
+                    fontFamily: 'monospace',
+                    wordBreak: 'break-all',
+                    color: 'var(--lobe-color-primary)',
+                    maxHeight: 48,
+                    overflow: 'hidden',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {oauthAuthorizationUrl}
+                </div>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    navigator.clipboard.writeText(oauthAuthorizationUrl);
+                    message.success('链接已复制');
+                  }}
+                >
+                  复制
+                </Button>
+                <Button
+                  size="small"
+                  type="primary"
+                  icon={<LinkOutlined />}
+                  onClick={() => window.open(oauthAuthorizationUrl, '_blank')}
+                >
+                  打开
+                </Button>
+              </Flexbox>
+            </div>
+          )}
         </div>
 
         {/* 已配置提供商 */}

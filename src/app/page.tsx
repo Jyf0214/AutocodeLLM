@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Grid, Text, Icon } from '@lobehub/ui';
-import { ArrowRightOutlined, CodeOutlined, ApiOutlined, TeamOutlined, PlayCircleOutlined, LogoutOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, CodeOutlined, ApiOutlined, TeamOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Card } from 'antd';
