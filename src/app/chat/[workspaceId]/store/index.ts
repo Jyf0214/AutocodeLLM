@@ -7,6 +7,7 @@
  */
 
 import create from 'zustand';
+import type { StateCreator } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 import { initialState } from './initialState';
@@ -19,33 +20,32 @@ import { createUISlice, type UISlice } from './slices/ui/slice';
 
 export type ChatStore = ChatStoreState & ChatSlice & MessagesSlice & AgentSlice & InputSlice & UISlice;
 
-export const useChatStore = create<ChatStore>()(
-  devtools(
-    (set, get) => ({
-      ...initialState,
-      ...createChatSlice(set, get),
-      ...createMessagesSlice(set, get),
-      ...createAgentSlice(set, get),
-      ...createInputSlice(set, get),
-      ...createUISlice(set, get),
-    }),
-    { name: 'ChatStore', enabled: process.env.NODE_ENV === 'development' }
-  )
-);
+type Creator = StateCreator<ChatStore, [['zustand/devtools', never]], []>;
+
+const storeCreator: Creator = (set, get) => ({
+  ...initialState,
+  ...createChatSlice(set, get),
+  ...createMessagesSlice(set, get),
+  ...createAgentSlice(set, get),
+  ...createInputSlice(set, get),
+  ...createUISlice(set, get),
+});
+
+export const useChatStore = create<ChatStore>()(devtools(storeCreator, { name: 'ChatStore' }));
 
 export const getChatStoreState = (): ChatStoreState => {
-  const state = useChatStore.getState();
+  const s = useChatStore.getState();
   return {
-    workspaceId: state.workspaceId,
-    workspace: state.workspace,
-    messages: state.messages,
-    messageMap: state.messageMap,
-    isLoading: state.isLoading,
-    error: state.error,
-    agents: state.agents,
-    models: state.models,
-    input: state.input,
-    ui: state.ui,
+    workspaceId: s.workspaceId,
+    workspace: s.workspace,
+    messages: s.messages,
+    messageMap: s.messageMap,
+    isLoading: s.isLoading,
+    error: s.error,
+    agents: s.agents,
+    models: s.models,
+    input: s.input,
+    ui: s.ui,
   };
 };
 

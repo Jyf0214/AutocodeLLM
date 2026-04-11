@@ -7,7 +7,7 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { ChatStoreState, ErrorDialogState, UIState } from '../types';
+import type { ChatStoreState, ErrorDialogState } from '../../types';
 
 export interface UISlice {
   toggleAgentPanel: (show?: boolean) => void;
@@ -17,12 +17,13 @@ export interface UISlice {
   hideErrorDialog: () => void;
 }
 
-export const createUISlice: StateCreator<ChatStoreState, [], [], UISlice> = (set) => ({
-  ui: { showAgentPanel: false, scrollToBottom: true, loadingMessages: false, errorDialog: null },
+type C = StateCreator<ChatStoreState, [['zustand/devtools', never]], [], UISlice>;
 
-  toggleAgentPanel: (show?: boolean) => set((state) => ({ ui: { ...state.ui, showAgentPanel: show !== undefined ? show : !state.ui.showAgentPanel } })),
-  setScrollToBottom: (scroll: boolean) => set((state) => ({ ui: { ...state.ui, scrollToBottom: scroll } })),
-  setLoadingMessages: (loading: boolean) => set((state) => ({ ui: { ...state.ui, loadingMessages: loading } })),
-  showErrorDialog: (dialogState: ErrorDialogState) => set((state) => ({ ui: { ...state.ui, errorDialog: dialogState } })),
-  hideErrorDialog: () => set((state) => ({ ui: { ...state.ui, errorDialog: null } })),
+export const createUISlice: C = (set) => ({
+  ui: { showAgentPanel: false, scrollToBottom: true, loadingMessages: false, errorDialog: null },
+  toggleAgentPanel: (show?: boolean) => set((s) => ({ ui: { ...s.ui, showAgentPanel: show !== undefined ? show : !s.ui.showAgentPanel } })),
+  setScrollToBottom: (scroll: boolean) => set((s) => ({ ui: { ...s.ui, scrollToBottom: scroll } })),
+  setLoadingMessages: (loading: boolean) => set((s) => ({ ui: { ...s.ui, loadingMessages: loading } })),
+  showErrorDialog: (dialogState: ErrorDialogState) => set((s) => ({ ui: { ...s.ui, errorDialog: dialogState } })),
+  hideErrorDialog: () => set((s) => ({ ui: { ...s.ui, errorDialog: null } })),
 });

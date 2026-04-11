@@ -7,7 +7,7 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { ChatStoreState, FileAttachment, InputState } from '../types';
+import type { ChatStoreState, FileAttachment } from '../../types';
 
 export interface InputSlice {
   setInputValue: (value: string) => void;
@@ -18,13 +18,14 @@ export interface InputSlice {
   clearAttachments: () => void;
 }
 
-export const createInputSlice: StateCreator<ChatStoreState, [], [], InputSlice> = (set) => ({
-  input: { value: '', isSending: false, attachments: [] },
+type C = StateCreator<ChatStoreState, [['zustand/devtools', never]], [], InputSlice>;
 
-  setInputValue: (value: string) => set((state) => ({ input: { ...state.input, value } })),
-  clearInput: () => set((state) => ({ input: { ...state.input, value: '' } })),
-  setSending: (isSending: boolean) => set((state) => ({ input: { ...state.input, isSending } })),
-  addAttachment: (file: FileAttachment) => set((state) => ({ input: { ...state.input, attachments: [...state.input.attachments, file] } })),
-  removeAttachment: (id: string) => set((state) => ({ input: { ...state.input, attachments: state.input.attachments.filter((f) => f.id !== id) } })),
-  clearAttachments: () => set((state) => ({ input: { ...state.input, attachments: [] } })),
+export const createInputSlice: C = (set) => ({
+  input: { value: '', isSending: false, attachments: [] },
+  setInputValue: (value: string) => set((s) => ({ input: { ...s.input, value } })),
+  clearInput: () => set((s) => ({ input: { ...s.input, value: '' } })),
+  setSending: (isSending: boolean) => set((s) => ({ input: { ...s.input, isSending } })),
+  addAttachment: (file: FileAttachment) => set((s) => ({ input: { ...s.input, attachments: [...s.input.attachments, file] } })),
+  removeAttachment: (id: string) => set((s) => ({ input: { ...s.input, attachments: s.input.attachments.filter((f) => f.id !== id) } })),
+  clearAttachments: () => set((s) => ({ input: { ...s.input, attachments: [] } })),
 });

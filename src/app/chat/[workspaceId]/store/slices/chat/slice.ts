@@ -7,11 +7,8 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { ChatStoreState, WorkspaceInfo, ChatError } from '../types';
+import type { ChatStoreState, WorkspaceInfo, ChatError } from '../../types';
 
-/**
- * Chat Slice - 聊天核心功能
- */
 export interface ChatSlice {
   initializeChat: (workspaceId: string) => Promise<void>;
   loadWorkspace: () => Promise<void>;
@@ -20,7 +17,9 @@ export interface ChatSlice {
   setError: (error: ChatError | null) => void;
 }
 
-export const createChatSlice: StateCreator<ChatStoreState, [], [], ChatSlice> = (set, get) => ({
+type C = StateCreator<ChatStoreState, [['zustand/devtools', never]], [], ChatSlice>;
+
+export const createChatSlice: C = (set, get) => ({
   workspaceId: '',
   workspace: null,
   isLoading: false,
@@ -46,7 +45,7 @@ export const createChatSlice: StateCreator<ChatStoreState, [], [], ChatSlice> = 
       const response = await fetch(`/api/workspaces/${workspaceId}`);
       const result = await response.json();
       if (!result.success || !result.data) throw new Error(result.error?.message ?? '获取工作区失败');
-      set({ workspace: result.data });
+      set({ workspace: result.data as WorkspaceInfo });
     } catch (error) {
       set({ error: { message: error instanceof Error ? error.message : '加载失败', code: 'LOAD_FAILED' } });
       throw error;

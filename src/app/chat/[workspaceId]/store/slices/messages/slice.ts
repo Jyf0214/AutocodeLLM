@@ -7,7 +7,7 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { ChatStoreState, ChatMessage } from '../types';
+import type { ChatStoreState, ChatMessage } from '../../types';
 
 export interface MessagesSlice {
   addMessage: (message: ChatMessage) => void;
@@ -17,7 +17,9 @@ export interface MessagesSlice {
   clearMessages: () => void;
 }
 
-export const createMessagesSlice: StateCreator<ChatStoreState, [], [], MessagesSlice> = (set) => ({
+type C = StateCreator<ChatStoreState, [['zustand/devtools', never]], [], MessagesSlice>;
+
+export const createMessagesSlice: C = (set) => ({
   messages: [],
   messageMap: new Map(),
 

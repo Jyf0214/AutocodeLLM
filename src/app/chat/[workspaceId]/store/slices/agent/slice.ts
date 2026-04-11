@@ -26,10 +26,9 @@ export interface AgentSlice {
   updateAgent: (agentId: string, updates: Partial<AgentInstance>) => void;
 }
 
-type SetState = Parameters<StateCreator<ChatStoreState, [], [], AgentSlice>>[0];
-type GetState = Parameters<StateCreator<ChatStoreState, [], [], AgentSlice>>[1];
+type C = StateCreator<ChatStoreState, [['zustand/devtools', never]], [], AgentSlice>;
 
-export const createAgentSlice: StateCreator<ChatStoreState, [], [], AgentSlice> = (set: SetState, get: GetState) => ({
+export const createAgentSlice: C = (set, get) => ({
   agents: { activeAgents: [], status: 'idle' },
 
   runSingleAgent: async (params: RunAgentParams) => {
@@ -82,25 +81,25 @@ export const createAgentSlice: StateCreator<ChatStoreState, [], [], AgentSlice> 
         },
         onComplete: () => {
           get().updateMessage(assistantMessageId, { content: finalContent, updatedAt: Date.now() });
-          set((s: ChatStoreState) => ({ agents: { ...s.agents, status: 'completed' as const } }));
-          setTimeout(() => set((s: ChatStoreState) => ({ agents: { ...s.agents, status: 'idle' } })), 3000);
+          set((s) => ({ agents: { ...s.agents, status: 'completed' as const } }));
+          setTimeout(() => set((s) => ({ agents: { ...s.agents, status: 'idle' } })), 3000);
         },
         onError: (error: Error) => {
           get().updateMessage(assistantMessageId, { content: finalContent || '失败', error: { message: error.message, code: 'ERR' }, updatedAt: Date.now() });
-          set((s: ChatStoreState) => ({ agents: { ...s.agents, status: 'error' as const } }));
+          set((s) => ({ agents: { ...s.agents, status: 'error' as const } }));
         },
       });
     } catch (error) {
       const msg = error instanceof Error ? error.message : '失败';
       get().updateMessage(assistantMessageId, { content: finalContent || '失败', error: { message: msg, code: 'ERR' }, updatedAt: Date.now() });
-      set((s: ChatStoreState) => ({ agents: { ...s.agents, status: 'error' as const } }));
+      set((s) => ({ agents: { ...s.agents, status: 'error' as const } }));
     }
   },
 
-  cancelAgentExecution: () => set((s: ChatStoreState) => ({ agents: { ...s.agents, status: 'cancelled' as const } })),
-  updateAgentStatus: (status: AgentState['status']) => set((s: ChatStoreState) => ({ agents: { ...s.agents, status } })),
-  setActiveAgents: (agents: AgentInstance[]) => set((s: ChatStoreState) => ({ agents: { ...s.agents, activeAgents: agents } })),
-  addActiveAgent: (agent: AgentInstance) => set((s: ChatStoreState) => ({ agents: { ...s.agents, activeAgents: [...s.agents.activeAgents, agent] } })),
-  removeActiveAgent: (agentId: string) => set((s: ChatStoreState) => ({ agents: { ...s.agents, activeAgents: s.agents.activeAgents.filter((a: AgentInstance) => a.id !== agentId) } })),
-  updateAgent: (agentId: string, updates: Partial<AgentInstance>) => set((s: ChatStoreState) => ({ agents: { ...s.agents, activeAgents: s.agents.activeAgents.map((a: AgentInstance) => (a.id === agentId ? { ...a, ...updates } : a)) } })),
+  cancelAgentExecution: () => set((s) => ({ agents: { ...s.agents, status: 'cancelled' as const } })),
+  updateAgentStatus: (status: AgentState['status']) => set((s) => ({ agents: { ...s.agents, status } })),
+  setActiveAgents: (agents: AgentInstance[]) => set((s) => ({ agents: { ...s.agents, activeAgents: agents } })),
+  addActiveAgent: (agent: AgentInstance) => set((s) => ({ agents: { ...s.agents, activeAgents: [...s.agents.activeAgents, agent] } })),
+  removeActiveAgent: (agentId: string) => set((s) => ({ agents: { ...s.agents, activeAgents: s.agents.activeAgents.filter((a) => a.id !== agentId) } })),
+  updateAgent: (agentId: string, updates: Partial<AgentInstance>) => set((s) => ({ agents: { ...s.agents, activeAgents: s.agents.activeAgents.map((a) => (a.id === agentId ? { ...a, ...updates } : a)) } })),
 });
