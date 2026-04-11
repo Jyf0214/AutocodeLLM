@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createCipheriv, randomBytes, createHash } from 'crypto';
+import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypto';
 
 // Mock Prisma
 const mockFindMany = vi.fn();
@@ -44,6 +44,7 @@ function encryptValue(value: string): string {
 /**
  * AES-256-CBC 解密（与 route.ts 保持一致）
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function decryptValue(encrypted: string): string {
   const key = deriveKey();
   const parts = encrypted.split(':');
@@ -55,7 +56,6 @@ function decryptValue(encrypted: string): string {
     throw new Error('无效的加密数据：iv 或加密数据为空');
   }
   const iv = Buffer.from(ivHex, 'hex');
-  const { createDecipheriv } = require('crypto');
   const decipher = createDecipheriv('aes-256-cbc', key, iv);
   let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
@@ -65,6 +65,7 @@ function decryptValue(encrypted: string): string {
 /**
  * 脱敏显示变量值（与 route.ts 保持一致）
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function maskValue(value: string): string {
   if (value.length <= 2) return '**';
   return value.substring(0, 2) + '*'.repeat(Math.max(value.length - 2, 4));
@@ -110,7 +111,7 @@ describe('环境变量 API (/api/env)', () => {
 
       expect(response.status).toBe(200);
 
-      const body = await response.json() as { success: boolean; data: Array<{ key: string; value: string }> };
+      const body = await response.json() as { success: boolean; data: { key: string; value: string }[] };
       expect(body.success).toBe(true);
       expect(body.data).toHaveLength(2);
       expect(body.data[0]?.key).toBe('API_KEY');
@@ -157,7 +158,7 @@ describe('环境变量 API (/api/env)', () => {
       const { GET } = await import('@/app/api/env/route');
       const response = await GET();
 
-      const body = await response.json() as { data: Array<{ value: string }> };
+      const body = await response.json() as { data: { value: string }[] };
       const firstItem = body.data[0];
       if (!firstItem) throw new Error('Expected at least one env var');
       // 脱敏后应该包含星号
