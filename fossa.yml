@@ -34,6 +34,10 @@ policy:
     - LGPL-3.0-only
     - LGPL-2.1-or-later
     - LGPL-2.1-only
+    - Zlib # 常见于压缩库
+    - BSL-1.0 # Boost Software License
+    - Artistic-2.0 # Perl相关
+    - Python-2.0
 
   # 拒绝的许可证（会阻止构建）
   deny:
@@ -54,6 +58,8 @@ policy:
     - CDDL-1.0
     - EPL-1.0
     - EPL-2.0
+    - WTFPL # 允许但需要审查
+    - Unlicense # 公共领域
 
 # 忽略特定包的问题（用于误报或可接受的风险）
 ignored:
