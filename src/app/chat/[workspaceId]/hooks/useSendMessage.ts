@@ -15,7 +15,7 @@ import type { ModelConfig } from '../store/types';
  * 发送消息 Hook
  */
 export function useSendMessage() {
-  const store = useChatStore();
+  const store = useChatStore.getState();
 
   /**
    * 发送消息

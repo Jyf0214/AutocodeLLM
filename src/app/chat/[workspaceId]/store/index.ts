@@ -6,8 +6,7 @@
  * Copyright (c) 2026 Jyf0214
  */
 
-import createStore from 'zustand/vanilla';
-import { useStore } from 'zustand/react';
+import create from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 import { initialState } from './initialState';
@@ -20,7 +19,7 @@ import { createUISlice, type UISlice } from './slices/ui/slice';
 
 export type ChatStore = ChatStoreState & ChatSlice & MessagesSlice & AgentSlice & InputSlice & UISlice;
 
-const store = createStore<ChatStore>()(
+export const useChatStore = create<ChatStore>()(
   devtools(
     (set, get) => ({
       ...initialState,
@@ -34,16 +33,8 @@ const store = createStore<ChatStore>()(
   )
 );
 
-export function useChatStore(): ChatStore;
-export function useChatStore<T>(selector: (state: ChatStore) => T): T;
-export function useChatStore<T>(selector?: (state: ChatStore) => T): T | ChatStore {
-  if (selector) return useStore(store, selector);
-  return useStore(store) as ChatStore;
-}
-Object.assign(useChatStore, store);
-
 export const getChatStoreState = (): ChatStoreState => {
-  const s = store.getState();
+  const s = useChatStore.getState();
   return { workspaceId: s.workspaceId, workspace: s.workspace, messages: s.messages, messageMap: s.messageMap, isLoading: s.isLoading, error: s.error, agents: s.agents, models: s.models, input: s.input, ui: s.ui };
 };
 

@@ -26,6 +26,10 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
+  # 加密密钥（CI 构建使用默认值，生产环境应通过 secrets 覆盖）
+  KEY_VAULTS_SECRET: ${{ secrets.KEY_VAULTS_SECRET || 'ci-default-key-vaults-secret-change-me' }}
+  AUTH_SECRET: ${{ secrets.AUTH_SECRET || 'ci-default-auth-secret-change-me' }}
+  JWKS_KEY: ${{ secrets.JWKS_KEY || '{"keys":[{"d":"ci","dp":"ci","dq":"ci","e":"AQAB","kty":"RSA","n":"ci","p":"ci","q":"ci","qi":"ci","use":"sig","kid":"ci","alg":"RS256"}]}' }}
 
 jobs:
   lint:
