@@ -2,11 +2,11 @@ name: CI & Docker
 
 on:
   push:
-    branches: [main]
+    branches: [test-version]
     tags:
       - 'v*'
   pull_request:
-    branches: [main]
+    branches: [test-version]
   workflow_dispatch:
     inputs:
       tag_type:
@@ -150,7 +150,7 @@ jobs:
       ((github.event_name == 'workflow_dispatch' &&
       github.event.inputs.tag_type == 'base') ||
       (github.event_name == 'push' &&
-      github.ref == 'refs/heads/main'))
+      github.ref == 'refs/heads/test-version'))
     permissions:
       contents: read
       packages: write
