@@ -6,9 +6,9 @@
  * Copyright (c) 2026 Jyf0214
  */
 
-import React, { createContext, useContext, useReducer, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useReducer, useCallback } from 'react';
 import { initialState } from './initialState';
-import type { ChatStoreState, ChatMessage, ModelConfig, AgentInstance, AgentState, FileAttachment, ErrorDialogState } from './types';
+import type { ChatStoreState, ChatMessage, AgentState, FileAttachment, ErrorDialogState } from './types';
 
 type Action =
   | { type: 'SET_WORKSPACE_ID'; payload: string }
@@ -99,7 +99,7 @@ function reducer(state: ChatStoreState, action: Action): ChatStoreState {
     case 'CLEAR_INPUT':
       return { ...state, input: { ...state.input, value: '' } };
     case 'TOGGLE_AGENT_PANEL':
-      return { ...state, ui: { ...state.ui, showAgentPanel: action.payload !== undefined ? action.payload : !state.ui.showAgentPanel } };
+      return { ...state, ui: { ...state.ui, showAgentPanel: action.payload ?? !state.ui.showAgentPanel } };
     case 'SET_SCROLL_TO_BOTTOM':
       return { ...state, ui: { ...state.ui, scrollToBottom: action.payload } };
     case 'SET_LOADING_MESSAGES':
@@ -123,18 +123,14 @@ export function ChatStoreProvider({ children }: { children: React.ReactNode }) {
   return <ChatStoreContext.Provider value={{ state, dispatch }}>{children}</ChatStoreContext.Provider>;
 }
 
-function useChatStoreContext() {
-  const ctx = useContext(ChatStoreContext);
-  if (!ctx) throw new Error('useChatStoreContext must be used within ChatStoreProvider');
-  return ctx;
-}
-
-// Hook 接口（兼容之前的 useChatStore 调用）
 export function useChatStore() {
-  const { state, dispatch } = useChatStoreContext();
+  const ctx = useContext(ChatStoreContext);
+  if (!ctx) throw new Error('useChatStore must be used within ChatStoreProvider');
+  const { state, dispatch } = ctx;
 
   return {
-    ...state,
+    state,
+    dispatch,
     initializeChat: useCallback((workspaceId: string) => {
       dispatch({ type: 'SET_WORKSPACE_ID', payload: workspaceId });
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -164,21 +160,13 @@ export function useChatStore() {
     updateMessage: useCallback((id: string, updates: Partial<ChatMessage>) => dispatch({ type: 'UPDATE_MESSAGE', payload: { id, updates } }), [dispatch]),
     removeMessage: useCallback((id: string) => dispatch({ type: 'REMOVE_MESSAGE', payload: id }), [dispatch]),
     batchUpdateMessages: useCallback((updates: Array<{ id: string; updates: Partial<ChatMessage> }>) => dispatch({ type: 'BATCH_UPDATE_MESSAGES', payload: updates }), [dispatch]),
-    runSingleAgent: useCallback(async (_params: { message: string; model: ModelConfig }) => {
-      console.log('runSingleAgent called with:', _params);
-    }, []),
+    runSingleAgent: useCallback((_params?: unknown) => { void _params; return Promise.resolve(); }, []),
     cancelAgentExecution: useCallback(() => dispatch({ type: 'SET_AGENTS', payload: { status: 'cancelled' } }), [dispatch]),
     updateAgentStatus: useCallback((status: AgentState['status']) => dispatch({ type: 'SET_AGENTS', payload: { status } }), [dispatch]),
-    setActiveAgents: useCallback((activeAgents: AgentInstance[]) => dispatch({ type: 'SET_AGENTS', payload: { activeAgents } }), [dispatch]),
-    addActiveAgent: useCallback((agent: AgentInstance) => {
-      dispatch({ type: 'SET_AGENTS', payload: { activeAgents: [] } }); // placeholder
-    }, [dispatch]),
-    removeActiveAgent: useCallback((agentId: string) => {
-      // placeholder
-    }, []),
-    updateAgent: useCallback((_agentId: string, _updates: Partial<AgentInstance>) => {
-      // placeholder
-    }, []),
+    setActiveAgents: useCallback((activeAgents: AgentState['activeAgents']) => dispatch({ type: 'SET_AGENTS', payload: { activeAgents } }), [dispatch]),
+    addActiveAgent: useCallback((_agent: unknown) => { void _agent; }, []),
+    removeActiveAgent: useCallback((_id: string) => { void _id; }, []),
+    updateAgent: useCallback((_id: string, _updates: unknown) => { void _id; void _updates; }, []),
     setInputValue: useCallback((value: string) => dispatch({ type: 'SET_INPUT_VALUE', payload: value }), [dispatch]),
     clearInput: useCallback(() => dispatch({ type: 'CLEAR_INPUT' }), [dispatch]),
     setSending: useCallback((isSending: boolean) => dispatch({ type: 'SET_SENDING', payload: isSending }), [dispatch]),
@@ -192,13 +180,6 @@ export function useChatStore() {
     hideErrorDialog: useCallback(() => dispatch({ type: 'HIDE_ERROR_DIALOG' }), [dispatch]),
   };
 }
-
-// 用于非组件场景
-export const getChatStoreState = () => {
-  // 注意：这只能在组件内调用，因为使用了 context
-  const ctx = useChatStoreContext();
-  return ctx.state;
-};
 
 export type { ChatStoreState } from './types';
 export type { ChatMessage, WorkspaceInfo, ModelConfig, AgentInstance, GroupOrchestrationState, SupervisorState, AgentState, ModelState, InputState, FileAttachment, UIState, ErrorDialogState, ChatError } from './types';

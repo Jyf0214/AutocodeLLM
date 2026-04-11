@@ -139,9 +139,8 @@ function ChatPageInner({
   const handleInputChange = useCallback(
     (value: string) => {
       setInputValue(value);
-      storeSetInputValue(value);
     },
-    [storeSetInputValue]
+    []
   );
 
   // 模型选择
