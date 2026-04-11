@@ -481,7 +481,7 @@ export default function ProviderPage() {
         setOauthPolling(true);
 
         // 轮询获取 Token
-        const poll = async () => {
+        const poll = async (currentInterval = interval) => {
           try {
             const pollRes = await fetch('/api/providers/qwen-oauth/poll', {
               method: 'POST',
@@ -497,16 +497,20 @@ export default function ProviderPage() {
               message.success('Qwen OAuth 登录成功');
               fetchProviders();
             } else if (pollData.error?.code === 'AUTHORIZATION_PENDING') {
-              setTimeout(poll, interval * 1000);
+              setTimeout(() => poll(currentInterval), currentInterval * 1000);
+            } else if (pollData.error?.code === 'SLOW_DOWN') {
+              // 增加轮询间隔（官方建议 +2s）
+              const newInterval = currentInterval + 2;
+              setTimeout(() => poll(newInterval), newInterval * 1000);
             } else {
               setOauthPolling(false);
               message.error(pollData.error?.message ?? '获取 Token 失败');
             }
           } catch {
-            setTimeout(poll, interval * 1000);
+            setTimeout(() => poll(currentInterval), currentInterval * 1000);
           }
         };
-        setTimeout(poll, interval * 1000);
+        setTimeout(() => poll(interval), interval * 1000);
       }
     } catch {
       message.error('启动 OAuth 失败');
