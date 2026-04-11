@@ -7,7 +7,7 @@ import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypt
  * 从环境变量派生 32 字节 AES-256 密钥（使用 SHA-256）
  */
 function deriveKey(): Buffer {
-  const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
+  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
   return createHash('sha256').update(keyStr).digest();
 }
 

@@ -37,6 +37,10 @@ services:
       NODE_ENV: production
       PORT: 3000
       DEMO_MODE: ${DEMO_MODE:-false}
+      # 加密密钥（生产环境必须修改）
+      KEY_VAULTS_SECRET: ${KEY_VAULTS_SECRET:-your-key-vaults-secret-here-change-in-production}
+      AUTH_SECRET: ${AUTH_SECRET:-your-auth-secret-here-change-in-production}
+      JWKS_KEY: ${JWKS_KEY:-your-jwks-key-here-change-in-production}
     ports:
       - "${APP_PORT:-3000}:3000"
     networks:

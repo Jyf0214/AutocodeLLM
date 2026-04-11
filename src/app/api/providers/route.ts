@@ -14,7 +14,7 @@ import type {
  * AES-256-CBC 加密 API Key
  */
 function encryptApiKey(apiKey: string): string {
-  const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
+  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
   const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
   const iv = randomBytes(16);
   const cipher = createCipheriv('aes-256-cbc', key, iv);
@@ -27,7 +27,7 @@ function encryptApiKey(apiKey: string): string {
  * AES-256-CBC 加密（通用值）
  */
 function encryptValue(value: string): string {
-  const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
+  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
   const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
   const iv = randomBytes(16);
   const cipher = createCipheriv('aes-256-cbc', key, iv);
@@ -40,7 +40,7 @@ function encryptValue(value: string): string {
  * AES-256-CBC 解密 API Key
  */
 function decryptApiKey(encrypted: string): string {
-  const keyStr = process.env.ENCRYPTION_KEY ?? 'autocodellm-encryption-key-32b!';
+  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
   const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
   const parts = encrypted.split(':');
   const ivHex = parts[0];
