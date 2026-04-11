@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { message, Tag, Modal as AntdModal, Card } from 'antd';
+import { message, Tag, Modal, Card } from 'antd';
 import {
   Button,
   Text,
   Empty,
-  Modal,
   Form,
   Input as LobeInput,
   Flexbox,
@@ -434,7 +433,7 @@ export default function ProviderPage() {
   // 删除提供商
   const handleDelete = useCallback(
     (provider: Provider) => {
-      AntdModal.confirm({
+      Modal.confirm({
         title: '确认删除',
         content: `确定要删除提供商「${provider.name}」吗？`,
         okText: '删除',
