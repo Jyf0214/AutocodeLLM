@@ -6,7 +6,8 @@
  * Copyright (c) 2026 Jyf0214
  */
 
-import { create } from 'zustand';
+import { createStore } from 'zustand/vanilla';
+import { useStore } from 'zustand/react';
 import { devtools } from 'zustand/middleware';
 
 import { initialState } from './initialState';
@@ -19,7 +20,7 @@ import { createUISlice, type UISlice } from './slices/ui/slice';
 
 export type ChatStore = ChatStoreState & ChatSlice & MessagesSlice & AgentSlice & InputSlice & UISlice;
 
-const useChatStoreBase = create<ChatStore>()(
+const chatStore = createStore<ChatStore>()(
   devtools(
     (set, get) => ({
       ...initialState,
@@ -33,14 +34,19 @@ const useChatStoreBase = create<ChatStore>()(
   )
 );
 
-export const useChatStore = useChatStoreBase as typeof useChatStoreBase & {
+export const useChatStore = ((selector?: (state: ChatStore) => unknown) => {
+  if (selector) return useStore(chatStore, selector);
+  return useStore(chatStore);
+}) as typeof useStore<ChatStore> & {
   getState: () => ChatStore;
   setState: (state: Partial<ChatStore>) => void;
   subscribe: (listener: (state: ChatStore) => void) => () => void;
 };
 
+Object.assign(useChatStore, chatStore);
+
 export const getChatStoreState = (): ChatStoreState => {
-  const s = useChatStoreBase.getState();
+  const s = chatStore.getState();
   return { workspaceId: s.workspaceId, workspace: s.workspace, messages: s.messages, messageMap: s.messageMap, isLoading: s.isLoading, error: s.error, agents: s.agents, models: s.models, input: s.input, ui: s.ui };
 };
 
