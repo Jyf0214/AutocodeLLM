@@ -590,15 +590,34 @@ export default function WorkplaceDetailPage({
           <Flexbox style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
             {messages.length === 0 ? (
               <Flexbox
-                gap={16}
+                gap={20}
                 align="center"
                 justify="center"
-                style={{ flex: 1, minHeight: '300px' }}
+                style={{ flex: 1, padding: '40px 0' }}
               >
-                <Avatar avatar="🤖" size={64} />
-                <Text type="secondary" style={{ fontSize: 16 }}>
-                  开始与 AI 对话...
-                </Text>
+                <Flexbox gap={24} align="center">
+                  <Avatar avatar="🤖" size={72} />
+                  <Flexbox gap={8} align="center">
+                    <Text style={{ fontSize: 18, fontWeight: 600, textAlign: 'center' }}>
+                      从任何想法开始...
+                    </Text>
+                    <Text type="secondary" style={{ fontSize: 14, textAlign: 'center', maxWidth: 320 }}>
+                      输入你的问题或想法，AI 助手将帮助你实现
+                    </Text>
+                  </Flexbox>
+                </Flexbox>
+                {/* 快捷提示按钮 */}
+                <Flexbox gap={8} horizontal wrap="wrap" justify="center" style={{ marginTop: 8 }}>
+                  <Tag style={{ padding: '6px 12px', cursor: 'pointer', borderRadius: 16 }} onClick={() => setInputValue('帮我写一段 Python 代码')}>
+                    💻 写代码
+                  </Tag>
+                  <Tag style={{ padding: '6px 12px', cursor: 'pointer', borderRadius: 16 }} onClick={() => setInputValue('帮我写一篇文章')}>
+                    ✍️ 写文章
+                  </Tag>
+                  <Tag style={{ padding: '6px 12px', cursor: 'pointer', borderRadius: 16 }} onClick={() => setInputValue('帮我分析这段代码')}>
+                    🔍 分析代码
+                  </Tag>
+                </Flexbox>
               </Flexbox>
             ) : (
             <>
