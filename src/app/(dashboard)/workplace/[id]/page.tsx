@@ -381,10 +381,34 @@ export default function WorkplaceDetailPage({
           }
           setMessages((prev) => [...prev, assistantMessage]);
         } else {
-          message.error(result.error?.message ?? '发送消息失败');
+          // 添加错误消息到聊天记录
+          const errorMessage: WorkspaceChatMessage = {
+            id: `error-${Date.now().toString()}`,
+            role: 'assistant',
+            content: `模型服务商返回错误。请根据以下信息排查，或稍后重试\n\n\`\`\`json\n${JSON.stringify(result.error ?? { message: '未知错误' }, null, 2)}\n\`\`\``,
+            createAt: Date.now(),
+            updateAt: Date.now(),
+            meta: createAssistantMeta(selectedModel.name),
+            providerId: selectedModel.providerId,
+            model: selectedModel.name,
+            error: { message: result.error?.message ?? '发送消息失败' },
+          };
+          setMessages((prev) => [...prev, errorMessage]);
         }
-      } catch {
-        message.error('发送消息失败');
+      } catch (error) {
+        // 添加错误消息到聊天记录
+        const errorMessage: WorkspaceChatMessage = {
+          id: `error-${Date.now().toString()}`,
+          role: 'assistant',
+          content: `模型服务商返回错误。请根据以下信息排查，或稍后重试\n\n\`\`\`json\n${JSON.stringify({ error: error instanceof Error ? error.message : '未知错误' }, null, 2)}\n\`\`\``,
+          createAt: Date.now(),
+          updateAt: Date.now(),
+          meta: createAssistantMeta(selectedModel.name),
+          providerId: selectedModel.providerId,
+          model: selectedModel.name,
+          error: { message: '发送消息失败' },
+        };
+        setMessages((prev) => [...prev, errorMessage]);
       } finally {
         setLoading(false);
       }
@@ -623,6 +647,7 @@ export default function WorkplaceDetailPage({
             <>
               {messages.map((msg) => {
                 const isUser = msg.role === 'user';
+                const hasError = msg.error != null;
                 return (
                   <React.Fragment key={msg.id}>
                     <ChatItem
@@ -633,6 +658,11 @@ export default function WorkplaceDetailPage({
                       message={msg.content}
                       showAvatar
                       variant="bubble"
+                      error={hasError ? {
+                        type: 'error',
+                        message: '模型服务商返回错误',
+                        description: msg.error?.message,
+                      } : undefined}
                       markdownProps={{
                         variant: 'chat',
                         enableMermaid: true,
