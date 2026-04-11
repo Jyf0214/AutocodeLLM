@@ -102,106 +102,107 @@ export default function SyncPage() {
   }, [form]);
 
   return (
-    <Flexbox gap={16} style={{ flexDirection: 'column' }}>
-        <Text style={{ fontSize: 20, fontWeight: 700 }}>WebDAV 同步</Text>
-        <Text type="secondary">通过 WebDAV 实现本地文件与远程的自动同步</Text>
+    <Flexbox gap={16} style={{ flexDirection: 'column', height: '100%', maxHeight: 'calc(100dvh - 64px)', overflowY: 'auto', padding: '0 16px 24px' }}>
+      <Text style={{ fontSize: 20, fontWeight: 700 }}>WebDAV 同步</Text>
+      <Text type="secondary">通过 WebDAV 实现本地文件与远程的自动同步</Text>
 
-        <Card
-          title="同步状态"
-          extra={
-            status?.enabled ? (
-              <Tag icon={<CheckCircleOutlined />} color="success">已启用</Tag>
-            ) : (
-              <Tag icon={<CloseCircleOutlined />} color="default">未启用</Tag>
-            )
-          }
-        >
-          <Space style={{ width: '100%', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <Flexbox horizontal justify="space-between">
-              <Text type="secondary">远程地址</Text>
-              <Text>{status?.url ?? '未配置'}</Text>
-            </Flexbox>
-            <Flexbox horizontal justify="space-between">
-              <Text type="secondary">远程路径</Text>
-              <Text>{status?.remotePath ?? '未配置'}</Text>
-            </Flexbox>
-            <Flexbox horizontal justify="space-between">
-              <Text type="secondary">文件监听</Text>
-              <Text>{status?.watching ? '运行中' : '已停止'}</Text>
-            </Flexbox>
-          </Space>
+      <Card
+        title="同步状态"
+        extra={
+          status?.enabled ? (
+            <Tag icon={<CheckCircleOutlined />} color="success">已启用</Tag>
+          ) : (
+            <Tag icon={<CloseCircleOutlined />} color="default">未启用</Tag>
+          )
+        }
+        size="small"
+      >
+        <Space style={{ width: '100%', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+          <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
+            <Text type="secondary">远程地址</Text>
+            <Text style={{ wordBreak: 'break-all' }}>{status?.url ?? '未配置'}</Text>
+          </Flexbox>
+          <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
+            <Text type="secondary">远程路径</Text>
+            <Text style={{ wordBreak: 'break-all' }}>{status?.remotePath ?? '未配置'}</Text>
+          </Flexbox>
+          <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
+            <Text type="secondary">文件监听</Text>
+            <Text>{status?.watching ? '运行中' : '已停止'}</Text>
+          </Flexbox>
+        </Space>
+      </Card>
+
+      <Card title="操作" size="small">
+        <Space wrap size={[8, 8]}>
+          <Button
+            icon={<CloudDownloadOutlined />}
+            loading={loading}
+            onClick={() => handleAction('pull')}
+            disabled={!status?.enabled}
+          >
+            从远程拉取
+          </Button>
+          <Button
+            icon={<CloudUploadOutlined />}
+            loading={loading}
+            onClick={() => handleAction('push')}
+            disabled={!status?.enabled}
+          >
+            推送到远程
+          </Button>
+          <Button
+            icon={<PlayCircleOutlined />}
+            loading={loading}
+            onClick={() => handleAction('start')}
+            disabled={!status?.enabled || status?.watching}
+          >
+            启动监听
+          </Button>
+          <Button
+            icon={<PauseCircleOutlined />}
+            loading={loading}
+            onClick={() => handleAction('stop')}
+            disabled={!status?.watching}
+          >
+            停止监听
+          </Button>
+          <Button
+            icon={<SettingOutlined />}
+            onClick={() => setConfigMode(!configMode)}
+          >
+            {configMode ? '取消配置' : '配置服务器'}
+          </Button>
+        </Space>
+      </Card>
+
+      {configMode && (
+        <Card title="WebDAV 服务器配置" size="small">
+          <Form form={form} layout="vertical" onFinish={handleSaveConfig}>
+            <Form.Item name="url" label="服务器地址" rules={[{ required: true, message: '请输入服务器地址' }]}>
+              <Input placeholder="https://webdav.example.com" />
+            </Form.Item>
+            <Form.Item name="username" label="用户名" rules={[{ required: true, message: '请输入用户名' }]}>
+              <Input placeholder="username" />
+            </Form.Item>
+            <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
+              <Input.Password placeholder="password" />
+            </Form.Item>
+            <Form.Item name="remotePath" label="远程路径" rules={[{ required: true, message: '请输入远程路径' }]}>
+              <Input placeholder="/autocodellm" />
+            </Form.Item>
+            <Form.Item name="enabled" label="启用同步" valuePropName="checked" initialValue={false}>
+              <Switch />
+            </Form.Item>
+            <Form.Item>
+              <Space wrap size={[8, 8]}>
+                <Button type="primary" htmlType="submit" loading={loading}>保存配置</Button>
+                <Button onClick={handleTest} loading={loading}>测试连接</Button>
+              </Space>
+            </Form.Item>
+          </Form>
         </Card>
-
-        <Card title="操作">
-          <Space>
-            <Button
-              icon={<CloudDownloadOutlined />}
-              loading={loading}
-              onClick={() => handleAction('pull')}
-              disabled={!status?.enabled}
-            >
-              从远程拉取
-            </Button>
-            <Button
-              icon={<CloudUploadOutlined />}
-              loading={loading}
-              onClick={() => handleAction('push')}
-              disabled={!status?.enabled}
-            >
-              推送到远程
-            </Button>
-            <Button
-              icon={<PlayCircleOutlined />}
-              loading={loading}
-              onClick={() => handleAction('start')}
-              disabled={!status?.enabled || status.watching}
-            >
-              启动监听
-            </Button>
-            <Button
-              icon={<PauseCircleOutlined />}
-              loading={loading}
-              onClick={() => handleAction('stop')}
-              disabled={!status?.watching}
-            >
-              停止监听
-            </Button>
-            <Button
-              icon={<SettingOutlined />}
-              onClick={() => setConfigMode(!configMode)}
-            >
-              {configMode ? '取消配置' : '配置服务器'}
-            </Button>
-          </Space>
-        </Card>
-
-        {configMode && (
-          <Card title="WebDAV 服务器配置">
-            <Form form={form} layout="vertical" onFinish={handleSaveConfig}>
-              <Form.Item name="url" label="服务器地址" rules={[{ required: true, message: '请输入服务器地址' }]}>
-                <Input placeholder="https://webdav.example.com" />
-              </Form.Item>
-              <Form.Item name="username" label="用户名" rules={[{ required: true, message: '请输入用户名' }]}>
-                <Input placeholder="username" />
-              </Form.Item>
-              <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
-                <Input.Password placeholder="password" />
-              </Form.Item>
-              <Form.Item name="remotePath" label="远程路径" rules={[{ required: true, message: '请输入远程路径' }]}>
-                <Input placeholder="/autocodellm" />
-              </Form.Item>
-              <Form.Item name="enabled" label="启用同步" valuePropName="checked" initialValue={false}>
-                <Switch />
-              </Form.Item>
-              <Form.Item>
-                <Space>
-                  <Button type="primary" htmlType="submit" loading={loading}>保存配置</Button>
-                  <Button onClick={handleTest} loading={loading}>测试连接</Button>
-                </Space>
-              </Form.Item>
-            </Form>
-          </Card>
-        )}
-      </Flexbox>
+      )}
+    </Flexbox>
   );
 }

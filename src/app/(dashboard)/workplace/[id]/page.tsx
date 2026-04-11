@@ -100,7 +100,7 @@ function EmptyModelGuide({ onGoToConfig }: { onGoToConfig: () => void }) {
     <Flexbox
       align="center"
       justify="center"
-      style={{ height: '100dvh', padding: 24 }}
+      style={{ height: '100%', padding: 24 }}
     >
       <Flexbox align="center" gap={24} style={{ maxWidth: 480 }}>
         <Avatar avatar="🤖" size={80} />
@@ -482,7 +482,7 @@ export default function WorkplaceDetailPage({
   // 验证状态加载中
   if (!verified) {
     return (
-      <Flexbox align="center" justify="center" style={{ height: '100dvh' }}>
+      <Flexbox align="center" justify="center" style={{ height: '100%' }}>
         <Text type="secondary">验证中...</Text>
       </Flexbox>
     );
@@ -494,7 +494,7 @@ export default function WorkplaceDetailPage({
       <Flexbox
         align="center"
         justify="center"
-        style={{ height: '100dvh' }}
+        style={{ height: '100%' }}
       >
         <Spin size="large" />
       </Flexbox>
@@ -513,90 +513,94 @@ export default function WorkplaceDetailPage({
   }
 
   return (
-    <Flexbox style={{ height: '100dvh', background: '#f5f5f5' }}>
-      {/* 顶部导航栏 */}
-      <Flexbox
-        horizontal
-        justify="space-between"
-        align="center"
-        style={{
-          borderBottom: '1px solid #e8e8e8',
-          padding: '12px 16px',
-          background: '#ffffff',
-        }}
-      >
-        <Flexbox gap={12} horizontal align="center">
-          <ActionIcon
-            icon={ArrowLeftOutlined}
-            onClick={() => {
-              router.push('/workplace');
-            }}
-            size={{ blockSize: 32 }}
-          />
-          <Dropdown
-            menu={{
-              items: modelList.map((model) => ({
-                key: model.id,
-                label: (
-                  <Flexbox gap={8} horizontal align="center">
-                    <ModelIcon model={model.sdkType} size={18} />
-                    <Text>{model.name}</Text>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      {model.providerName}
-                    </Text>
-                  </Flexbox>
-                ),
-                onClick: () => {
-                  handleModelSelect(model.id);
-                },
-              })),
-            }}
-            placement="bottomLeft"
-            arrow
-          >
-            <Flexbox
-              gap={6}
-              horizontal
-              align="center"
-              style={{
-                padding: '4px 8px',
-                borderRadius: 8,
-                cursor: 'pointer',
+    <Flexbox style={{ height: '100%', maxHeight: '100dvh', overflow: 'hidden', background: '#f5f5f5' }}>
+      {/* 顶部导航栏 - 固定不收缩 */}
+      <div style={{ flexShrink: 0 }}>
+        <Flexbox
+          horizontal
+          justify="space-between"
+          align="center"
+          style={{
+            borderBottom: '1px solid #e8e8e8',
+            padding: '12px 16px',
+            background: '#ffffff',
+          }}
+        >
+          <Flexbox gap={12} horizontal align="center">
+            <ActionIcon
+              icon={ArrowLeftOutlined}
+              onClick={() => {
+                router.push('/workplace');
               }}
+              size={{ blockSize: 32 }}
+            />
+            <Dropdown
+              menu={{
+                items: modelList.map((model) => ({
+                  key: model.id,
+                  label: (
+                    <Flexbox gap={8} horizontal align="center">
+                      <ModelIcon model={model.sdkType} size={18} />
+                      <Text>{model.name}</Text>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        {model.providerName}
+                      </Text>
+                    </Flexbox>
+                  ),
+                  onClick: () => {
+                    handleModelSelect(model.id);
+                  },
+                })),
+              }}
+              placement="bottomLeft"
+              arrow
             >
-              <Text strong style={{ fontSize: 15 }}>
-                {workspace?.name ?? '工作区'}
-              </Text>
-              <DownOutlined style={{ fontSize: 12, color: '#999' }} />
-            </Flexbox>
-          </Dropdown>
+              <Flexbox
+                gap={6}
+                horizontal
+                align="center"
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                }}
+              >
+                <Text strong style={{ fontSize: 15 }}>
+                  {workspace?.name ?? '工作区'}
+                </Text>
+                <DownOutlined style={{ fontSize: 12, color: '#999' }} />
+              </Flexbox>
+            </Dropdown>
+          </Flexbox>
+          <ActionIcon icon={ShareAltOutlined} size={{ blockSize: 32 }} />
         </Flexbox>
-        <ActionIcon icon={ShareAltOutlined} size={{ blockSize: 32 }} />
-      </Flexbox>
+      </div>
 
-      {/* 聊天消息区 */}
-      <Flexbox
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '16px',
-          background: '#f5f5f5',
-        }}
-      >
-        <Flexbox style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
-          {messages.length === 0 ? (
-            <Flexbox
-              gap={16}
-              align="center"
-              justify="center"
-              style={{ height: '60vh' }}
-            >
-              <Avatar avatar="🤖" size={64} />
-              <Text type="secondary" style={{ fontSize: 16 }}>
-                从任何想法开始...
-              </Text>
-            </Flexbox>
-          ) : (
+      {/* 聊天消息区 - 自动填充剩余空间 */}
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <Flexbox
+          style={{
+            height: '100%',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            padding: '16px',
+            background: '#f5f5f5',
+          }}
+        >
+          <Flexbox style={{ maxWidth: 800, margin: '0 auto', width: '100%' }}>
+            {messages.length === 0 ? (
+              <Flexbox
+                gap={16}
+                align="center"
+                justify="center"
+                style={{ flex: 1, minHeight: '300px' }}
+              >
+                <Avatar avatar="🤖" size={64} />
+                <Text type="secondary" style={{ fontSize: 16 }}>
+                  开始与 AI 对话...
+                </Text>
+              </Flexbox>
+            ) : (
             <>
               {messages.map((msg) => {
                 const isUser = msg.role === 'user';
@@ -671,9 +675,11 @@ export default function WorkplaceDetailPage({
           )}
         </Flexbox>
       </Flexbox>
+      </div>
 
-      {/* 底部输入区 */}
-      <Flexbox
+      {/* 底部输入区 - 固定不收缩 */}
+      <div style={{ flexShrink: 0 }}>
+        <Flexbox
         style={{
           borderTop: '1px solid #e8e8e8',
           background: '#f5f5f5',
@@ -696,7 +702,7 @@ export default function WorkplaceDetailPage({
             onChange={handleTextAreaChange}
             onSend={handleInputSend}
             loading={loading}
-            placeholder="从任何想法开始... 按 Ctrl+Enter 换行..."
+            placeholder="输入消息... (Ctrl+Enter 发送)"
             autoSize={{ minRows: 1, maxRows: 8 }}
           />
           <Flexbox
@@ -765,7 +771,8 @@ export default function WorkplaceDetailPage({
             />
           </Flexbox>
         </Flexbox>
-      </Flexbox>
+        </Flexbox>
+      </div>
 
       {/* 密码验证弹窗 */}
       {workspace && (
