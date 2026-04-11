@@ -6,7 +6,7 @@
  * Copyright (c) 2026 Jyf0214
  */
 
-import type { StateCreator } from 'zustand/vanilla';
+import type { StateCreator } from 'zustand';
 import type { ChatStoreState, FileAttachment } from '../../types';
 
 export interface InputSlice {
