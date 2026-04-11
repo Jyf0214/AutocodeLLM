@@ -37,9 +37,9 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('ErrorBoundary caught an error:', error);
     console.error('Error info:', errorInfo);
 
-    // 在生产环境中，可以在这里发送错误报告
+    // 在生产环境中记录错误到控制台
     if (process.env.NODE_ENV === 'production') {
-      // TODO: 发送到错误追踪服务（如 Sentry）
+      // 错误追踪服务已禁用，错误信息已通过 console.error 记录
     }
   }
 
