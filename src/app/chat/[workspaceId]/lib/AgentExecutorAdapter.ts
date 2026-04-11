@@ -42,18 +42,6 @@ export interface ExecutionResult {
 }
 
 /**
- * 执行参数
- */
-export interface ExecuteParams {
-  userInput: string;
-  model: ModelConfig;
-  workspaceId: string;
-  messages: ChatMessage[];
-  parentId?: string;
-  callbacks?: StreamingCallbacks;
-}
-
-/**
  * 简化的Agent执行方法(通过API端点)
  */
 export async function simpleExecute(params: {
@@ -66,7 +54,6 @@ export async function simpleExecute(params: {
   const { userInput, model, onContentUpdate, onComplete, onError } = params;
 
   try {
-    // 调用现有的API端点
     const response = await fetch('/api/workspaces/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -78,10 +65,9 @@ export async function simpleExecute(params: {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${String(response.status)}`);
     }
 
-    // 处理流式响应
     const reader = response.body?.getReader();
     if (!reader) {
       throw new Error('No response body');
@@ -97,30 +83,24 @@ export async function simpleExecute(params: {
       const chunk = decoder.decode(value, { stream: true });
       content += chunk;
       
-      if (onContentUpdate) {
-        onContentUpdate(content);
-      }
+      onContentUpdate?.(content);
     }
 
-    if (onComplete) {
-      onComplete();
-    }
+    onComplete?.();
   } catch (error) {
     console.error('[AgentExecutorAdapter] Simple execute failed:', error);
-    if (onError) {
-      onError(error instanceof Error ? error : new Error(String(error)));
-    }
+    onError?.(error instanceof Error ? error : new Error(String(error)));
   }
 }
 
 /**
  * 转换新的ChatMessage格式为旧的UIChatMessage格式
  */
-function convertToUIMessages(
+export function convertToUIMessages(
   messages: ChatMessage[],
   userInput: string
-): unknown[] {
-  const uiMessages = messages.map((msg) => ({
+): Record<string, unknown>[] {
+  const uiMessages: Record<string, unknown>[] = messages.map((msg) => ({
     id: msg.id,
     role: msg.role,
     content: msg.content,
@@ -135,11 +115,10 @@ function convertToUIMessages(
     usage: msg.usage,
   }));
 
-  // 如果最后一条不是用户消息,添加当前输入
   const lastMsg = uiMessages[uiMessages.length - 1];
   if (!lastMsg || lastMsg.role !== 'user') {
     uiMessages.push({
-      id: `user-${Date.now()}`,
+      id: `user-${String(Date.now())}`,
       role: 'user',
       content: userInput,
       createAt: Date.now(),
@@ -158,9 +137,8 @@ export function throttle<T extends (...args: unknown[]) => void>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {
-  let inThrottle: boolean;
-  let lastArgs: Parameters<T>;
-  let lastCall: NodeJS.Timeout;
+  let inThrottle = false;
+  let lastArgs: Parameters<T> | undefined;
 
   return function (...args: Parameters<T>) {
     lastArgs = args;
@@ -170,10 +148,9 @@ export function throttle<T extends (...args: unknown[]) => void>(
       inThrottle = true;
       setTimeout(() => {
         inThrottle = false;
-        // 如果节流期间有新调用,立即执行
         if (lastArgs) {
           func(...lastArgs);
-          lastArgs = undefined as unknown as Parameters<T>;
+          lastArgs = undefined;
         }
       }, limit);
     }

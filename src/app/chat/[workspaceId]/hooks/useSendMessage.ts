@@ -9,21 +9,17 @@
 import { useCallback } from 'react';
 import { message } from 'antd';
 import { useChatStore } from '../store';
-import type { ModelConfig } from '../store/types';
+import type { ChatStore, ModelConfig } from '../store/types';
 
 /**
  * 发送消息Hook
  */
 export function useSendMessage() {
-  const store = useChatStore();
-  
-  const {
-    runSingleAgent,
-    agents,
-    input,
-    models,
-    setInputValue,
-  } = store;
+  const runSingleAgent = useChatStore((state: ChatStore) => state.runSingleAgent);
+  const agents = useChatStore((state: ChatStore) => state.agents);
+  const input = useChatStore((state: ChatStore) => state.input);
+  const models = useChatStore((state: ChatStore) => state.models);
+  const setInputValue = useChatStore((state: ChatStore) => state.setInputValue);
 
   /**
    * 发送消息
@@ -47,13 +43,11 @@ export function useSendMessage() {
       }
 
       try {
-        // 执行Agent
         await runSingleAgent({
           message: trimmed,
           model: selectedModel,
         });
 
-        // 清空输入
         setInputValue('');
 
         return true;
@@ -70,7 +64,6 @@ export function useSendMessage() {
    * 取消发送
    */
   const cancel = useCallback(() => {
-    // TODO: 实现取消逻辑
     message.info('取消功能待实现');
   }, []);
 

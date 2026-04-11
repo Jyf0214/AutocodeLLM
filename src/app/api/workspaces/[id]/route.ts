@@ -71,7 +71,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as { name?: string; description?: string };
     const { name, description } = body;
 
     // 验证工作区存在

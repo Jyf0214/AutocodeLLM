@@ -28,14 +28,14 @@ export function useModelSelector() {
           fetch('/api/providers'),
         ]);
 
-        const modelsData: {
+        const modelsData = (await modelsRes.json()) as {
           success: boolean;
           data?: { id: string; name: string; provider: string; enabled: boolean }[];
-        } = await modelsRes.json();
-        const providersData: {
+        };
+        const providersData = (await providersRes.json()) as {
           success: boolean;
           data?: { id: string; name: string; sdkType: string; authType: string; enabled: boolean }[];
-        } = await providersRes.json();
+        };
 
         const items: ModelConfig[] = [];
 
