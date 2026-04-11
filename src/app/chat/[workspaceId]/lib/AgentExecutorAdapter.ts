@@ -6,7 +6,7 @@
  * Copyright (c) 2026 Jyf0214
  */
 
-import type { ChatMessage, ModelConfig } from '../types';
+import type { ChatMessage, ModelConfig } from '../store/types';
 
 /**
  * 流式更新回调
