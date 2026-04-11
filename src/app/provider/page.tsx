@@ -310,8 +310,6 @@ export default function ProviderPage() {
   // OAuth 状态
   const [oauthLoading, setOauthLoading] = useState(false);
   const [oauthPolling, setOauthPolling] = useState(false);
-  const [oauthVerificationUri, setOauthVerificationUri] = useState('');
-  const [oauthUserCode, setOauthUserCode] = useState('');
   const [oauthProviderId, setOauthProviderId] = useState<string | null>(null);
   const [oauthExpiresAt, setOauthExpiresAt] = useState<string | null>(null);
 
@@ -481,8 +479,6 @@ export default function ProviderPage() {
   // Qwen OAuth 登录
   const handleQwenOAuthStart = useCallback(async () => {
     setOauthLoading(true);
-    setOauthVerificationUri('');
-    setOauthUserCode('');
     try {
       const res = await fetch('/api/providers/qwen-oauth/start', {
         method: 'POST',
@@ -493,13 +489,14 @@ export default function ProviderPage() {
       }
       const data = await res.json();
       if (data.success && data.data) {
-        const { authorizationUrl, userCode, deviceCode, codeVerifier, interval } = data.data;
-        setOauthVerificationUri(authorizationUrl || 'https://chat.qwen.ai/authorize');
-        setOauthUserCode(userCode);
-        setOauthPolling(true);
+        const { authorizationUrl, deviceCode, codeVerifier, interval } = data.data;
 
-        // 打开授权页面
-        window.open(authorizationUrl, '_blank');
+        if (authorizationUrl) {
+          // 直接打开组合好的授权 URL
+          window.open(authorizationUrl, '_blank');
+        }
+
+        setOauthPolling(true);
 
         // 轮询获取 Token
         const poll = async () => {
@@ -666,13 +663,6 @@ export default function ProviderPage() {
               </Button>
             )}
           </Flexbox>
-          {oauthVerificationUri && !oauthExpiresAt && (
-            <div style={{ marginTop: 12, padding: '8px 12px', background: 'var(--color-fill-quaternary)', borderRadius: 8 }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                请访问 <a href={oauthVerificationUri} target="_blank" rel="noopener noreferrer">{oauthVerificationUri}</a> 并输入验证码：<strong>{oauthUserCode}</strong>
-              </Text>
-            </div>
-          )}
         </div>
 
         {/* 已配置提供商 */}
