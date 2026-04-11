@@ -480,7 +480,7 @@ export class StreamingExecutorActionImpl {
     const modelRuntimeConfig = {
       model,
       provider: provider!,
-      // TODO: Support dedicated compression model from chatConfig.compressionModelId
+      // NOTE: 当前使用与主模型相同的配置作为压缩模型，未来可支持从 chatConfig.compressionModelId 独立配置
       compressionModel: { model, provider: provider! },
     };
     // ===========================================

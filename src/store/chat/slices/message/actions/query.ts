@@ -55,7 +55,7 @@ export class MessageQueryActionImpl {
   refreshMessages = async (context?: Partial<ConversationContext>): Promise<void> => {
     const agentId = context?.agentId ?? this.#get().activeAgentId;
     const topicId = context?.topicId !== undefined ? context.topicId : this.#get().activeTopicId;
-    // TODO: Support threadId refresh when needed
+    // NOTE: 当前仅支持 session 和 group 类型消息刷新，threadId 类型消息刷新待未来支持
     await mutate([SWR_USE_FETCH_MESSAGES, agentId, topicId, 'session']);
     await mutate([SWR_USE_FETCH_MESSAGES, agentId, topicId, 'group']);
   };

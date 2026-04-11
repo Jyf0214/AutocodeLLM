@@ -40,8 +40,7 @@ export interface TopicData {
 }
 
 export interface ChatTopicState {
-  // TODO: need to add the null to the type
-  activeTopicId?: string;
+  activeTopicId: string | null;
   /**
    * whether all topics drawer is open
    */
@@ -61,7 +60,7 @@ export interface ChatTopicState {
 }
 
 export const initialTopicState: ChatTopicState = {
-  activeTopicId: null as any,
+  activeTopicId: null,
   allTopicsDrawerOpen: false,
   creatingTopic: false,
   isSearchingTopic: false,

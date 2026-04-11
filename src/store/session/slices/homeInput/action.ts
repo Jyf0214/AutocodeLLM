@@ -100,11 +100,52 @@ export class HomeInputActionImpl {
   };
 
   sendAsResearch = async (message: string): Promise<void> => {
-    // TODO: Implement DeepResearch mode
-    console.info('sendAsResearch:', message);
+    this.#set({ homeInputLoading: true }, false, n('sendAsResearch/start'));
 
-    // Clear mode
-    this.#set({ inputActiveMode: null }, false, n('sendAsResearch'));
+    try {
+      const agentState = getAgentStoreState();
+
+      // 1. Get model/provider config from inbox agent
+      const inboxAgentId = builtinAgentSelectors.inboxAgentId(agentState);
+      const inboxConfig = inboxAgentId
+        ? agentSelectors.getAgentConfigById(inboxAgentId)(agentState)
+        : null;
+      const model = inboxConfig?.model;
+      const provider = inboxConfig?.provider;
+
+      // 2. Create new Agent with research capabilities
+      const result = await agentState.createAgent({
+        config: {
+          model,
+          provider,
+          systemRole: `你是一个深度研究助手。请对以下主题进行深入研究和分析：${message}`,
+          title: message?.slice(0, 50) || 'Research Task',
+        },
+      });
+
+      // 3. Navigate to Agent profile page
+      const { navigate } = this.#get();
+      if (navigate) {
+        navigate(`/agent/${result.agentId}/profile`);
+      }
+
+      // 4. Refresh agent list
+      this.#get().refreshAgentList();
+
+      // 5. Send message with research context
+      if (result.agentId) {
+        const { sendMessage } = useChatStore.getState();
+        await sendMessage({
+          context: { agentId: result.agentId, scope: 'agent' },
+          message,
+        });
+      }
+
+      // 6. Clear mode
+      this.#set({ inputActiveMode: null }, false, n('sendAsResearch/clearMode'));
+    } finally {
+      this.#set({ homeInputLoading: false }, false, n('sendAsResearch/end'));
+    }
   };
 
   sendAsWrite = async ({ editorData, message }: SendMessageWithEditorParams): Promise<string> => {

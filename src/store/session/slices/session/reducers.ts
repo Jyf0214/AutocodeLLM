@@ -47,8 +47,6 @@ export const sessionsReducer = (state: LobeSessions, payload: SessionDispatch): 
         const { session } = payload;
         if (!session) return;
 
-        // TODO: Migrate Date type in the future to remove this ignore
-        // @ts-ignore
         draft.unshift({ ...session, createdAt: new Date(), updatedAt: new Date() });
       });
     }

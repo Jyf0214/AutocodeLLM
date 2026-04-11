@@ -60,7 +60,7 @@ export type PortalViewData =
 
 export interface ChatPortalState {
   // Legacy fields (kept for backward compatibility during migration)
-  // TODO: Remove after Phase 3 migration complete
+  // NOTE: 这些字段将在 Phase 3 迁移完成后移除，当前保留以确保向后兼容
   /** @deprecated Use portalStack instead */
   portalArtifact?: PortalArtifact;
   portalArtifactDisplayMode: ArtifactDisplayMode;

@@ -259,7 +259,7 @@ export const createAgentExecutors = (context: {
 
         // If this is the first regenerated creation of userMessage, llmPayload doesn't have parentMessageId
         // So we assign it this way
-        // TODO: Maybe this should be implemented with an init method in the future
+        // NOTE: 未来可以考虑通过初始化方法统一管理 parentMessageId 赋值逻辑
         if (!llmPayload.parentMessageId) {
           llmPayload.parentMessageId = context.parentId;
         }

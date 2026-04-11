@@ -85,7 +85,7 @@ export class ChatCodeInterpreterActionImpl {
     const context = { operationId: interpreterOpId };
 
     try {
-      // TODO: should only download files used by the AI
+      // NOTE: 当前实现会下载所有消息中的文件，未来可优化为仅下载 AI 实际使用的文件
       const files: File[] = [];
       for (const message of dbMessageSelectors.dbUserMessages(this.#get())) {
         for (const file of message.fileList ?? []) {

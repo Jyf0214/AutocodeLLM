@@ -1020,7 +1020,7 @@ describe('topic action', () => {
       expect(updateTopicTitleInSummarySpy).toHaveBeenCalledWith(topicId, LOADING_FLAT);
       expect(refreshTopicSpy).toHaveBeenCalled();
 
-      // TODO: need to test with fetchPresetTaskResult
+      // NOTE: 未来可补充与 fetchPresetTaskResult 交互的测试场景
     });
   });
   describe('createTopic', () => {

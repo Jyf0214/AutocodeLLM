@@ -737,11 +737,10 @@ describe('ChatPluginAction', () => {
         messageId,
         expect.objectContaining(newArguments),
       );
-      // TODO: 需要验证 updateMessage 是否被调用
-      // expect(messageService.updateMessage).toHaveBeenCalledWith(
-      //   parentId,
-      //   expect.objectContaining({ tools: expect.any(Array) }),
-      // );
+      expect(messageService.updateMessage).toHaveBeenCalledWith(
+        parentId,
+        expect.objectContaining({ tools: expect.any(Array) }),
+      );
       expect(result.current.refreshMessages).toHaveBeenCalled();
     });
   });
