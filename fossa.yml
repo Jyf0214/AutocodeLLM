@@ -1,0 +1,92 @@
+# FOSSA 许可证配置
+# 用于处理误报和允许的许可证例外
+
+version: 2
+
+# 许可证覆盖规则
+licenseOverrides:
+  # Next.js 实际使用 MIT 许可证
+  # FOSSA 误报为 CC-BY-SA-4.0（可能是因为文档中使用了 Creative Commons 授权的示例）
+  - package: 'npm+next$16.2.2'
+    license: 'MIT'
+    reason: 'Next.js 官方声明为 MIT 许可证，CC-BY-SA-4.0 为误报'
+
+  # rc-util 实际使用 MIT 许可证
+  # facebook-patent-rights-2 是 FOSSA 的附加检测，但 MIT 许可证已覆盖
+  - package: 'npm+rc-util$5.44.4'
+    license: 'MIT'
+    reason: 'rc-util 使用 MIT 许可证，facebook-patent-rights-2 为附加条款但非主要许可证'
+
+# 许可证策略
+policy:
+  # 允许的许可证（不会标记问题）
+  allow:
+    - MIT
+    - Apache-2.0
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - ISC
+    - 0BSD
+    - Unlicense
+    - CC0-1.0
+    - MPL-2.0
+    - LGPL-3.0-or-later # 动态链接时可接受
+    - LGPL-3.0-only
+    - LGPL-2.1-or-later
+    - LGPL-2.1-only
+
+  # 拒绝的许可证（会阻止构建）
+  deny:
+    - GPL-3.0-or-later
+    - GPL-3.0-only
+    - GPL-2.0-or-later
+    - GPL-2.0-only
+    - AGPL-3.0-or-later
+    - AGPL-3.0-only
+    - CC-BY-SA-4.0
+    - CC-BY-NC-4.0
+    - SSPL-1.0
+    - EUPL-1.1
+
+  # 需要审查的许可证（标记但不阻止）
+  review:
+    - MPL-2.0
+    - CDDL-1.0
+    - EPL-1.0
+    - EPL-2.0
+
+# 忽略特定包的问题（用于误报或可接受的风险）
+ignored:
+  # Sharp 的 native 包使用 LGPL-3.0，但作为动态链接的独立进程使用，不触发 copyleft
+  - package: 'npm+@img/sharp-libvips-darwin-arm64$1.2.4'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-libvips-darwin-x64$1.2.4'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-libvips-linux-arm$1.2.4'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-libvips-linux-arm64$1.2.4'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-libvips-linuxmusl-arm64$1.2.4'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-libvips-linuxmusl-x64$1.2.4'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-libvips-linux-ppc64$1.2.4'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-libvips-linux-riscv64$1.2.4'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-libvips-linux-s390x$1.2.4'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-libvips-linux-x64$1.2.4'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-wasm32$0.34.5'
+    reason: 'Sharp WASM 模块，动态链接'
+  - package: 'npm+@img/sharp-win32-arm64$0.34.5'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-win32-ia32$0.34.5'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+  - package: 'npm+@img/sharp-win32-x64$0.34.5'
+    reason: 'Sharp 使用动态链接，LGPL 要求已满足'
+
+  # @splinetool/runtime 通过 @lobehub/ui 引入，仅用于 3D 渲染，不修改源码
+  - package: 'npm+@splinetool/runtime$0.9.526'
+    reason: '仅运行时依赖，不涉及代码修改，许可证风险可接受'
