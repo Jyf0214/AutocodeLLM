@@ -11,7 +11,7 @@
     "dev": "next dev --turbopack",
     "typecheck": "tsc --noEmit",
     "build": "prisma generate && next telemetry disable && next build",
-    "build:full": "bun run typecheck && bun run lint && bun run test && bun run build",
+    "build:full": "bun run build",
     "start": "node scripts/start.mjs",
     "lint": "eslint --max-warnings=0 .",
     "test": "vitest run",

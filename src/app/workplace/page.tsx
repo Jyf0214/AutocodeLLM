@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { message, Modal } from 'antd';
+import { message, Modal, Result } from 'antd';
 import {
   Button,
   Text,
@@ -23,6 +23,7 @@ import {
   DeleteOutlined,
   ArrowRightOutlined,
   ClockCircleOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import type { WorkspaceListItem } from '@/lib/api/workspace-types';
 
@@ -195,15 +196,54 @@ function LoadingSkeleton() {
           <Flexbox gap={14} align="flex-start">
             <Skeleton.Avatar active size={48} shape="square" />
             <div style={{ flex: 1 }}>
-              <Skeleton.Input active style={{ width: '60%', marginBottom: 8, height: 20 }} />
-              <Skeleton.Input active style={{ width: '80%', height: 16 }} />
+              <div style={{ width: '60%', height: 20, marginBottom: 8, background: 'var(--color-fill-quaternary)', borderRadius: 4 }} />
+              <div style={{ width: '80%', height: 16, background: 'var(--color-fill-quaternary)', borderRadius: 4 }} />
             </div>
           </Flexbox>
           <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--color-border)' }}>
-            <Skeleton.Input active style={{ width: 80, height: 14 }} />
+            <div style={{ width: 80, height: 14, background: 'var(--color-fill-quaternary)', borderRadius: 4 }} />
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * 错误状态 - 显示错误信息和重试按钮
+ */
+function ErrorState({
+  error,
+  onRetry,
+}: {
+  error: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 400,
+      }}
+    >
+      <Result
+        status="error"
+        title="加载失败"
+        subTitle={error}
+        extra={[
+          <Button
+            key="retry"
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={onRetry}
+            style={{ borderRadius: 10 }}
+          >
+            重试
+          </Button>,
+        ]}
+      />
     </div>
   );
 }
@@ -218,23 +258,36 @@ export default function WorkplacePage() {
   const [workspaces, setWorkspaces] = useState<WorkspaceListItem[]>([]);
   const [fetching, setFetching] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingWorkspace, setEditingWorkspace] = useState<WorkspaceListItem | null>(null);
   const [form] = Form.useForm();
 
   const fetchWorkspaces = useCallback(async () => {
+    setFetching(true);
+    setError(null);
     try {
       const response = await fetch('/api/workspaces');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${String(response.status)}`);
+      }
+      
       const result: { success: boolean; data?: WorkspaceListItem[]; error?: { message: string } } =
         await response.json();
 
       if (result.success) {
         setWorkspaces(result.data ?? []);
       } else {
-        message.error(result.error?.message ?? t('fetchFailed'));
+        const errorMsg = result.error?.message ?? t('fetchFailed');
+        setError(errorMsg);
+        message.error(errorMsg);
       }
-    } catch {
-      message.error(t('fetchFailed'));
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : t('fetchFailed');
+      setError(errorMsg);
+      message.error(errorMsg);
+      console.error('Failed to fetch workspaces:', err);
     } finally {
       setFetching(false);
     }
@@ -389,12 +442,13 @@ export default function WorkplacePage() {
 
       {/* 主内容区 */}
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px' }}>
-        {fetching ? (
+        {error ? (
+          <ErrorState error={error} onRetry={fetchWorkspaces} />
+        ) : fetching ? (
           <LoadingSkeleton />
         ) : workspaces.length === 0 ? (
           <Empty
             style={{ padding: '60px 0' }}
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={
               <Flexbox gap={16} align="center" style={{ marginTop: 8 }}>
                 <Text type="secondary" style={{ fontSize: 15 }}>
