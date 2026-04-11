@@ -19,7 +19,7 @@ import { createUISlice, type UISlice } from './slices/ui/slice';
 
 export type ChatStore = ChatStoreState & ChatSlice & MessagesSlice & AgentSlice & InputSlice & UISlice;
 
-export const useChatStore = create<ChatStore>()(
+const useChatStoreBase = create<ChatStore>()(
   devtools(
     (set, get) => ({
       ...initialState,
@@ -33,8 +33,14 @@ export const useChatStore = create<ChatStore>()(
   )
 );
 
+export const useChatStore = useChatStoreBase as typeof useChatStoreBase & {
+  getState: () => ChatStore;
+  setState: (state: Partial<ChatStore>) => void;
+  subscribe: (listener: (state: ChatStore) => void) => () => void;
+};
+
 export const getChatStoreState = (): ChatStoreState => {
-  const s = useChatStore.getState();
+  const s = useChatStoreBase.getState();
   return { workspaceId: s.workspaceId, workspace: s.workspace, messages: s.messages, messageMap: s.messageMap, isLoading: s.isLoading, error: s.error, agents: s.agents, models: s.models, input: s.input, ui: s.ui };
 };
 
