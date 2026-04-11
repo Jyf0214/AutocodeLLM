@@ -98,6 +98,14 @@ export async function callProviderAPI(params: {
     }
   }
 
+  // 对于 Qwen OAuth，如果 baseUrl 不是正确的 API 端点，强制使用正确的 URL
+  if (provider.authType === 'oauth' && provider.name?.includes('通义')) {
+    // 检查是否为错误的端点（如 chat.qwen.ai 或 dashscope）
+    if (!effectiveBaseUrl.includes('portal.qwen.ai')) {
+      effectiveBaseUrl = 'https://portal.qwen.ai/v1';
+    }
+  }
+
   const config = buildRequestConfig({
     baseUrl: effectiveBaseUrl,
     apiKey,
@@ -161,6 +169,14 @@ export async function fetchProviderModels(providerId: string): Promise<{ id: str
       }
     } catch {
       // 元数据解析失败，使用默认 baseUrl
+    }
+  }
+
+  // 对于 Qwen OAuth，如果 baseUrl 不是正确的 API 端点，强制使用正确的 URL
+  if (provider.authType === 'oauth' && provider.name?.includes('通义')) {
+    // 检查是否为错误的端点（如 chat.qwen.ai 或 dashscope）
+    if (!effectiveBaseUrl.includes('portal.qwen.ai')) {
+      effectiveBaseUrl = 'https://portal.qwen.ai/v1';
     }
   }
 
