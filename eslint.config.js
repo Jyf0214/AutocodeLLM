@@ -163,6 +163,14 @@ export default tseslint.config(
       '@typescript-eslint/no-confusing-void-expression': 'warn',
       '@typescript-eslint/restrict-template-expressions': 'warn',
       '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
+      'react/prop-types': 'off',
+    },
+  },
+  // 全局关闭 react/prop-types（项目使用 TypeScript 不需要）
+  {
+    files: ['**/*.tsx', '**/*.ts'],
+    rules: {
+      'react/prop-types': 'off',
     },
   },
 );
