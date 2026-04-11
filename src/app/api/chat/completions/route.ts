@@ -72,9 +72,15 @@ export async function POST(request: Request) {
     }
 
     // 调用 OpenAI 兼容 API
-    const baseUrl = providerConfig.baseUrl.endsWith('/v1')
-      ? providerConfig.baseUrl
-      : `${providerConfig.baseUrl}/v1`;
+    let baseUrl = providerConfig.baseUrl;
+    // 确保 baseUrl 包含协议前缀
+    if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = `https://${baseUrl}`;
+    }
+    // 添加 /v1 后缀（如果还没有）
+    if (!baseUrl.endsWith('/v1') && !baseUrl.endsWith('/v1/')) {
+      baseUrl = baseUrl.endsWith('/') ? `${baseUrl}v1` : `${baseUrl}/v1`;
+    }
 
     const apiResponse = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',

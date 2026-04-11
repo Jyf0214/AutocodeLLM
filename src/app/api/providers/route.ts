@@ -448,10 +448,16 @@ export async function testProvider(request: Request) {
       );
     }
 
+    // 确保 baseUrl 包含协议前缀
+    let normalizedBaseUrl = baseUrl;
+    if (!normalizedBaseUrl.startsWith('http://') && !normalizedBaseUrl.startsWith('https://')) {
+      normalizedBaseUrl = `https://${normalizedBaseUrl}`;
+    }
+
     const startTime = Date.now();
 
     try {
-      const url = baseUrl.endsWith('/') ? `${baseUrl}models` : `${baseUrl}/models`;
+      const url = normalizedBaseUrl.endsWith('/') ? `${normalizedBaseUrl}models` : `${normalizedBaseUrl}/models`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
