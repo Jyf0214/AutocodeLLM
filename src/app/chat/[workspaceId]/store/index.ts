@@ -23,11 +23,11 @@ export const useChatStore = create<ChatStore>()(
   devtools(
     (set, get) => ({
       ...initialState,
-      ...createChatSlice(set, get),
-      ...createMessagesSlice(set, get),
-      ...createAgentSlice(set, get),
-      ...createInputSlice(set, get),
-      ...createUISlice(set, get),
+      ...createChatSlice(set as never, get as never),
+      ...createMessagesSlice(set as never, get as never),
+      ...createAgentSlice(set as never, get as never),
+      ...createInputSlice(set as never, get as never),
+      ...createUISlice(set as never, get as never),
     }),
     { name: 'ChatStore' }
   )

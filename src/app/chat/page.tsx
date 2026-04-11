@@ -12,7 +12,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { message, Empty } from 'antd';
 import { FolderOutlined } from '@ant-design/icons';
-import { Flexbox, Text, Button, Icon } from '@lobehub/ui';
+import { Flexbox, Text, Button } from '@lobehub/ui';
 import { PlusOutlined } from '@ant-design/icons';
 import AppLayout from '@/components/layout/AppLayout';
 import type { WorkspaceListItem } from '@/lib/api/workspace-types';

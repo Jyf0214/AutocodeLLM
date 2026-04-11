@@ -7,7 +7,8 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { ChatStoreState, AgentInstance, AgentState, ModelConfig, ChatMessage } from '../../types';
+import type { ChatStoreState, AgentInstance, AgentState, ModelConfig } from '../../types';
+import type { ChatMessage } from '../../types';
 import { simpleExecute, throttle } from '../../../lib/AgentExecutorAdapter';
 
 export interface RunAgentParams { message: string; model: ModelConfig; parentId?: string; }
@@ -29,7 +30,7 @@ export const createAgentSlice: StateCreator<ChatStoreState, [], [], AgentSlice> 
     get().addMessage({ id: `u-${Date.now()}`, role: 'user', content: p.message, createdAt: Date.now(), updatedAt: Date.now(), meta: { title: '用户', avatar: '👤' } });
     const aid = `a-${Date.now()}`;
     get().addMessage({ id: aid, role: 'assistant', content: '', createdAt: Date.now(), updatedAt: Date.now(), meta: { title: p.model ? `AI · ${p.model.name}` : 'AI', avatar: '🤖' }, model: p.model.name, provider: p.model.provider });
-    set({ agents: { activeAgents: [{ id: 'd', name: p.model.name, role: 'worker', status: 'running', task: '处理中' }], status: 'running', currentOperationId: `o-${Date.now()}` }, input: { ...s.input, isSending: false } });
+    set({ agents: { activeAgents: [{ id: 'd', name: p.model.name, role: 'worker', status: 'running', task: '处理中' }], status: 'running', currentOperationId: `o-${String(Date.now())}` }, input: { ...s.input, isSending: false } });
     let fc = '';
     const tu = throttle(16)((c: string) => get().updateMessage(aid, { content: c, updatedAt: Date.now() }));
     try {

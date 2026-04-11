@@ -104,7 +104,6 @@ export default function ProviderPage() {
   const [oauthPolling, setOauthPolling] = useState(false);
   const [oauthVerificationUri, setOauthVerificationUri] = useState('');
   const [oauthUserCode, setOauthUserCode] = useState('');
-  const [oauthAuthorizationUrl, setOauthAuthorizationUrl] = useState(''); // 新增：自动组合的授权URL
   const [oauthProviderId, setOauthProviderId] = useState<string | null>(null);
   const [oauthExpiresAt, setOauthExpiresAt] = useState<string | null>(null);
   const [oauthErrorDetail, setOauthErrorDetail] = useState<{ message: string; code: string; rawResponse: string } | null>(null);

@@ -58,7 +58,7 @@ export default function ChatPage({
     const init = async () => {
       try {
         await initializeChat(workspaceId);
-      } catch (error) {
+      } catch {
         message.error('初始化聊天失败');
         router.push('/workplace');
       }

@@ -115,8 +115,8 @@ export function convertToUIMessages(
     usage: msg.usage,
   }));
 
-  const lastMsg = uiMessages[uiMessages.length - 1];
-  if (!lastMsg || lastMsg.role !== 'user') {
+  const lastMsg = uiMessages.at(-1);
+  if (lastMsg?.role !== 'user') {
     uiMessages.push({
       id: `user-${String(Date.now())}`,
       role: 'user',

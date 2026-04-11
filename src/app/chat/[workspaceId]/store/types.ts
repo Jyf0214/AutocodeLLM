@@ -38,7 +38,7 @@ export interface ChatMessage {
   error?: {
     message: string;
     code?: string;
-    body?: Record<string, any>;
+    body?: Record<string, unknown>;
   };
   
   // 推理内容
@@ -182,7 +182,7 @@ export interface ErrorDialogState {
 export interface ChatError {
   message: string;
   code?: string;
-  details?: any;
+  details?: unknown;
 }
 
 /**

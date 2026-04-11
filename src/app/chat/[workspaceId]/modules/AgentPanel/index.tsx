@@ -53,7 +53,7 @@ const StatusIcon: React.FC<{ status: AgentInstance['status'] }> = ({ status }) =
   return (
     <Flexbox gap={4} horizontal align="center">
       <Spin spinning={spin ?? false}>
-        <Icon icon={IconComponent as any} size={14} color={color} />
+        <Icon icon={IconComponent as React.ComponentType} size={14} color={color} />
       </Spin>
       <Text style={{ fontSize: 12, color }}>{text}</Text>
     </Flexbox>

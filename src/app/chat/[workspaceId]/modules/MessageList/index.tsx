@@ -72,8 +72,8 @@ export const MessageList: React.FC<MessageListProps> = ({
                 <React.Fragment key={msg.id}>
                   <ChatItem
                     avatar={{
-                      title: msg.meta?.title || (isUser ? '用户' : 'AI'),
-                      avatar: msg.meta?.avatar || (isUser ? '👤' : '🤖'),
+                      title: msg.meta?.title ?? (isUser ? '用户' : 'AI'),
+                      avatar: msg.meta?.avatar ?? (isUser ? '👤' : '🤖'),
                     }}
                     placement={isUser ? 'right' : 'left'}
                     message={msg.content}

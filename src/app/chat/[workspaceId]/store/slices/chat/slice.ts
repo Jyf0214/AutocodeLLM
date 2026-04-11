@@ -25,9 +25,14 @@ export const createChatSlice: StateCreator<ChatStoreState, [], [], ChatSlice> = 
 
   initializeChat: async (workspaceId: string) => {
     set({ workspaceId, isLoading: true, error: null });
-    try { await get().loadWorkspace(); }
-    catch (error) { set({ error: { message: error instanceof Error ? error.message : '初始化失败', code: 'INIT_FAILED' } }); throw error; }
-    finally { set({ isLoading: false }); }
+    try {
+      await get().loadWorkspace();
+    } catch (error) {
+      set({ error: { message: error instanceof Error ? error.message : '初始化失败', code: 'INIT_FAILED' } });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   loadWorkspace: async () => {
@@ -36,11 +41,15 @@ export const createChatSlice: StateCreator<ChatStoreState, [], [], ChatSlice> = 
     set({ isLoading: true });
     try {
       const response = await fetch(`/api/workspaces/${workspaceId}`);
-      const result = await response.json();
+      const result: { success: boolean; data?: WorkspaceInfo; error?: { message: string } } = await response.json();
       if (!result.success || !result.data) throw new Error(result.error?.message ?? '获取工作区失败');
-      set({ workspace: result.data as WorkspaceInfo });
-    } catch (error) { set({ error: { message: error instanceof Error ? error.message : '加载失败', code: 'LOAD_FAILED' } }); throw error; }
-    finally { set({ isLoading: false }); }
+      set({ workspace: result.data });
+    } catch (error) {
+      set({ error: { message: error instanceof Error ? error.message : '加载失败', code: 'LOAD_FAILED' } });
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   clearChat: () => set({ messages: [], messageMap: new Map(), error: null }),
