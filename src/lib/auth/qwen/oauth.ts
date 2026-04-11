@@ -11,7 +11,9 @@ const QWEN_OAUTH_CONFIG = {
   deviceCodeUrl: 'https://chat.qwen.ai/api/v1/oauth2/device/code',
   tokenUrl: 'https://chat.qwen.ai/api/v1/oauth2/token',
   scope: 'openid profile email model.completion',
-  defaultApiUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  // Qwen Code 官方实际使用的 API 端点（OAuth 认证后）
+  // 参考：https://portal.qwen.ai/v1/chat/completions
+  defaultApiUrl: 'https://portal.qwen.ai/v1',
   grantType: 'urn:ietf:params:oauth:grant-type:device_code',
 };
 

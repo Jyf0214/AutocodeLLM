@@ -33,12 +33,14 @@ export const PRESET_PROVIDERS: PresetProvider[] = [
     id: 'qwen',
     name: '通义千问',
     nameEn: 'Qwen',
-    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    // OAuth 方式使用 portal.qwen.ai（免费，每日限额）
+    baseUrl: 'https://portal.qwen.ai/v1',
+    // API Key 方式使用 dashscope.aliyuncs.com（按量付费）
     apiKeyUrl: 'https://bailian.console.aliyun.com/?apiKey=1#/api-key',
     sdkType: 'openai',
-    authType: 'bearer',
+    authType: 'oauth',
     openaiCompatible: true,
-    checkModel: 'qwen-plus',
-    description: '阿里云通义千问官方 API（支持 OAuth 登录）',
+    checkModel: 'qwen3-coder-plus',
+    description: '通义千问官方 API（支持 OAuth 免费登录，每日限额）',
   },
 ];

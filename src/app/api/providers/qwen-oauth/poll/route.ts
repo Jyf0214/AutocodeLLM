@@ -41,6 +41,10 @@ export async function POST(request: Request) {
     const result = await pollQwenToken(deviceCode, codeVerifier);
 
     const providerName = '通义千问';
+    // Qwen Code 官方实际使用的 API 端点（OAuth 认证后）
+    // 参考：https://portal.qwen.ai/v1/chat/completions
+    const QWEN_OAUTH_API_BASE_URL = 'https://portal.qwen.ai/v1';
+
     let provider = await prisma.provider.findUnique({
       where: { name: providerName },
     });
@@ -48,7 +52,7 @@ export async function POST(request: Request) {
     provider ??= await prisma.provider.create({
       data: {
         name: providerName,
-        baseUrl: result.resourceUrl,
+        baseUrl: QWEN_OAUTH_API_BASE_URL,
         apiKey: '',
         enabled: true,
         providerType: 'preset',
