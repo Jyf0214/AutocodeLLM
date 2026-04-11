@@ -1,7 +1,7 @@
 /**
  * 本文件是 AutocodeLLM 项目的原始实现
  *
- * AutocodeLLM 项目许可证:
+ * AutocodeLLM 项目许可证：
  * Apache License, Version 2.0
  * Copyright (c) 2026 Jyf0214
  */
@@ -14,7 +14,7 @@ import type {
   ModelConfig,
   ChatMessage,
 } from '../types';
-import { AgentExecutorAdapter } from '../../../lib/AgentExecutorAdapter';
+import { simpleExecute, throttle } from '../../../lib/AgentExecutorAdapter';
 
 /**
  * 运行Agent参数
@@ -26,7 +26,8 @@ export interface RunAgentParams {
 }
 
 /**
- * Agent Slice - Agent调度和执行
+ * Agent Slice - Agent调度和执行(优化版)
+ * 包含节流优化和完整的错误处理
  */
 export interface AgentSlice {
   // Actions
@@ -40,7 +41,7 @@ export interface AgentSlice {
 }
 
 /**
- * 创建Agent Slice
+ * 创建Agent Slice(优化版)
  */
 export const createAgentSlice: StateCreator<
   ChatStoreState,
@@ -120,19 +121,41 @@ export const createAgentSlice: StateCreator<
       },
     });
 
+    // 创建节流版本的更新函数(16ms ≈ 60fps)
+    const throttledUpdate = throttle(
+      (content: string) => {
+        get().updateMessage(assistantMessageId, {
+          content,
+          updatedAt: Date.now(),
+        });
+      },
+      16 // 16ms节流,限制在60fps以内
+    );
+
+    let finalContent = '';
+
     try {
-      // 使用AgentExecutorAdapter执行真实的Agent
-      await AgentExecutorAdapter.simpleExecute({
+      // 使用simpleExecute执行真实的Agent
+      await simpleExecute({
         userInput: message,
         model,
         onContentUpdate: (content: string) => {
-          // 流式更新消息内容
-          get().updateMessage(assistantMessageId, {
-            content,
-            updatedAt: Date.now(),
-          });
+          finalContent = content;
+          // 使用节流更新,避免过于频繁的渲染
+          throttledUpdate(content);
         },
         onComplete: () => {
+          // 确保最终内容被更新
+          get().updateMessage(assistantMessageId, {
+            content: finalContent,
+            updatedAt: Date.now(),
+            usage: {
+              inputTokens: message.length, // 估算
+              outputTokens: finalContent.length,
+              totalTokens: message.length + finalContent.length,
+            },
+          });
+
           // 完成执行
           set((state) => ({
             agents: {
@@ -141,17 +164,30 @@ export const createAgentSlice: StateCreator<
               activeAgents: state.agents.activeAgents.map((agent) => ({
                 ...agent,
                 status: 'completed' as const,
+                result: finalContent,
               })),
             },
           }));
+
+          // 3秒后重置为idle
+          setTimeout(() => {
+            set((state) => ({
+              agents: {
+                ...state.agents,
+                status: 'idle',
+              },
+            }));
+          }, 3000);
         },
         onError: (error: Error) => {
           // 处理错误
           get().updateMessage(assistantMessageId, {
+            content: finalContent || '回复生成失败',
             error: {
               message: error.message,
               code: 'AGENT_EXECUTION_FAILED',
             },
+            updatedAt: Date.now(),
           });
 
           set((state) => ({
@@ -171,10 +207,12 @@ export const createAgentSlice: StateCreator<
       const errorMessage = error instanceof Error ? error.message : 'Agent执行失败';
       
       get().updateMessage(assistantMessageId, {
+        content: finalContent || '回复生成失败',
         error: {
           message: errorMessage,
           code: 'AGENT_EXECUTION_FAILED',
         },
+        updatedAt: Date.now(),
       });
 
       set((state) => ({

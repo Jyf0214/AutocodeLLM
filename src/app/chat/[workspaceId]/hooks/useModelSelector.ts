@@ -30,11 +30,11 @@ export function useModelSelector() {
 
         const modelsData: {
           success: boolean;
-          data?: Array<{ id: string; name: string; provider: string; enabled: boolean }>;
+          data?: { id: string; name: string; provider: string; enabled: boolean }[];
         } = await modelsRes.json();
         const providersData: {
           success: boolean;
-          data?: Array<{ id: string; name: string; sdkType: string; authType: string; enabled: boolean }>;
+          data?: { id: string; name: string; sdkType: string; authType: string; enabled: boolean }[];
         } = await providersRes.json();
 
         const items: ModelConfig[] = [];

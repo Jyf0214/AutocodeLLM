@@ -9,19 +9,21 @@
 import { useCallback } from 'react';
 import { message } from 'antd';
 import { useChatStore } from '../store';
-import type { ModelConfig } from '../store';
+import type { ModelConfig } from '../store/types';
 
 /**
  * 发送消息Hook
  */
 export function useSendMessage() {
+  const store = useChatStore();
+  
   const {
     runSingleAgent,
     agents,
     input,
     models,
     setInputValue,
-  } = useChatStore();
+  } = store;
 
   /**
    * 发送消息
@@ -30,18 +32,18 @@ export function useSendMessage() {
     async (content: string, model?: ModelConfig) => {
       const trimmed = content.trim();
       if (!trimmed) {
-        return;
+        return false;
       }
 
-      const selectedModel = model || models.selected;
+      const selectedModel = model ?? models.selected;
       if (!selectedModel) {
         message.warning('请先选择模型');
-        return;
+        return false;
       }
 
       if (agents.status === 'running') {
         message.warning('Agent正在执行中');
-        return;
+        return false;
       }
 
       try {

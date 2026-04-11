@@ -93,7 +93,7 @@ export async function PUT(
     }
 
     // 验证必填字段
-    if (name && name.trim().length === 0) {
+    if (name?.trim().length === 0) {
       return NextResponse.json(
         {
           success: false,
