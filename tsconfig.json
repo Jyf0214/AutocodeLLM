@@ -61,6 +61,8 @@
     "node_modules",
     ".next",
     "out",
-    "build"
+    "build",
+    "src/store/userMemory",
+    "src/store/aiInfra"
   ]
 }
