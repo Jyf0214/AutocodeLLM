@@ -1,0 +1,126 @@
+# AutocodeLLM NOTICE 文件
+
+本文件包含 AutocodeLLM 项目使用的第三方代码的版权声明和许可信息。
+
+---
+
+## LobeChat 移植代码声明
+
+本项目包含从 [LobeChat](https://github.com/lobehub/lobe-chat) 项目移植的代码，受以下许可证约束：
+
+### LobeHub Community License
+
+LobeChat 使用 **LobeHub Community License**（基于 Apache License 2.0）。
+
+- **版权所有者**: LobeHub LLC
+- **版权年份**: 2024-2026
+- **许可证详情**: http://www.apache.org/licenses/LICENSE-2.0
+
+### 移植代码清单
+
+以下目录包含从 LobeChat 移植的代码：
+
+| 目录 | 来源 | 说明 |
+|------|------|------|
+| `src/store/global/` | lobe-chat/src/store/global/ | 全局状态管理 |
+| `src/store/aiInfra/` | lobe-chat/src/store/aiInfra/ | AI 基础设施状态 |
+| `src/store/home/` | lobe-chat/src/store/home/ | 首页状态 |
+| `src/store/userMemory/` | lobe-chat/src/store/userMemory/ | 用户记忆状态 |
+| `src/store/mention/` | lobe-chat/src/store/mention/ | @提及功能状态 |
+| `src/store/middleware/` | lobe-chat/src/store/middleware/ | Store 中间件 |
+| `src/store/agent/` | lobe-chat/src/store/agent/ | Agent 状态管理 |
+| `src/store/agentGroup/` | lobe-chat/src/store/agentGroup/ | Agent 群组状态 |
+| `src/store/chat/` | lobe-chat/src/store/chat/ | 聊天状态管理 |
+| `src/store/file/` | lobe-chat/src/store/file/ | 文件管理状态 |
+| `src/store/session/` | lobe-chat/src/store/session/ | 会话管理状态 |
+| `src/store/user/` | lobe-chat/src/store/user/ | 用户设置状态 |
+| `src/libs/swr/` | lobe-chat/src/libs/swr/ | 数据获取层 |
+| `src/libs/trpc/` | lobe-chat/src/libs/trpc/ | RPC 客户端 |
+| `src/libs/mcp/` | lobe-chat/src/libs/mcp/ | MCP 协议支持 |
+| `src/libs/pdfjs/` | lobe-chat/src/libs/pdfjs/ | PDF 查看器 |
+| `src/libs/next/` | lobe-chat/src/libs/next/ | Next.js 工具 |
+| `src/features/` | lobe-chat/src/features/ | 功能组件 |
+| `src/components/` | lobe-chat/src/components/ | 共享组件 |
+| `src/hooks/` | lobe-chat/src/hooks/ | 自定义 Hooks |
+| `src/services/` | lobe-chat/src/services/ | 服务层 |
+| `src/helpers/` | lobe-chat/src/helpers/ | 辅助函数 |
+| `src/const/` | lobe-chat/src/const/ | 常量定义 |
+| `src/prompts/` | lobe-chat/src/prompts/ | 提示词模板 |
+| `src/utils/` | lobe-chat/src/utils/ | 工具函数 |
+| `src/lib/` | lobe-chat/src/lib/ | 库代码 |
+| `src/providers/` | lobe-chat/src/providers/ | Provider 组件 |
+
+### 修改声明
+
+所有移植代码已进行以下修改以适配 AutocodeLLM 项目：
+- 目录结构调整
+- 依赖适配
+- API 接口兼容
+- 添加版权文件头
+
+每个移植文件顶部均包含完整的版权信息，格式如下：
+
+```
+/**
+ * 本代码来源于 LobeChat 项目（https://github.com/lobehub/lobe-chat）
+ *
+ * LobeChat 许可证信息：
+ * LobeHub Community License（基于 Apache License 2.0）
+ * Copyright (c) 2024-2026 LobeHub LLC. All rights reserved.
+ * 详细信息：http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 修改声明：
+ * 本文件已从 LobeChat 源代码进行修改以适配 AutocodeLLM 项目。
+ * 修改内容包括：目录结构调整、依赖适配、API 接口兼容等。
+ *
+ * AutocodeLLM 项目许可证：
+ * Apache License, Version 2.0
+ * Copyright (c) 2026 Jyf0214
+ *
+ * 双重许可：本文件同时受上述两个许可证约束。
+ * 商业使用需分别获得对应授权。
+ */
+```
+
+### 许可证要求
+
+LobeHub Community License 要求：
+1. 保留版权声明
+2. 保留许可证文本
+3. 声明修改内容
+4. 商业使用需获得授权
+
+---
+
+## AutocodeLLM 原创代码
+
+AutocodeLLM 原创代码（未标记为移植的代码）使用 **Apache License 2.0**。
+
+- **版权所有者**: Jyf0214
+- **版权年份**: 2026
+- **许可证**: Apache License, Version 2.0
+
+---
+
+## 其他第三方组件
+
+本项目还使用以下第三方开源组件：
+
+| 组件 | 版本 | 许可证 |
+|------|------|--------|
+| next | 16.2.2 | MIT |
+| react | 19 | MIT |
+| react-dom | 19 | MIT |
+| antd | 6.3.5 | MIT |
+| @ant-design/icons | 6.1.1 | MIT |
+| @lobehub/ui | 5.6.4 | MIT |
+| @lobehub/icons | 5.2.0 | MIT |
+| @prisma/client | 6.19.3 | Apache-2.0 |
+| openai | 6.33.0 | Apache-2.0 |
+| @anthropic-ai/sdk | 0.82.0 | MIT |
+
+详见 [LICENSE-3RD-PARTY.md](./LICENSE-3RD-PARTY.md) 获取完整清单。
+
+---
+
+**最后更新**: 2026-04-11
