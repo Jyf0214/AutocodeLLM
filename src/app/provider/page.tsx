@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { message, Tag, Modal as AntdModal } from 'antd';
+import { message, Tag, Modal as AntdModal, Card } from 'antd';
 import {
   Button,
   Text,
@@ -12,7 +12,6 @@ import {
   Flexbox,
   Icon,
   Skeleton,
-  Card,
 } from '@lobehub/ui';
 import {
   PlusOutlined,
@@ -498,10 +497,10 @@ export default function ProviderPage() {
               fetchProviders();
             } else if (pollData.error?.code === 'AUTHORIZATION_PENDING') {
               setTimeout(() => poll(currentInterval), currentInterval * 1000);
-            } else if (pollData.error?.code === 'SLOW_DOWN') {
-              // 增加轮询间隔（官方建议 +2s）
-              const newInterval = currentInterval + 2;
-              setTimeout(() => poll(newInterval), newInterval * 1000);
+           } else if (pollData.error?.code === 'SLOW_DOWN') {
+               // 增加轮询间隔（官方建议 +2s）
+               const newInterval = Number(currentInterval) + 2;
+               setTimeout(() => poll(newInterval), newInterval * 1000);
             } else {
               setOauthPolling(false);
               message.error(pollData.error?.message ?? '获取 Token 失败');

@@ -8,7 +8,6 @@ import {
   Button,
   Text,
   Empty,
-  Modal,
   Form,
   Input as LobeInput,
   Flexbox,
