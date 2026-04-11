@@ -37,7 +37,7 @@ interface AgentPanelProps {
  * Agent状态图标
  */
 const StatusIcon: React.FC<{ status: AgentInstance['status'] }> = ({ status }) => {
-  const config = {
+  const config: Record<string, { icon: React.ComponentType; color: string; text: string; spin?: boolean }> = {
     idle: { icon: PauseCircleOutlined, color: '#999', text: '等待中' },
     running: { icon: LoadingOutlined, color: '#1890ff', text: '执行中', spin: true },
     completed: { icon: CheckCircleOutlined, color: '#52c41a', text: '已完成' },
@@ -45,12 +45,15 @@ const StatusIcon: React.FC<{ status: AgentInstance['status'] }> = ({ status }) =
     cancelled: { icon: PauseCircleOutlined, color: '#faad14', text: '已取消' },
   };
 
-  const { icon: IconComponent, color, text, spin } = config[status];
+  const item = config[status];
+  if (!item) return null;
+  
+  const { icon: IconComponent, color, text, spin } = item;
 
   return (
     <Flexbox gap={4} horizontal align="center">
       <Spin spinning={spin ?? false}>
-        <Icon icon={IconComponent} size={14} color={color} />
+        <Icon icon={IconComponent as any} size={14} color={color} />
       </Spin>
       <Text style={{ fontSize: 12, color }}>{text}</Text>
     </Flexbox>

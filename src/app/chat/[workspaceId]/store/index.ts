@@ -6,7 +6,7 @@
  * Copyright (c) 2026 Jyf0214
  */
 
-import create from 'zustand';
+import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 import { initialState } from './initialState';
@@ -17,41 +17,22 @@ import { createAgentSlice, type AgentSlice } from './slices/agent/slice';
 import { createInputSlice, type InputSlice } from './slices/input/slice';
 import { createUISlice, type UISlice } from './slices/ui/slice';
 
-/**
- * Chat Store 类型
- */
-export type ChatStore = ChatStoreState &
-  ChatSlice &
-  MessagesSlice &
-  AgentSlice &
-  InputSlice &
-  UISlice;
+export type ChatStore = ChatStoreState & ChatSlice & MessagesSlice & AgentSlice & InputSlice & UISlice;
 
-/**
- * Chat Store 实例（单例）
- * 注意：每个 workspace 应该有独立的 store 实例
- * 这里先使用单例，后续可改为多实例
- */
-export const useChatStore = create<ChatStore>(
+export const useChatStore = create<ChatStore>()(
   devtools(
-    (set, get, api) => ({
+    (set, get) => ({
       ...initialState,
-      ...createChatSlice(set as any, get, api),
-      ...createMessagesSlice(set as any, get, api),
-      ...createAgentSlice(set as any, get, api),
-      ...createInputSlice(set as any, get, api),
-      ...createUISlice(set as any, get, api),
+      ...createChatSlice(set, get),
+      ...createMessagesSlice(set, get),
+      ...createAgentSlice(set, get),
+      ...createInputSlice(set, get),
+      ...createUISlice(set, get),
     }),
-    {
-      name: 'ChatStore',
-      enabled: process.env.NODE_ENV === 'development',
-    }
+    { name: 'ChatStore', enabled: process.env.NODE_ENV === 'development' }
   )
 );
 
-/**
- * 获取 Store 状态（用于非组件场景）
- */
 export const getChatStoreState = (): ChatStoreState => {
   const state = useChatStore.getState();
   return {
@@ -68,20 +49,5 @@ export const getChatStoreState = (): ChatStoreState => {
   };
 };
 
-// 导出类型
 export type { ChatStoreState } from './types';
-export type {
-  ChatMessage,
-  WorkspaceInfo,
-  ModelConfig,
-  AgentInstance,
-  GroupOrchestrationState,
-  SupervisorState,
-  AgentState,
-  ModelState,
-  InputState,
-  FileAttachment,
-  UIState,
-  ErrorDialogState,
-  ChatError,
-} from './types';
+export type { ChatMessage, WorkspaceInfo, ModelConfig, AgentInstance, GroupOrchestrationState, SupervisorState, AgentState, ModelState, InputState, FileAttachment, UIState, ErrorDialogState, ChatError } from './types';

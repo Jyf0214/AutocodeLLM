@@ -10,7 +10,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { message, Spin, Empty } from 'antd';
+import { message, Spin } from 'antd';
+import { Empty } from '@lobehub/ui';
 import { FolderOutlined } from '@ant-design/icons';
 
 import { useChatStore } from './store';
@@ -41,17 +42,15 @@ export default function ChatPage({
     initializeChat,
     messages,
     agents,
-    ui,
+    models: storeModels,
     setInputValue: storeSetInputValue,
     runSingleAgent,
-    addMessage,
-    updateMessage,
   } = useChatStore();
 
   // 选中的模型
   const selectedModel = useMemo(
-    () => models.find((m) => m.id === selectedModelId) ?? null,
-    [models, selectedModelId]
+    () => storeModels.available.find((m: ModelConfig) => m.id === selectedModelId) ?? null,
+    [storeModels.available, selectedModelId]
   );
 
   // 初始化聊天

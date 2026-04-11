@@ -15,11 +15,7 @@ import type { ModelConfig } from '../store/types';
  * 发送消息 Hook
  */
 export function useSendMessage() {
-  const runSingleAgent = useChatStore((state) => state.runSingleAgent);
-  const agents = useChatStore((state) => state.agents);
-  const input = useChatStore((state) => state.input);
-  const models = useChatStore((state) => state.models);
-  const setInputValue = useChatStore((state) => state.setInputValue);
+  const store = useChatStore();
 
   /**
    * 发送消息
@@ -31,24 +27,24 @@ export function useSendMessage() {
         return false;
       }
 
-      const selectedModel = model ?? models.selected;
+      const selectedModel = model ?? store.models.selected;
       if (!selectedModel) {
         message.warning('请先选择模型');
         return false;
       }
 
-      if (agents.status === 'running') {
+      if (store.agents.status === 'running') {
         message.warning('Agent正在执行中');
         return false;
       }
 
       try {
-        await runSingleAgent({
+        await store.runSingleAgent({
           message: trimmed,
           model: selectedModel,
         });
 
-        setInputValue('');
+        store.setInputValue('');
 
         return true;
       } catch (error) {
@@ -57,7 +53,7 @@ export function useSendMessage() {
         return false;
       }
     },
-    [agents.status, models.selected, runSingleAgent, setInputValue]
+    [store]
   );
 
   /**
@@ -70,7 +66,7 @@ export function useSendMessage() {
   return {
     send,
     cancel,
-    isSending: agents.status === 'running',
-    canSend: input.value.trim().length > 0 && models.selected !== null && agents.status !== 'running',
+    isSending: store.agents.status === 'running',
+    canSend: store.input.value.trim().length > 0 && store.models.selected !== null && store.agents.status !== 'running',
   };
 }

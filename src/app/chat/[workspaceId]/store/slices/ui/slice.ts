@@ -7,13 +7,9 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { ChatStoreState, ErrorDialogState } from '../types';
+import type { ChatStoreState, ErrorDialogState, UIState } from '../types';
 
-/**
- * UI Slice - UI状态管理
- */
 export interface UISlice {
-  // Actions
   toggleAgentPanel: (show?: boolean) => void;
   setScrollToBottom: (scroll: boolean) => void;
   setLoadingMessages: (loading: boolean) => void;
@@ -21,66 +17,12 @@ export interface UISlice {
   hideErrorDialog: () => void;
 }
 
-/**
- * 创建UI Slice
- */
-export const createUISlice: StateCreator<
-  ChatStoreState,
-  [['zustand/devtools', never]],
-  [],
-  UISlice
-> = (set) => ({
-  // 初始状态
-  ui: {
-    showAgentPanel: false,
-    scrollToBottom: true,
-    loadingMessages: false,
-    errorDialog: null,
-  },
+export const createUISlice: StateCreator<ChatStoreState, [], [], UISlice> = (set) => ({
+  ui: { showAgentPanel: false, scrollToBottom: true, loadingMessages: false, errorDialog: null },
 
-  // Actions
-  toggleAgentPanel: (show?: boolean) => {
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        showAgentPanel: show !== undefined ? show : !state.ui.showAgentPanel,
-      },
-    }));
-  },
-
-  setScrollToBottom: (scroll: boolean) => {
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        scrollToBottom: scroll,
-      },
-    }));
-  },
-
-  setLoadingMessages: (loading: boolean) => {
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        loadingMessages: loading,
-      },
-    }));
-  },
-
-  showErrorDialog: (dialogState: ErrorDialogState) => {
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        errorDialog: dialogState,
-      },
-    }));
-  },
-
-  hideErrorDialog: () => {
-    set((state) => ({
-      ui: {
-        ...state.ui,
-        errorDialog: null,
-      },
-    }));
-  },
+  toggleAgentPanel: (show?: boolean) => set((state) => ({ ui: { ...state.ui, showAgentPanel: show !== undefined ? show : !state.ui.showAgentPanel } })),
+  setScrollToBottom: (scroll: boolean) => set((state) => ({ ui: { ...state.ui, scrollToBottom: scroll } })),
+  setLoadingMessages: (loading: boolean) => set((state) => ({ ui: { ...state.ui, loadingMessages: loading } })),
+  showErrorDialog: (dialogState: ErrorDialogState) => set((state) => ({ ui: { ...state.ui, errorDialog: dialogState } })),
+  hideErrorDialog: () => set((state) => ({ ui: { ...state.ui, errorDialog: null } })),
 });

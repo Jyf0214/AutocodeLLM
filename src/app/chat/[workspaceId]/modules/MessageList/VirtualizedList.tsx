@@ -8,9 +8,7 @@
 
 'use client';
 
-import React, { useRef, useMemo } from 'react';
-import { Flexbox } from '@lobehub/ui';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import React, { useRef } from 'react';
 import type { ChatMessage } from '../../store/types';
 
 interface VirtualizedMessageListProps {
@@ -23,86 +21,35 @@ interface VirtualizedMessageListProps {
 
 /**
  * 虚拟列表消息组件
- * 使用@tanstack/react-virtual优化大量消息的渲染
  * 
- * 性能优势:
- * - 只渲染可视区域的消息
- * - 100条消息以上启用
- * - 大幅减少DOM节点数量
+ * 注意：当前使用简单实现，当消息数量超过50条时会警告
+ * 如需完整虚拟列表功能，请安装 @tanstack/react-virtual
  */
 export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
   messages,
   renderItem,
-  estimatedSize = 200, // 每条消息预估高度
-  overscan = 5, // 预渲染条数
   autoScroll = true,
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // 消息少于50条时不启用虚拟列表
-  const shouldVirtualize = messages.length >= 50;
-
-  const virtualizer = useVirtualizer({
-    count: messages.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => estimatedSize,
-    overscan,
-  });
+  // TODO: 安装@tanstack/react-virtual后启用完整虚拟列表
 
   // 自动滚动到底部
   React.useEffect(() => {
-    if (autoScroll && virtualizer.scrollElement) {
-      virtualizer.scrollToIndex(messages.length - 1, {
-        align: 'end',
-        behavior: 'smooth',
-      });
+    if (autoScroll && parentRef.current) {
+      parentRef.current.scrollTop = parentRef.current.scrollHeight;
     }
-  }, [messages.length, autoScroll, virtualizer]);
+  }, [messages.length, autoScroll]);
 
-  if (!shouldVirtualize) {
-    // 消息较少时直接渲染
-    return (
-      <Flexbox ref={parentRef} style={{ flex: 1, overflowY: 'auto' }}>
-        {messages.map((message, index) => (
-          <React.Fragment key={message.id}>
-            {renderItem(message, index)}
-          </React.Fragment>
-        ))}
-      </Flexbox>
-    );
-  }
-
-  // 消息较多时启用虚拟列表
+  // 消息较少时直接渲染
   return (
-    <Flexbox ref={parentRef} style={{ flex: 1, overflowY: 'auto' }}>
-      <div
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        {virtualizer.getVirtualItems().map((virtualRow) => {
-          const message = messages[virtualRow.index];
-          return (
-            <div
-              key={message.id}
-              data-index={virtualRow.index}
-              ref={virtualizer.measureElement}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
-            >
-              {renderItem(message, virtualRow.index)}
-            </div>
-          );
-        })}
-      </div>
-    </Flexbox>
+    <div ref={parentRef} style={{ flex: 1, overflowY: 'auto' }}>
+      {messages.map((message, index) => (
+        <React.Fragment key={message.id}>
+          {renderItem(message, index)}
+        </React.Fragment>
+      ))}
+    </div>
   );
 };
 

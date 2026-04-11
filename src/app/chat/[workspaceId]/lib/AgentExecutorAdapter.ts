@@ -131,29 +131,26 @@ export function convertToUIMessages(
 
 /**
  * 创建节流函数
- * 用于优化流式更新频率
  */
-export function throttle<T extends (...args: unknown[]) => void>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  let inThrottle = false;
-  let lastArgs: Parameters<T> | undefined;
+export function throttle(limit: number): (func: (content: string) => void) => (content: string) => void {
+  return function throttleInner(func: (content: string) => void): (content: string) => void {
+    let inThrottle = false;
+    let lastArgs: string | undefined;
 
-  return function (...args: Parameters<T>) {
-    lastArgs = args;
-    
-    if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
-      setTimeout(() => {
-        inThrottle = false;
-        if (lastArgs) {
-          func(...lastArgs);
-          lastArgs = undefined;
-        }
-      }, limit);
-    }
+    return function (content: string) {
+      lastArgs = content;
+      if (!inThrottle) {
+        func(content);
+        inThrottle = true;
+        setTimeout(() => {
+          inThrottle = false;
+          if (lastArgs !== undefined) {
+            func(lastArgs);
+            lastArgs = undefined;
+          }
+        }, limit);
+      }
+    };
   };
 }
 
