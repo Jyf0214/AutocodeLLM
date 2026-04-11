@@ -402,13 +402,18 @@ export default function ProviderPage() {
     async (provider: Provider) => {
       setTestingId(provider.id);
       try {
+        // OAuth 提供商使用 access token，而不是 API Key
+        const testApiKey = provider.apiKey === 'oauth'
+          ? (provider.oauthAccessToken ?? '')
+          : provider.apiKey;
+
         const res = await fetch('/api/providers/test', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: provider.id,
             baseUrl: provider.baseUrl,
-            apiKey: provider.apiKey,
+            apiKey: testApiKey,
           }),
         });
         const data = await res.json();
