@@ -41,7 +41,6 @@ const menuItems = [
   { key: '/sync', icon: SyncOutlined, labelKey: 'common.sync' },
   { key: '/model', icon: AppstoreOutlined, labelKey: 'common.models' },
   { key: '/provider', icon: ApiOutlined, labelKey: 'common.providers' },
-  { key: '/setting/qwen-oauth-test', icon: LinkOutlined, labelKey: 'common.qwenOAuthTest' },
 ];
 
 const themeModeMap: Record<string, 'auto' | 'light' | 'dark'> = {
