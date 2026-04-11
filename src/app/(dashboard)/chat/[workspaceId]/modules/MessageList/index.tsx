@@ -47,6 +47,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       style={{
         flex: 1,
         overflowY: 'auto',
+        overflowX: 'hidden',
         padding: '16px',
         background: 'var(--color-bg-layout)',
       }}
@@ -57,11 +58,11 @@ export const MessageList: React.FC<MessageListProps> = ({
             gap={16}
             align="center"
             justify="center"
-            style={{ height: '60vh' }}
+            style={{ flex: 1, minHeight: '300px' }}
           >
             <Avatar avatar="🤖" size={64} />
             <Text type="secondary" style={{ fontSize: 16 }}>
-              从任何想法开始...
+              开始与 AI 对话...
             </Text>
           </Flexbox>
         ) : (

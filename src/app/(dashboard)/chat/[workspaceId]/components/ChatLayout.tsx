@@ -56,34 +56,40 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
   disabled,
 }) => {
   return (
-    <Flexbox style={{ height: '100%', overflow: 'hidden' }}>
-      {/* 顶部导航栏 */}
-      <ChatHeader
-        workspaceName={workspaceName}
-        selectedModel={selectedModel}
-        availableModels={availableModels}
-        onModelSelect={onModelSelect}
-        modelsLoading={modelsLoading}
-      />
+    <Flexbox style={{ height: '100%', overflow: 'hidden', maxHeight: '100dvh' }}>
+      {/* 顶部导航栏 - 固定高度 */}
+      <div style={{ flexShrink: 0 }}>
+        <ChatHeader
+          workspaceName={workspaceName}
+          selectedModel={selectedModel}
+          availableModels={availableModels}
+          onModelSelect={onModelSelect}
+          modelsLoading={modelsLoading}
+        />
+      </div>
 
       {/* 消息列表区 - 自动填充剩余空间 */}
-      <MessageList
-        messages={messages}
-        isLoading={isLoading}
-      />
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <MessageList
+          messages={messages}
+          isLoading={isLoading}
+        />
+      </div>
 
       {/* 底部输入区 - 固定在底部 */}
-      <ChatInput
-        value={inputValue}
-        onChange={onInputChange}
-        onSend={onSend}
-        loading={sending}
-        disabled={disabled}
-        selectedModel={selectedModel}
-        availableModels={availableModels}
-        onModelSelect={onModelSelect}
-        modelsLoading={modelsLoading}
-      />
+      <div style={{ flexShrink: 0 }}>
+        <ChatInput
+          value={inputValue}
+          onChange={onInputChange}
+          onSend={onSend}
+          loading={sending}
+          disabled={disabled}
+          selectedModel={selectedModel}
+          availableModels={availableModels}
+          onModelSelect={onModelSelect}
+          modelsLoading={modelsLoading}
+        />
+      </div>
     </Flexbox>
   );
 };
