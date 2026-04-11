@@ -166,22 +166,58 @@ function ChatPageInner({
     setInputValue('');
     setAgentStatus('running');
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch('/api/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map((m) => ({ role: m.role, content: m.content })),
+          model: selectedModel.name,
+          provider: selectedModel.provider,
+        }),
+      });
 
-    const assistantMessage: ChatMessage = {
-      id: `msg-${Date.now()}-assistant`,
-      role: 'assistant',
-      content: `这是对"${trimmed}"的回复`,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      meta: { title: `AI · ${selectedModel.name}`, avatar: '🤖' },
-      model: selectedModel.name,
-    };
+      if (!response.ok) {
+        throw new Error(`请求失败: ${response.status}`);
+      }
 
-    setMessages((prev) => [...prev, assistantMessage]);
-    setAgentStatus('completed');
-    setTimeout(() => setAgentStatus('idle'), 3000);
-  }, [inputValue, selectedModel, agentStatus]);
+      const data = await response.json();
+
+      if (!data.success || !data.data?.content) {
+        throw new Error(data.error?.message ?? 'AI 回复为空');
+      }
+
+      const assistantMessage: ChatMessage = {
+        id: `msg-${Date.now()}-assistant`,
+        role: 'assistant',
+        content: data.data.content,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        meta: { title: `AI · ${selectedModel.name}`, avatar: '🤖' },
+        model: selectedModel.name,
+        usage: data.data.usage,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+      setAgentStatus('completed');
+      setTimeout(() => setAgentStatus('idle'), 3000);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '发送消息失败';
+      const errorMessageObj: ChatMessage = {
+        id: `msg-${Date.now()}-assistant`,
+        role: 'assistant',
+        content: '',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        meta: { title: `AI · ${selectedModel.name}`, avatar: '🤖' },
+        model: selectedModel.name,
+        error: { message: errorMessage, code: 'REQUEST_FAILED' },
+      };
+      setMessages((prev) => [...prev, errorMessageObj]);
+      setAgentStatus('error');
+      setTimeout(() => setAgentStatus('idle'), 3000);
+    }
+  }, [inputValue, selectedModel, agentStatus, messages]);
 
   // 加载中
   if (!workspace) {
