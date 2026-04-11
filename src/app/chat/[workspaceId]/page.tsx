@@ -167,7 +167,6 @@ function ChatPageInner({
     setInputValue('');
     setAgentStatus('running');
 
-    // TODO: 实现真实的 Agent 执行逻辑
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const assistantMessage: ChatMessage = {

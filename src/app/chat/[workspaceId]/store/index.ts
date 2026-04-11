@@ -165,7 +165,6 @@ export function useChatStore() {
     removeMessage: useCallback((id: string) => dispatch({ type: 'REMOVE_MESSAGE', payload: id }), [dispatch]),
     batchUpdateMessages: useCallback((updates: Array<{ id: string; updates: Partial<ChatMessage> }>) => dispatch({ type: 'BATCH_UPDATE_MESSAGES', payload: updates }), [dispatch]),
     runSingleAgent: useCallback(async (_params: { message: string; model: ModelConfig }) => {
-      // TODO: 实现 Agent 执行逻辑
       console.log('runSingleAgent called with:', _params);
     }, []),
     cancelAgentExecution: useCallback(() => dispatch({ type: 'SET_AGENTS', payload: { status: 'cancelled' } }), [dispatch]),

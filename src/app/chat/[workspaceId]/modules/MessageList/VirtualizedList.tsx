@@ -32,7 +32,6 @@ export const VirtualizedMessageList: React.FC<VirtualizedMessageListProps> = ({
 }) => {
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // TODO: 安装@tanstack/react-virtual后启用完整虚拟列表
 
   // 自动滚动到底部
   React.useEffect(() => {

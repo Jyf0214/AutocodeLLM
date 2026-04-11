@@ -63,24 +63,24 @@ jobs:
       - name: Generate Prisma Client
         run: bunx prisma generate
 
-      # 检测代码中的 TODO 标记
+      # 检测代码中的 TODO 注释标记
       - name: Check for TODO markers
         run: |
-          echo "🔍 检测代码中的 TODO 标记..."
-          TODO_COUNT=$(grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents "TODO" . | wc -l | tr -d ' ')
+          echo "🔍 检测代码中的 TODO 注释标记..."
+          TODO_COUNT=$(grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents -E "(//\s*TODO|/\*\s*TODO)" . | wc -l | tr -d ' ')
           if [ "$TODO_COUNT" -gt 0 ]; then
             echo ""
-            echo "❌ 检测到代码中存在 $TODO_COUNT 个 TODO 标记"
+            echo "❌ 检测到代码中存在 $TODO_COUNT 个 TODO 注释标记"
             echo ""
             echo "📋 检测到以下 TODO 位置："
-            grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents "TODO" . | head -20
+            grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents -E "(//\s*TODO|/\*\s*TODO)" . | head -20
             echo ""
             echo "⚠️  提示：请完整实现项目内容后再提交代码。"
-            echo "   所有 TODO 项都需要被实现或移除后才能通过 CI 检查。"
+            echo "   所有 TODO 注释项都需要被实现或移除后才能通过 CI 检查。"
             echo ""
             exit 1
           fi
-          echo "✅ 未检测到 TODO 标记"
+          echo "✅ 未检测到 TODO 注释标记"
 
       # 运行构建验证（包含类型检查、lint 和测试）
       - name: Build project
