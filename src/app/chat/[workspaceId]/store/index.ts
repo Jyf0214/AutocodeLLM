@@ -28,37 +28,29 @@ export type ChatStore = ChatStoreState &
   UISlice;
 
 /**
- * 创建Chat Store实例
- * 使用函数形式以支持动态workspaceId
- */
-const createChatStore = () => {
-  return create<ChatStore>()(
-    devtools(
-      (...a) => ({
-        ...initialState,
-        ...createChatSlice(...a),
-        ...createMessagesSlice(...a),
-        ...createAgentSlice(...a),
-        ...createInputSlice(...a),
-        ...createUISlice(...a),
-      }),
-      {
-        name: 'ChatStore',
-        enabled: process.env.NODE_ENV === 'development',
-      }
-    )
-  );
-};
-
-/**
- * Chat Store实例（单例）
- * 注意：每个workspace应该有独立的store实例
+ * Chat Store 实例（单例）
+ * 注意：每个 workspace 应该有独立的 store 实例
  * 这里先使用单例，后续可改为多实例
  */
-export const useChatStore = createChatStore();
+export const useChatStore = create<ChatStore>(
+  devtools(
+    (set, get, api) => ({
+      ...initialState,
+      ...createChatSlice(set as any, get, api),
+      ...createMessagesSlice(set as any, get, api),
+      ...createAgentSlice(set as any, get, api),
+      ...createInputSlice(set as any, get, api),
+      ...createUISlice(set as any, get, api),
+    }),
+    {
+      name: 'ChatStore',
+      enabled: process.env.NODE_ENV === 'development',
+    }
+  )
+);
 
 /**
- * 获取Store状态（用于非组件场景）
+ * 获取 Store 状态（用于非组件场景）
  */
 export const getChatStoreState = (): ChatStoreState => {
   const state = useChatStore.getState();

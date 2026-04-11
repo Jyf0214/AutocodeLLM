@@ -10,17 +10,16 @@ import { useCallback } from 'react';
 import { message } from 'antd';
 import { useChatStore } from '../store';
 import type { ModelConfig } from '../store/types';
-import type { ChatStore } from '../store';
 
 /**
- * 发送消息Hook
+ * 发送消息 Hook
  */
 export function useSendMessage() {
-  const runSingleAgent = useChatStore((state: ChatStore) => state.runSingleAgent);
-  const agents = useChatStore((state: ChatStore) => state.agents);
-  const input = useChatStore((state: ChatStore) => state.input);
-  const models = useChatStore((state: ChatStore) => state.models);
-  const setInputValue = useChatStore((state: ChatStore) => state.setInputValue);
+  const runSingleAgent = useChatStore((state) => state.runSingleAgent);
+  const agents = useChatStore((state) => state.agents);
+  const input = useChatStore((state) => state.input);
+  const models = useChatStore((state) => state.models);
+  const setInputValue = useChatStore((state) => state.setInputValue);
 
   /**
    * 发送消息
