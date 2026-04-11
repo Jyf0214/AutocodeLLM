@@ -6,7 +6,7 @@
  * Copyright (c) 2026 Jyf0214
  */
 
-import { create } from 'zustand';
+import create from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 import { initialState } from './initialState';
