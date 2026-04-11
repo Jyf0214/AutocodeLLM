@@ -1,103 +1,311 @@
-/**
- * API 提供商配置页
- *
- * 职责：管理 API 提供商连接（OpenAI, Anthropic, Qwen OAuth 等）
- * - 显示已配置的提供商，点击可配置/测试
- * - 支持添加自定义提供商
- * - OAuth 登录入口
- */
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
-import { Text, Flexbox, Button, Icon, Avatar } from '@lobehub/ui';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { message, Spin, Tag, Modal as AntdModal } from 'antd';
 import {
-  Table,
-  Tag,
-  Space,
+  Button,
+  Text,
+  Empty,
   Modal,
   Form,
-  Input,
-  Switch,
-  message,
-  Popconfirm,
-  Tooltip,
+  Input as LobeInput,
+  Flexbox,
+  Icon,
+  Avatar,
+  TextArea,
+  Skeleton,
   Card,
-  Select,
-  Collapse,
-  Alert,
-  Empty,
-  Spin,
-} from 'antd';
+} from '@lobehub/ui';
 import {
   PlusOutlined,
+  ApiOutlined,
   DeleteOutlined,
-  ThunderboltOutlined,
-  GlobalOutlined,
-  LockOutlined,
-  ReloadOutlined,
+  EditOutlined,
   CheckCircleOutlined,
-  CopyOutlined,
-  SettingOutlined,
+  CloseCircleOutlined,
+  SyncOutlined,
+  LockOutlined,
+  ThunderboltOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+  AppstoreOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
-import { OpenAI, Anthropic, Google, DeepSeek, Nvidia, Zhipu, Moonshot, Groq, Mistral, OpenRouter, Ollama, Azure, Cohere, Fireworks, Perplexity, ZeroOne, Alibaba, Tencent, IFlyTekCloud, SiliconCloud, Together, XAI, Minimax } from '@lobehub/icons';
-import type { Provider, ProviderResponse, TestProviderResponse } from '@/lib/api/provider-types';
-import type { PresetProvider } from '@/lib/providers';
+import { ModelIcon } from '@lobehub/icons';
+import type { WorkspaceListItem } from '@/lib/api/workspace-types';
 
-interface PresetProviderWithStatus extends PresetProvider {
-  isAdded: boolean;
-  dbId?: string;
-}
-
-const PROVIDER_ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
-  openai: OpenAI,
-  anthropic: Anthropic,
-  google: Google,
-  deepseek: DeepSeek,
-  nvidia: Nvidia,
-  qwen: Alibaba,
-  zhipu: Zhipu,
-  moonshot: Moonshot,
-  minimax: Minimax,
-  groq: Groq,
-  mistral: Mistral,
-  openrouter: OpenRouter,
-  siliconcloud: SiliconCloud,
-  together: Together,
-  ollama: Ollama,
-  azure: Azure,
-  xai: XAI,
-  cohere: Cohere,
-  fireworks: Fireworks,
-  perplexity: Perplexity,
-  yi: ZeroOne,
-  baichuan: Alibaba,
-  hunyuan: Tencent,
-  spark: IFlyTekCloud,
-  stepfun: Moonshot,
-};
-
-interface ProviderFormValues {
+/**
+ * 提供商类型
+ */
+interface Provider {
+  id: string;
   name: string;
   baseUrl: string;
   apiKey: string;
-  databaseUrl?: string;
   enabled: boolean;
   authType: string;
-  presetId?: string;
+  sdkType: string;
+  oauthAccessToken?: string | null;
+  oauthRefreshToken?: string | null;
+  oauthExpiresAt?: string | null;
 }
 
+/**
+ * 模型配置类型
+ */
+interface ModelConfig {
+  id: string;
+  name: string;
+  provider: string;
+  enabled: boolean;
+  baseUrl?: string;
+  apiKey?: string;
+}
+
+/**
+ * 预置提供商
+ */
+interface PresetProvider {
+  id: string;
+  name: string;
+  nameEn: string;
+  baseUrl: string;
+  sdkType: string;
+  authType: string;
+  isAdded?: boolean;
+  dbId?: string;
+}
+
+/**
+ * 提供商卡片组件
+ */
+function ProviderCard({
+  provider,
+  onEdit,
+  onDelete,
+  onTest,
+  testing,
+}: {
+  provider: Provider;
+  onEdit: () => void;
+  onDelete: () => void;
+  onTest: () => void;
+  testing: boolean;
+}) {
+  const [showKey, setShowKey] = useState(false);
+
+  const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
+    openai: ({ size }) => <ModelIcon model="openai" size={size || 20} />,
+    anthropic: ({ size }) => <ModelIcon model="anthropic" size={size || 20} />,
+    google: ({ size }) => <ModelIcon model="gemini" size={size || 20} />,
+    deepseek: ({ size }) => <ModelIcon model="deepseek" size={size || 20} />,
+    qwen: ({ size }) => <ModelIcon model="qwen" size={size || 20} />,
+    zhipu: ({ size }) => <ModelIcon model="zhipu" size={size || 20} />,
+    moonshot: ({ size }) => <ModelIcon model="moonshot" size={size || 20} />,
+  };
+
+  const IconComponent = iconMap[provider.sdkType] || iconMap.openai;
+
+  return (
+    <Card
+      style={{
+        borderRadius: 12,
+        border: '1px solid var(--color-border)',
+        background: 'var(--color-bg)',
+      }}
+    >
+      <Flexbox gap={14} align="flex-start">
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 10,
+            background: 'var(--color-fill-quaternary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <IconComponent size={22} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Flexbox horizontal justify="space-between" align="center">
+            <Text strong style={{ fontSize: 15 }}>
+              {provider.name}
+            </Text>
+            <Tag color={provider.enabled ? 'green' : 'default'}>
+              {provider.enabled ? '已启用' : '已禁用'}
+            </Tag>
+          </Flexbox>
+          <Flexbox gap={8} horizontal style={{ marginTop: 6 }}>
+            <Tag style={{ fontSize: 11 }}>{provider.sdkType}</Tag>
+            {provider.authType === 'oauth' && <Tag color="blue">OAuth</Tag>}
+          </Flexbox>
+          <div
+            style={{
+              marginTop: 10,
+              fontSize: 12,
+              fontFamily: 'monospace',
+              color: 'var(--color-text-secondary)',
+              background: 'var(--color-fill-quaternary)',
+              padding: '4px 8px',
+              borderRadius: 6,
+            }}
+          >
+            {provider.apiKey === 'oauth'
+              ? 'OAuth 已授权'
+              : showKey
+                ? provider.apiKey
+                : provider.apiKey.substring(0, 4) + '****' + provider.apiKey.slice(-4)}
+            {provider.apiKey !== 'oauth' && (
+              <Icon
+                icon={showKey ? EyeInvisibleOutlined : EyeOutlined}
+                size={12}
+                onClick={() => setShowKey(!showKey)}
+                style={{ marginLeft: 6, cursor: 'pointer' }}
+              />
+            )}
+          </div>
+        </div>
+      </Flexbox>
+
+      {/* 操作按钮 */}
+      <Flexbox
+        gap={8}
+        horizontal
+        style={{
+          marginTop: 14,
+          paddingTop: 12,
+          borderTop: '1px solid var(--color-border)',
+        }}
+      >
+        <Button
+          size="small"
+          icon={<ThunderboltOutlined />}
+          loading={testing}
+          onClick={(e) => {
+            e.stopPropagation();
+            onTest();
+          }}
+        >
+          测试
+        </Button>
+        <Button
+          size="small"
+          icon={<EditOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+        >
+          编辑
+        </Button>
+        <Button
+          size="small"
+          danger
+          icon={<DeleteOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        >
+          删除
+        </Button>
+      </Flexbox>
+    </Card>
+  );
+}
+
+/**
+ * 预置提供商卡片
+ */
+function PresetCard({
+  preset,
+  onAdd,
+  adding,
+}: {
+  preset: PresetProvider;
+  onAdd: () => void;
+  adding: boolean;
+}) {
+  const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
+    openai: ({ size }) => <ModelIcon model="openai" size={size || 24} />,
+    anthropic: ({ size }) => <ModelIcon model="anthropic" size={size || 24} />,
+    google: ({ size }) => <ModelIcon model="gemini" size={size || 24} />,
+    deepseek: ({ size }) => <ModelIcon model="deepseek" size={size || 24} />,
+    qwen: ({ size }) => <ModelIcon model="qwen" size={size || 24} />,
+    zhipu: ({ size }) => <ModelIcon model="zhipu" size={size || 24} />,
+    moonshot: ({ size }) => <ModelIcon model="moonshot" size={size || 24} />,
+  };
+
+  const IconComponent = iconMap[preset.sdkType] || iconMap.openai;
+
+  return (
+    <div
+      style={{
+        background: 'var(--color-bg)',
+        borderRadius: 12,
+        border: '1px solid var(--color-border)',
+        padding: 18,
+        transition: 'all 200ms',
+      }}
+    >
+      <Flexbox gap={12} align="center">
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 10,
+            background: 'var(--color-fill-quaternary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <IconComponent size={24} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Text strong style={{ fontSize: 14 }}>
+            {preset.name}
+          </Text>
+          <div style={{ marginTop: 4 }}>
+            <Tag style={{ fontSize: 10 }}>{preset.sdkType}</Tag>
+          </div>
+        </div>
+      </Flexbox>
+      <Button
+        type={preset.isAdded ? 'default' : 'primary'}
+        size="small"
+        block
+        style={{ marginTop: 12, borderRadius: 8 }}
+        icon={preset.isAdded ? <CheckCircleOutlined /> : <PlusOutlined />}
+        disabled={preset.isAdded}
+        loading={adding}
+        onClick={onAdd}
+      >
+        {preset.isAdded ? '已配置' : '添加'}
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * 主页面
+ */
 export default function ProviderPage() {
-  const t = useTranslations();
+  const t = useTranslations('common');
+  const router = useRouter();
+
   const [dataSource, setDataSource] = useState<Provider[]>([]);
-  const [presets, setPresets] = useState<PresetProviderWithStatus[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [presets, setPresets] = useState<PresetProvider[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testingId, setTestingId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
-  const [testingId, setTestingId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [form] = Form.useForm<ProviderFormValues>();
+  const [form] = Form.useForm();
 
   // OAuth 状态
   const [oauthLoading, setOauthLoading] = useState(false);
@@ -106,20 +314,17 @@ export default function ProviderPage() {
   const [oauthUserCode, setOauthUserCode] = useState('');
   const [oauthProviderId, setOauthProviderId] = useState<string | null>(null);
   const [oauthExpiresAt, setOauthExpiresAt] = useState<string | null>(null);
-  const [oauthErrorDetail, setOauthErrorDetail] = useState<{ message: string; code: string; rawResponse: string } | null>(null);
 
   const fetchProviders = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/providers');
-      const data: ProviderResponse & { presets?: PresetProviderWithStatus[] } = await res.json();
+      const data = await res.json();
       if (data.success) {
-        setDataSource(data.data as Provider[]);
-        if (data.presets) {
-          setPresets(data.presets);
-        }
+        setDataSource(data.data ?? []);
+        setPresets(data.presets ?? []);
       } else {
-        message.error(data.error?.message ?? '获取列表失败');
+        message.error(data.error?.message ?? '获取失败');
       }
     } catch {
       message.error('获取提供商列表失败');
@@ -132,112 +337,91 @@ export default function ProviderPage() {
     fetchProviders();
   }, [fetchProviders]);
 
-  const handleOpenModal = useCallback(
-    (provider?: Provider) => {
-      if (provider) {
-        setEditingProvider(provider);
-        form.setFieldsValue({
-          name: provider.name,
-          baseUrl: provider.baseUrl,
-          apiKey: '',
-          databaseUrl: provider.databaseUrl ?? '',
-          enabled: provider.enabled,
-          authType: provider.authType,
-        });
-      } else {
-        setEditingProvider(null);
-        form.resetFields();
-        form.setFieldsValue({ authType: 'apiKey', enabled: true, baseUrl: '' });
-      }
-      setModalOpen(true);
-    },
-    [form]
-  );
-
-  const handlePresetChange = useCallback(
-    (presetId: string | undefined) => {
-      if (!presetId) {
-        form.setFieldsValue({ name: '', baseUrl: '' });
-        return;
-      }
-      const preset = presets.find((p) => p.id === presetId);
-      if (preset) {
-        form.setFieldsValue({
-          name: preset.name,
-          baseUrl: preset.baseUrl ?? '',
-        });
-      }
-    },
-    [presets, form]
-  );
-
-  const handleSave = useCallback(async () => {
-    try {
+  // 添加预置提供商
+  const handleAddPreset = useCallback(
+    async (preset: PresetProvider) => {
       setSaving(true);
-      const values = await form.validateFields();
-      const payload: Record<string, unknown> = {
-        name: values.name,
-        baseUrl: values.baseUrl,
-        enabled: values.enabled,
-        authType: values.authType,
-      };
-
-      if (values.databaseUrl) {
-        payload.databaseUrl = values.databaseUrl;
+      try {
+        const res = await fetch('/api/providers/preset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ presetId: preset.id }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          message.success('添加成功，请配置 API Key');
+          fetchProviders();
+        } else {
+          message.error(data.error?.message ?? '添加失败');
+        }
+      } catch {
+        message.error('添加失败');
+      } finally {
+        setSaving(false);
       }
+    },
+    [fetchProviders],
+  );
 
-      if (values.apiKey || !editingProvider) {
-        payload.apiKey = values.apiKey;
-      }
+  // 打开编辑弹窗
+  const handleOpenModal = (provider?: Provider) => {
+    if (provider) {
+      setEditingProvider(provider);
+      form.setFieldsValue({
+        name: provider.name,
+        baseUrl: provider.baseUrl,
+        apiKey: provider.apiKey === 'oauth' ? '' : provider.apiKey,
+        authType: provider.authType,
+        sdkType: provider.sdkType,
+      });
+    } else {
+      setEditingProvider(null);
+      form.resetFields();
+      form.setFieldsValue({ authType: 'apiKey', sdkType: 'openai' });
+    }
+    setModalOpen(true);
+  };
 
-      const url = '/api/providers';
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setEditingProvider(null);
+    form.resetFields();
+  };
+
+  // 保存提供商
+  const handleSubmit = async (values: Record<string, string>) => {
+    setSaving(true);
+    try {
+      const isOAuth = values.authType === 'oauth';
+      const url = editingProvider ? '/api/providers' : '/api/providers';
       const method = editingProvider ? 'PUT' : 'POST';
-      const body = editingProvider ? { id: editingProvider.id, ...payload } : payload;
 
-      const res = await fetch(url, {
+      const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          id: editingProvider?.id,
+          ...values,
+          apiKey: isOAuth ? '' : values.apiKey,
+        }),
       });
 
-      const data: ProviderResponse = await res.json();
-
-      if (!res.ok || !data.success) {
-        message.error(data.error?.message ?? (editingProvider ? '更新失败' : '创建失败'));
-        return;
+      const result = await response.json();
+      if (result.success) {
+        message.success(editingProvider ? '更新成功' : '添加成功');
+        handleCloseModal();
+        fetchProviders();
+      } else {
+        message.error(result.error?.message ?? '保存失败');
       }
-
-      message.success(editingProvider ? '提供商更新成功' : '提供商创建成功');
-      setModalOpen(false);
-      fetchProviders();
-    } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'errorFields' in error) {
-        return;
-      }
-      message.error(editingProvider ? '更新提供商失败' : '创建提供商失败');
+    } catch {
+      message.error('保存失败');
     } finally {
       setSaving(false);
     }
-  }, [editingProvider, form, fetchProviders]);
+  };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      try {
-        const res = await fetch(`/api/providers?id=${id}`, { method: 'DELETE' });
-        const data: ProviderResponse = await res.json();
-        if (data.success) {
-          message.success('提供商删除成功');
-          fetchProviders();
-        } else {
-          message.error(data.error?.message ?? '删除失败');
-        }
-      } catch {
-        message.error('删除提供商失败');
-      }
-    },
-    [fetchProviders]
-  );
-
+  // 测试连通性
   const handleTest = useCallback(
     async (provider: Provider) => {
       setTestingId(provider.id);
@@ -251,110 +435,89 @@ export default function ProviderPage() {
             apiKey: provider.apiKey,
           }),
         });
-        const data: TestProviderResponse = await res.json();
-        if (data.success && data.data) {
-          if (data.data.connected) {
-            message.success(data.data.message);
-          } else {
-            message.warning(data.data.message);
-          }
+        const data = await res.json();
+        if (data.success && data.data?.connected) {
+          message.success(`连接成功，延迟 ${data.data.latency}ms`);
         } else {
-          message.error(data.error?.message ?? '测试失败');
+          message.error(data.data?.message ?? '连接失败');
         }
       } catch {
-        message.error('测试 API Key 连通性失败');
+        message.error('测试失败');
       } finally {
         setTestingId(null);
       }
     },
-    []
+    [],
   );
 
-  const handleAddPreset = useCallback(
-    async (preset: PresetProviderWithStatus) => {
-      try {
-        const res = await fetch('/api/providers/preset', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ presetId: preset.id }),
-        });
-        const data: ProviderResponse = await res.json();
-        if (data.success) {
-          message.success(`已添加 ${preset.name}`);
-          fetchProviders();
-        } else {
-          message.error(data.error?.message ?? '添加失败');
-        }
-      } catch {
-        message.error('添加预置提供商失败');
-      }
+  // 删除提供商
+  const handleDelete = useCallback(
+    (provider: Provider) => {
+      AntdModal.confirm({
+        title: '确认删除',
+        content: `确定要删除提供商「${provider.name}」吗？`,
+        okText: '删除',
+        okButtonProps: { danger: true },
+        cancelText: '取消',
+        onOk: async () => {
+          try {
+            const res = await fetch(`/api/providers?id=${provider.id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+              message.success('删除成功');
+              fetchProviders();
+            } else {
+              message.error(data.error?.message ?? '删除失败');
+            }
+          } catch {
+            message.error('删除失败');
+          }
+        },
+      });
     },
-    [fetchProviders]
+    [fetchProviders],
   );
 
-  // 启动 Qwen OAuth 登录
+  // Qwen OAuth 登录
   const handleQwenOAuthStart = useCallback(async () => {
     setOauthLoading(true);
     setOauthVerificationUri('');
     setOauthUserCode('');
-    setOauthErrorDetail(null);
     try {
       const res = await fetch('/api/providers/qwen-oauth/start', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
       });
-
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        const errMsg = errorData.error?.message ?? '启动 OAuth 失败';
-        setOauthErrorDetail({
-          message: errMsg,
-          code: errorData.error?.code ?? 'UNKNOWN',
-          rawResponse: JSON.stringify(errorData, null, 2),
-        });
+        message.error('启动 OAuth 失败');
         return;
       }
-
-      const data: { success: boolean; data?: { verificationUri: string; userCode: string; authorizationUrl: string; deviceCode: string; interval: number; codeVerifier: string }; error?: { message: string } } = await res.json();
-
+      const data = await res.json();
       if (data.success && data.data) {
-        const { verificationUri, userCode, authorizationUrl, deviceCode, interval, codeVerifier } = data.data;
-        setOauthVerificationUri(verificationUri);
+        const { authorizationUrl, userCode, deviceCode, codeVerifier, interval } = data.data;
+        setOauthVerificationUri(authorizationUrl || 'https://chat.qwen.ai/authorize');
         setOauthUserCode(userCode);
         setOauthPolling(true);
-        // 使用自动组合的URL格式
+
+        // 打开授权页面
         window.open(authorizationUrl, '_blank');
 
-        const pollStartTime = Date.now();
-        const maxPollTime = 5 * 60 * 1000;
-
+        // 轮询获取 Token
         const poll = async () => {
-          if (Date.now() - pollStartTime > maxPollTime) {
-            setOauthPolling(false);
-            message.error('OAuth 授权超时，请重试');
-            return;
-          }
-
           try {
             const pollRes = await fetch('/api/providers/qwen-oauth/poll', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ deviceCode, codeVerifier }),
             });
-
-            const pollData: { success: boolean; data?: { providerId: string; expiresIn: number }; error?: { code: string; message: string } } = await pollRes.json();
-
+            const pollData = await pollRes.json();
             if (pollData.success && pollData.data) {
               setOauthPolling(false);
               setOauthProviderId(pollData.data.providerId);
-              const expiresAt = new Date(Date.now() + pollData.data.expiresIn * 1000).toISOString();
-              setOauthExpiresAt(expiresAt);
+              setOauthExpiresAt(new Date(Date.now() + pollData.data.expiresIn * 1000).toISOString());
               message.success('Qwen OAuth 登录成功');
               fetchProviders();
             } else if (pollData.error?.code === 'AUTHORIZATION_PENDING') {
               setTimeout(poll, interval * 1000);
-            } else if (pollData.error?.code === 'SLOW_DOWN') {
-              setTimeout(poll, (interval + 2) * 1000);
             } else {
               setOauthPolling(false);
               message.error(pollData.error?.message ?? '获取 Token 失败');
@@ -363,10 +526,7 @@ export default function ProviderPage() {
             setTimeout(poll, interval * 1000);
           }
         };
-
         setTimeout(poll, interval * 1000);
-      } else {
-        message.error(data.error?.message ?? '启动 OAuth 失败');
       }
     } catch {
       message.error('启动 OAuth 失败');
@@ -376,15 +536,14 @@ export default function ProviderPage() {
   }, [fetchProviders]);
 
   const getOAuthStatusText = () => {
-    if (oauthExpiresAt == null) return '未登录';
+    if (!oauthExpiresAt) return '未登录';
     const expires = new Date(oauthExpiresAt);
-    const now = new Date();
-    const diff = expires.getTime() - now.getTime();
+    const diff = expires.getTime() - Date.now();
     if (diff <= 0) return '已过期';
     const minutes = Math.floor(diff / 60000);
-    if (minutes < 60) return `剩余 ${String(minutes)} 分钟`;
+    if (minutes < 60) return `剩余 ${minutes} 分钟`;
     const hours = Math.floor(minutes / 60);
-    return `剩余 ${String(hours)} 小时 ${String(minutes % 60)} 分钟`;
+    return `剩余 ${hours} 小时 ${minutes % 60} 分钟`;
   };
 
   const handleQwenOAuthRefresh = useCallback(async () => {
@@ -395,341 +554,226 @@ export default function ProviderPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ providerId: oauthProviderId }),
       });
-      const data: { success: boolean; data?: { expiresAt: string }; error?: { message: string } } = await res.json();
-      if (data.success && data.data) {
-        setOauthExpiresAt(data.data.expiresAt);
+      const data = await res.json();
+      if (data.success) {
+        setOauthExpiresAt(data.data?.expiresAt);
         message.success('Token 刷新成功');
-        fetchProviders();
       } else {
         message.error(data.error?.message ?? '刷新失败');
       }
     } catch {
-      message.error('刷新 Token 失败');
+      message.error('刷新失败');
     }
-  }, [oauthProviderId, fetchProviders]);
+  }, [oauthProviderId]);
 
-  const columns = [
-    {
-      title: '名称',
-      dataIndex: 'name',
-      key: 'name',
-      render: (name: string, record: Provider) => (
-        <Space>
-          {(() => {
-            const IconComponent = PROVIDER_ICON_MAP[record.sdkType] ?? GlobalOutlined;
-            return <IconComponent size={20} />;
-          })()}
-          <Text strong>{name}</Text>
-        </Space>
-      ),
-    },
-    {
-      title: '基础 URL',
-      dataIndex: 'baseUrl',
-      key: 'baseUrl',
-      ellipsis: true,
-    },
-    {
-      title: '认证方式',
-      dataIndex: 'authType',
-      key: 'authType',
-      render: (authType: string) => (
-        <Tag color={authType === 'oauth' ? 'purple' : 'blue'}>
-          {authType === 'oauth' ? 'OAuth' : 'API Key'}
-        </Tag>
-      ),
-    },
-    {
-      title: 'OAuth 状态',
-      key: 'oauthStatus',
-      render: (_: unknown, record: Provider) => {
-        if (record.authType !== 'oauth') return <Tag color="default">-</Tag>;
-        if (!record.oauthExpiresAt) return <Tag color="red">未登录</Tag>;
-        const expires = new Date(record.oauthExpiresAt);
-        const now = new Date();
-        const diff = expires.getTime() - now.getTime();
-        if (diff <= 0) return <Tag color="red">已过期</Tag>;
-        const minutes = Math.floor(diff / 60000);
-        return <Tag color="green">{minutes < 60 ? `剩余 ${String(minutes)} 分钟` : `剩余 ${String(Math.floor(minutes / 60))} 小时`}</Tag>;
-      },
-    },
-    {
-      title: '状态',
-      dataIndex: 'enabled',
-      key: 'enabled',
-      render: (enabled: boolean) => (
-        <Tag color={enabled ? 'green' : 'red'}>{enabled ? '已启用' : '已禁用'}</Tag>
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      render: (_: unknown, record: Provider) => (
-        <Space>
-          <Tooltip title="配置">
-            <Button
-              type="text"
-              icon={<SettingOutlined />}
-              onClick={() => { handleOpenModal(record); }}
-            />
-          </Tooltip>
-          <Tooltip title="测试连通性">
-            <Button
-              type="text"
-              icon={<ThunderboltOutlined />}
-              onClick={() => { void handleTest(record); }}
-              loading={testingId === record.id}
-            />
-          </Tooltip>
-          {record.authType === 'oauth' && record.oauthRefreshToken && (
-            <Tooltip title="刷新 Token">
-              <Button
-                type="text"
-                icon={<ReloadOutlined />}
-                onClick={() => { setOauthProviderId(record.id); void handleQwenOAuthRefresh(); }}
-              />
-            </Tooltip>
-          )}
-          <Popconfirm
-            title="确定删除此提供商吗？"
-            onConfirm={() => { void handleDelete(record.id); }}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Tooltip title="删除">
-              <Button type="text" danger icon={<DeleteOutlined />} />
-            </Tooltip>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  // 已配置提供商
+  const configuredProviders = useMemo(() => dataSource.filter((p) => p.enabled), [dataSource]);
+
+  if (loading) {
+    return (
+      <div style={{ padding: 32 }}>
+        <Skeleton active paragraph={{ rows: 3 }} />
+      </div>
+    );
+  }
 
   return (
-    <AppLayout>
-      <Text strong style={{ fontSize: 20, display: 'block', marginBottom: 8 }}>
-        {t('common.providers')}
-      </Text>
-      <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
-        配置和管理 API 提供商连接。添加提供商后，前往「模型管理」页面添加具体模型。
-      </Text>
-
-      {/* Qwen OAuth 登录 */}
-      <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 12 }}>
-        <Icon icon={LockOutlined} /> Qwen OAuth 登录
-      </Text>
-      <Card style={{ marginBottom: 32 }}>
-        <Flexbox align="center" gap={16}>
-          <Button
-            type="primary"
-            size="large"
-            icon={<LockOutlined />}
-            loading={oauthLoading || oauthPolling}
-            onClick={() => { void handleQwenOAuthStart(); }}
-            disabled={oauthPolling}
-          >
-            {oauthPolling ? '等待授权...' : oauthLoading ? '启动中...' : '使用 Qwen 账号登录'}
-          </Button>
-          {oauthVerificationUri && (
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              请在浏览器中访问 {oauthVerificationUri} 并输入验证码：{oauthUserCode}
-            </Text>
-          )}
-          {oauthExpiresAt && (
-            <Flexbox align="center" gap={8}>
-              <Tag color="green">Token 有效: {getOAuthStatusText()}</Tag>
-              <Button
-                type="text"
-                size="small"
-                icon={<ReloadOutlined />}
-                onClick={() => { void handleQwenOAuthRefresh(); }}
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg-layout)' }}>
+      {/* 顶部标题栏 */}
+      <div
+        style={{
+          background: 'var(--color-bg)',
+          borderBottom: '1px solid var(--color-border)',
+          padding: '20px 24px',
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <Flexbox horizontal align="center" justify="space-between">
+            <Flexbox gap={12} horizontal align="center">
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  background: 'var(--lobe-color-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                刷新
-              </Button>
-            </Flexbox>
-          )}
-        </Flexbox>
-
-        {oauthErrorDetail != null && (
-          <div style={{ marginTop: 16 }}>
-            <Collapse
-              size="small"
-              defaultActiveKey={[]}
-              items={[{
-                key: 'error',
-                label: (
-                  <Flexbox gap={8} horizontal align="center">
-                    <Tag color="red" style={{ margin: 0 }}>OAuth 错误详情</Tag>
-                    <Text type="secondary" style={{ fontSize: 12 }}>{oauthErrorDetail.message}</Text>
-                  </Flexbox>
-                ),
-                children: (
-                  <div>
-                    <Flexbox justify="space-between" align="center" style={{ marginBottom: 8 }}>
-                      <Text type="secondary" style={{ fontSize: 12 }}>错误代码: {oauthErrorDetail.code}</Text>
-                      <Button
-                        size="small"
-                        icon={<CopyOutlined />}
-                        onClick={() => {
-                          const text = `错误信息: ${oauthErrorDetail.message}\n错误代码: ${oauthErrorDetail.code}\n\n原始响应:\n${oauthErrorDetail.rawResponse}`;
-                          void navigator.clipboard.writeText(text);
-                          message.success('已复制到剪贴板');
-                        }}
-                      >
-                        复制全部
-                      </Button>
-                    </Flexbox>
-                    <Alert
-                      type="error"
-                      title={oauthErrorDetail.message}
-                      description={<pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 12 }}>{oauthErrorDetail.rawResponse}</pre>}
-                      showIcon
-                    />
-                  </div>
-                ),
-              }]}
-            />
-          </div>
-        )}
-      </Card>
-
-      {/* 已配置的提供商列表 */}
-      <Flexbox justify="space-between" align="center" style={{ marginBottom: 16 }}>
-        <Text strong style={{ fontSize: 16 }}>
-          <Icon icon={GlobalOutlined} /> 已配置提供商
-        </Text>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => { handleOpenModal(); }}
-        >
-          添加提供商
-        </Button>
-      </Flexbox>
-
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: 40 }}><Spin /></div>
-      ) : dataSource.length === 0 ? (
-        <Empty description="暂无已配置的提供商，点击上方按钮添加" style={{ marginBottom: 32 }} />
-      ) : (
-        <Table
-          columns={columns}
-          dataSource={dataSource}
-          rowKey="id"
-          loading={false}
-          pagination={false}
-          style={{ marginBottom: 32 }}
-        />
-      )}
-
-      {/* 预置提供商网格 */}
-      <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 12 }}>
-        <Icon icon={GlobalOutlined} /> 快速添加预置提供商
-      </Text>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 32 }}>
-        {presets.map((preset) => (
-          <Card
-            key={preset.id}
-            size="small"
-            hoverable
-            style={{
-              opacity: preset.isAdded ? 0.6 : 1,
-              cursor: preset.isAdded ? 'default' : 'pointer',
-            }}
-            onClick={() => { if (!preset.isAdded) void handleAddPreset(preset); }}
-          >
-            <Flexbox align="center" gap={8}>
-              {(() => {
-                const IconComponent = PROVIDER_ICON_MAP[preset.id];
-                return IconComponent ? <IconComponent size={32} /> : <Avatar avatar={preset.icon ?? <GlobalOutlined />} size={32} />;
-              })()}
-              <Flexbox flex={1}>
-                <Text strong style={{ fontSize: 14 }}>{preset.name}</Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {preset.description?.substring(0, 20)}...
+                <Icon icon={ApiOutlined} size={20} color="#fff" />
+              </div>
+              <div>
+                <Text strong style={{ fontSize: 22, display: 'block' }}>
+                  提供商管理
                 </Text>
-              </Flexbox>
-              {preset.isAdded ? (
-                <Tag color="green" icon={<CheckCircleOutlined />}>已添加</Tag>
-              ) : (
-                <Button type="primary" size="small" icon={<PlusOutlined />}>
-                  添加
-                </Button>
-              )}
+                <Text type="secondary" style={{ fontSize: 13 }}>
+                  {configuredProviders.length > 0
+                    ? `${configuredProviders.length} 个已配置提供商`
+                    : '添加提供商以开始使用 AI 模型'}
+                </Text>
+              </div>
             </Flexbox>
-          </Card>
-        ))}
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              size="large"
+              onClick={() => handleOpenModal()}
+              style={{ borderRadius: 10, padding: '0 20px', height: 40 }}
+            >
+              添加提供商
+            </Button>
+          </Flexbox>
+        </div>
       </div>
 
+      {/* 主内容区 */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px' }}>
+        {/* Qwen OAuth 登录 */}
+        <div
+          style={{
+            background: 'var(--color-bg)',
+            borderRadius: 12,
+            border: '1px solid var(--color-border)',
+            padding: 20,
+            marginBottom: 24,
+          }}
+        >
+          <Flexbox gap={16} horizontal align="center">
+            <Icon icon={LockOutlined} size={20} color="var(--lobe-color-primary)" />
+            <div style={{ flex: 1 }}>
+              <Text strong>Qwen OAuth 登录</Text>
+              <Text type="secondary" style={{ display: 'block', fontSize: 12, marginTop: 4 }}>
+                使用 Qwen 账号授权，无需 API Key
+              </Text>
+            </div>
+            {oauthExpiresAt ? (
+              <Flexbox gap={8} horizontal>
+                <Tag color="green">{getOAuthStatusText()}</Tag>
+                <Button size="small" icon={<SyncOutlined />} onClick={handleQwenOAuthRefresh}>
+                  刷新
+                </Button>
+              </Flexbox>
+            ) : (
+              <Button
+                type="primary"
+                icon={<LinkOutlined />}
+                loading={oauthLoading || oauthPolling}
+                onClick={handleQwenOAuthStart}
+                disabled={oauthPolling}
+              >
+                {oauthPolling ? '等待授权...' : '使用 Qwen 账号登录'}
+              </Button>
+            )}
+          </Flexbox>
+          {oauthVerificationUri && !oauthExpiresAt && (
+            <div style={{ marginTop: 12, padding: '8px 12px', background: 'var(--color-fill-quaternary)', borderRadius: 8 }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                请访问 <a href={oauthVerificationUri} target="_blank" rel="noopener noreferrer">{oauthVerificationUri}</a> 并输入验证码：<strong>{oauthUserCode}</strong>
+              </Text>
+            </div>
+          )}
+        </div>
+
+        {/* 已配置提供商 */}
+        <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 16 }}>
+          已配置提供商 ({dataSource.length})
+        </Text>
+        {dataSource.length === 0 ? (
+          <Empty
+            style={{ padding: '40px 0' }}
+            description="暂无已配置的提供商，请添加或从预置中选择"
+          />
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+              gap: 16,
+              marginBottom: 32,
+            }}
+          >
+            {dataSource.map((provider) => (
+              <ProviderCard
+                key={provider.id}
+                provider={provider}
+                onEdit={() => handleOpenModal(provider)}
+                onDelete={() => handleDelete(provider)}
+                onTest={() => handleTest(provider)}
+                testing={testingId === provider.id}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* 预置提供商 */}
+        <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 16 }}>
+          快速添加
+        </Text>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap: 14,
+          }}
+        >
+          {presets.map((preset) => (
+            <PresetCard
+              key={preset.id}
+              preset={preset}
+              onAdd={() => handleAddPreset(preset)}
+              adding={saving}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* 添加/编辑弹窗 */}
       <Modal
         title={editingProvider ? '编辑提供商' : '添加提供商'}
         open={modalOpen}
-        onOk={() => { void handleSave(); }}
-        onCancel={() => { setModalOpen(false); }}
+        onCancel={handleCloseModal}
+        footer={null}
         destroyOnHidden
+        centered
         width={520}
-        okText="保存"
-        cancelText="取消"
-        confirmLoading={saving}
       >
-        <Form form={form} layout="vertical">
-          {!editingProvider && (
-            <Form.Item name="presetId" label="选择预置提供商（可选）">
-              <Select
-                placeholder="选择预置提供商可自动填充配置"
-                allowClear
-                onChange={handlePresetChange}
-                options={presets.map((p) => ({
-                  value: p.id,
-                  label: p.name,
-                }))}
-              />
-            </Form.Item>
-          )}
-
+        <Form form={form} onFinish={handleSubmit} layout="vertical" style={{ marginTop: 20 }}>
           <Form.Item
             name="name"
             label="提供商名称"
-            rules={[{ required: true, message: '请输入提供商名称' }]}
+            rules={[{ required: true, message: '请输入名称' }]}
           >
-            <Input placeholder="例如：OpenAI, DeepSeek" />
+            <LobeInput placeholder="例如：OpenAI" size="large" />
           </Form.Item>
 
           <Form.Item
             name="baseUrl"
-            label="Base URL"
-            rules={[{ required: true, message: '请输入 Base URL' }, { type: 'url', message: '请输入有效的 URL' }]}
+            label="API 地址"
+            rules={[{ required: true, message: '请输入 Base URL' }]}
           >
-            <Input placeholder="https://api.openai.com/v1" />
+            <LobeInput placeholder="https://api.openai.com" size="large" />
           </Form.Item>
 
-          <Form.Item
-            noStyle
-            shouldUpdate={(prev, curr) => prev.authType !== curr.authType}
-          >
-            {({ getFieldValue }) =>
-              getFieldValue('authType') === 'apiKey' ? (
-                <Form.Item
-                  name="apiKey"
-                  label="API Key"
-                  tooltip={editingProvider ? '留空则不修改' : undefined}
-                  rules={[{ required: !editingProvider, message: '请输入 API Key' }]}
-                >
-                  <Input.Password placeholder="sk-..." />
-                </Form.Item>
-              ) : null
-            }
+          <Form.Item name="apiKey" label="API Key">
+            <LobeInput.Password placeholder="sk-..." size="large" />
           </Form.Item>
 
-          <Form.Item name="databaseUrl" label="数据库 URL（可选）">
-            <Input placeholder="可选" />
-          </Form.Item>
-
-          <Form.Item name="enabled" label="启用" valuePropName="checked" initialValue={true}>
-            <Switch checkedChildren="启用" unCheckedChildren="禁用" />
+          <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
+            <Flexbox gap={12} horizontal justify="flex-end">
+              <Button onClick={handleCloseModal}>取消</Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={saving}
+                style={{ borderRadius: 10, padding: '0 24px' }}
+              >
+                {editingProvider ? '保存' : '添加'}
+              </Button>
+            </Flexbox>
           </Form.Item>
         </Form>
       </Modal>
-    </AppLayout>
+    </div>
   );
 }

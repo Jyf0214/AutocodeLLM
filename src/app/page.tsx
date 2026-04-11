@@ -81,12 +81,6 @@ export default function LandingPage() {
                   <Icon icon={ArrowRightOutlined} />
                 </Button>
               </Link>
-              <Link href="/demo">
-                <Button size="large">
-                  <Icon icon={PlayCircleOutlined} />
-                  {t('onlineDemo')}
-                </Button>
-              </Link>
             </>
           )}
         </div>

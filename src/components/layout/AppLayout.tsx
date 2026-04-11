@@ -39,7 +39,6 @@ const menuItems = [
   { key: '/workers', icon: CloudServerOutlined, labelKey: 'common.workers' },
   { key: '/agents', icon: TeamOutlined, labelKey: 'common.agents' },
   { key: '/sync', icon: SyncOutlined, labelKey: 'common.sync' },
-  { key: '/model', icon: AppstoreOutlined, labelKey: 'common.models' },
   { key: '/provider', icon: ApiOutlined, labelKey: 'common.providers' },
 ];
 
