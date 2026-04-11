@@ -14,7 +14,7 @@ import { message, Empty } from 'antd';
 import { FolderOutlined } from '@ant-design/icons';
 import { Flexbox, Text, Button } from '@lobehub/ui';
 import { PlusOutlined } from '@ant-design/icons';
-import AppLayout from '@/components/layout/AppLayout';
+
 import type { WorkspaceListItem } from '@/lib/api/workspace-types';
 
 /**
@@ -59,7 +59,7 @@ export default function ChatListPage() {
   }, [router]);
 
   return (
-    <AppLayout>
+    
       <Flexbox gap={24}>
         <Flexbox horizontal align="center" justify="space-between">
           <Text strong style={{ fontSize: 20 }}>
@@ -138,6 +138,6 @@ export default function ChatListPage() {
           </div>
         )}
       </Flexbox>
-    </AppLayout>
+    
   );
 }

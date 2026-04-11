@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, Button, Space, Form, Input, Switch, message as antdMessage, Tag } from 'antd';
 import { CloudUploadOutlined, CloudDownloadOutlined, PlayCircleOutlined, PauseCircleOutlined, SettingOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { Flexbox, Text } from '@lobehub/ui';
-import AppLayout from '@/components/layout/AppLayout';
 
 interface SyncStatus {
   enabled: boolean;
@@ -103,8 +102,7 @@ export default function SyncPage() {
   }, [form]);
 
   return (
-    <AppLayout>
-      <Flexbox gap={16} style={{ flexDirection: 'column' }}>
+    <Flexbox gap={16} style={{ flexDirection: 'column' }}>
         <Text style={{ fontSize: 20, fontWeight: 700 }}>WebDAV 同步</Text>
         <Text type="secondary">通过 WebDAV 实现本地文件与远程的自动同步</Text>
 
@@ -205,6 +203,5 @@ export default function SyncPage() {
           </Card>
         )}
       </Flexbox>
-    </AppLayout>
   );
 }

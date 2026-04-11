@@ -5,7 +5,7 @@ import { Button, Text, Empty, Modal, Form, Input as LobeInput } from '@lobehub/u
 import { PlusOutlined, EditOutlined, DeleteOutlined, HeartOutlined } from '@ant-design/icons';
 import { Table, Tag, Space, Popconfirm, Select as AntSelect, Switch, message, Input as AntdInput } from 'antd';
 import { useTranslations } from 'next-intl';
-import AppLayout from '@/components/layout/AppLayout';
+
 import type { Worker } from '@/lib/api/worker-types';
 
 interface WorkerFormData {
@@ -243,35 +243,33 @@ export default function WorkersPage() {
   ];
 
   return (
-    <AppLayout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text strong style={{ fontSize: 20 }}>
-            {t('title')}
-          </Text>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => {
-            handleOpenModal();
-          }}>
-            {t('addWorker')}
-          </Button>
-        </div>
-
-        <Text type="secondary">{t('description')}</Text>
-
-        {fetching ? (
-          <Empty description="加载中..." />
-        ) : workers.length === 0 ? (
-          <Empty description={t('noWorkersDesc')} />
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={workers}
-            rowKey="id"
-            pagination={false}
-            size="middle"
-          />
-        )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text strong style={{ fontSize: 20 }}>
+          {t('title')}
+        </Text>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => {
+          handleOpenModal();
+        }}>
+          {t('addWorker')}
+        </Button>
       </div>
+
+      <Text type="secondary">{t('description')}</Text>
+
+      {fetching ? (
+        <Empty description="加载中..." />
+      ) : workers.length === 0 ? (
+        <Empty description={t('noWorkersDesc')} />
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={workers}
+          rowKey="id"
+          pagination={false}
+          size="middle"
+        />
+      )}
 
       <Modal
         title={editingWorker ? t('editWorker') : t('addWorker')}
@@ -334,6 +332,6 @@ export default function WorkersPage() {
           </Form.Item>
         </Form>
       </Modal>
-    </AppLayout>
+    </div>
   );
 }

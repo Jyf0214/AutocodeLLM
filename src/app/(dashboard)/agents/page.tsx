@@ -6,7 +6,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, PauseCi
 import { Table, Tag, Space, Popconfirm, Progress, Collapse, Select as AntdSelect, Input as AntdInput } from 'antd';
 import { useTranslations } from 'next-intl';
 import { message } from 'antd';
-import AppLayout from '@/components/layout/AppLayout';
+
 import type { AgentTask } from '@/lib/api/agent-task-types';
 
 interface AgentTaskFormData {
@@ -309,35 +309,33 @@ export default function AgentsPage() {
   ];
 
   return (
-    <AppLayout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text strong style={{ fontSize: 20 }}>
-            {t('title')}
-          </Text>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => {
-            handleOpenModal();
-          }}>
-            {t('addAgent')}
-          </Button>
-        </div>
-
-        <Text type="secondary">{t('description')}</Text>
-
-        {fetching ? (
-          <Empty description="加载中..." />
-        ) : agents.length === 0 ? (
-          <Empty description={t('noAgentsDesc')} />
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={agents}
-            rowKey="id"
-            pagination={false}
-            size="middle"
-          />
-        )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text strong style={{ fontSize: 20 }}>
+          {t('title')}
+        </Text>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => {
+          handleOpenModal();
+        }}>
+          {t('addAgent')}
+        </Button>
       </div>
+
+      <Text type="secondary">{t('description')}</Text>
+
+      {fetching ? (
+        <Empty description="加载中..." />
+      ) : agents.length === 0 ? (
+        <Empty description={t('noAgentsDesc')} />
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={agents}
+          rowKey="id"
+          pagination={false}
+          size="middle"
+        />
+      )}
 
       <Modal
         title={editingAgent ? t('editAgent') : t('addAgent')}
@@ -438,6 +436,6 @@ export default function AgentsPage() {
           </div>
         )}
       </Modal>
-    </AppLayout>
+    </div>
   );
 }

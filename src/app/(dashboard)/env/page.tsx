@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons';
 import { Table, Tag, Space, Popconfirm, Switch, message, Input as AntdInput } from 'antd';
 import { useTranslations } from 'next-intl';
-import AppLayout from '@/components/layout/AppLayout';
+
 
 interface EnvVariable {
   id: string;
@@ -321,47 +321,45 @@ export default function EnvPage() {
   ];
 
   return (
-    <AppLayout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {/* 页面标题和操作按钮 */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-          <Text strong style={{ fontSize: 20 }}>
-            {t('title')}
-          </Text>
-          <Space wrap>
-            <Button icon={<PlusOutlined />} type="primary" onClick={() => {
-              handleOpenModal();
-            }}>
-              {t('add')}
-            </Button>
-            <Button icon={<ExportOutlined />} onClick={handleExport}>
-              {t('export')}
-            </Button>
-            <Button icon={<ImportOutlined />} onClick={() => {
-              setImportModalOpen(true);
-            }}>
-              {t('import')}
-            </Button>
-          </Space>
-        </div>
-
-        <Text type="secondary">{t('description')}</Text>
-
-        {/* 环境变量列表 */}
-        {fetching ? (
-          <Empty description={t('loading')} />
-        ) : envVars.length === 0 ? (
-          <Empty description={t('noEnvVarsDesc')} />
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={envVars}
-            rowKey="id"
-            pagination={false}
-            size="middle"
-          />
-        )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* 页面标题和操作按钮 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        <Text strong style={{ fontSize: 20 }}>
+          {t('title')}
+        </Text>
+        <Space wrap>
+          <Button icon={<PlusOutlined />} type="primary" onClick={() => {
+            handleOpenModal();
+          }}>
+            {t('add')}
+          </Button>
+          <Button icon={<ExportOutlined />} onClick={handleExport}>
+            {t('export')}
+          </Button>
+          <Button icon={<ImportOutlined />} onClick={() => {
+            setImportModalOpen(true);
+          }}>
+            {t('import')}
+          </Button>
+        </Space>
       </div>
+
+      <Text type="secondary">{t('description')}</Text>
+
+      {/* 环境变量列表 */}
+      {fetching ? (
+        <Empty description={t('loading')} />
+      ) : envVars.length === 0 ? (
+        <Empty description={t('noEnvVarsDesc')} />
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={envVars}
+          rowKey="id"
+          pagination={false}
+          size="middle"
+        />
+      )}
 
       {/* 添加/编辑弹窗 */}
       <Modal
@@ -466,6 +464,6 @@ export default function EnvPage() {
           </Form.Item>
         </Form>
       </Modal>
-    </AppLayout>
+    </div>
   );
 }

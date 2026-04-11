@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+
 import { Text } from '@lobehub/ui';
 import { useTranslations } from 'next-intl';
 import {
@@ -245,7 +245,7 @@ export default function McpPage() {
   ];
 
   return (
-    <AppLayout>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <Text strong style={{ fontSize: 20, display: 'block', marginBottom: 8 }}>
         {t('common.mcp')}
       </Text>
@@ -297,6 +297,6 @@ export default function McpPage() {
           </Form.Item>
         </Form>
       </Modal>
-    </AppLayout>
+    </div>
   );
 }
