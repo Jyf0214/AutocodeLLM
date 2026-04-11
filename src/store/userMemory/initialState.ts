@@ -1,0 +1,82 @@
+/**
+ * 本代码来源于 LobeChat 项目（https://github.com/lobehub/lobe-chat）
+ *
+ * LobeChat 许可证信息：
+ * LobeHub Community License（基于 Apache License 2.0）
+ * Copyright (c) 2024-2026 LobeHub LLC. All rights reserved.
+ * 详细信息：http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * 修改声明：
+ * 本文件已从 LobeChat 源代码进行修改以适配 AutocodeLLM 项目。
+ * 修改内容包括：目录结构调整、依赖适配、API 接口兼容等。
+ *
+ * AutocodeLLM 项目许可证：
+ * Apache License, Version 2.0
+ * Copyright (c) 2026 Jyf0214
+ *
+ * 双重许可：本文件同时受上述两个许可证约束。
+ * 商业使用需分别获得对应授权。
+ */
+
+import { type RetrieveMemoryParams, type RetrieveMemoryResult } from '@lobechat/types';
+
+import { type ActivitySliceState } from './slices/activity';
+import { activityInitialState } from './slices/activity';
+import { type AgentMemorySliceState } from './slices/agent';
+import { agentMemoryInitialState } from './slices/agent';
+import { type ContextSliceState } from './slices/context';
+import { contextInitialState } from './slices/context';
+import { type ExperienceSliceState } from './slices/experience';
+import { experienceInitialState } from './slices/experience';
+import { type IdentitySliceState } from './slices/identity';
+import { identityInitialState } from './slices/identity';
+import { type PreferenceSliceState } from './slices/preference';
+import { preferenceInitialState } from './slices/preference';
+
+export interface PersonaData {
+  content: string;
+  summary: string;
+}
+
+export interface UserMemoryStoreState
+  extends
+    ActivitySliceState,
+    AgentMemorySliceState,
+    ContextSliceState,
+    ExperienceSliceState,
+    IdentitySliceState,
+    PreferenceSliceState {
+  activeParams?: RetrieveMemoryParams;
+  activeParamsKey?: string;
+  editingMemoryContent?: string;
+  editingMemoryId?: string;
+  editingMemoryLayer?: 'activity' | 'context' | 'experience' | 'identity' | 'preference';
+  memoryFetchedAtMap: Record<string, number>;
+  memoryMap: Record<string, RetrieveMemoryResult>;
+  persona?: PersonaData;
+  personaInit: boolean;
+  roles: { count: number; tag: string }[];
+  tags: { count: number; tag: string }[];
+  tagsInit: boolean;
+}
+
+export const initialState: UserMemoryStoreState = {
+  ...activityInitialState,
+  ...agentMemoryInitialState,
+  ...contextInitialState,
+  ...experienceInitialState,
+  ...identityInitialState,
+  ...preferenceInitialState,
+  activeParams: undefined,
+  activeParamsKey: undefined,
+  editingMemoryContent: undefined,
+  editingMemoryId: undefined,
+  editingMemoryLayer: undefined,
+  memoryFetchedAtMap: {},
+  memoryMap: {},
+  persona: undefined,
+  personaInit: false,
+  roles: [],
+  tags: [],
+  tagsInit: false,
+};
