@@ -6,8 +6,8 @@
  * Copyright (c) 2026 Jyf0214
  */
 
-import create from 'zustand';
-import type { StateCreator } from 'zustand';
+import { createStore } from 'zustand/vanilla';
+import { useStore } from 'zustand/react';
 import { devtools } from 'zustand/middleware';
 
 import { initialState } from './initialState';
@@ -20,21 +20,32 @@ import { createUISlice, type UISlice } from './slices/ui/slice';
 
 export type ChatStore = ChatStoreState & ChatSlice & MessagesSlice & AgentSlice & InputSlice & UISlice;
 
-type Creator = StateCreator<ChatStore, [['zustand/devtools', never]], []>;
+const store = createStore<ChatStore>()(
+  devtools(
+    (set, get) => ({
+      ...initialState,
+      ...createChatSlice(set, get),
+      ...createMessagesSlice(set, get),
+      ...createAgentSlice(set, get),
+      ...createInputSlice(set, get),
+      ...createUISlice(set, get),
+    }),
+    { name: 'ChatStore' }
+  )
+);
 
-const storeCreator: Creator = (set, get) => ({
-  ...initialState,
-  ...createChatSlice(set, get),
-  ...createMessagesSlice(set, get),
-  ...createAgentSlice(set, get),
-  ...createInputSlice(set, get),
-  ...createUISlice(set, get),
-});
-
-export const useChatStore = create<ChatStore>()(devtools(storeCreator, { name: 'ChatStore' }));
+export function useChatStore(): ChatStore;
+export function useChatStore<T>(selector: (state: ChatStore) => T): T;
+export function useChatStore<T>(selector?: (state: ChatStore) => T): T | ChatStore {
+  if (selector) {
+    return useStore(store, selector);
+  }
+  return useStore(store);
+}
+Object.assign(useChatStore, store);
 
 export const getChatStoreState = (): ChatStoreState => {
-  const s = useChatStore.getState();
+  const s = store.getState();
   return {
     workspaceId: s.workspaceId,
     workspace: s.workspace,

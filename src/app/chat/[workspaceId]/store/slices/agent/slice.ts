@@ -6,100 +6,40 @@
  * Copyright (c) 2026 Jyf0214
  */
 
-import type { StateCreator } from 'zustand';
+import type { StateCreator } from 'zustand/vanilla';
 import type { ChatStoreState, AgentInstance, AgentState, ModelConfig, ChatMessage } from '../../types';
 import { simpleExecute, throttle } from '../../../lib/AgentExecutorAdapter';
 
-export interface RunAgentParams {
-  message: string;
-  model: ModelConfig;
-  parentId?: string;
-}
-
+export interface RunAgentParams { message: string; model: ModelConfig; parentId?: string; }
 export interface AgentSlice {
-  runSingleAgent: (params: RunAgentParams) => Promise<void>;
+  runSingleAgent: (p: RunAgentParams) => Promise<void>;
   cancelAgentExecution: () => void;
-  updateAgentStatus: (status: AgentState['status']) => void;
-  setActiveAgents: (agents: AgentInstance[]) => void;
-  addActiveAgent: (agent: AgentInstance) => void;
-  removeActiveAgent: (agentId: string) => void;
-  updateAgent: (agentId: string, updates: Partial<AgentInstance>) => void;
+  updateAgentStatus: (s: AgentState['status']) => void;
+  setActiveAgents: (a: AgentInstance[]) => void;
+  addActiveAgent: (a: AgentInstance) => void;
+  removeActiveAgent: (id: string) => void;
+  updateAgent: (id: string, u: Partial<AgentInstance>) => void;
 }
 
-type C = StateCreator<ChatStoreState, [['zustand/devtools', never]], [], AgentSlice>;
-
-export const createAgentSlice: C = (set, get) => ({
+export const createAgentSlice: StateCreator<ChatStoreState, [], [], AgentSlice> = (set, get) => ({
   agents: { activeAgents: [], status: 'idle' },
-
-  runSingleAgent: async (params: RunAgentParams) => {
-    const state = get();
-    if (state.agents.status === 'running') return;
-
-    const userMessage: ChatMessage = {
-      id: `msg-${Date.now()}-user`,
-      role: 'user',
-      content: params.message,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      meta: { title: '用户', avatar: '👤' },
-    };
-    get().addMessage(userMessage);
-
-    const assistantMessageId = `msg-${Date.now()}-assistant`;
-    get().addMessage({
-      id: assistantMessageId,
-      role: 'assistant',
-      content: '',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      meta: { title: params.model ? `AI · ${params.model.name}` : 'AI', avatar: '🤖' },
-      model: params.model.name,
-      provider: params.model.provider,
-    });
-
-    set({
-      agents: {
-        activeAgents: [{ id: 'default', name: params.model.name, role: 'worker', status: 'running', task: '处理中' }],
-        status: 'running',
-        currentOperationId: `op-${Date.now()}`,
-      },
-      input: { ...state.input, isSending: false },
-    });
-
-    let finalContent = '';
-    const throttledUpdate = throttle(16)((content: string) => {
-      get().updateMessage(assistantMessageId, { content, updatedAt: Date.now() });
-    });
-
+  runSingleAgent: async (p) => {
+    const s = get();
+    if (s.agents.status === 'running') return;
+    get().addMessage({ id: `u-${Date.now()}`, role: 'user', content: p.message, createdAt: Date.now(), updatedAt: Date.now(), meta: { title: '用户', avatar: '👤' } });
+    const aid = `a-${Date.now()}`;
+    get().addMessage({ id: aid, role: 'assistant', content: '', createdAt: Date.now(), updatedAt: Date.now(), meta: { title: p.model ? `AI · ${p.model.name}` : 'AI', avatar: '🤖' }, model: p.model.name, provider: p.model.provider });
+    set({ agents: { activeAgents: [{ id: 'd', name: p.model.name, role: 'worker', status: 'running', task: '处理中' }], status: 'running', currentOperationId: `o-${Date.now()}` }, input: { ...s.input, isSending: false } });
+    let fc = '';
+    const tu = throttle(16)((c: string) => get().updateMessage(aid, { content: c, updatedAt: Date.now() }));
     try {
-      await simpleExecute({
-        userInput: params.message,
-        model: params.model,
-        onContentUpdate: (content: string) => {
-          finalContent = content;
-          throttledUpdate(content);
-        },
-        onComplete: () => {
-          get().updateMessage(assistantMessageId, { content: finalContent, updatedAt: Date.now() });
-          set((s) => ({ agents: { ...s.agents, status: 'completed' as const } }));
-          setTimeout(() => set((s) => ({ agents: { ...s.agents, status: 'idle' } })), 3000);
-        },
-        onError: (error: Error) => {
-          get().updateMessage(assistantMessageId, { content: finalContent || '失败', error: { message: error.message, code: 'ERR' }, updatedAt: Date.now() });
-          set((s) => ({ agents: { ...s.agents, status: 'error' as const } }));
-        },
-      });
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : '失败';
-      get().updateMessage(assistantMessageId, { content: finalContent || '失败', error: { message: msg, code: 'ERR' }, updatedAt: Date.now() });
-      set((s) => ({ agents: { ...s.agents, status: 'error' as const } }));
-    }
+      await simpleExecute({ userInput: p.message, model: p.model, onContentUpdate: (c) => { fc = c; tu(c); }, onComplete: () => { get().updateMessage(aid, { content: fc, updatedAt: Date.now() }); set((st) => ({ agents: { ...st.agents, status: 'completed' as const } })); setTimeout(() => set((st) => ({ agents: { ...st.agents, status: 'idle' } })), 3000); }, onError: (e) => { get().updateMessage(aid, { content: fc || '失败', error: { message: e.message, code: 'ERR' }, updatedAt: Date.now() }); set((st) => ({ agents: { ...st.agents, status: 'error' as const } })); } });
+    } catch (error) { const m = error instanceof Error ? error.message : '失败'; get().updateMessage(aid, { content: fc || '失败', error: { message: m, code: 'ERR' }, updatedAt: Date.now() }); set((st) => ({ agents: { ...st.agents, status: 'error' as const } })); }
   },
-
   cancelAgentExecution: () => set((s) => ({ agents: { ...s.agents, status: 'cancelled' as const } })),
-  updateAgentStatus: (status: AgentState['status']) => set((s) => ({ agents: { ...s.agents, status } })),
-  setActiveAgents: (agents: AgentInstance[]) => set((s) => ({ agents: { ...s.agents, activeAgents: agents } })),
-  addActiveAgent: (agent: AgentInstance) => set((s) => ({ agents: { ...s.agents, activeAgents: [...s.agents.activeAgents, agent] } })),
-  removeActiveAgent: (agentId: string) => set((s) => ({ agents: { ...s.agents, activeAgents: s.agents.activeAgents.filter((a) => a.id !== agentId) } })),
-  updateAgent: (agentId: string, updates: Partial<AgentInstance>) => set((s) => ({ agents: { ...s.agents, activeAgents: s.agents.activeAgents.map((a) => (a.id === agentId ? { ...a, ...updates } : a)) } })),
+  updateAgentStatus: (status) => set((s) => ({ agents: { ...s.agents, status } })),
+  setActiveAgents: (agents) => set((s) => ({ agents: { ...s.agents, activeAgents: agents } })),
+  addActiveAgent: (agent) => set((s) => ({ agents: { ...s.agents, activeAgents: [...s.agents.activeAgents, agent] } })),
+  removeActiveAgent: (id) => set((s) => ({ agents: { ...s.agents, activeAgents: s.agents.activeAgents.filter((a) => a.id !== id) } })),
+  updateAgent: (id, u) => set((s) => ({ agents: { ...s.agents, activeAgents: s.agents.activeAgents.map((a) => (a.id === id ? { ...a, ...u } : a)) } })),
 });

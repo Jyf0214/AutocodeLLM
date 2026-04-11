@@ -6,26 +6,24 @@
  * Copyright (c) 2026 Jyf0214
  */
 
-import type { StateCreator } from 'zustand';
+import type { StateCreator } from 'zustand/vanilla';
 import type { ChatStoreState, FileAttachment } from '../../types';
 
 export interface InputSlice {
-  setInputValue: (value: string) => void;
+  setInputValue: (v: string) => void;
   clearInput: () => void;
-  setSending: (isSending: boolean) => void;
-  addAttachment: (file: FileAttachment) => void;
+  setSending: (v: boolean) => void;
+  addAttachment: (f: FileAttachment) => void;
   removeAttachment: (id: string) => void;
   clearAttachments: () => void;
 }
 
-type C = StateCreator<ChatStoreState, [['zustand/devtools', never]], [], InputSlice>;
-
-export const createInputSlice: C = (set) => ({
+export const createInputSlice: StateCreator<ChatStoreState, [], [], InputSlice> = (set) => ({
   input: { value: '', isSending: false, attachments: [] },
-  setInputValue: (value: string) => set((s) => ({ input: { ...s.input, value } })),
+  setInputValue: (v) => set((s) => ({ input: { ...s.input, value: v } })),
   clearInput: () => set((s) => ({ input: { ...s.input, value: '' } })),
-  setSending: (isSending: boolean) => set((s) => ({ input: { ...s.input, isSending } })),
-  addAttachment: (file: FileAttachment) => set((s) => ({ input: { ...s.input, attachments: [...s.input.attachments, file] } })),
-  removeAttachment: (id: string) => set((s) => ({ input: { ...s.input, attachments: s.input.attachments.filter((f) => f.id !== id) } })),
+  setSending: (v) => set((s) => ({ input: { ...s.input, isSending: v } })),
+  addAttachment: (f) => set((s) => ({ input: { ...s.input, attachments: [...s.input.attachments, f] } })),
+  removeAttachment: (id) => set((s) => ({ input: { ...s.input, attachments: s.input.attachments.filter((x) => x.id !== id) } })),
   clearAttachments: () => set((s) => ({ input: { ...s.input, attachments: [] } })),
 });
