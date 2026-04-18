@@ -49,53 +49,52 @@ export default function HomePage() {
     setIsLoading(true);
     try {
       sessionStorage.clear();
-      message.success('已退出登录');
+      message.success(t('logoutSuccess'));
       setTimeout(() => {
         window.location.reload();
       }, 500);
     } catch {
-      message.error('退出失败，请重试');
+      message.error(t('logoutFailed'));
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   /**
    * 功能卡片数据
    */
   const features: FeatureCard[] = [
-    
     {
       icon: <FolderOutlined style={{ fontSize: 28 }} />,
-      title: '工作区管理',
-      description: '多工作区隔离，独立配置，满足不同项目需求',
+      title: t('workspaceManagement'),
+      description: t('workspaceManagementDesc'),
       link: '/workplace',
       color: 'var(--lobe-color-success)',
     },
     {
       icon: <ApiOutlined style={{ fontSize: 28 }} />,
-      title: '多模型支持',
-      description: '兼容 OpenAI、Anthropic、Google 等主流 AI 模型',
+      title: t('multiModelSupport'),
+      description: t('multiModelSupportDesc'),
       link: '/provider',
       color: 'var(--lobe-color-warning)',
     },
     {
       icon: <TeamOutlined style={{ fontSize: 28 }} />,
-      title: '任务代理',
-      description: '多 Agent 协作，自动化完成复杂任务',
+      title: t('taskAgent'),
+      description: t('taskAgentDesc'),
       link: '/agents',
       color: 'var(--lobe-color-purple)',
     },
     {
       icon: <SettingOutlined style={{ fontSize: 28 }} />,
-      title: 'MCP 配置',
-      description: 'Model Context Protocol 服务器配置中心',
+      title: t('mcpConfig'),
+      description: t('mcpConfigDesc'),
       link: '/setting/mcp',
       color: 'var(--lobe-color-cyan)',
     },
     {
       icon: <CloudServerOutlined style={{ fontSize: 28 }} />,
-      title: '云服务',
-      description: 'WebDAV 备份、环境变量管理、工作节点监控',
+      title: t('cloudService'),
+      description: t('cloudServiceDesc'),
       link: '/cloud',
       color: 'var(--lobe-color-violet)',
     },
@@ -152,7 +151,7 @@ export default function HomePage() {
               color: '#666666',
             }}
           >
-            基于 AI 的智能编码代理平台，支持函数调用、任务代理、文件操作、Web 搜索等完整工具链
+            {t('subtitle')}
           </Text>
 
           <Flexbox gap={16} horizontal wrap="wrap" justify="center">
@@ -165,7 +164,7 @@ export default function HomePage() {
                     icon={<FolderOutlined />}
                     loading={isLoading}
                   >
-                    进入工作区
+                    {t('enterWorkspace')}
                   </Button>
                 </Link>
                 
@@ -176,7 +175,7 @@ export default function HomePage() {
                   onClick={handleLogout}
                   loading={isLoading}
                 >
-                  退出登录
+                  {t('logout')}
                 </Button>
               </>
             ) : (
@@ -187,7 +186,7 @@ export default function HomePage() {
                     size="large"
                     icon={<ArrowRightOutlined />}
                   >
-                    立即开始
+                    {t('startNow')}
                   </Button>
                 </Link>
                 <Link href="/demo">
@@ -196,7 +195,7 @@ export default function HomePage() {
                     size="large"
                     icon={<CodeOutlined />}
                   >
-                    在线演示
+                    {t('onlineDemo')}
                   </Button>
                 </Link>
               </>
@@ -222,7 +221,7 @@ export default function HomePage() {
               color: '#333333',
             }}
           >
-            核心功能
+            {t('coreFeatures')}
           </Text>
 
           <div
@@ -316,7 +315,7 @@ export default function HomePage() {
               color: '#333333',
             }}
           >
-            准备好开始了吗？
+            {t('cta.title')}
           </Text>
           <Text
             type="secondary"
@@ -328,7 +327,7 @@ export default function HomePage() {
               color: '#666666',
             }}
           >
-            立即登录，体验 AI 驱动的智能编码
+            {t('cta.desc')}
           </Text>
           <Link href="/login">
             <Button
@@ -341,7 +340,7 @@ export default function HomePage() {
                 height: 44,
               }}
             >
-              立即登录
+              {t('cta.loginBtn')}
             </Button>
           </Link>
         </div>
@@ -355,7 +354,7 @@ export default function HomePage() {
           }}
         >
           <Text type="secondary" style={{ fontSize: 13 }}>
-            © 2026 AutocodeLLM · Apache License 2.0
+            © 2026 {t('footer')}
           </Text>
         </div>
       </div>

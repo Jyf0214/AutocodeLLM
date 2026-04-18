@@ -43,7 +43,22 @@
         "logoutBtn": "Logout"
       },
       "logout": "Logout",
-      "footer": "AutocodeLLM — AI Coding Agent Platform"
+      "footer": "AutocodeLLM — AI Coding Agent Platform",
+      "workspaceManagement": "Workspace Management",
+      "workspaceManagementDesc": "Multi-workspace isolation with independent configuration for different project needs",
+      "multiModelSupport": "Multi-Model Support",
+      "multiModelSupportDesc": "Compatible with OpenAI, Anthropic, Google and other mainstream AI models",
+      "taskAgent": "Task Agents",
+      "taskAgentDesc": "Multi-Agent collaboration to automate complex tasks",
+      "mcpConfig": "MCP Configuration",
+      "mcpConfigDesc": "Model Context Protocol server configuration center",
+      "cloudService": "Cloud Services",
+      "cloudServiceDesc": "WebDAV backup, environment variables management, worker node monitoring",
+      "enterWorkspace": "Enter Workspace",
+      "logoutSuccess": "Logged out successfully",
+      "logoutFailed": "Logout failed, please try again",
+      "startNow": "Get Started",
+      "onlineDemo": "Live Demo"
     }
   },
   "login": {

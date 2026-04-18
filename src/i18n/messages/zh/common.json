@@ -43,7 +43,22 @@
         "logoutBtn": "退出账户"
       },
       "logout": "退出账户",
-      "footer": "AutocodeLLM — AI 编码代理平台"
+      "footer": "AutocodeLLM — AI 编码代理平台",
+      "workspaceManagement": "工作区管理",
+      "workspaceManagementDesc": "多工作区隔离，独立配置，满足不同项目需求",
+      "multiModelSupport": "多模型支持",
+      "multiModelSupportDesc": "兼容 OpenAI、Anthropic、Google 等主流 AI 模型",
+      "taskAgent": "任务代理",
+      "taskAgentDesc": "多 Agent 协作，自动化完成复杂任务",
+      "mcpConfig": "MCP 配置",
+      "mcpConfigDesc": "Model Context Protocol 服务器配置中心",
+      "cloudService": "云服务",
+      "cloudServiceDesc": "WebDAV 备份、环境变量管理、工作节点监控",
+      "enterWorkspace": "进入工作区",
+      "logoutSuccess": "已退出登录",
+      "logoutFailed": "退出失败，请重试",
+      "startNow": "立即开始",
+      "onlineDemo": "在线演示"
     }
   },
   "login": {
