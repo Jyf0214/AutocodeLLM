@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Button, Text, Empty, Modal, Form, Input as LobeInput } from '@lobehub/ui';
 import {
   PlusOutlined,
@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons';
 import { Table, Tag, Space, Popconfirm, Switch, message, Input as AntdInput } from 'antd';
 import { useTranslations } from 'next-intl';
+import { useFetchData } from '@/hooks';
 
 
 interface EnvVariable {
@@ -34,9 +35,7 @@ interface EnvFormData {
 
 export default function EnvPage() {
   const t = useTranslations('env');
-  const [envVars, setEnvVars] = useState<EnvVariable[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [editingEnv, setEditingEnv] = useState<EnvVariable | null>(null);
@@ -45,28 +44,9 @@ export default function EnvPage() {
   const [visibleKeys, setVisibleKeys] = useState(new Set<string>());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchEnvVars = useCallback(async () => {
-    try {
-      const response = await fetch('/api/env');
-       
-      const result: { success: boolean; data?: EnvVariable[]; error?: { message: string } } =
-        await response.json();
-
-      if (result.success) {
-        setEnvVars(result.data ?? []);
-      } else {
-        message.error(result.error?.message ?? t('fetchFailed'));
-      }
-    } catch {
-      message.error(t('fetchFailed'));
-    } finally {
-      setFetching(false);
-    }
-  }, [t]);
-
-  useEffect(() => {
-    fetchEnvVars();
-  }, [fetchEnvVars]);
+  const { data: envVars, loading: fetching, refresh } = useFetchData<EnvVariable[]>('/api/env', {
+    errorMsg: t('fetchFailed'),
+  });
 
   const handleOpenModal = (envVar?: EnvVariable) => {
     if (envVar) {
@@ -112,7 +92,7 @@ export default function EnvPage() {
       if (result.success) {
         message.success(editingEnv ? t('updateSuccess') : t('createSuccess'));
         handleCloseModal();
-        fetchEnvVars();
+        refresh();
       } else {
         message.error(result.error?.message ?? (editingEnv ? t('updateFailed') : t('createFailed')));
       }
@@ -134,7 +114,7 @@ export default function EnvPage() {
 
       if (result.success) {
         message.success(t('deleteSuccess'));
-        fetchEnvVars();
+        refresh();
       } else {
         message.error(result.error?.message ?? t('deleteFailed'));
       }
@@ -156,7 +136,7 @@ export default function EnvPage() {
   };
 
   const handleExport = () => {
-    const exportData = envVars.map((envVar) => ({
+    const exportData = (envVars ?? []).map((envVar) => ({
       key: envVar.key,
       value: envVar.value,
       description: envVar.description,
@@ -219,7 +199,7 @@ export default function EnvPage() {
       message.success(t('importSuccess', { success: successCount, fail: failCount }));
       setImportModalOpen(false);
       importForm.resetFields();
-      fetchEnvVars();
+      refresh();
     } catch {
       message.error(t('importFormatError'));
     } finally {
@@ -349,7 +329,7 @@ export default function EnvPage() {
       {/* 环境变量列表 */}
       {fetching ? (
         <Empty description={t('loading')} />
-      ) : envVars.length === 0 ? (
+      ) : !envVars || envVars.length === 0 ? (
         <Empty description={t('noEnvVarsDesc')} />
       ) : (
         <Table

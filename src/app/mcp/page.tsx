@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 import { Text } from '@lobehub/ui';
 import { useTranslations } from 'next-intl';
@@ -24,6 +24,7 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import type { McpServer, McpServerResponse, TestMcpServerResponse } from '@/lib/api/mcp-types';
+import { useFetchData } from '@/hooks';
 
 interface McpFormValues {
   name: string;
@@ -33,33 +34,14 @@ interface McpFormValues {
 
 export default function McpPage() {
   const t = useTranslations();
-  const [dataSource, setDataSource] = useState<McpServer[]>([]);
-  const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingServer, setEditingServer] = useState<McpServer | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [form] = Form.useForm<McpFormValues>();
 
-  const fetchServers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/mcp');
-      const data: McpServerResponse = await res.json();
-      if (data.success) {
-        setDataSource(data.data as McpServer[]);
-      } else {
-        message.error(data.error?.message ?? '获取列表失败');
-      }
-    } catch {
-      message.error('获取 MCP 服务列表失败');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchServers();
-  }, [fetchServers]);
+  const { data: dataSource, loading, refresh } = useFetchData<McpServer[]>('/api/mcp', {
+    errorMsg: '获取 MCP 服务列表失败',
+  });
 
   const handleOpenModal = useCallback(
     (server?: McpServer) => {
@@ -95,7 +77,7 @@ export default function McpPage() {
         if (data.success) {
           message.success('MCP 服务更新成功');
           setModalOpen(false);
-          fetchServers();
+          refresh();
         } else {
           message.error(data.error?.message ?? '更新失败');
         }
@@ -109,7 +91,7 @@ export default function McpPage() {
         if (data.success) {
           message.success('MCP 服务创建成功');
           setModalOpen(false);
-          fetchServers();
+          refresh();
         } else {
           message.error(data.error?.message ?? '创建失败');
         }
@@ -117,7 +99,7 @@ export default function McpPage() {
     } catch {
       message.error(editingServer ? '更新 MCP 服务失败' : '创建 MCP 服务失败');
     }
-  }, [editingServer, form, fetchServers]);
+  }, [editingServer, form, refresh]);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -126,7 +108,7 @@ export default function McpPage() {
         const data: McpServerResponse = await res.json();
         if (data.success) {
           message.success('MCP 服务删除成功');
-          fetchServers();
+          refresh();
         } else {
           message.error(data.error?.message ?? '删除失败');
         }
@@ -134,7 +116,7 @@ export default function McpPage() {
         message.error('删除 MCP 服务失败');
       }
     },
-    [fetchServers]
+    [refresh]
   );
 
   const handleTest = useCallback(
@@ -256,7 +238,7 @@ export default function McpPage() {
 
       <Table
         columns={columns}
-        dataSource={dataSource}
+        dataSource={dataSource ?? []}
         rowKey="id"
         loading={loading}
         pagination={false}

@@ -1,4 +1,4 @@
-export { useFetch, usePagination, useSearch } from './useFetchData';
+export { useFetch, usePagination, useSearch, useFetchData } from './useFetchData';
 export { useDebounce, useDebounceFn, useThrottle } from './useDebounce';
 export { useFormSubmit } from './useFormSubmit';
 export { useCRUD } from './useCRUD';
