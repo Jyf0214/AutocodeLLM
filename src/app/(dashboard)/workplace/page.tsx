@@ -34,7 +34,6 @@ interface WorkspaceCardProps {
   onClick: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  t: (key: string, values?: Record<string, string>) => string;
 }
 
 /**
@@ -47,6 +46,7 @@ function WorkspaceCard({
   onEdit,
   onDelete,
 }: WorkspaceCardProps) {
+  const t = useTranslations('workplace');
   const [hovered, setHovered] = useState(false);
   const createdDate = new Date(workspace.createdAt).toLocaleDateString('zh-CN');
 

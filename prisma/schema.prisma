@@ -112,6 +112,7 @@ model Workspace {
   messages ChatMessage[]
   logs     WorkspaceLog[]
   backups  Backup[]
+  channels  Channel[]
 
   @@map("workspaces")
 }
@@ -232,4 +233,48 @@ model WorkspaceLog {
   @@index([workspaceId])
   @@index([createdAt])
   @@map("workspace_logs")
+}
+
+// Discord 频道
+model Channel {
+  id               String      @id @default(uuid())
+  workspaceId      String
+  name             String
+  discordGuildId   String
+  discordChannelId String      @unique
+  type             ChannelType @default(TEXT)
+  enabled          Boolean     @default(true)
+  lastSyncedAt     DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  workspace        Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  messages         ChannelMessage[]
+
+  @@index([workspaceId])
+  @@map("channels")
+}
+
+// Discord 频道消息
+model ChannelMessage {
+  id            String   @id @default(uuid())
+  channelId     String
+  discordMsgId  String   @unique
+  authorId      String
+  authorName    String
+  authorAvatar  String?
+  content       String   @db.LongText
+  attachments   String?  @db.Text
+  sentFromApp   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  channel       Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, createdAt])
+  @@map("channel_messages")
+}
+
+// 频道类型
+enum ChannelType {
+  TEXT
+  VOICE
+  ANNOUNCEMENT
 }

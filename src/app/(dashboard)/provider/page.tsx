@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { message, Tag, Modal, Card } from 'antd';
+import { message, Tag, Modal, Card, Input } from 'antd';
 import {
   Button,
   Text,
   Empty,
   Form,
-  Input as LobeInput,
   Flexbox,
   Icon,
   Skeleton,
@@ -87,7 +86,7 @@ function ProviderCard({
     moonshot: ({ size }) => <ModelIcon model="moonshot" size={size ?? 20} />,
   };
 
-  const IconComponent = iconMap[provider.sdkType] ?? iconMap.openai;
+  const IconComponent = (iconMap[provider.sdkType] ?? iconMap.openai) as React.ComponentType<{ size?: number }>;
 
   return (
     <Card
@@ -222,7 +221,7 @@ function PresetCard({
     moonshot: ({ size }) => <ModelIcon model="moonshot" size={size ?? 24} />,
   };
 
-  const IconComponent = iconMap[preset.sdkType] ?? iconMap.openai;
+  const IconComponent = (iconMap[preset.sdkType] ?? iconMap.openai) as React.ComponentType<{ size?: number }>;
 
   return (
     <div
@@ -791,7 +790,7 @@ if (!res.ok) {
             label={t('providerName')}
             rules={[{ required: true, message: t('providerNameRequired') }]}
           >
-            <LobeInput placeholder={t('providerNamePlaceholder')} size="large" />
+            <Input placeholder={t('providerNamePlaceholder')} size="large" />
           </Form.Item>
 
           <Form.Item
@@ -806,11 +805,11 @@ if (!res.ok) {
             ]}
             extra={t('apiUrlExtra')}
           >
-            <LobeInput placeholder={t('apiUrlPlaceholder')} size="large" />
+            <Input placeholder={t('apiUrlPlaceholder')} size="large" />
           </Form.Item>
 
           <Form.Item name="apiKey" label={t('apiKey')}>
-            <LobeInput.Password placeholder={t('apiKeyPlaceholder')} size="large" />
+            <Input.Password placeholder={t('apiKeyPlaceholder')} size="large" />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>

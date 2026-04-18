@@ -70,14 +70,17 @@ export default function GlobalBackupsPage() {
       title: t('workspace'),
       dataIndex: 'workspaceName',
       key: 'workspaceName',
-      render: (name: string) => (
-        <Flexbox horizontal gap={8} align="center">
-          <Avatar size="small" style={{ backgroundColor: '#1677ff' }}>
-            {name.charAt(0)}
-          </Avatar>
-          <Text style={{ fontWeight: 500 }}>{name}</Text>
-        </Flexbox>
-      ),
+      render: (name: unknown) => {
+        const nameStr = String(name ?? '');
+        return (
+          <Flexbox horizontal gap={8} align="center">
+            <Avatar size="small" style={{ backgroundColor: '#1677ff' }}>
+              {nameStr.charAt(0)}
+            </Avatar>
+            <Text style={{ fontWeight: 500 }}>{nameStr}</Text>
+          </Flexbox>
+        );
+      },
     },
     {
       title: t('status'),

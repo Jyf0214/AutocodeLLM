@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { message, Tag, Modal, Card } from 'antd';
+import { message, Tag, Modal, Card, Input } from 'antd';
 import {
   Button,
   Text,
   Empty,
   Form,
-  Input as LobeInput,
   Flexbox,
   Icon,
   Skeleton,
@@ -762,7 +761,7 @@ export default function ProviderModelPage() {
             label={t('providerName')}
             rules={[{ required: true, message: t('providerNameRequired') }]}
           >
-            <LobeInput placeholder="例如：OpenAI" size="large" />
+            <Input placeholder="例如：OpenAI" size="large" />
           </Form.Item>
 
           <Form.Item
@@ -777,11 +776,11 @@ export default function ProviderModelPage() {
             ]}
             extra={t('apiUrlExtra')}
           >
-            <LobeInput placeholder="https://api.openai.com/v1" size="large" />
+            <Input placeholder="https://api.openai.com/v1" size="large" />
           </Form.Item>
 
           <Form.Item name="apiKey" label={t('apiKey')}>
-            <LobeInput.Password placeholder="sk-..." size="large" />
+            <Input.Password placeholder="sk-..." size="large" />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
