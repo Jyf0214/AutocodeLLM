@@ -20,19 +20,14 @@ export default memo(function NotFoundPage() {
         padding: 24,
       }}
     >
-      <Flexbox
-        gap={32}
-        align="center"
-        style={{ maxWidth: 480, textAlign: 'center' }}
-      >
+      <Flexbox gap={32} align="center" style={{ maxWidth: 480, textAlign: 'center' }}>
         {/* 404 视觉元素 */}
         <div
           style={{
             width: 140,
             height: 140,
             borderRadius: '50%',
-            background:
-              'linear-gradient(135deg, var(--lobe-color-primary), var(--lobe-color-warning))',
+            background: 'linear-gradient(135deg, var(--lobe-color-primary), var(--lobe-color-warning))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -51,8 +46,7 @@ export default memo(function NotFoundPage() {
             strong
             style={{
               fontSize: 28,
-              background:
-                'linear-gradient(135deg, var(--lobe-color-primary), var(--lobe-color-violet))',
+              background: 'linear-gradient(135deg, var(--lobe-color-primary), var(--lobe-color-violet))',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -79,10 +73,7 @@ export default memo(function NotFoundPage() {
             icon={<HomeOutlined />}
             size="large"
             onClick={() => router.push('/')}
-            style={{
-              borderRadius: 10,
-              padding: '0 24px',
-            }}
+            style={{ borderRadius: 10, padding: '0 24px' }}
           >
             {t('goHome')}
           </Button>
@@ -90,10 +81,7 @@ export default memo(function NotFoundPage() {
             icon={<ArrowLeftOutlined />}
             size="large"
             onClick={() => router.back()}
-            style={{
-              borderRadius: 10,
-              padding: '0 24px',
-            }}
+            style={{ borderRadius: 10, padding: '0 24px' }}
           >
             {t('goBack')}
           </Button>
@@ -115,10 +103,7 @@ export default memo(function NotFoundPage() {
               href="https://github.com/Jyf0214/AutocodeLLM/issues"
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                color: 'var(--lobe-color-primary)',
-                textDecoration: 'none',
-              }}
+              style={{ color: 'var(--lobe-color-primary)', textDecoration: 'none' }}
             >
               {t('submitIssue')}
             </a>
@@ -127,4 +112,4 @@ export default memo(function NotFoundPage() {
       </Flexbox>
     </Flexbox>
   );
-}
+});
