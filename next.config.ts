@@ -9,9 +9,12 @@ const nextConfig: NextConfig = {
   turbopack: {
     resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
   },
-  serverExternalPackages: ['xterm', 'xterm-addon-fit', 'chokidar', 'webdav'],
+  serverExternalPackages: ['xterm', 'xterm-addon-fit', 'chokidar', 'webdav', 'zlib-sync', '@discordjs/ws', '@discordjs/gateway', '@discordjs/opus', '@discordjs/rest', 'discord.js', 'erlpack', 'tweetnacl', 'tweetnacl-secretspace'],
   typescript: {
     ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 

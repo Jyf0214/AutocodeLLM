@@ -3,12 +3,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Card, Button, Space, Tag, Spin } from 'antd';
+import { Card, Button, Space, Tag, Spin, Modal, List, Progress } from 'antd';
 import {
   CloudServerOutlined,
   CloudUploadOutlined,
   CloudDownloadOutlined,
   RightOutlined,
+  PlayCircleOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 import { Flexbox, Text, Avatar } from '@lobehub/ui';
 
@@ -42,6 +46,9 @@ export default function CloudPage() {
   const t = useTranslations('cloud');
   const [overview, setOverview] = useState<CloudOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [backupModalOpen, setBackupModalOpen] = useState(false);
+  const [backingUpId, setBackingUpId] = useState<string | null>(null);
+  const [backupLogs, setBackupLogs] = useState<Array<{timestamp: string; workspaceId: string; workspaceName: string; status: string; message: string}>>([]);
 
   const fetchOverview = useCallback(async () => {
     try {
@@ -60,6 +67,44 @@ export default function CloudPage() {
   useEffect(() => {
     fetchOverview();
   }, [fetchOverview]);
+
+  const handleBackupNow = async (workspaceId: string, workspaceName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setBackingUpId(workspaceId);
+    try {
+      const res = await fetch('/api/cloud/backup-now', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchBackupLogs();
+      }
+    } catch {
+      // ignore
+    } finally {
+      setBackingUpId(null);
+    }
+  };
+
+  const fetchBackupLogs = async () => {
+    try {
+      const res = await fetch('/api/cloud/backup-now');
+      const data = await res.json();
+      if (data.success && data.data) {
+        setBackupLogs(data.data);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const openBackupLogs = (workspaceId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    fetchBackupLogs();
+    setBackupModalOpen(true);
+  };
 
   const getSyncStatusTag = () => {
     if (!overview?.sync?.enabled) {
@@ -137,6 +182,21 @@ export default function CloudPage() {
                     ) : (
                       <Tag color="default">{t('notBackedUp')}</Tag>
                     )}
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<PlayCircleOutlined />}
+                      loading={backingUpId === ws.workspaceId}
+                      onClick={(e) => handleBackupNow(ws.workspaceId, ws.workspaceName, e)}
+                      title={t('backupNow') || '立即备份'}
+                    />
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<CloudUploadOutlined />}
+                      onClick={(e) => openBackupLogs(ws.workspaceId, e)}
+                      title={t('viewLogs') || '查看日志'}
+                    />
                     <RightOutlined style={{ fontSize: 12, color: '#999' }} />
                   </Flexbox>
                 </Flexbox>
@@ -149,6 +209,40 @@ export default function CloudPage() {
           </Flexbox>
         )}
       </Card>
+
+      <Modal
+        title={t('backupLogs') || '备份日志'}
+        open={backupModalOpen}
+        onCancel={() => setBackupModalOpen(false)}
+        footer={null}
+        width={600}
+      >
+        <List
+          dataSource={backupLogs.filter(
+            (log) => overview?.workspaceBackups?.some((ws) => ws.workspaceId === log.workspaceId)
+          )}
+          renderItem={(item) => (
+            <List.Item>
+              <Flexbox horizontal gap={8} style={{ width: '100%' }}>
+                {item.status === 'running' ? (
+                  <LoadingOutlined spin style={{ color: '#1677ff' }} />
+                ) : item.status === 'success' ? (
+                  <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                ) : (
+                  <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+                )}
+                <Text style={{ flex: 1 }}>{item.workspaceName}</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {item.message}
+                </Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {new Date(item.timestamp).toLocaleString('zh-CN')}
+                </Text>
+              </Flexbox>
+            </List.Item>
+          )}
+        />
+      </Modal>
     </Flexbox>
   );
 }
