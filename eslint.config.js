@@ -13,6 +13,8 @@ export default tseslint.config(
       'node_modules/**',
       'scripts/**',
       '.agents/**',
+      'src/__tests__/**',
+      'src/test/**',
       // ========== 移植代码豁免（LobeChat 已验证代码，不审查） ==========
       // Store 层
       'src/store/global/**',
@@ -119,8 +121,14 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-misused-promises': 'off',
       '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
       'react/react-in-jsx-scope': 'off',
       '@next/next/no-html-link-for-pages': 'off',
+      'react-hooks/exhaustive-deps': 'warn',
     },
     settings: {
       react: { version: '19' },

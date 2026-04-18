@@ -48,7 +48,7 @@ export async function POST(
     // 验证必填字段
     const validationError = validateRequiredFields({ name: body.name });
     if (validationError) {
-      return validationError as unknown as NextResponse<WorkspaceResponse>;
+      return validationError as NextResponse<ApiResponse<never>> as NextResponse<WorkspaceResponse>;
     }
 
     const { name, description } = body;
