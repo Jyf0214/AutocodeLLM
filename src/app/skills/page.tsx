@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Card, Table, Tag, Space, Button, message, Empty, Switch, Modal, Form, Input as AntdInput } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { Table, Tag, Space, Button, message, Empty, Switch, Modal, Form, Input as AntdInput } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Text, Input as LobeInput } from '@lobehub/ui';
 import { useTranslations } from 'next-intl';
 
@@ -23,7 +23,7 @@ interface SkillFormData {
 }
 
 export default function SkillsPage() {
-  const t = useTranslations();
+  const t = useTranslations('skills');
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -38,14 +38,14 @@ export default function SkillsPage() {
       if (result.success) {
         setSkills(result.data ?? []);
       } else {
-        message.error(result.error?.message ?? '获取技能列表失败');
+        message.error(result.error?.message ?? t('skills.fetchFailed'));
       }
     } catch {
-      message.error('获取技能列表失败');
+      message.error(t('skills.fetchFailed'));
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchSkills();
@@ -91,14 +91,14 @@ export default function SkillsPage() {
       const result: { success: boolean; error?: { message: string } } = await response.json();
 
       if (result.success) {
-        message.success(editingSkill ? '更新成功' : '创建成功');
+        message.success(editingSkill ? t('skills.updateSuccess') : t('skills.createSuccess'));
         handleCloseModal();
         fetchSkills();
       } else {
-        message.error(result.error?.message ?? '保存失败');
+        message.error(result.error?.message ?? t('skills.saveFailed'));
       }
     } catch {
-      message.error('保存失败');
+      message.error(t('skills.saveFailed'));
     } finally {
       setLoading(false);
     }
@@ -109,13 +109,13 @@ export default function SkillsPage() {
       const response = await fetch(`/api/skills?id=${id}`, { method: 'DELETE' });
       const result: { success: boolean; error?: { message: string } } = await response.json();
       if (result.success) {
-        message.success('删除成功');
+        message.success(t('skills.deleteSuccess'));
         fetchSkills();
       } else {
-        message.error(result.error?.message ?? '删除失败');
+        message.error(result.error?.message ?? t('skills.deleteFailed'));
       }
     } catch {
-      message.error('删除失败');
+      message.error(t('skills.deleteFailed'));
     }
   };
 
@@ -131,45 +131,45 @@ export default function SkillsPage() {
       });
       const result: { success: boolean; error?: { message: string } } = await response.json();
       if (result.success) {
-        message.success(skill.enabled ? '已禁用' : '已启用');
+        message.success(skill.enabled ? t('env.disabled') : t('env.enabled'));
         fetchSkills();
       } else {
-        message.error(result.error?.message ?? '操作失败');
+        message.error(result.error?.message ?? t('skills.toggleSuccess'));
       }
     } catch {
-      message.error('操作失败');
+      message.error(t('skills.toggleSuccess'));
     }
   };
 
   const columns = [
     {
-      title: '名称',
+      title: t('skills.name'),
       dataIndex: 'name',
       key: 'name',
       render: (text: string) => <Text strong>{text}</Text>,
     },
     {
-      title: '描述',
+      title: t('skills.description'),
       dataIndex: 'description',
       key: 'description',
       ellipsis: true,
     },
     {
-      title: '工具数量',
+      title: t('skills.tools'),
       dataIndex: 'tools',
       key: 'tools',
-      render: (tools: number) => <Tag>{tools} 个</Tag>,
+      render: (tools: number) => <Tag>{tools}</Tag>,
     },
     {
-      title: '状态',
+      title: t('env.status'),
       dataIndex: 'enabled',
       key: 'enabled',
       render: (enabled: boolean) => (
-        <Tag color={enabled ? 'green' : 'default'}>{enabled ? '已启用' : '已禁用'}</Tag>
+        <Tag color={enabled ? 'green' : 'default'}>{enabled ? t('env.enabled') : t('env.disabled')}</Tag>
       ),
     },
     {
-      title: '操作',
+      title: t('env.actions'),
       key: 'actions',
       render: (_: unknown, record: Skill) => (
         <Space>
@@ -178,7 +178,7 @@ export default function SkillsPage() {
             size="small"
             onClick={() => { handleToggle(record); }}
           >
-            {record.enabled ? '禁用' : '启用'}
+            {record.enabled ? t('env.disabled') : t('env.enabled')}
           </Button>
           <Button
             type="link"
@@ -186,7 +186,7 @@ export default function SkillsPage() {
             icon={<EditOutlined />}
             onClick={() => { handleOpenModal(record); }}
           >
-            编辑
+            {t('env.edit')}
           </Button>
           <Button
             type="link"
@@ -195,7 +195,7 @@ export default function SkillsPage() {
             icon={<DeleteOutlined />}
             onClick={() => { handleDelete(record.id); }}
           >
-            删除
+            {t('env.delete')}
           </Button>
         </Space>
       ),
@@ -207,21 +207,21 @@ export default function SkillsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <Text strong style={{ fontSize: 20, display: 'block' }}>
-            LLM Skills 管理
+            {t('skills.title')}
           </Text>
           <Text type="secondary" style={{ display: 'block', marginTop: 4 }}>
-            配置和管理 LLM Skills，扩展 AI 能力
+            {t('skills.description')}
           </Text>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => { handleOpenModal(); }}>
-          添加 Skill
+          {t('skills.addSkill')}
         </Button>
       </div>
 
       {fetching ? (
-        <Empty description="加载中..." />
+        <Empty description={t('env.loading')} />
       ) : skills.length === 0 ? (
-        <Empty description="暂无技能，请添加" />
+        <Empty description={t('skills.noSkills')} />
       ) : (
         <Table
           columns={columns}
@@ -233,7 +233,7 @@ export default function SkillsPage() {
       )}
 
       <Modal
-        title={editingSkill ? '编辑 Skill' : '添加 Skill'}
+        title={editingSkill ? t('skills.editSkill') : t('skills.addSkill')}
         open={modalOpen}
         onCancel={handleCloseModal}
         footer={null}
@@ -242,25 +242,25 @@ export default function SkillsPage() {
         <Form form={form} onFinish={handleSubmit} layout="vertical">
           <Form.Item
             name="name"
-            label="名称"
-            rules={[{ required: true, message: '请输入名称' }]}
+            label={t('skills.name')}
+            rules={[{ required: true, message: t('skills.nameRequired') }]}
           >
-            <LobeInput placeholder="例如：代码解释器" />
+            <LobeInput placeholder={t('skills.namePlaceholder')} />
           </Form.Item>
 
-          <Form.Item name="description" label="描述">
-            <AntdInput.TextArea placeholder="描述这个技能的功能..." rows={3} />
+          <Form.Item name="description" label={t('skills.description')}>
+            <AntdInput.TextArea placeholder={t('skills.descriptionPlaceholder')} rows={3} />
           </Form.Item>
 
-          <Form.Item name="enabled" label="启用" valuePropName="checked">
-            <Switch checkedChildren="已启用" unCheckedChildren="已禁用" />
+          <Form.Item name="enabled" label={t('skills.enabled')} valuePropName="checked">
+            <Switch checkedChildren={t('env.enabled')} unCheckedChildren={t('env.disabled')} />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>
-              <Button onClick={handleCloseModal}>取消</Button>
+              <Button onClick={handleCloseModal}>{t('env.cancel')}</Button>
               <Button type="primary" htmlType="submit" loading={loading}>
-                {editingSkill ? '保存' : '添加'}
+                {editingSkill ? t('env.save') : t('env.add')}
               </Button>
             </Space>
           </Form.Item>

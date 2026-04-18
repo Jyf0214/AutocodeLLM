@@ -40,7 +40,7 @@ export default function McpPage() {
   const [form] = Form.useForm<McpFormValues>();
 
   const { data: dataSource, loading, refresh } = useFetchData<McpServer[]>('/api/mcp', {
-    errorMsg: '获取 MCP 服务列表失败',
+    errorMsg: t('mcp.fetchFailed'),
   });
 
   const handleOpenModal = useCallback(
@@ -75,11 +75,11 @@ export default function McpPage() {
         });
         const data: McpServerResponse = await res.json();
         if (data.success) {
-          message.success('MCP 服务更新成功');
+          message.success(t('mcp.updateSuccess'));
           setModalOpen(false);
           refresh();
         } else {
-          message.error(data.error?.message ?? '更新失败');
+          message.error(data.error?.message ?? t('mcp.updateFailed'));
         }
       } else {
         const res = await fetch('/api/mcp', {
@@ -89,15 +89,15 @@ export default function McpPage() {
         });
         const data: McpServerResponse = await res.json();
         if (data.success) {
-          message.success('MCP 服务创建成功');
+          message.success(t('mcp.createSuccess'));
           setModalOpen(false);
           refresh();
         } else {
-          message.error(data.error?.message ?? '创建失败');
+          message.error(data.error?.message ?? t('mcp.createFailed'));
         }
       }
     } catch {
-      message.error(editingServer ? '更新 MCP 服务失败' : '创建 MCP 服务失败');
+      message.error(editingServer ? t('mcp.updateFailed') : t('mcp.createFailed'));
     }
   }, [editingServer, form, refresh]);
 
@@ -107,16 +107,16 @@ export default function McpPage() {
         const res = await fetch(`/api/mcp?id=${id}`, { method: 'DELETE' });
         const data: McpServerResponse = await res.json();
         if (data.success) {
-          message.success('MCP 服务删除成功');
+          message.success(t('mcp.deleteSuccess'));
           refresh();
         } else {
-          message.error(data.error?.message ?? '删除失败');
+          message.error(data.error?.message ?? t('mcp.deleteFailed'));
         }
       } catch {
-        message.error('删除 MCP 服务失败');
+        message.error(t('mcp.deleteFailed'));
       }
     },
-    [refresh]
+    [refresh, t]
   );
 
   const handleTest = useCallback(
@@ -136,59 +136,59 @@ export default function McpPage() {
             message.warning(data.data.message);
           }
         } else {
-          message.error(data.error?.message ?? '测试失败');
+          message.error(data.error?.message ?? t('mcp.testFailed'));
         }
       } catch {
-        message.error('测试 MCP 服务连通性失败');
+        message.error(t('mcp.testFailed'));
       } finally {
         setTestingId(null);
       }
     },
-    []
+    [t]
   );
 
   const columns = [
     {
-      title: '名称',
+      title: t('mcp.name'),
       dataIndex: 'name',
       key: 'name',
     },
     {
-      title: 'URL',
+      title: t('mcp.url'),
       dataIndex: 'url',
       key: 'url',
       ellipsis: true,
     },
     {
-      title: '状态',
+      title: t('mcp.status'),
       dataIndex: 'enabled',
       key: 'enabled',
       render: (enabled: boolean) => (
-        <Tag color={enabled ? 'green' : 'red'}>{enabled ? '已启用' : '已禁用'}</Tag>
+        <Tag color={enabled ? 'green' : 'red'}>{enabled ? t('mcp.enabled') : t('env.disabled')}</Tag>
       ),
     },
     {
-      title: '连接状态',
+      title: t('mcp.connectionStatus'),
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
         <Tag color={status === 'connected' ? 'green' : status === 'disconnected' ? 'default' : 'orange'}>
-          {status === 'connected' ? '已连接' : status === 'disconnected' ? '未连接' : status}
+          {status === 'connected' ? t('mcp.connected') : status === 'disconnected' ? t('mcp.disconnected') : status}
         </Tag>
       ),
     },
     {
-      title: '工具数量',
+      title: t('mcp.tools'),
       dataIndex: 'tools',
       key: 'tools',
       render: (tools: string[]) => tools.length,
     },
     {
-      title: '操作',
+      title: t('env.actions'),
       key: 'action',
       render: (_: unknown, record: McpServer) => (
         <Space>
-          <Tooltip title="测试连通性">
+          <Tooltip title={t('mcp.testConnection')}>
             <Button
               type="text"
               icon={<ThunderboltOutlined />}
@@ -196,7 +196,7 @@ export default function McpPage() {
               loading={testingId === record.id}
             />
           </Tooltip>
-          <Tooltip title="编辑">
+          <Tooltip title={t('env.edit')}>
             <Button
               type="text"
               icon={<EditOutlined />}
@@ -204,12 +204,12 @@ export default function McpPage() {
             />
           </Tooltip>
           <Popconfirm
-            title="确定删除此 MCP 服务吗？"
+            title={t('mcp.confirmDelete')}
             onConfirm={() => { void handleDelete(record.id); }}
-            okText="确定"
-            cancelText="取消"
+            okText={t('env.delete')}
+            cancelText={t('env.cancel')}
           >
-            <Tooltip title="删除">
+            <Tooltip title={t('env.delete')}>
               <Button type="text" danger icon={<DeleteOutlined />} />
             </Tooltip>
           </Popconfirm>
@@ -221,10 +221,10 @@ export default function McpPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <Text strong style={{ fontSize: 20, display: 'block', marginBottom: 8 }}>
-        {t('common.mcp')}
+        {t('mcp.title')}
       </Text>
       <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
-        配置和管理 MCP（Model Context Protocol）服务连接。
+        {t('mcp.description')}
       </Text>
 
       <Button
@@ -233,7 +233,7 @@ export default function McpPage() {
         onClick={() => { handleOpenModal(); }}
         style={{ marginBottom: 16 }}
       >
-        添加 MCP 服务
+        {t('mcp.addServer')}
       </Button>
 
       <Table
@@ -245,7 +245,7 @@ export default function McpPage() {
       />
 
       <Modal
-        title={editingServer ? '编辑 MCP 服务' : '添加 MCP 服务'}
+        title={editingServer ? t('mcp.editServer') : t('mcp.addServer')}
         open={modalOpen}
         onOk={() => { void handleSave(); }}
         onCancel={() => { setModalOpen(false); }}
@@ -254,19 +254,19 @@ export default function McpPage() {
         <Form form={form} layout="vertical">
           <Form.Item
             name="name"
-            label="名称"
-            rules={[{ required: true, message: '请输入 MCP 服务名称' }]}
+            label={t('mcp.name')}
+            rules={[{ required: true, message: t('mcp.nameRequired') }]}
           >
-            <Input placeholder="例如：My MCP Server" />
+            <Input placeholder={t('mcp.namePlaceholder')} />
           </Form.Item>
           <Form.Item
             name="url"
-            label="URL"
-            rules={[{ required: true, message: '请输入 MCP 服务 URL' }, { type: 'url', message: '请输入有效的 URL' }]}
+            label={t('mcp.url')}
+            rules={[{ required: true, message: t('mcp.urlRequired') }, { type: 'url', message: t('mcp.urlInvalid') }]}
           >
             <Input placeholder="https://example.com/mcp" />
           </Form.Item>
-          <Form.Item name="enabled" label="启用" valuePropName="checked">
+          <Form.Item name="enabled" label={t('mcp.enabled')} valuePropName="checked">
             <Switch />
           </Form.Item>
         </Form>
