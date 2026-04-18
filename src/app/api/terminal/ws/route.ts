@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 
-export function GET() {
-  const wsUrl = process.env.WS_URL ?? 'ws://localhost:3000';
+const TERMINAL_WS_URL = process.env.TERMINAL_WS_URL || 'ws://localhost:7861/api/terminal/ws';
+
+export async function GET() {
   return NextResponse.json({
     success: true,
-    data: { wsUrl: wsUrl + '/api/terminal/ws' },
+    data: { wsUrl: TERMINAL_WS_URL },
   });
 }

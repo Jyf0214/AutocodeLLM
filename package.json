@@ -22,7 +22,8 @@
     "db:studio": "prisma studio",
     "db:init": "bun run scripts/db-push.mjs",
     "db:health": "bun run src/lib/db/health-check.ts",
-    "db:reset": "prisma db push --force-reset && bun run db:init"
+    "db:reset": "prisma db push --force-reset && bun run db:init",
+    "terminal": "bun run scripts/terminal-server.ts"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^16.2.2",
