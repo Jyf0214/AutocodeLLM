@@ -15,7 +15,7 @@ AutocodeLLM is a full-stack workspace management platform with AI integration ca
 - Built-in terminal, chat, logging, and backup systems
 - Extensible skills and agents system for LLM enhancement
 - Environment variable management for shell and terminal operations
-
+。
 ## Technology Stack
 
 - **Frontend**: Next.js 16, React 19, TypeScript, Ant Design, Zustand
