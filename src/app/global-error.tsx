@@ -37,12 +37,12 @@ export default function GlobalError({
                 <p style={{ marginBottom: 8 }}>
                   抱歉，页面在加载过程中遇到了错误。请尝试刷新页面。
                 </p>
-                {error?.message && (
+                {error.message && (
                   <p style={{ marginBottom: 8, color: '#ff4d4f' }}>
                     错误信息：{error.message}
                   </p>
                 )}
-                {showDetail && error?.stack && (
+                {showDetail && error.stack && (
                   <pre
                     style={{
                       background: '#f5f5f5',

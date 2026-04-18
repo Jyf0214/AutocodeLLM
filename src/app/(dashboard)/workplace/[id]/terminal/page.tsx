@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
 import TerminalPanel from '@/components/features/TerminalPanel';
 import { useParams } from 'next/navigation';
 import { Flexbox, Text, Alert } from '@lobehub/ui';
@@ -15,8 +14,7 @@ interface WsConfig {
 
 export default function WorkplaceTerminalPage() {
   const params = useParams();
-  const workspaceId = params?.id as string;
-  const t = useTranslations('common');
+  const workspaceId = params.id as string;
   const [wsUrl, setWsUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,7 +51,7 @@ export default function WorkplaceTerminalPage() {
         <Alert
           type="warning"
           icon={<CodeOutlined />}
-          message="终端服务未配置"
+          title="终端服务未配置"
           description={
             <div>
               <p>请配置 TERMINAL_WS_URL 环境变量来启用 Web 终端功能。</p>

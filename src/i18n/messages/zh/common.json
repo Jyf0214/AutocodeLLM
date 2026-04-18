@@ -57,8 +57,57 @@
       "enterWorkspace": "进入工作区",
       "logoutSuccess": "已退出登录",
       "logoutFailed": "退出失败，请重试",
-      "startNow": "立即开始",
-      "onlineDemo": "在线演示"
+      "startNow": "立即开始"
+    },
+    "channel": {
+      "title": "频道",
+      "subtitle": "为工作区集成 Discord 频道通信",
+      "addChannel": "添加频道",
+      "editChannel": "编辑频道",
+      "deleteChannel": "删除频道",
+      "channelName": "频道名称",
+      "discordGuild": "Discord 服务器",
+      "discordChannel": "Discord 频道",
+      "channelType": "频道类型",
+      "enabled": "已启用",
+      "disabled": "已禁用",
+      "noChannels": "暂无绑定频道",
+      "noChannelsDesc": "连接 Discord Bot 并添加频道以开始接收消息",
+      "messageCount": "{count} 条消息",
+      "lastSynced": "最后同步",
+      "neverSynced": "从未同步",
+      "confirmDelete": "确定删除此频道？所有消息历史将被清除。",
+      "typeText": "文本",
+      "typeVoice": "语音",
+      "typeAnnouncement": "公告",
+      "chatTitle": "频道聊天",
+      "sendMessage": "发送消息",
+      "messagePlaceholder": "输入消息发送到 Discord...",
+      "noMessages": "暂无消息",
+      "loadMore": "加载更多",
+      "sentFromApp": "来自应用",
+      "selectGuild": "选择服务器",
+      "selectChannel": "选择频道",
+      "bindChannel": "绑定频道",
+      "unbindChannel": "解绑频道"
+    },
+    "discord": {
+      "title": "Discord Bot",
+      "connect": "连接",
+      "disconnect": "断开",
+      "tokenLabel": "Bot Token",
+      "tokenPlaceholder": "输入你的 Discord Bot Token...",
+      "tokenHint": "从 Discord 开发者门户获取 Token",
+      "connected": "已连接",
+      "disconnected": "未连接",
+      "connecting": "连接中...",
+      "botTag": "Bot: {tag}",
+      "guildCount": "{count} 个服务器可用",
+      "connectSuccess": "Discord Bot 连接成功",
+      "connectFailed": "Discord Bot 连接失败",
+      "disconnectSuccess": "Discord Bot 已断开",
+      "status": "连接状态",
+      "noGuilds": "暂无可用服务器，请确保 Bot 已加入至少一个服务器"
     }
   },
   "login": {
@@ -344,7 +393,7 @@
   },
   "env": {
     "title": "环境变量",
-    "description": "管理和配置系统环境变量与运行时参数",
+    "description": "描述",
     "add": "添加变量",
     "edit": "编辑",
     "delete": "删除",
@@ -359,7 +408,6 @@
     "value": "变量值",
     "valueRequired": "请输入变量值",
     "valuePlaceholder": "请输入敏感信息，将加密存储",
-    "description": "描述",
     "descriptionPlaceholder": "可选，描述该变量的用途",
     "status": "状态",
     "enabled": "已启用",
@@ -478,13 +526,12 @@
   },
   "skills": {
     "title": "LLM Skills 管理",
-    "description": "配置和管理 LLM Skills，扩展 AI 能力",
+    "description": "描述",
     "addSkill": "添加 Skill",
     "editSkill": "编辑 Skill",
     "name": "名称",
     "nameRequired": "请输入名称",
     "namePlaceholder": "例如：代码解释器",
-    "description": "描述",
     "descriptionPlaceholder": "描述这个技能的功能...",
     "enabled": "启用",
     "fetchFailed": "获取技能列表失败",
@@ -505,7 +552,6 @@
     "health": "健康度",
     "refresh": "刷新",
     "retry": "重试",
-    "fetchFailed": "获取系统状态失败",
     "fetchError": "无法获取系统状态",
     "status": {
       "healthy": "正常",
@@ -618,7 +664,6 @@
     "ok": "正常",
     "failed": "失败",
     "noBackup": "未备份",
-    "fileWatching": "文件监听",
     "syncActions": "操作",
     "pullFromRemote": "从远程拉取",
     "pushToRemote": "推送到远程",
@@ -647,6 +692,13 @@
   "metadata": {
     "title": "AutocodeLLM — AI 编码代理平台",
     "description": "基于 LobeHub UI 的 AI 编码代理平台，支持函数调用、任务代理、文件操作、Web 搜索等完整工具链",
-    "keywords": ["AI", "编码", "代理", "LobeHub", "LLM", "自动化工具"]
+    "keywords": [
+      "AI",
+      "编码",
+      "代理",
+      "LobeHub",
+      "LLM",
+      "自动化工具"
+    ]
   }
 }

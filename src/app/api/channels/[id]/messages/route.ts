@@ -49,7 +49,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const body = await parseJsonBody<SendMessageRequest>(request);
     if (isErrorResponse(body)) return body;
 
-    if (!body.content?.trim()) {
+    if (!body.content.trim()) {
       return errorResponse('消息内容不能为空', 'EMPTY_CONTENT', 400);
     }
 

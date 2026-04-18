@@ -18,7 +18,7 @@ export async function GET() {
     components.database = {
       name: '数据库',
       status: 'healthy',
-      message: `连接正常 (${Date.now() - start}ms)`,
+      message: `连接正常 (${String(Date.now() - start)}ms)`,
       latency: Date.now() - start,
     };
   } catch (error) {
@@ -35,7 +35,7 @@ export async function GET() {
     components.workers = {
       name: '工作节点',
       status: workers.length === 0 ? 'degraded' : online > 0 ? 'healthy' : 'unhealthy',
-      message: workers.length === 0 ? '暂无工作节点' : `${online}/${workers.length} 在线`,
+      message: workers.length === 0 ? '暂无工作节点' : `${String(online)}/${String(workers.length)} 在线`,
       details: { total: workers.length, online },
     };
   } catch (error) {
@@ -53,7 +53,7 @@ export async function GET() {
     components.mcp = {
       name: 'MCP',
       status: servers.length === 0 ? 'degraded' : connected > 0 ? 'healthy' : 'degraded',
-      message: servers.length === 0 ? '暂无 MCP 服务器' : `${connected}/${enabled} 已连接`,
+      message: servers.length === 0 ? '暂无 MCP 服务器' : `${String(connected)}/${String(enabled)} 已连接`,
       details: { total: servers.length, enabled, connected },
     };
   } catch (error) {
@@ -70,7 +70,7 @@ export async function GET() {
     components.providers = {
       name: 'AI 提供商',
       status: providers.length === 0 ? 'degraded' : 'healthy',
-      message: providers.length === 0 ? '暂无 AI 提供商' : `${enabled} 个已启用`,
+      message: providers.length === 0 ? '暂无 AI 提供商' : `${String(enabled)} 个已启用`,
       details: { total: providers.length, enabled },
     };
   } catch (error) {

@@ -57,8 +57,57 @@
       "enterWorkspace": "Enter Workspace",
       "logoutSuccess": "Logged out successfully",
       "logoutFailed": "Logout failed, please try again",
-      "startNow": "Get Started",
-      "onlineDemo": "Live Demo"
+      "startNow": "Get Started"
+    },
+    "channel": {
+      "title": "Channels",
+      "subtitle": "Discord channel integration for your workspace",
+      "addChannel": "Add Channel",
+      "editChannel": "Edit Channel",
+      "deleteChannel": "Delete Channel",
+      "channelName": "Channel Name",
+      "discordGuild": "Discord Server",
+      "discordChannel": "Discord Channel",
+      "channelType": "Channel Type",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "noChannels": "No channels bound yet",
+      "noChannelsDesc": "Connect your Discord Bot and add channels to start receiving messages",
+      "messageCount": "{count} messages",
+      "lastSynced": "Last synced",
+      "neverSynced": "Never synced",
+      "confirmDelete": "Are you sure you want to delete this channel? All message history will be lost.",
+      "typeText": "Text",
+      "typeVoice": "Voice",
+      "typeAnnouncement": "Announcement",
+      "chatTitle": "Channel Chat",
+      "sendMessage": "Send Message",
+      "messagePlaceholder": "Type a message to send to Discord...",
+      "noMessages": "No messages yet",
+      "loadMore": "Load More",
+      "sentFromApp": "Sent from App",
+      "selectGuild": "Select Server",
+      "selectChannel": "Select Channel",
+      "bindChannel": "Bind Channel",
+      "unbindChannel": "Unbind Channel"
+    },
+    "discord": {
+      "title": "Discord Bot",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "tokenLabel": "Bot Token",
+      "tokenPlaceholder": "Enter your Discord Bot Token...",
+      "tokenHint": "Get your token from the Discord Developer Portal",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "connecting": "Connecting...",
+      "botTag": "Bot: {tag}",
+      "guildCount": "{count} servers available",
+      "connectSuccess": "Discord Bot connected successfully",
+      "connectFailed": "Failed to connect Discord Bot",
+      "disconnectSuccess": "Discord Bot disconnected",
+      "status": "Connection Status",
+      "noGuilds": "No servers available. Make sure the Bot has joined at least one server."
     }
   },
   "login": {
@@ -298,7 +347,7 @@
   },
   "env": {
     "title": "Environment Variables",
-    "description": "Manage and configure system environment variables and runtime parameters",
+    "description": "Description",
     "add": "Add Variable",
     "edit": "Edit",
     "delete": "Delete",
@@ -313,7 +362,6 @@
     "value": "Variable Value",
     "valueRequired": "Please enter a variable value",
     "valuePlaceholder": "Enter sensitive information, will be encrypted",
-    "description": "Description",
     "descriptionPlaceholder": "Optional, describe the purpose of this variable",
     "status": "Status",
     "enabled": "Enabled",
@@ -544,7 +592,6 @@
     "ok": "OK",
     "failed": "Failed",
     "noBackup": "Not backed up",
-    "fileWatching": "File Watching",
     "syncActions": "Actions",
     "pullFromRemote": "Pull from Remote",
     "pushToRemote": "Push to Remote",
@@ -573,6 +620,13 @@
   "metadata": {
     "title": "AutocodeLLM — AI Coding Agent Platform",
     "description": "AI coding agent platform based on LobeHub UI, supporting function calling, task agents, file operations, web search and more",
-    "keywords": ["AI", "coding", "agent", "LobeHub", "LLM", "automation"]
+    "keywords": [
+      "AI",
+      "coding",
+      "agent",
+      "LobeHub",
+      "LLM",
+      "automation"
+    ]
   }
 }
