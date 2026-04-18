@@ -46,6 +46,8 @@
     ]
   },
   "include": [
+    "src/app/**/*.ts",
+    "src/app/**/*.tsx",
     "next.config.ts",
     "next-env.d.ts"
   ],
