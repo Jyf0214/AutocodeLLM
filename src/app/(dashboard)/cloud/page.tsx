@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card, Button, Space, Tag, Spin } from 'antd';
 import {
   CloudServerOutlined,
@@ -38,6 +39,7 @@ interface ApiResponse {
 
 export default function CloudPage() {
   const router = useRouter();
+  const t = useTranslations('cloud');
   const [overview, setOverview] = useState<CloudOverview | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -61,12 +63,12 @@ export default function CloudPage() {
 
   const getSyncStatusTag = () => {
     if (!overview?.sync?.enabled) {
-      return <Tag icon={<CloudServerOutlined />} color="default">未配置</Tag>;
+      return <Tag icon={<CloudServerOutlined />} color="default">{t('notConfigured')}</Tag>;
     }
     if (overview.sync.watching) {
-      return <Tag icon={<CloudUploadOutlined />} color="success">同步中</Tag>;
+      return <Tag icon={<CloudUploadOutlined />} color="success">{t('syncing')}</Tag>;
     }
-    return <Tag icon={<CloudServerOutlined />} color="processing">已配置</Tag>;
+    return <Tag icon={<CloudServerOutlined />} color="processing">{t('configured')}</Tag>;
   };
 
   const navigateTo = (path: string) => {
@@ -83,34 +85,34 @@ export default function CloudPage() {
 
   return (
     <Flexbox gap={16} style={{ flexDirection: 'column', height: '100%', maxHeight: 'calc(100dvh - 64px)', overflowY: 'auto', padding: '0 16px 24px' }}>
-      <Text style={{ fontSize: 20, fontWeight: 700 }}>云服务</Text>
-      <Text type="secondary">统一管理云存储、同步与备份服务</Text>
+      <Text style={{ fontSize: 20, fontWeight: 700 }}>{t('title')}</Text>
+      <Text type="secondary">{t('description')}</Text>
 
-      <Card title="WebDAV 同步状态" extra={getSyncStatusTag()} size="small">
+      <Card title={t('webdavSyncStatus')} extra={getSyncStatusTag()} size="small">
         <Space style={{ width: '100%', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
           <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
-            <Text type="secondary">服务器地址</Text>
-            <Text style={{ wordBreak: 'break-all' }}>{overview?.sync?.url ?? '未配置'}</Text>
+            <Text type="secondary">{t('serverUrl')}</Text>
+            <Text style={{ wordBreak: 'break-all' }}>{overview?.sync?.url ?? t('notConfigured')}</Text>
           </Flexbox>
           <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
-            <Text type="secondary">远程路径</Text>
-            <Text style={{ wordBreak: 'break-all' }}>{overview?.sync?.remotePath ?? '未配置'}</Text>
+            <Text type="secondary">{t('remotePath')}</Text>
+            <Text style={{ wordBreak: 'break-all' }}>{overview?.sync?.remotePath ?? t('notConfigured')}</Text>
           </Flexbox>
         </Space>
       </Card>
 
-      <Card title="快速入口" size="small">
+      <Card title={t('quickAccess')} size="small">
         <Space wrap size={[8, 8]}>
           <Button type="primary" icon={<CloudServerOutlined />} onClick={() => navigateTo('/cloud/webdav')}>
-            WebDAV 配置
+            {t('webdavConfig')}
           </Button>
           <Button icon={<CloudDownloadOutlined />} onClick={() => navigateTo('/cloud/backups')}>
-            备份监控
+            {t('backupMonitor')}
           </Button>
         </Space>
       </Card>
 
-      <Card title="工作区备份状态" size="small">
+      <Card title={t('workspaceBackupStatus')} size="small">
         {overview?.workspaceBackups && overview.workspaceBackups.length > 0 ? (
           <Flexbox gap={8} style={{ flexDirection: 'column' }}>
             {overview.workspaceBackups.map((ws) => (
@@ -129,11 +131,11 @@ export default function CloudPage() {
                   </Flexbox>
                   <Flexbox horizontal gap={8} align="center">
                     {ws.status === 'ok' ? (
-                      <Tag color="success">已备份</Tag>
+                      <Tag color="success">{t('backedUp')}</Tag>
                     ) : ws.status === 'failed' ? (
-                      <Tag color="error">备份失败</Tag>
+                      <Tag color="error">{t('backupFailed')}</Tag>
                     ) : (
-                      <Tag color="default">未备份</Tag>
+                      <Tag color="default">{t('notBackedUp')}</Tag>
                     )}
                     <RightOutlined style={{ fontSize: 12, color: '#999' }} />
                   </Flexbox>
@@ -143,7 +145,7 @@ export default function CloudPage() {
           </Flexbox>
         ) : (
           <Flexbox align="center" justify="center" style={{ padding: 24 }}>
-            <Text type="secondary">暂无工作区数据</Text>
+            <Text type="secondary">{t('noWorkspaceData')}</Text>
           </Flexbox>
         )}
       </Card>

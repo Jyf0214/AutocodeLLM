@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Card, Button, Space, Form, Input, Switch, message as antdMessage, Tag } from 'antd';
+import { useTranslations } from 'next-intl';
 import {
   CloudServerOutlined,
   CheckCircleOutlined,
@@ -23,6 +24,7 @@ interface ApiResponse {
 }
 
 export default function WebDAVPage() {
+  const t = useTranslations('cloud');
   const [status, setStatus] = useState<SyncStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [configMode, setConfigMode] = useState(false);
@@ -66,18 +68,18 @@ export default function WebDAVPage() {
       });
       const data: { success: boolean; message?: string } = await res.json();
       if (data.success) {
-        antdMessage.success('配置已保存');
+        antdMessage.success(t('saveConfig') + ' ' + t('ok'));
         setConfigMode(false);
         await fetchStatus();
       } else {
-        antdMessage.error(data.message ?? '保存失败');
+        antdMessage.error(data.message ?? t('saveFailed'));
       }
     } catch {
-      antdMessage.error('保存失败');
+      antdMessage.error(t('saveFailed'));
     } finally {
       setLoading(false);
     }
-  }, [fetchStatus]);
+  }, [fetchStatus, t]);
 
   const handleTest = useCallback(async () => {
     const values = form.getFieldsValue() as Record<string, string>;
@@ -90,80 +92,80 @@ export default function WebDAVPage() {
       });
       const data: { success: boolean; message?: string } = await res.json();
       if (data.success) {
-        antdMessage.success('连接成功');
+        antdMessage.success(t('connectionSuccess'));
       } else {
-        antdMessage.error(data.message ?? '连接失败');
+        antdMessage.error(data.message ?? t('connectionFailed'));
       }
     } catch {
-      antdMessage.error('连接测试失败');
+      antdMessage.error(t('connectionFailed'));
     } finally {
       setLoading(false);
     }
-  }, [form]);
+  }, [form, t]);
 
   return (
     <Flexbox gap={16} style={{ flexDirection: 'column', height: '100%', maxHeight: 'calc(100dvh - 64px)', overflowY: 'auto', padding: '0 16px 24px' }}>
-      <Text style={{ fontSize: 20, fontWeight: 700 }}>WebDAV 配置</Text>
-      <Text type="secondary">配置 WebDAV 服务器以实现文件同步与备份</Text>
+      <Text style={{ fontSize: 20, fontWeight: 700 }}>{t('webdavConfig')}</Text>
+      <Text type="secondary">{t('description')}</Text>
 
       <Card
-        title="连接状态"
+        title={t('connectionStatus')}
         extra={
           status?.enabled ? (
-            <Tag icon={<CheckCircleOutlined />} color="success">已启用</Tag>
+            <Tag icon={<CheckCircleOutlined />} color="success">{t('enabled')}</Tag>
           ) : (
-            <Tag icon={<CloseCircleOutlined />} color="default">未启用</Tag>
+            <Tag icon={<CloseCircleOutlined />} color="default">{t('disabled')}</Tag>
           )
         }
         size="small"
       >
         <Space style={{ width: '100%', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
           <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
-            <Text type="secondary">服务器地址</Text>
-            <Text style={{ wordBreak: 'break-all' }}>{status?.url ?? '未配置'}</Text>
+            <Text type="secondary">{t('serverUrl')}</Text>
+            <Text style={{ wordBreak: 'break-all' }}>{status?.url ?? t('notConfigured')}</Text>
           </Flexbox>
           <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
-            <Text type="secondary">远程路径</Text>
-            <Text style={{ wordBreak: 'break-all' }}>{status?.remotePath ?? '未配置'}</Text>
+            <Text type="secondary">{t('remotePath')}</Text>
+            <Text style={{ wordBreak: 'break-all' }}>{status?.remotePath ?? t('notConfigured')}</Text>
           </Flexbox>
           <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
-            <Text type="secondary">同步状态</Text>
-            <Text>{status?.watching ? '运行中' : '已停止'}</Text>
+            <Text type="secondary">{t('syncStatus')}</Text>
+            <Text>{status?.watching ? t('running') : t('stopped')}</Text>
           </Flexbox>
         </Space>
       </Card>
 
-      <Card title="服务器配置" size="small">
+      <Card title={t('serverConfig')} size="small">
         <Button
           icon={<CloudServerOutlined />}
           onClick={() => setConfigMode(!configMode)}
         >
-          {configMode ? '取消配置' : '配置服务器'}
+          {configMode ? t('cancelConfig') : t('configureServer')}
         </Button>
       </Card>
 
       {configMode && (
-        <Card title="WebDAV 服务器设置" size="small">
+        <Card title={t('webdavServerSettings')} size="small">
           <Form form={form} layout="vertical" onFinish={handleSaveConfig}>
-            <Form.Item name="url" label="服务器地址" rules={[{ required: true, message: '请输入服务器地址' }]}>
+            <Form.Item name="url" label={t('serverUrl')} rules={[{ required: true, message: t('serverUrl') + ' ' + t('notConfigured') }]}>
               <Input placeholder="https://webdav.example.com" />
             </Form.Item>
-            <Form.Item name="username" label="用户名" rules={[{ required: true, message: '请输入用户名' }]}>
+            <Form.Item name="username" label={t('username')} rules={[{ required: true, message: t('username') + ' ' + t('notConfigured') }]}>
               <Input placeholder="username" />
             </Form.Item>
-            <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
+            <Form.Item name="password" label={t('password')} rules={[{ required: true, message: t('password') + ' ' + t('notConfigured') }]}>
               <Input.Password placeholder="password" />
             </Form.Item>
-            <Form.Item name="remotePath" label="远程路径" rules={[{ required: true, message: '请输入远程路径' }]}>
+            <Form.Item name="remotePath" label={t('remotePath')} rules={[{ required: true, message: t('remotePath') + ' ' + t('notConfigured') }]}>
               <Input placeholder="/autocodellm" />
             </Form.Item>
-            <Form.Item name="enabled" label="启用同步" valuePropName="checked" initialValue={false}>
+            <Form.Item name="enabled" label={t('enableSync')} valuePropName="checked" initialValue={false}>
               <Switch />
             </Form.Item>
             <Form.Item>
               <Space wrap size={[8, 8]}>
-                <Button type="primary" htmlType="submit" loading={loading}>保存配置</Button>
-                <Button onClick={handleTest} loading={loading}>测试连接</Button>
+                <Button type="primary" htmlType="submit" loading={loading}>{t('saveConfig')}</Button>
+                <Button onClick={handleTest} loading={loading}>{t('testConnection')}</Button>
               </Space>
             </Form.Item>
           </Form>

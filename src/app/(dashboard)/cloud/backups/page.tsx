@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Card, Table, Tag, Button, Spin, Space } from 'antd';
+import { useTranslations } from 'next-intl';
 import { ReloadOutlined, EyeOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { Flexbox, Text, Avatar } from '@lobehub/ui';
 import { useRouter } from 'next/navigation';
@@ -23,6 +24,7 @@ interface GlobalBackupsResponse {
 
 export default function GlobalBackupsPage() {
   const router = useRouter();
+  const t = useTranslations('cloud');
   const [backups, setBackups] = useState<WorkspaceBackup[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,11 +50,11 @@ export default function GlobalBackupsPage() {
   const getStatusTag = (status: string) => {
     switch (status) {
       case 'ok':
-        return <Tag icon={<CheckCircleOutlined />} color="success">正常</Tag>;
+        return <Tag icon={<CheckCircleOutlined />} color="success">{t('ok')}</Tag>;
       case 'failed':
-        return <Tag icon={<CloseCircleOutlined />} color="error">失败</Tag>;
+        return <Tag icon={<CloseCircleOutlined />} color="error">{t('failed')}</Tag>;
       case 'no_backup':
-        return <Tag icon={<ClockCircleOutlined />} color="default">未备份</Tag>;
+        return <Tag icon={<ClockCircleOutlined />} color="default">{t('noBackup')}</Tag>;
       default:
         return <Tag>{status}</Tag>;
     }
@@ -65,7 +67,7 @@ export default function GlobalBackupsPage() {
 
   const columns = [
     {
-      title: '工作区',
+      title: t('workspace'),
       dataIndex: 'workspaceName',
       key: 'workspaceName',
       render: (name: string) => (
@@ -78,31 +80,31 @@ export default function GlobalBackupsPage() {
       ),
     },
     {
-      title: '状态',
+      title: t('status'),
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => getStatusTag(status),
     },
     {
-      title: '上次备份',
+      title: t('lastBackup'),
       dataIndex: 'lastBackup',
       key: 'lastBackup',
       render: (date: string | null) => formatDate(date),
     },
     {
-      title: '下次备份',
+      title: t('nextBackup'),
       dataIndex: 'nextBackup',
       key: 'nextBackup',
       render: (date: string | null) => formatDate(date),
     },
     {
-      title: '备份次数',
+      title: t('backupCount'),
       dataIndex: 'backupCount',
       key: 'backupCount',
       render: (count: number) => count,
     },
     {
-      title: '操作',
+      title: t('actions'),
       key: 'action',
       render: (_: unknown, record: WorkspaceBackup) => (
         <Space>
@@ -112,7 +114,7 @@ export default function GlobalBackupsPage() {
             icon={<EyeOutlined />}
             onClick={() => router.push(`/workplace/${record.workspaceId}/backups`)}
           >
-            查看详情
+            {t('viewDetails')}
           </Button>
         </Space>
       ),
@@ -129,11 +131,11 @@ export default function GlobalBackupsPage() {
 
   return (
     <Flexbox gap={16} style={{ flexDirection: 'column', height: '100%', maxHeight: 'calc(100dvh - 64px)', overflowY: 'auto', padding: '0 16px 24px' }}>
-      <Text style={{ fontSize: 20, fontWeight: 700 }}>全局备份监控</Text>
-      <Text type="secondary">查看所有工作区的备份状态（只读视图）</Text>
+      <Text style={{ fontSize: 20, fontWeight: 700 }}>{t('globalBackupMonitor')}</Text>
+      <Text type="secondary">{t('backupDesc')}</Text>
 
       <Card
-        title="备份概览"
+        title={t('backupOverview')}
         extra={
           <Button
             type="text"
@@ -141,13 +143,13 @@ export default function GlobalBackupsPage() {
             icon={<ReloadOutlined />}
             onClick={fetchBackups}
           >
-            刷新
+            {t('refresh')}
           </Button>
         }
       >
         {backups.length === 0 ? (
           <Flexbox align="center" justify="center" style={{ padding: 48 }}>
-            <Text type="secondary">暂无备份数据</Text>
+            <Text type="secondary">{t('noBackupData')}</Text>
           </Flexbox>
         ) : (
           <Table
