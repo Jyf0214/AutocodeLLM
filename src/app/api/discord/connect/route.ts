@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const body = await parseJsonBody<ConnectRequest>(request);
     if (isErrorResponse(body)) return body;
 
-    if (!body.token.trim()) {
+    if (!body.token?.trim()) {
       return errorResponse('Bot Token 不能为空', 'EMPTY_TOKEN', 400);
     }
 

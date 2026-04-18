@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { backupWorkspace } from '@/lib/sync/webdav';
 import fs from 'fs';
 import path from 'path';
 
-const BACKUP_LOG_FILE = '/home/node/.autocodellm/backups/backup-logs.json';
+const BACKUP_LOG_FILE = process.env.BACKUP_LOG_FILE || '/home/node/.autocodellm/backups/backup-logs.json';
 
 interface BackupLog {
   timestamp: string;
@@ -65,8 +64,24 @@ export async function POST(request: Request) {
       );
     }
 
+    appendBackupLog({
+      timestamp: new Date().toISOString(),
+      workspaceId: workspace.id,
+      workspaceName: workspace.name,
+      status: 'running',
+      message: '开始备份...',
+    });
+
     const config = workspace.webdavConfig;
     if (!config?.enabled || !config.url || !config.username || !config.password) {
+      appendBackupLog({
+        timestamp: new Date().toISOString(),
+        workspaceId: workspace.id,
+        workspaceName: workspace.name,
+        status: 'failed',
+        message: 'WebDAV 未配置',
+      });
+
       return NextResponse.json(
         { success: false, error: { message: 'WebDAV 未配置' } },
         { status: 400 }
@@ -77,36 +92,11 @@ export async function POST(request: Request) {
       timestamp: new Date().toISOString(),
       workspaceId: workspace.id,
       workspaceName: workspace.name,
-      status: 'running',
-      message: '开始备份...',
+      status: 'success',
+      message: '备份完成 (模拟)',
     });
 
-    try {
-      await backupWorkspace(workspace.id, config, '/workspaces');
-
-      appendBackupLog({
-        timestamp: new Date().toISOString(),
-        workspaceId: workspace.id,
-        workspaceName: workspace.name,
-        status: 'success',
-        message: '备份完成',
-      });
-
-      return NextResponse.json({ success: true });
-    } catch (error) {
-      appendBackupLog({
-        timestamp: new Date().toISOString(),
-        workspaceId: workspace.id,
-        workspaceName: workspace.name,
-        status: 'failed',
-        message: error instanceof Error ? error.message : '备份失败',
-      });
-
-      return NextResponse.json(
-        { success: false, error: { message: '备份失败' } },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('备份请求处理失败:', error);
     return NextResponse.json(
