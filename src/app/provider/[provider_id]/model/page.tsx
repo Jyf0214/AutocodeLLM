@@ -265,7 +265,7 @@ function PresetCard({
 
 export default function ProviderModelPage() {
   const params = useParams();
-  const providerId = params.provider_id as string | undefined;
+  void params; // params is unused but kept for future use
   const t = useTranslations('common.providers');
 
   const [dataSource, setDataSource] = useState<Provider[]>([]);

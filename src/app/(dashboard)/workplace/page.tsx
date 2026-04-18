@@ -151,7 +151,7 @@ function WorkspaceCard({
               lineHeight: 1.5,
             }}
           >
-            {workspace.description ?? t('noDescription')}
+            {(workspace.description) || ('No description')}
           </Text>
         </div>
       </Flexbox>
