@@ -63,13 +63,6 @@ export async function POST(request: Request) {
       // 审计表不存在或写入失败，忽略
     }
 
-    console.log(`\n🔐 密码审计 [${new Date().toISOString()}]`);
-    console.log(`  用户: ${user.username} (${userId})`);
-    console.log(`  操作: PASSWORD_CHANGED`);
-    console.log(`  旧哈希: ${oldHash}`);
-    console.log(`  新哈希: ${newPasswordHash}`);
-    console.log('========================================\n');
-
     return NextResponse.json({
       success: true,
       data: { message: '密码修改成功' },

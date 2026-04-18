@@ -64,12 +64,6 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      // 记录登录失败 - 用户不存在
-      console.log(`\n🔐 登录审计 [${new Date().toISOString()}]`);
-      console.log(`  用户名: ${username}`);
-      console.log(`  结果: FAILED (用户不存在)`);
-      console.log('========================================\n');
-
       return NextResponse.json(
         { success: false, error: { message: '用户不存在', code: 'USER_NOT_FOUND' } },
         { status: 401 },
@@ -105,14 +99,6 @@ export async function POST(request: Request) {
           // 审计表不存在，忽略
         }
 
-        console.log(`\n🔐 登录审计 [${new Date().toISOString()}]`);
-        console.log(`  用户: ${user.username} (${user.id})`);
-        console.log(`  结果: FAILED (密码错误)`);
-        console.log(`  提交哈希: ${passwordHash}`);
-        console.log(`  系统哈希: ${user.passwordHash}`);
-        console.log(`  匹配: ${passwordHash === user.passwordHash ? '✅' : '❌'}`);
-        console.log('========================================\n');
-
         return NextResponse.json(
           { success: false, error: { message: '密码错误', code: 'INVALID_CREDENTIALS' } },
           { status: 401 },
@@ -135,14 +121,6 @@ export async function POST(request: Request) {
       } catch {
         // 审计表不存在，忽略
       }
-
-      console.log(`\n🔐 登录审计 [${new Date().toISOString()}]`);
-      console.log(`  用户: ${user.username} (${user.id})`);
-      console.log(`  结果: SUCCESS`);
-      console.log(`  提交哈希: ${passwordHash}`);
-      console.log(`  系统哈希: ${user.passwordHash}`);
-      console.log(`  匹配: ✅`);
-      console.log('========================================\n');
     }
 
     const response = NextResponse.json({
