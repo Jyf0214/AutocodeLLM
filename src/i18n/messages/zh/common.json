@@ -548,6 +548,7 @@
     "lastHeartbeat": "最后心跳",
     "metadata": "元数据",
     "metadataPlaceholder": "可选，JSON 格式的额外配置信息",
+    "metadataJsonError": "元数据 JSON 格式错误",
     "confirmDelete": "确定要删除此工作节点吗？",
     "deleteSuccess": "节点删除成功",
     "createSuccess": "节点创建成功",
@@ -563,7 +564,8 @@
     "noWorkersDesc": "点击上方按钮添加第一个工作节点",
     "actions": "操作",
     "edit": "编辑",
-    "delete": "删除"
+    "delete": "删除",
+    "cancel": "取消"
   },
   "cloud": {
     "title": "云服务",
@@ -586,6 +588,7 @@
     "enabled": "已启用",
     "disabled": "未启用",
     "syncStatus": "同步状态",
+    "fileWatching": "文件监听",
     "running": "运行中",
     "stopped": "已停止",
     "serverConfig": "服务器配置",
@@ -614,7 +617,20 @@
     "viewDetails": "查看详情",
     "ok": "正常",
     "failed": "失败",
-    "noBackup": "未备份"
+    "noBackup": "未备份",
+    "fileWatching": "文件监听",
+    "syncActions": "操作",
+    "pullFromRemote": "从远程拉取",
+    "pushToRemote": "推送到远程",
+    "startWatching": "启动监听",
+    "stopWatching": "停止监听",
+    "serverUrlRequired": "请输入服务器地址",
+    "usernameRequired": "请输入用户名",
+    "passwordRequired": "请输入密码",
+    "remotePathRequired": "请输入远程路径",
+    "actionSuccess": "操作成功",
+    "actionFailed": "操作失败",
+    "configSaved": "配置已保存"
   },
   "notFound": {
     "title": "页面未找到",

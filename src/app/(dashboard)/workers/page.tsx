@@ -92,7 +92,7 @@ export default function WorkersPage() {
         try {
           metadata = JSON.parse(values.metadata) as Record<string, unknown>;
         } catch {
-          message.error('元数据 JSON 格式错误');
+          message.error(t('metadataJsonError'));
           setLoading(false);
           return;
         }
@@ -231,7 +231,7 @@ export default function WorkersPage() {
               handleDelete(record.id);
             }}
             okText={t('delete')}
-            cancelText="取消"
+            cancelText={t('cancel')}
           >
             <Button type="link" danger size="small" icon={<DeleteOutlined />}>
               {t('delete')}
@@ -258,7 +258,7 @@ export default function WorkersPage() {
       <Text type="secondary">{t('description')}</Text>
 
       {fetching ? (
-        <Empty description="加载中..." />
+        <Empty description={t('loading')} />
       ) : workers.length === 0 ? (
         <Empty description={t('noWorkersDesc')} />
       ) : (
@@ -324,7 +324,7 @@ export default function WorkersPage() {
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>
-              <Button onClick={handleCloseModal}>取消</Button>
+              <Button onClick={handleCloseModal}>{t('cancel')}</Button>
               <Button type="primary" htmlType="submit" loading={loading}>
                 {editingWorker ? t('updateSuccess') : t('createSuccess')}
               </Button>
