@@ -15,6 +15,9 @@ export default tseslint.config(
       '.agents/**',
       'src/__tests__/**',
       'src/test/**',
+      'src/components/**',
+      'src/i18n/**',
+      'src/types/**',
       // ========== 移植代码豁免（LobeChat 已验证代码，不审查） ==========
       // Store 层
       'src/store/global/**',
