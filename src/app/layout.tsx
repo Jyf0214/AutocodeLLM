@@ -6,11 +6,28 @@ import { ConfigProvider } from 'antd';
 import { ThemeProvider } from '@lobehub/ui';
 import '../styles/globals.css';
 
+/**
+ * 应用元数据配置
+ * 定义网站标题、描述等 SEO 信息
+ */
 export const metadata: Metadata = {
-  title: 'AutocodeLLM',
-  description: 'AI 编码代理平台 — 支持函数调用、任务代理、文件操作、Web 搜索等完整工具链',
+  title: 'AutocodeLLM — AI 编码代理平台',
+  description: '基于 LobeHub UI 的 AI 编码代理平台，支持函数调用、任务代理、文件操作、Web 搜索等完整工具链',
+  keywords: ['AI', '编码', '代理', 'LobeHub', 'LLM', '自动化工具'],
+  authors: [{ name: 'Jyf0214' }],
+  creator: 'Jyf0214',
+  publisher: 'AutocodeLLM',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
 };
 
+/**
+ * 根布局组件
+ * 提供全局主题、国际化、Ant Design 配置
+ */
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +45,8 @@ export default async function RootLayout({
                 theme={{
                   token: {
                     borderRadius: 6,
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif",
+                    fontFamily:
+                      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif",
                     fontSize: 14,
                   },
                   components: {
@@ -39,6 +57,12 @@ export default async function RootLayout({
                     Input: {
                       borderRadius: 6,
                       controlHeight: 36,
+                    },
+                    Card: {
+                      borderRadius: 12,
+                    },
+                    Modal: {
+                      borderRadius: 12,
                     },
                   },
                 }}

@@ -2,6 +2,9 @@
  * Provider API 类型定义
  */
 
+/**
+ * 提供商数据
+ */
 export interface Provider {
   id: string;
   name: string;
@@ -17,11 +20,14 @@ export interface Provider {
   oauthExpiresAt: string | null;
   oauthClientId: string | null;
   oauthDeviceCode: string | null;
-  metadata: string;
+  metadata: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
+/**
+ * 提供商响应
+ */
 export interface ProviderResponse {
   success: boolean;
   data?: Provider | Provider[];
@@ -31,14 +37,28 @@ export interface ProviderResponse {
   };
 }
 
+/**
+ * 创建提供商请求
+ */
 export interface CreateProviderRequest {
   name: string;
   baseUrl: string;
-  apiKey: string;
+  apiKey?: string;
   databaseUrl?: string;
   enabled?: boolean;
+  providerType?: string;
+  sdkType?: string;
+  authType?: string;
+  oauthAccessToken?: string;
+  oauthRefreshToken?: string;
+  oauthDeviceCode?: string;
+  oauthExpiresAt?: string;
+  metadata?: string;
 }
 
+/**
+ * 更新提供商请求
+ */
 export interface UpdateProviderRequest {
   id: string;
   name?: string;
@@ -46,8 +66,18 @@ export interface UpdateProviderRequest {
   apiKey?: string;
   databaseUrl?: string;
   enabled?: boolean;
+  authType?: string;
+  sdkType?: string;
+  oauthAccessToken?: string;
+  oauthRefreshToken?: string;
+  oauthDeviceCode?: string;
+  oauthExpiresAt?: string;
+  metadata?: string;
 }
 
+/**
+ * 测试提供商请求和响应
+ */
 export interface TestProviderRequest {
   id: string;
   baseUrl: string;
@@ -67,6 +97,9 @@ export interface TestProviderResponse {
   };
 }
 
+/**
+ * 预置提供商数据
+ */
 export interface PresetProviderData {
   id: string;
   name: string;
@@ -83,6 +116,9 @@ export interface PresetProviderData {
   dbId?: string;
 }
 
+/**
+ * Qwen OAuth 相关类型
+ */
 export interface QwenOAuthStartResponse {
   success: boolean;
   data?: {
@@ -90,7 +126,7 @@ export interface QwenOAuthStartResponse {
     userCode: string;
     verificationUri: string;
     verificationUriComplete: string;
-    authorizationUrl: string; // 新增: 自动组合的授权URL
+    authorizationUrl: string;
     expiresIn: number;
     interval: number;
     codeVerifier: string;
@@ -130,6 +166,9 @@ export interface QwenOAuthRefreshResponse {
   };
 }
 
+/**
+ * 添加预置提供商响应
+ */
 export interface AddPresetProviderResponse {
   success: boolean;
   data?: Provider;

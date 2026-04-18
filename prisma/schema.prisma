@@ -111,6 +111,7 @@ model Workspace {
 
   messages ChatMessage[]
   logs     WorkspaceLog[]
+  backups  Backup[]
 
   @@map("workspaces")
 }
@@ -198,6 +199,22 @@ model AgentTask {
   updatedAt   DateTime @updatedAt
 
   @@map("agent_tasks")
+}
+
+// 备份记录
+model Backup {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  size        Int      @default(0)
+  status      String   @default("pending") // pending, completed, failed
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([createdAt])
+  @@map("backups")
 }
 
 // 工作区日志

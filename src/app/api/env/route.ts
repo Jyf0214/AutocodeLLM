@@ -1,65 +1,30 @@
+/**
+ * 环境变量管理 API
+ * GET /api/env - 获取所有环境变量列表
+ * POST /api/env - 创建新的环境变量
+ * PUT /api/env - 更新环境变量
+ * DELETE /api/env - 删除环境变量
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import type { EnvVariableResponse, CreateEnvVariableRequest, UpdateEnvVariableRequest } from '@/lib/api/env-types';
-import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypto';
-
-/**
- * 从环境变量派生 32 字节 AES-256 密钥（使用 SHA-256）
- */
-function deriveKey(): Buffer {
-  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
-  return createHash('sha256').update(keyStr).digest();
-}
-
-/**
- * AES-256-CBC 加密函数（生产级别加密）
- * @param value 明文值
- * @returns iv:encrypted 格式（hex 编码）
- */
-function encryptValue(value: string): string {
-  const key = deriveKey();
-  const iv = randomBytes(16);
-  const cipher = createCipheriv('aes-256-cbc', key, iv);
-  let encrypted = cipher.update(value, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
-}
-
-/**
- * AES-256-CBC 解密函数
- * @param encrypted 密文（iv:encrypted 格式）
- * @returns 明文值
- * @throws 错误：当格式无效或解密失败时
- */
-function decryptValue(encrypted: string): string {
-  const key = deriveKey();
-  const parts = encrypted.split(':');
-  if (parts.length !== 2) {
-    throw new Error('无效的加密数据格式：应为 iv:encrypted');
-  }
-  const [ivHex, encryptedData] = parts;
-  if (!ivHex || !encryptedData) {
-    throw new Error('无效的加密数据：iv 或加密数据为空');
-  }
-  const iv = Buffer.from(ivHex, 'hex');
-  const decipher = createDecipheriv('aes-256-cbc', key, iv);
-  let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
-}
-
-/**
- * 脱敏显示变量值
- */
-function maskValue(value: string): string {
-  if (value.length <= 2) return '**';
-  return value.substring(0, 2) + '*'.repeat(Math.max(value.length - 2, 4));
-}
+import {
+  successResponse,
+  errorResponse,
+  handleError,
+  validateRequiredFields,
+} from '@/lib/api/response';
+import { encryptValue, decryptValue, maskValue } from '@/lib/providers/qwen-oauth';
+import type {
+  EnvVariableResponse,
+  CreateEnvVariableRequest,
+  UpdateEnvVariableRequest,
+} from '@/lib/api/env-types';
 
 /**
  * GET /api/env - 获取所有环境变量列表
  */
-export async function GET() {
+export async function GET(): Promise<NextResponse<EnvVariableResponse>> {
   try {
     const envVars = await prisma.environmentVariable.findMany({
       orderBy: { createdAt: 'desc' },
@@ -75,43 +40,26 @@ export async function GET() {
       updatedAt: envVar.updatedAt.toISOString(),
     }));
 
-    return NextResponse.json({
-      success: true,
-      data: maskedEnvVars,
-    } as EnvVariableResponse);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '获取环境变量列表失败',
-          code: 'FETCH_FAILED',
-        },
-      } as EnvVariableResponse,
-      { status: 500 }
-    );
+    return successResponse(maskedEnvVars);
+  } catch (error) {
+    return handleError(error, '获取环境变量列表');
   }
 }
 
 /**
  * POST /api/env - 创建新的环境变量
  */
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+): Promise<NextResponse<EnvVariableResponse>> {
   try {
     const body = (await request.json()) as CreateEnvVariableRequest;
     const { key, value, description, enabled } = body;
 
-    if (!key || !value) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少必填字段：key, value',
-            code: 'MISSING_FIELDS',
-          },
-        } as EnvVariableResponse,
-        { status: 400 }
-      );
+    // 验证必填字段
+    const validationError = validateRequiredFields({ key, value });
+    if (validationError) {
+      return validationError as unknown as NextResponse<EnvVariableResponse>;
     }
 
     const existingEnvVar = await prisma.environmentVariable.findUnique({
@@ -119,16 +67,7 @@ export async function POST(request: Request) {
     });
 
     if (existingEnvVar) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '环境变量名已存在',
-            code: 'DUPLICATE_KEY',
-          },
-        } as EnvVariableResponse,
-        { status: 409 }
-      );
+      return errorResponse('环境变量名已存在', 'DUPLICATE_KEY', 409);
     }
 
     const newEnvVar = await prisma.environmentVariable.create({
@@ -140,54 +79,35 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(
+    return successResponse(
       {
-        success: true,
-        data: {
-          id: newEnvVar.id,
-          key: newEnvVar.key,
-          value: maskValue(decryptValue(newEnvVar.value)),
-          description: newEnvVar.description,
-          enabled: newEnvVar.enabled,
-          createdAt: newEnvVar.createdAt.toISOString(),
-          updatedAt: newEnvVar.updatedAt.toISOString(),
-        },
-      } as EnvVariableResponse,
-      { status: 201 }
+        id: newEnvVar.id,
+        key: newEnvVar.key,
+        value: maskValue(decryptValue(newEnvVar.value)),
+        description: newEnvVar.description,
+        enabled: newEnvVar.enabled,
+        createdAt: newEnvVar.createdAt.toISOString(),
+        updatedAt: newEnvVar.updatedAt.toISOString(),
+      },
+      201,
     );
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '创建环境变量失败',
-          code: 'CREATE_FAILED',
-        },
-      } as EnvVariableResponse,
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleError(error, '创建环境变量');
   }
 }
 
 /**
  * PUT /api/env - 更新环境变量
  */
-export async function PUT(request: Request) {
+export async function PUT(
+  request: Request,
+): Promise<NextResponse<EnvVariableResponse>> {
   try {
     const body = (await request.json()) as UpdateEnvVariableRequest;
     const { id, key, value, description, enabled } = body;
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少 ID 字段',
-            code: 'MISSING_ID',
-          },
-        } as EnvVariableResponse,
-        { status: 400 }
-      );
+      return errorResponse('缺少 ID 字段', 'MISSING_ID', 400);
     }
 
     const existingEnvVar = await prisma.environmentVariable.findUnique({
@@ -195,34 +115,15 @@ export async function PUT(request: Request) {
     });
 
     if (!existingEnvVar) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '环境变量不存在',
-            code: 'NOT_FOUND',
-          },
-        } as EnvVariableResponse,
-        { status: 404 }
-      );
+      return errorResponse('环境变量不存在', 'NOT_FOUND', 404);
     }
 
     if (key && key !== existingEnvVar.key) {
       const duplicateCheck = await prisma.environmentVariable.findUnique({
         where: { key },
       });
-
       if (duplicateCheck && duplicateCheck.id !== id) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: {
-              message: '环境变量名已存在',
-              code: 'DUPLICATE_KEY',
-            },
-          } as EnvVariableResponse,
-          { status: 409 }
-        );
+        return errorResponse('环境变量名已存在', 'DUPLICATE_KEY', 409);
       }
     }
 
@@ -236,51 +137,32 @@ export async function PUT(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: updatedEnvVar.id,
-        key: updatedEnvVar.key,
-        value: maskValue(decryptValue(updatedEnvVar.value)),
-        description: updatedEnvVar.description,
-        enabled: updatedEnvVar.enabled,
-        createdAt: updatedEnvVar.createdAt.toISOString(),
-        updatedAt: updatedEnvVar.updatedAt.toISOString(),
-      },
-    } as EnvVariableResponse);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '更新环境变量失败',
-          code: 'UPDATE_FAILED',
-        },
-      } as EnvVariableResponse,
-      { status: 500 }
-    );
+    return successResponse({
+      id: updatedEnvVar.id,
+      key: updatedEnvVar.key,
+      value: maskValue(decryptValue(updatedEnvVar.value)),
+      description: updatedEnvVar.description,
+      enabled: updatedEnvVar.enabled,
+      createdAt: updatedEnvVar.createdAt.toISOString(),
+      updatedAt: updatedEnvVar.updatedAt.toISOString(),
+    });
+  } catch (error) {
+    return handleError(error, '更新环境变量');
   }
 }
 
 /**
  * DELETE /api/env - 删除环境变量
  */
-export async function DELETE(request: Request) {
+export async function DELETE(
+  request: Request,
+): Promise<NextResponse<EnvVariableResponse>> {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少 ID 参数',
-            code: 'MISSING_ID',
-          },
-        } as EnvVariableResponse,
-        { status: 400 }
-      );
+      return errorResponse('缺少 ID 参数', 'MISSING_ID', 400);
     }
 
     const existingEnvVar = await prisma.environmentVariable.findUnique({
@@ -288,36 +170,13 @@ export async function DELETE(request: Request) {
     });
 
     if (!existingEnvVar) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '环境变量不存在',
-            code: 'NOT_FOUND',
-          },
-        } as EnvVariableResponse,
-        { status: 404 }
-      );
+      return errorResponse('环境变量不存在', 'NOT_FOUND', 404);
     }
 
-    await prisma.environmentVariable.delete({
-      where: { id },
-    });
+    await prisma.environmentVariable.delete({ where: { id } });
 
-    return NextResponse.json({
-      success: true,
-      data: { id },
-    } as EnvVariableResponse);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '删除环境变量失败',
-          code: 'DELETE_FAILED',
-        },
-      } as EnvVariableResponse,
-      { status: 500 }
-    );
+    return successResponse({ id });
+  } catch (error) {
+    return handleError(error, '删除环境变量');
   }
 }

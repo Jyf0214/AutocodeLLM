@@ -2,7 +2,6 @@
  * 本文件是 AutocodeLLM 项目的原始实现
  *
  * AutocodeLLM 项目许可证：
-import type { ChatMessage } from "./store/types";
  * Apache License, Version 2.0
  * Copyright (c) 2026 Jyf0214
  */
@@ -10,6 +9,7 @@ import type { ChatMessage } from "./store/types";
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import type { ChatMessage } from './store/types';
 import { useRouter } from 'next/navigation';
 import { message, Spin } from 'antd';
 import { Empty } from '@lobehub/ui';

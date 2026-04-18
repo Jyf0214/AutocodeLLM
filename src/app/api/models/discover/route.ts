@@ -1,62 +1,38 @@
+/**
+ * 模型发现 API
+ * POST /api/models/discover - 发现 OpenAI 兼容的模型
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-
-export interface DiscoveredModel {
-  id: string;
-  name: string;
-  owner?: string | undefined;
-  created?: number | undefined;
-}
-
-export interface DiscoverRequest {
-  baseUrl: string;
-  apiKey: string;
-}
-
-export interface DiscoverResponse {
-  success: boolean;
-  data?: DiscoveredModel[];
-  error?: {
-    message: string;
-    code: string;
-  };
-}
+import {
+  successResponse,
+  errorResponse,
+  handleError,
+} from '@/lib/api/response';
+import type { DiscoverResponse } from '@/lib/api/model-types';
 
 /**
- * POST /api/models/discover
- * 通过 OpenAI 兼容的 /v1/models 端点发现可用模型
+ * POST /api/models/discover - 通过 OpenAI 兼容的/v1/models端点发现可用模型
  */
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+): Promise<NextResponse<DiscoverResponse>> {
   try {
-    const body = (await request.json()) as DiscoverRequest;
+    const body = (await request.json()) as {
+      baseUrl: string;
+      apiKey: string;
+    };
     const { baseUrl, apiKey } = body;
 
     if (!baseUrl) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少 API Base URL',
-            code: 'MISSING_BASE_URL',
-          },
-        } as DiscoverResponse,
-        { status: 400 }
-      );
+      return errorResponse('缺少 API Base URL', 'MISSING_BASE_URL', 400);
     }
 
     if (!apiKey) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少 API Key',
-            code: 'MISSING_API_KEY',
-          },
-        } as DiscoverResponse,
-        { status: 400 }
-      );
+      return errorResponse('缺少 API Key', 'MISSING_API_KEY', 400);
     }
 
-    // 标准化 baseUrl，确保正确处理 /v1 结尾的情况
+    // 标准化 URL
     const normalizedUrl = baseUrl.replace(/\/+$/, '');
     const modelsUrl = normalizedUrl.endsWith('/v1')
       ? `${normalizedUrl}/models`
@@ -67,7 +43,7 @@ export async function POST(request: NextRequest) {
     const response = await fetch(modelsUrl, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       signal: AbortSignal.timeout(15000),
@@ -77,114 +53,65 @@ export async function POST(request: NextRequest) {
       const errorText = await response.text().catch(() => '');
 
       if (response.status === 401 || response.status === 403) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: {
-              message: 'API Key 无效或权限不足',
-              code: 'AUTH_FAILED',
-            },
-          } as DiscoverResponse,
-          { status: 401 }
-        );
+        return errorResponse('API Key 无效或权限不足', 'AUTH_FAILED', 401);
       }
 
       if (response.status === 404) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: {
-              message: '不支持的 API 端点，请确认 Base URL 是否正确（应包含 /v1）',
-              code: 'ENDPOINT_NOT_FOUND',
-            },
-          } as DiscoverResponse,
-          { status: 404 }
+        return errorResponse(
+          '不支持的 API 端点，请确认 Base URL 是否正确（应包含/v1）',
+          'ENDPOINT_NOT_FOUND',
+          404,
         );
       }
 
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: `服务器错误 (${String(response.status)}): ${errorText || '未知错误'}`,
-            code: 'SERVER_ERROR',
-          },
-        } as DiscoverResponse,
-        { status: response.status }
+      return errorResponse(
+        `服务器错误 (${String(response.status)}): ${errorText || '未知错误'}`,
+        'SERVER_ERROR',
+        response.status,
       );
     }
 
     const data = await response.json();
-
-    // OpenAI 兼容格式：{ data: [{ id, object, created, owned_by }, ...] }
     const rawModels = data?.data ?? data?.models ?? [];
 
     if (!Array.isArray(rawModels)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: 'API 返回格式不正确，无法解析模型列表',
-            code: 'INVALID_RESPONSE',
-          },
-        } as DiscoverResponse,
-        { status: 422 }
+      return errorResponse(
+        'API 返回格式不正确，无法解析模型列表',
+        'INVALID_RESPONSE',
+        422,
       );
     }
 
-    const models: DiscoveredModel[] = rawModels.map((model: Record<string, unknown>) => {
-      const idValue = (model.id as string | undefined) ?? (model.name as string | undefined);
-      const ownedBy = model.owned_by as string | undefined;
-      const created = model.created as number | undefined;
+    const models = rawModels.map(
+      (model: Record<string, unknown>) => ({
+        id: (model.id as string | undefined) ?? 'unknown',
+        name: (model.id as string | undefined) ?? 'Unknown Model',
+        owner: model.owned_by as string | undefined,
+        created: model.created as number | undefined,
+      }),
+    );
 
-      return {
-        id: idValue ?? 'unknown',
-        name: idValue ?? 'Unknown Model',
-        owner: ownedBy,
-        created,
-      };
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: models,
-    } as DiscoverResponse);
+    return successResponse(models);
   } catch (error) {
-    if (error instanceof DOMException && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '请求超时，请检查网络连接和 API 地址',
-            code: 'TIMEOUT',
-          },
-        } as DiscoverResponse,
-        { status: 408 }
+    if (
+      error instanceof DOMException &&
+      (error.name === 'AbortError' || error.name === 'TimeoutError')
+    ) {
+      return errorResponse(
+        '请求超时，请检查网络连接和 API 地址',
+        'TIMEOUT',
+        408,
       );
     }
 
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '网络连接失败，请检查 API 地址是否正确',
-            code: 'NETWORK_ERROR',
-          },
-        } as DiscoverResponse,
-        { status: 502 }
+      return errorResponse(
+        '网络连接失败，请检查 API 地址是否正确',
+        'NETWORK_ERROR',
+        502,
       );
     }
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '探测模型失败，请稍后重试',
-          code: 'DISCOVER_FAILED',
-        },
-      } as DiscoverResponse,
-      { status: 500 }
-    );
+    return handleError(error, '探测模型');
   }
 }

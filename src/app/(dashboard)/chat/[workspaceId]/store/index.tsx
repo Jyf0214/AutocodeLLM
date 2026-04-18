@@ -6,6 +6,8 @@
  * Copyright (c) 2026 Jyf0214
  */
 
+'use client';
+
 import React, { createContext, useContext, useReducer, useCallback } from 'react';
 import { initialState } from './initialState';
 import type { ChatStoreState, ChatMessage, AgentState, FileAttachment, ErrorDialogState } from './types';

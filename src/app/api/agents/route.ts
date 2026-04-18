@@ -1,10 +1,32 @@
+/**
+ * Agent 任务管理 API
+ * GET /api/agents - 获取所有任务代理列表
+ * POST /api/agents - 创建新的任务代理
+ * PUT /api/agents - 更新任务代理
+ * DELETE /api/agents - 删除任务代理
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import type { AgentTask, AgentTaskListResponse, UpdateAgentTaskRequest } from '@/lib/api/agent-task-types';
+import {
+  successResponse,
+  errorResponse,
+  handleError,
+  validateRequiredFields,
+  validateEnum,
+} from '@/lib/api/response';
+import type {
+  AgentTask,
+  AgentTaskListResponse,
+  UpdateAgentTaskRequest,
+} from '@/lib/api/agent-task-types';
 
 const VALID_MODES = ['read_only', 'yolo'] as const;
 const VALID_STATUSES = ['ready', 'running', 'completed', 'failed'] as const;
 
+/**
+ * 解析日志
+ */
 function parseLogs(logs: unknown): Record<string, unknown>[] | null {
   if (!logs) return null;
   if (typeof logs === 'string') {
@@ -17,6 +39,9 @@ function parseLogs(logs: unknown): Record<string, unknown>[] | null {
   return logs as Record<string, unknown>[] | null;
 }
 
+/**
+ * 序列化日志
+ */
 function serializeLogs(logs: unknown): string | null {
   if (!logs) return null;
   if (typeof logs === 'string') return logs;
@@ -27,6 +52,9 @@ function serializeLogs(logs: unknown): string | null {
   }
 }
 
+/**
+ * 转换为 AgentTask 响应格式
+ */
 function toAgentTaskResponse(task: {
   id: string;
   name: string;
@@ -58,7 +86,7 @@ function toAgentTaskResponse(task: {
 /**
  * GET /api/agents - 获取所有任务代理列表
  */
-export async function GET() {
+export async function GET(): Promise<NextResponse<AgentTaskListResponse>> {
   try {
     const tasks = await prisma.agentTask.findMany({
       orderBy: { createdAt: 'desc' },
@@ -66,28 +94,18 @@ export async function GET() {
 
     const taskList = tasks.map(toAgentTaskResponse);
 
-    const response: AgentTaskListResponse = {
-      success: true,
-      data: taskList,
-    };
-
-    return NextResponse.json(response);
-  } catch {
-    const response: AgentTaskListResponse = {
-      success: false,
-      error: {
-        message: '获取任务代理列表失败',
-        code: 'FETCH_FAILED',
-      },
-    };
-    return NextResponse.json(response, { status: 500 });
+    return successResponse(taskList);
+  } catch (error) {
+    return handleError(error, '获取任务代理列表');
   }
 }
 
 /**
  * POST /api/agents - 创建新的任务代理
  */
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+): Promise<NextResponse<AgentTaskListResponse>> {
   try {
     const body = (await request.json()) as Record<string, unknown>;
     const name = body.name as string | undefined;
@@ -95,107 +113,77 @@ export async function POST(request: Request) {
     const description = body.description as string | undefined;
     const maxAgents = body.maxAgents as number | undefined;
 
-    if (!name || !mode) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少必填字段：name, mode',
-            code: 'MISSING_FIELDS',
-          },
-        } as AgentTaskListResponse,
-        { status: 400 }
-      );
+    // 验证必填字段
+    const validationError = validateRequiredFields({ name, mode });
+    if (validationError) {
+      return validationError as unknown as NextResponse<AgentTaskListResponse>;
     }
 
-    if (!VALID_MODES.includes(mode as typeof VALID_MODES[number])) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '无效的执行模式',
-            code: 'INVALID_MODE',
-          },
-        } as AgentTaskListResponse,
-        { status: 400 }
-      );
+    // 验证模式
+    const modeValidation = validateEnum(
+      mode as 'read_only' | 'yolo',
+      VALID_MODES,
+      'mode',
+    );
+    if (modeValidation) {
+      return modeValidation as unknown as NextResponse<AgentTaskListResponse>;
     }
 
     const newTask = await prisma.agentTask.create({
       data: {
-        name,
+        name: name!,
         description: description ?? '',
-        mode,
+        mode: mode as 'read_only' | 'yolo',
         status: 'ready',
         maxAgents: maxAgents ?? 5,
         progress: 0,
       },
     });
 
-    const response: AgentTaskListResponse = {
-      success: true,
-      data: toAgentTaskResponse(newTask),
-    };
-    return NextResponse.json(response, { status: 201 });
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '创建任务代理失败',
-          code: 'CREATE_FAILED',
-        },
-      } as AgentTaskListResponse,
-      { status: 500 }
-    );
+    return successResponse(toAgentTaskResponse(newTask), 201);
+  } catch (error) {
+    return handleError(error, '创建任务代理');
   }
 }
 
 /**
  * PUT /api/agents - 更新任务代理
  */
-export async function PUT(request: Request) {
+export async function PUT(
+  request: Request,
+): Promise<NextResponse<AgentTaskListResponse>> {
   try {
     const body = (await request.json()) as UpdateAgentTaskRequest;
-    const { id, name, description, mode, status, maxAgents, progress, logs, result } = body;
+    const {
+      id,
+      name,
+      description,
+      mode,
+      status,
+      maxAgents,
+      progress,
+      logs,
+      result,
+    } = body;
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少 ID 字段',
-            code: 'MISSING_ID',
-          },
-        } as AgentTaskListResponse,
-        { status: 400 }
-      );
+      return errorResponse('缺少 ID 字段', 'MISSING_ID', 400);
     }
 
-    if (mode && !VALID_MODES.includes(mode)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '无效的执行模式',
-            code: 'INVALID_MODE',
-          },
-        } as AgentTaskListResponse,
-        { status: 400 }
-      );
+    // 验证模式
+    if (mode) {
+      const modeValidation = validateEnum(mode, VALID_MODES, 'mode');
+      if (modeValidation) {
+        return modeValidation as unknown as NextResponse<AgentTaskListResponse>;
+      }
     }
 
-    if (status && !VALID_STATUSES.includes(status)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '无效的任务状态',
-            code: 'INVALID_STATUS',
-          },
-        } as AgentTaskListResponse,
-        { status: 400 }
-      );
+    // 验证状态
+    if (status) {
+      const statusValidation = validateEnum(status, VALID_STATUSES, 'status');
+      if (statusValidation) {
+        return statusValidation as unknown as NextResponse<AgentTaskListResponse>;
+      }
     }
 
     const existingTask = await prisma.agentTask.findUnique({
@@ -203,16 +191,7 @@ export async function PUT(request: Request) {
     });
 
     if (!existingTask) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '任务代理不存在',
-            code: 'NOT_FOUND',
-          },
-        } as AgentTaskListResponse,
-        { status: 404 }
-      );
+      return errorResponse('任务代理不存在', 'NOT_FOUND', 404);
     }
 
     const updatedTask = await prisma.agentTask.update({
@@ -229,44 +208,24 @@ export async function PUT(request: Request) {
       },
     });
 
-    const response: AgentTaskListResponse = {
-      success: true,
-      data: toAgentTaskResponse(updatedTask),
-    };
-    return NextResponse.json(response);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '更新任务代理失败',
-          code: 'UPDATE_FAILED',
-        },
-      } as AgentTaskListResponse,
-      { status: 500 }
-    );
+    return successResponse(toAgentTaskResponse(updatedTask));
+  } catch (error) {
+    return handleError(error, '更新任务代理');
   }
 }
 
 /**
  * DELETE /api/agents - 删除任务代理
  */
-export async function DELETE(request: Request) {
+export async function DELETE(
+  request: Request,
+): Promise<NextResponse<AgentTaskListResponse>> {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少 ID 参数',
-            code: 'MISSING_ID',
-          },
-        } as AgentTaskListResponse,
-        { status: 400 }
-      );
+      return errorResponse('缺少 ID 参数', 'MISSING_ID', 400);
     }
 
     const existingTask = await prisma.agentTask.findUnique({
@@ -274,37 +233,13 @@ export async function DELETE(request: Request) {
     });
 
     if (!existingTask) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '任务代理不存在',
-            code: 'NOT_FOUND',
-          },
-        } as AgentTaskListResponse,
-        { status: 404 }
-      );
+      return errorResponse('任务代理不存在', 'NOT_FOUND', 404);
     }
 
-    await prisma.agentTask.delete({
-      where: { id },
-    });
+    await prisma.agentTask.delete({ where: { id } });
 
-    const response: AgentTaskListResponse = {
-      success: true,
-      data: { id },
-    };
-    return NextResponse.json(response);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '删除任务代理失败',
-          code: 'DELETE_FAILED',
-        },
-      } as AgentTaskListResponse,
-      { status: 500 }
-    );
+    return successResponse({ id });
+  } catch (error) {
+    return handleError(error, '删除任务代理');
   }
 }

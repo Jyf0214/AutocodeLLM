@@ -15,6 +15,10 @@
     "docs": "Documentation",
     "demo": "Demo",
     "account": "Account",
+    "setting": "Settings",
+    "skills": "Skills Management",
+    "state": "System Status",
+    "cloud": "Cloud Services",
     "landing": {
       "subtitle": "AI Coding Agent Platform — Full toolchain for function calling, task agents, file operations, and web search",
       "startUsing": "Get Started",

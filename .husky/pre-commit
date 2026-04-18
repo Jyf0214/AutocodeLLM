@@ -1,27 +1,102 @@
 #!/usr/bin/env bash
 
-echo "🔍 检测代码中的 TODO 注释标记..."
+echo "🔍 开始 Pre-commit 检查..."
 
-# 检测注释中的 TODO、todo、Todo 等大小写变体
-# 排除 node_modules、.next、.git 等目录
-# 只匹配注释中的 TODO（// TODO 或 /* TODO）
-TODO_COUNT=$(grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents -E "(//\s*TODO|/\*\s*TODO)" . | wc -l | tr -d ' ')
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  1️⃣  语法检查 (TypeScript)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if ! bun run typecheck; then
+  echo ""
+  echo "❌ TypeScript 检查失败，提交中止！"
+  exit 1
+fi
+echo "✅ 语法检查通过"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  2️⃣  安全检查"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# 检查是否提交了 .env 文件
+ENV_FILES=$(find . -maxdepth 1 -name ".env*" -type f 2>/dev/null | grep -v node_modules || true)
+if [ -n "$ENV_FILES" ]; then
+  echo ""
+  echo "❌ 检测到 .env 文件，禁止提交环境配置文件！"
+  echo "请将以下文件移除后再提交："
+  echo "$ENV_FILES"
+  exit 1
+fi
+
+# 扫描敏感字符串模式
+SENSITIVE_PATTERNS=(
+  "AKIA[0-9A-Z]{16}"       # AWS Access Key
+  "sk-[a-zA-Z0-9]{20,}"    # OpenAI API Key
+  "ghp_[a-zA-Z0-9]{36}"    # GitHub Token
+  "eyJ[A-Za-z0-9-_]+\.eyJ[A-Za-z0-9-_]+"  # JWT Token
+)
+
+SENSITIVE_FOUND=0
+for pattern in "${SENSITIVE_PATTERNS[@]}"; do
+  MATCHES=$(grep -r -E "$pattern" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.json" --include="*.env*" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents . 2>/dev/null | grep -v "node_modules" | grep -v ".next" | grep -v ".git" || true)
+  if [ -n "$MATCHES" ]; then
+    echo ""
+    echo "❌ 检测到敏感信息 (模式: $pattern)："
+    echo "$MATCHES" | head -10
+    SENSITIVE_FOUND=1
+  fi
+done
+
+if [ "$SENSITIVE_FOUND" -eq 1 ]; then
+  echo ""
+  echo "❌ 安全检查失败：检测到敏感信息，禁止提交！"
+  exit 1
+fi
+echo "✅ 安全检查通过"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  3️⃣  TODO 检查"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+TODO_COUNT=$(grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents -E "(//\s*TODO|/\*\s*TODO)" . 2>/dev/null | wc -l | tr -d ' ')
 
 if [ "$TODO_COUNT" -gt 0 ]; then
   echo ""
   echo "❌ 检测到代码中存在 $TODO_COUNT 个 TODO 注释标记"
   echo ""
   echo "📋 检测到以下 TODO 位置："
-  grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents -E "(//\s*TODO|/\*\s*TODO)" . | head -20
+  grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents -E "(//\s*TODO|/\*\s*TODO)" . 2>/dev/null | head -20
   echo ""
   echo "⚠️  提示：请完整实现项目内容后再提交代码。"
   echo "   所有 TODO 注释项都需要被实现或移除后才能通过 pre-commit 检查。"
-  echo ""
   exit 1
 fi
-
 echo "✅ 未检测到 TODO 注释标记"
-echo "🔨 运行完整构建验证..."
-bun run build || { echo "❌ 构建失败，提交中止！"; exit 1; }
-echo "✅ 构建成功，继续执行代码检查..."
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  4️⃣  单元测试检查"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if ! bun run test; then
+  echo ""
+  echo "❌ 测试失败，提交中止！"
+  exit 1
+fi
+echo "✅ 所有测试通过"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  5️⃣  构建检查"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if ! bun run build; then
+  echo ""
+  echo "❌ 构建失败，提交中止！"
+  exit 1
+fi
+echo "✅ 构建成功"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  ✅ 所有检查通过，可以提交！"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 npx lint-staged

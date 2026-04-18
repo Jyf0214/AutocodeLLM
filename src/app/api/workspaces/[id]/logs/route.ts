@@ -1,9 +1,20 @@
+/**
+ * 工作区日志 API
+ * GET /api/workspaces/[id]/logs - 获取工作区日志
+ * POST /api/workspaces/[id]/logs - 记录工作区日志
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import {
+  successResponse,
+  errorResponse,
+  handleError,
+} from '@/lib/api/response';
 import type {
   WorkspaceLogListResponse,
-  CreateWorkspaceLogRequest,
   WorkspaceLogResponse,
+  CreateWorkspaceLogRequest,
 } from '@/lib/api/workspace-log-types';
 
 /**
@@ -11,8 +22,8 @@ import type {
  */
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse<WorkspaceLogListResponse>> {
   try {
     const { id } = await params;
     const { searchParams } = new URL(request.url);
@@ -25,16 +36,7 @@ export async function GET(
     });
 
     if (!workspace) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '工作区不存在',
-            code: 'WORKSPACE_NOT_FOUND',
-          },
-        } as WorkspaceLogListResponse,
-        { status: 404 }
-      );
+      return errorResponse('工作区不存在', 'WORKSPACE_NOT_FOUND', 404) as unknown as NextResponse<WorkspaceLogListResponse>;
     }
 
     const logs = await prisma.workspaceLog.findMany({
@@ -57,21 +59,9 @@ export async function GET(
       createdAt: log.createdAt.toISOString(),
     }));
 
-    return NextResponse.json({
-      success: true,
-      data,
-    } as WorkspaceLogListResponse);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '获取日志失败',
-          code: 'FETCH_LOGS_FAILED',
-        },
-      } as WorkspaceLogListResponse,
-      { status: 500 }
-    );
+    return successResponse(data);
+  } catch (error) {
+    return handleError(error, '获取日志');
   }
 }
 
@@ -80,24 +70,16 @@ export async function GET(
  */
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse<WorkspaceLogResponse>> {
   try {
     const { id } = await params;
     const body = (await request.json()) as CreateWorkspaceLogRequest;
     const { type, functionName, summary, status } = body;
 
+    // 验证必填字段
     if (!type) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少日志类型参数',
-            code: 'MISSING_TYPE',
-          },
-        } as WorkspaceLogResponse,
-        { status: 400 }
-      );
+      return errorResponse('缺少日志类型参数', 'MISSING_TYPE', 400);
     }
 
     const workspace = await prisma.workspace.findUnique({
@@ -105,16 +87,7 @@ export async function POST(
     });
 
     if (!workspace) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '工作区不存在',
-            code: 'WORKSPACE_NOT_FOUND',
-          },
-        } as WorkspaceLogResponse,
-        { status: 404 }
-      );
+      return errorResponse('工作区不存在', 'WORKSPACE_NOT_FOUND', 404) as unknown as NextResponse<WorkspaceLogResponse>;
     }
 
     const newLog = await prisma.workspaceLog.create({
@@ -127,31 +100,19 @@ export async function POST(
       },
     });
 
-    return NextResponse.json(
+    return successResponse(
       {
-        success: true,
-        data: {
-          id: newLog.id,
-          workspaceId: newLog.workspaceId,
-          type: newLog.type as 'function_call' | 'chat_message',
-          functionName: newLog.functionName,
-          summary: newLog.summary,
-          status: newLog.status as 'success' | 'error' | 'pending' | null,
-          createdAt: newLog.createdAt.toISOString(),
-        },
-      } as WorkspaceLogResponse,
-      { status: 201 }
+        id: newLog.id,
+        workspaceId: newLog.workspaceId,
+        type: newLog.type as 'function_call' | 'chat_message',
+        functionName: newLog.functionName,
+        summary: newLog.summary,
+        status: newLog.status as 'success' | 'error' | 'pending' | null,
+        createdAt: newLog.createdAt.toISOString(),
+      },
+      201,
     );
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '记录日志失败',
-          code: 'CREATE_LOG_FAILED',
-        },
-      } as WorkspaceLogResponse,
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleError(error, '记录日志');
   }
 }

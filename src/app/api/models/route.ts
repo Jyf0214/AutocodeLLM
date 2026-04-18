@@ -1,11 +1,29 @@
+/**
+ * 模型管理 API
+ * GET /api/models - 获取所有模型配置列表
+ * POST /api/models - 创建新的模型配置
+ * PUT /api/models - 更新模型配置
+ * DELETE /api/models - 删除模型配置
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import type { ModelConfigResponse, CreateModelConfigRequest, UpdateModelConfigRequest } from '@/lib/api/model-types';
+import {
+  successResponse,
+  errorResponse,
+  handleError,
+  validateRequiredFields,
+} from '@/lib/api/response';
+import type {
+  ModelConfigResponse,
+  CreateModelConfigRequest,
+  UpdateModelConfigRequest,
+} from '@/lib/api/model-types';
 
 /**
  * GET /api/models - 获取所有模型配置列表
  */
-export async function GET() {
+export async function GET(): Promise<NextResponse<ModelConfigResponse>> {
   try {
     const providers = await prisma.provider.findMany({
       orderBy: { createdAt: 'desc' },
@@ -22,43 +40,26 @@ export async function GET() {
       updatedAt: provider.updatedAt.toISOString(),
     }));
 
-    return NextResponse.json({
-      success: true,
-      data: models,
-    } as ModelConfigResponse);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '获取模型列表失败',
-          code: 'FETCH_FAILED',
-        },
-      } as ModelConfigResponse,
-      { status: 500 }
-    );
+    return successResponse(models);
+  } catch (error) {
+    return handleError(error, '获取模型列表');
   }
 }
 
 /**
  * POST /api/models - 创建新的模型配置
  */
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+): Promise<NextResponse<ModelConfigResponse>> {
   try {
     const body = (await request.json()) as CreateModelConfigRequest;
     const { name, provider, apiKey, baseUrl, enabled } = body;
 
-    if (!name || !provider || !apiKey) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少必填字段：name, provider, apiKey',
-            code: 'MISSING_FIELDS',
-          },
-        } as ModelConfigResponse,
-        { status: 400 }
-      );
+    // 验证必填字段
+    const validationError = validateRequiredFields({ name, provider, apiKey });
+    if (validationError) {
+      return validationError as unknown as NextResponse<ModelConfigResponse>;
     }
 
     const existingProvider = await prisma.provider.findUnique({
@@ -66,16 +67,7 @@ export async function POST(request: Request) {
     });
 
     if (existingProvider) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '模型名称已存在',
-            code: 'DUPLICATE_NAME',
-          },
-        } as ModelConfigResponse,
-        { status: 409 }
-      );
+      return errorResponse('模型名称已存在', 'DUPLICATE_NAME', 409);
     }
 
     const newProvider = await prisma.provider.create({
@@ -87,55 +79,38 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(
+    return successResponse(
       {
-        success: true,
-        data: {
-          id: newProvider.id,
-          name: newProvider.name,
-          provider: newProvider.name,
-          apiKey: newProvider.apiKey,
-          baseUrl: newProvider.baseUrl,
-          enabled: newProvider.enabled,
-          createdAt: newProvider.createdAt.toISOString(),
-          updatedAt: newProvider.updatedAt.toISOString(),
-        },
-      } as ModelConfigResponse,
-      { status: 201 }
+        id: newProvider.id,
+        name: newProvider.name,
+        provider: newProvider.name,
+        apiKey: newProvider.apiKey,
+        baseUrl: newProvider.baseUrl,
+        enabled: newProvider.enabled,
+        createdAt: newProvider.createdAt.toISOString(),
+        updatedAt: newProvider.updatedAt.toISOString(),
+      },
+      201,
     );
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '创建模型配置失败',
-          code: 'CREATE_FAILED',
-        },
-      } as ModelConfigResponse,
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleError(error, '创建模型配置');
   }
 }
 
 /**
  * PUT /api/models - 更新模型配置
  */
-export async function PUT(request: Request) {
+export async function PUT(
+  request: Request,
+): Promise<NextResponse<ModelConfigResponse>> {
   try {
-    const body = (await request.json()) as UpdateModelConfigRequest & { id: string };
+    const body = (await request.json()) as UpdateModelConfigRequest & {
+      id?: string;
+    };
     const { id, name, provider, apiKey, baseUrl, enabled } = body;
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少 ID 字段',
-            code: 'MISSING_ID',
-          },
-        } as ModelConfigResponse,
-        { status: 400 }
-      );
+      return errorResponse('缺少 ID 字段', 'MISSING_ID', 400);
     }
 
     const existingProvider = await prisma.provider.findUnique({
@@ -143,34 +118,15 @@ export async function PUT(request: Request) {
     });
 
     if (!existingProvider) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '模型配置不存在',
-            code: 'NOT_FOUND',
-          },
-        } as ModelConfigResponse,
-        { status: 404 }
-      );
+      return errorResponse('模型配置不存在', 'NOT_FOUND', 404);
     }
 
     if (name && name !== existingProvider.name) {
       const duplicateCheck = await prisma.provider.findUnique({
         where: { name },
       });
-
       if (duplicateCheck && duplicateCheck.id !== id) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: {
-              message: '模型名称已存在',
-              code: 'DUPLICATE_NAME',
-            },
-          } as ModelConfigResponse,
-          { status: 409 }
-        );
+        return errorResponse('模型名称已存在', 'DUPLICATE_NAME', 409);
       }
     }
 
@@ -185,52 +141,33 @@ export async function PUT(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: updatedProvider.id,
-        name: updatedProvider.name,
-        provider: updatedProvider.name,
-        apiKey: updatedProvider.apiKey,
-        baseUrl: updatedProvider.baseUrl,
-        enabled: updatedProvider.enabled,
-        createdAt: updatedProvider.createdAt.toISOString(),
-        updatedAt: updatedProvider.updatedAt.toISOString(),
-      },
-    } as ModelConfigResponse);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '更新模型配置失败',
-          code: 'UPDATE_FAILED',
-        },
-      } as ModelConfigResponse,
-      { status: 500 }
-    );
+    return successResponse({
+      id: updatedProvider.id,
+      name: updatedProvider.name,
+      provider: updatedProvider.name,
+      apiKey: updatedProvider.apiKey,
+      baseUrl: updatedProvider.baseUrl,
+      enabled: updatedProvider.enabled,
+      createdAt: updatedProvider.createdAt.toISOString(),
+      updatedAt: updatedProvider.updatedAt.toISOString(),
+    });
+  } catch (error) {
+    return handleError(error, '更新模型配置');
   }
 }
 
 /**
  * DELETE /api/models - 删除模型配置
  */
-export async function DELETE(request: Request) {
+export async function DELETE(
+  request: Request,
+): Promise<NextResponse<ModelConfigResponse>> {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少 ID 参数',
-            code: 'MISSING_ID',
-          },
-        } as ModelConfigResponse,
-        { status: 400 }
-      );
+      return errorResponse('缺少 ID 参数', 'MISSING_ID', 400);
     }
 
     const existingProvider = await prisma.provider.findUnique({
@@ -238,36 +175,13 @@ export async function DELETE(request: Request) {
     });
 
     if (!existingProvider) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '模型配置不存在',
-            code: 'NOT_FOUND',
-          },
-        } as ModelConfigResponse,
-        { status: 404 }
-      );
+      return errorResponse('模型配置不存在', 'NOT_FOUND', 404);
     }
 
-    await prisma.provider.delete({
-      where: { id },
-    });
+    await prisma.provider.delete({ where: { id } });
 
-    return NextResponse.json({
-      success: true,
-      data: { id },
-    } as ModelConfigResponse);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '删除模型配置失败',
-          code: 'DELETE_FAILED',
-        },
-      } as ModelConfigResponse,
-      { status: 500 }
-    );
+    return successResponse({ id });
+  } catch (error) {
+    return handleError(error, '删除模型配置');
   }
 }

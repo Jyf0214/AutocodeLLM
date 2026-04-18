@@ -15,6 +15,10 @@
     "docs": "文档",
     "demo": "演示",
     "account": "账户设置",
+    "setting": "全局设置",
+    "skills": "Skills 管理",
+    "state": "系统状态",
+    "cloud": "云服务",
     "landing": {
       "subtitle": "AI 编码代理平台 — 支持函数调用、任务代理、文件操作、Web 搜索等完整工具链",
       "startUsing": "开始使用",

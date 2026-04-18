@@ -1,12 +1,20 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+/**
+ * Qwen OAuth 认证工具
+ * 提供 Token 加密、解密和刷新功能
+ */
+
+import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { prisma } from '@/lib/db/prisma';
 import { isTokenExpiring, refreshQwenToken } from '@/lib/auth/qwen/oauth';
 
 /**
  * AES-256-CBC 加密 Token
+ * @param token 要加密的 Token
+ * @returns 加密后的 Token（格式：iv:encrypted）
  */
 export function encryptToken(token: string): string {
-  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
+  const keyStr =
+    process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
   const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
   const iv = randomBytes(16);
   const cipher = createCipheriv('aes-256-cbc', key, iv);
@@ -16,17 +24,38 @@ export function encryptToken(token: string): string {
 }
 
 /**
- * AES-256-CBC 解密 Token
+ * AES-256-CBC 加密（通用值）
+ * @param value 要加密的值
+ * @returns 加密后的值
  */
-export function decryptToken(encrypted: string): string {
-  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
+export function encryptValue(value: string): string {
+  const keyStr =
+    process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
+  const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const iv = randomBytes(16);
+  const cipher = createCipheriv('aes-256-cbc', key, iv);
+  let encrypted = cipher.update(value, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  return iv.toString('hex') + ':' + encrypted;
+}
+
+/**
+ * AES-256-CBC 解密（通用值）
+ * @param encrypted 加密的值
+ * @returns 解密后的值
+ */
+export function decryptValue(encrypted: string): string {
+  const keyStr =
+    process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
   const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
   const parts = encrypted.split(':');
   const ivHex = parts[0];
   const encryptedData = parts[1];
+
   if (!ivHex || !encryptedData) {
     throw new Error('无效的加密数据格式');
   }
+
   const iv = Buffer.from(ivHex, 'hex');
   const decipher = createDecipheriv('aes-256-cbc', key, iv);
   let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
@@ -35,7 +64,43 @@ export function decryptToken(encrypted: string): string {
 }
 
 /**
+ * AES-256-CBC 解密 Token
+ * @param encrypted 加密的 Token
+ * @returns 解密后的 Token
+ */
+export function decryptToken(encrypted: string): string {
+  const keyStr =
+    process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
+  const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const parts = encrypted.split(':');
+  const ivHex = parts[0];
+  const encryptedData = parts[1];
+
+  if (!ivHex || !encryptedData) {
+    throw new Error('无效的加密数据格式');
+  }
+
+  const iv = Buffer.from(ivHex, 'hex');
+  const decipher = createDecipheriv('aes-256-cbc', key, iv);
+  let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+}
+
+/**
+ * 脱敏显示值
+ * @param value 要脱敏的值
+ * @returns 脱敏后的值
+ */
+export function maskValue(value: string): string {
+  if (value.length <= 4) return '****';
+  return value.substring(0, 4) + '****' + value.substring(value.length - 4);
+}
+
+/**
  * 保存 OAuth 凭证到数据库
+ * @param providerId 提供商 ID
+ * @param credentials OAuth 凭证
  */
 export async function saveQwenOAuthCredentials(
   providerId: string,
@@ -45,7 +110,7 @@ export async function saveQwenOAuthCredentials(
     resourceUrl: string;
     expiresIn: number;
     tokenType?: string;
-  }
+  },
 ): Promise<void> {
   const expiresAt = new Date(Date.now() + credentials.expiresIn * 1000);
 
@@ -69,7 +134,9 @@ export async function saveQwenOAuthCredentials(
     where: { id: providerId },
     data: {
       oauthAccessToken: encryptToken(credentials.accessToken),
-      oauthRefreshToken: credentials.refreshToken ? encryptToken(credentials.refreshToken) : null,
+      oauthRefreshToken: credentials.refreshToken
+        ? encryptToken(credentials.refreshToken)
+        : null,
       oauthExpiresAt: expiresAt,
       metadata: JSON.stringify({
         ...parsedMetadata,
@@ -82,6 +149,8 @@ export async function saveQwenOAuthCredentials(
 
 /**
  * 获取有效的 Token（自动刷新）
+ * @param providerId 提供商 ID
+ * @returns 有效的 Token
  */
 export async function getValidQwenToken(providerId: string): Promise<string> {
   const provider = await prisma.provider.findUnique({
@@ -113,10 +182,8 @@ export async function getValidQwenToken(providerId: string): Promise<string> {
 
   try {
     const refreshed = await refreshQwenToken(decryptedRefreshToken);
-
     const newExpiresAt = new Date(Date.now() + refreshed.expiresIn * 1000);
 
-    // 构建更新的元数据，保留现有字段并更新 resourceUrl
     const existingMetadata = provider.metadata ?? '{}';
     let parsedMetadata: Record<string, unknown>;
     try {
@@ -129,28 +196,29 @@ export async function getValidQwenToken(providerId: string): Promise<string> {
       where: { id: providerId },
       data: {
         oauthAccessToken: encryptToken(refreshed.accessToken),
-        oauthRefreshToken: refreshed.refreshToken ? encryptToken(refreshed.refreshToken) : null,
+        oauthRefreshToken: refreshed.refreshToken
+          ? encryptToken(refreshed.refreshToken)
+          : provider.oauthRefreshToken,
         oauthExpiresAt: newExpiresAt,
-        // 如果刷新响应包含新的 resourceUrl，更新到元数据中
         metadata: refreshed.resourceUrl
-          ? JSON.stringify({ ...parsedMetadata, resourceUrl: refreshed.resourceUrl })
+          ? JSON.stringify({
+              ...parsedMetadata,
+              resourceUrl: refreshed.resourceUrl,
+            })
           : existingMetadata,
       },
     });
 
     return refreshed.accessToken;
   } catch (error: unknown) {
-    // 使用 HTTP 状态码和 OAuth 标准错误码进行判断，避免字符串匹配
     if (error instanceof Error) {
       const errorMessage = error.message;
-      // 检测 token 过期的标准错误码
       const isTokenExpired =
         errorMessage.includes('400') ||
         errorMessage.includes('invalid_grant') ||
         errorMessage.includes('expired_token') ||
         errorMessage.includes('已过期');
 
-      // 如果是 token 过期，清除凭证并要求重新认证
       if (isTokenExpired) {
         await prisma.provider.update({
           where: { id: providerId },

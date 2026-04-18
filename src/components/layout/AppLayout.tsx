@@ -22,37 +22,49 @@ import {
   CloudServerOutlined,
   TeamOutlined,
   SyncOutlined,
-  AppstoreOutlined,
   ApiOutlined,
-  LinkOutlined,
   MenuOutlined,
+  CommentOutlined,
 } from '@ant-design/icons';
 import { Drawer, Typography } from 'antd';
 import { useIsMobile } from '@/hooks/useMediaQuery';
 
-const menuItems = [
+/**
+ * 菜单项配置
+ * 定义导航菜单的结构和图标
+ */
+const MENU_ITEMS = [
   { key: '/', icon: HomeOutlined, labelKey: 'common.appName' },
   { key: '/workplace', icon: FolderOutlined, labelKey: 'common.workplace' },
+  { key: '/chat', icon: CommentOutlined, labelKey: 'common.chat' },
   { key: '/account', icon: UserOutlined, labelKey: 'common.account' },
-  { key: '/setting/mcp', icon: SettingOutlined, labelKey: 'common.mcp' },
-  { key: '/env', icon: EnvironmentOutlined, labelKey: 'common.env' },
-  { key: '/workers', icon: CloudServerOutlined, labelKey: 'common.workers' },
+  { key: '/mcp', icon: SettingOutlined, labelKey: 'common.mcp' },
+  { key: '/provider/[[provider_id]]/model', icon: ApiOutlined, labelKey: 'common.providers' },
+  { key: '/setting', icon: EnvironmentOutlined, labelKey: 'common.setting' },
+  { key: '/cloud', icon: CloudServerOutlined, labelKey: 'common.cloud' },
   { key: '/agents', icon: TeamOutlined, labelKey: 'common.agents' },
-  { key: '/sync', icon: SyncOutlined, labelKey: 'common.sync' },
-  { key: '/provider', icon: ApiOutlined, labelKey: 'common.providers' },
-];
+  { key: '/skills', icon: SyncOutlined, labelKey: 'common.skills' },
+  { key: '/state', icon: CloudServerOutlined, labelKey: 'common.state' },
+] as const;
 
-const themeModeMap: Record<string, 'auto' | 'light' | 'dark'> = {
+/**
+ * 主题模式映射
+ */
+const THEME_MODE_MAP: Record<string, 'auto' | 'light' | 'dark'> = {
   system: 'auto',
   light: 'light',
   dark: 'dark',
 };
 
-interface AppLayoutProps {
+/**
+ * 应用布局组件
+ * 提供全局侧边栏导航和主题切换
+ */
+export default function AppLayout({
+  children,
+}: {
   children: React.ReactNode;
-}
-
-export default function AppLayout({ children }: AppLayoutProps) {
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations();
@@ -60,13 +72,21 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  /**
+   * 当前选中的菜单项
+   */
   const selectedKey = useMemo(() => {
-    return menuItems.find((item) => pathname.startsWith(item.key))?.key ?? '/';
+    return (
+      MENU_ITEMS.find((item) => pathname.startsWith(item.key))?.key ?? '/'
+    );
   }, [pathname]);
 
+  /**
+   * 翻译后的菜单项
+   */
   const translatedMenuItems = useMemo(
     () =>
-      menuItems.map((item) => ({
+      MENU_ITEMS.map((item) => ({
         key: item.key,
         icon: item.icon,
         label: t(item.labelKey),
@@ -74,6 +94,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
     [t],
   );
 
+  /**
+   * 导航跳转处理
+   */
   const handleNavigate = useCallback(
     (key: string) => {
       router.push(key);
@@ -82,6 +105,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
     [router],
   );
 
+  /**
+   * 主题切换处理
+   */
   const handleThemeSwitch = useCallback(
     (mode: 'auto' | 'light' | 'dark') => {
       const themeMap: Record<string, string> = {
@@ -94,34 +120,61 @@ export default function AppLayout({ children }: AppLayoutProps) {
     [setTheme],
   );
 
+  /**
+   * 侧边栏内容
+   */
   const sidebarContent = useMemo(
     () => (
       <SideNav
-        avatar={<span style={{ fontSize: 14, fontWeight: 600 }}>AutocodeLLM</span>}
+        avatar={
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              fontFamily:
+                "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            AutocodeLLM
+          </span>
+        }
         bottomActions={
           <ThemeSwitch
-            themeMode={themeModeMap[theme ?? 'light'] ?? 'light'}
+            themeMode={THEME_MODE_MAP[theme ?? 'light'] ?? 'light'}
             onThemeSwitch={handleThemeSwitch}
-            labels={{ auto: '跟随系统', dark: '深色模式', light: '浅色模式' }}
+            labels={{
+              auto: '跟随系统',
+              dark: '深色模式',
+              light: '浅色模式',
+            }}
           />
         }
       >
         <Menu
           items={translatedMenuItems}
           selectedKeys={[selectedKey]}
-          onClick={({ key }) => { handleNavigate(key); }}
+          onClick={({ key }) => handleNavigate(key)}
           variant="borderless"
         />
       </SideNav>
     ),
-    [theme, handleThemeSwitch, translatedMenuItems, selectedKey, handleNavigate],
+    [
+      theme,
+      handleThemeSwitch,
+      translatedMenuItems,
+      selectedKey,
+      handleNavigate,
+    ],
   );
 
+  /**
+   * 移动端抽屉
+   */
   const mobileDrawer = useMemo(
     () => (
       <Drawer
         placement="left"
-        onClose={() => { setMobileOpen(false); }}
+        onClose={() => setMobileOpen(false)}
         open={mobileOpen}
         size="85%"
         styles={{
@@ -130,42 +183,72 @@ export default function AppLayout({ children }: AppLayoutProps) {
         }}
         destroyOnHidden
         title={
-          <Typography.Title level={5} style={{ margin: 0 }}>
+          <Typography.Title
+            level={5}
+            style={{ margin: 0, fontSize: 16, fontWeight: 600 }}
+          >
             AutocodeLLM
           </Typography.Title>
         }
         extra={
           <ThemeSwitch
-            themeMode={themeModeMap[theme ?? 'light'] ?? 'light'}
+            themeMode={THEME_MODE_MAP[theme ?? 'light'] ?? 'light'}
             onThemeSwitch={handleThemeSwitch}
-            labels={{ auto: '跟随系统', dark: '深色模式', light: '浅色模式' }}
+            labels={{
+              auto: '跟随系统',
+              dark: '深色模式',
+              light: '浅色模式',
+            }}
           />
         }
       >
         <Menu
           items={translatedMenuItems}
           selectedKeys={[selectedKey]}
-          onClick={({ key }) => { handleNavigate(key); }}
+          onClick={({ key }) => handleNavigate(key)}
           variant="borderless"
           style={{ borderInlineEnd: 'none' }}
         />
       </Drawer>
     ),
-    [mobileOpen, theme, handleThemeSwitch, translatedMenuItems, selectedKey, handleNavigate],
+    [
+      mobileOpen,
+      theme,
+      handleThemeSwitch,
+      translatedMenuItems,
+      selectedKey,
+      handleNavigate,
+    ],
   );
+
+  /**
+   * 判断是否为聊天页面（需要特殊布局处理）
+   */
+  const isChatPage = pathname.startsWith('/chat/');
 
   return (
     <Layout
       sidebar={isMobile ? undefined : sidebarContent}
       header={
         <Header
-          logo={<span style={{ fontSize: 14, fontWeight: 600 }}>AutocodeLLM</span>}
+          logo={
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                fontFamily:
+                  "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              AutocodeLLM
+            </span>
+          }
           actions={
             isMobile ? (
               <ActionIcon
                 icon={MenuOutlined}
                 size="large"
-                onClick={() => { setMobileOpen(true); }}
+                onClick={() => setMobileOpen(true)}
               />
             ) : undefined
           }
@@ -173,15 +256,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
       }
     >
       <LayoutMain>
-        <div style={
-          pathname.startsWith('/chat/')
-            ? { height: '100%', overflow: 'hidden' }
-            : { maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }
-        }>
+        <div
+          style={
+            isChatPage
+              ? { height: '100%', overflow: 'hidden' }
+              : {
+                  maxWidth: 1200,
+                  margin: '0 auto',
+                  padding: '24px 16px',
+                }
+          }
+        >
           {children}
         </div>
       </LayoutMain>
-
       {isMobile && mobileDrawer}
     </Layout>
   );

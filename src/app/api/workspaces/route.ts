@@ -1,14 +1,23 @@
+/**
+ * 工作区列表和创建工作区 API
+ * GET /api/workspaces - 获取所有工作空间列表
+ * POST /api/workspaces - 创建工作空间
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import type {
-  WorkspaceResponse,
-  CreateWorkspaceRequest,
-} from '@/lib/api/workspace-types';
+import {
+  successResponse,
+  errorResponse,
+  handleError,
+  validateRequiredFields,
+} from '@/lib/api/response';
+import type { WorkspaceResponse, CreateWorkspaceRequest } from '@/lib/api/workspace-types';
 
 /**
  * GET /api/workspaces - 获取所有工作空间列表
  */
-export async function GET() {
+export async function GET(): Promise<NextResponse<WorkspaceResponse>> {
   try {
     const workspaces = await prisma.workspace.findMany({
       orderBy: { createdAt: 'desc' },
@@ -23,44 +32,28 @@ export async function GET() {
       updatedAt: workspace.updatedAt.toISOString(),
     }));
 
-    return NextResponse.json({
-      success: true,
-      data,
-    } as WorkspaceResponse);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '获取工作空间列表失败',
-          code: 'FETCH_FAILED',
-        },
-      } as WorkspaceResponse,
-      { status: 500 }
-    );
+    return successResponse(data);
+  } catch (error) {
+    return handleError(error, '获取工作空间列表');
   }
 }
 
 /**
  * POST /api/workspaces - 创建工作空间
  */
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+): Promise<NextResponse<WorkspaceResponse>> {
   try {
     const body = (await request.json()) as CreateWorkspaceRequest;
-    const { name, description } = body;
 
-    if (!name) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少必填字段：name',
-            code: 'MISSING_FIELDS',
-          },
-        } as WorkspaceResponse,
-        { status: 400 }
-      );
+    // 验证必填字段
+    const validationError = validateRequiredFields({ name: body.name });
+    if (validationError) {
+      return validationError as unknown as NextResponse<WorkspaceResponse>;
     }
+
+    const { name, description } = body;
 
     const newWorkspace = await prisma.workspace.create({
       data: {
@@ -69,30 +62,18 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(
+    return successResponse(
       {
-        success: true,
-        data: {
-          id: newWorkspace.id,
-          name: newWorkspace.name,
-          description: newWorkspace.description,
-          accessPassword: newWorkspace.accessPassword ? '***' : null,
-          createdAt: newWorkspace.createdAt.toISOString(),
-          updatedAt: newWorkspace.updatedAt.toISOString(),
-        },
-      } as WorkspaceResponse,
-      { status: 201 }
+        id: newWorkspace.id,
+        name: newWorkspace.name,
+        description: newWorkspace.description,
+        accessPassword: newWorkspace.accessPassword ? '***' : null,
+        createdAt: newWorkspace.createdAt.toISOString(),
+        updatedAt: newWorkspace.updatedAt.toISOString(),
+      },
+      201,
     );
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '创建工作空间失败',
-          code: 'CREATE_FAILED',
-        },
-      } as WorkspaceResponse,
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleError(error, '创建工作空间');
   }
 }

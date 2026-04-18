@@ -1,5 +1,15 @@
+/**
+ * 设置工作区进入密码 API
+ * POST /api/workspaces/[id]/set-password - 设置密码
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import {
+  successResponse,
+  errorResponse,
+  handleError,
+} from '@/lib/api/response';
 import type { SetPasswordResponse, SetPasswordRequest } from '@/lib/api/workspace-log-types';
 
 /**
@@ -7,8 +17,8 @@ import type { SetPasswordResponse, SetPasswordRequest } from '@/lib/api/workspac
  */
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+  { params }: { params: Promise<{ id: string }> },
+): Promise<NextResponse<SetPasswordResponse>> {
   try {
     const { id } = await params;
     const body = (await request.json()) as SetPasswordRequest;
@@ -19,39 +29,17 @@ export async function POST(
     });
 
     if (!workspace) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '工作区不存在',
-            code: 'WORKSPACE_NOT_FOUND',
-          },
-        } as SetPasswordResponse,
-        { status: 404 }
-      );
+      return errorResponse('工作区不存在', 'WORKSPACE_NOT_FOUND', 404);
     }
 
     // 空字符串表示清除密码
     await prisma.workspace.update({
       where: { id },
-      data: {
-        accessPassword: password || null,
-      },
+      data: { accessPassword: password || null },
     });
 
-    return NextResponse.json({
-      success: true,
-    } as SetPasswordResponse);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '设置密码失败',
-          code: 'SET_PASSWORD_FAILED',
-        },
-      } as SetPasswordResponse,
-      { status: 500 }
-    );
+    return successResponse(undefined);
+  } catch (error) {
+    return handleError(error, '设置密码');
   }
 }

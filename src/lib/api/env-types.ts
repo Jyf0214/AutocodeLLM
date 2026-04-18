@@ -2,6 +2,9 @@
  * 环境变量 API 类型定义
  */
 
+/**
+ * 环境变量
+ */
 export interface EnvVariable {
   id: string;
   key: string;
@@ -12,6 +15,9 @@ export interface EnvVariable {
   updatedAt: string;
 }
 
+/**
+ * 环境变量响应
+ */
 export interface EnvVariableResponse {
   success: boolean;
   data?: EnvVariable | EnvVariable[];
@@ -21,6 +27,9 @@ export interface EnvVariableResponse {
   };
 }
 
+/**
+ * 创建环境变量请求
+ */
 export interface CreateEnvVariableRequest {
   key: string;
   value: string;
@@ -28,6 +37,9 @@ export interface CreateEnvVariableRequest {
   enabled?: boolean;
 }
 
+/**
+ * 更新环境变量请求
+ */
 export interface UpdateEnvVariableRequest {
   id: string;
   key?: string;

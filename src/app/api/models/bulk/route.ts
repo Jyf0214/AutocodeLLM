@@ -1,48 +1,31 @@
+/**
+ * 模型批量添加 API
+ * POST /api/models/bulk - 批量添加模型配置
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-
-interface BulkAddRequest {
-  models: {
-    name: string;
-    provider: string;
-    apiKey: string;
-    baseUrl?: string;
-  }[];
-}
-
-interface BulkAddResult {
-  success: boolean;
-  data?: {
-    added: number;
-    skipped: number;
-    errors: string[];
-  };
-  error?: {
-    message: string;
-    code: string;
-  };
-}
+import {
+  successResponse,
+  errorResponse,
+  handleError,
+} from '@/lib/api/response';
+import type { BulkAddResponse } from '@/lib/api/model-types';
 
 /**
- * POST /api/models/bulk
- * 批量添加模型配置
+ * POST /api/models/bulk - 批量添加模型配置
  */
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+): Promise<NextResponse<BulkAddResponse>> {
   try {
-    const body = (await request.json()) as BulkAddRequest;
-    const { models } = body;
+    const body = (await request.json()) as {
+      models?: { name: string; provider: string; apiKey: string; baseUrl?: string }[];
+    };
+    const models = body.models;
 
     if (!Array.isArray(models) || models.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            message: '缺少模型数据或数据为空',
-            code: 'INVALID_INPUT',
-          },
-        } as BulkAddResult,
-        { status: 400 }
-      );
+      return errorResponse('缺少模型数据或数据为空', 'INVALID_INPUT', 400);
     }
 
     const added: string[] = [];
@@ -78,28 +61,17 @@ export async function POST(request: Request) {
 
         added.push(name);
       } catch (err) {
-        errors.push(`添加 "${name}" 失败：${err instanceof Error ? err.message : '未知错误'}`);
+        const errorMessage = err instanceof Error ? err.message : '未知错误';
+        errors.push(`添加 "${name}" 失败：${errorMessage}`);
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        added: added.length,
-        skipped: skipped.length,
-        errors,
-      },
-    } as BulkAddResult);
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          message: '批量添加模型失败',
-          code: 'BULK_ADD_FAILED',
-        },
-      } as BulkAddResult,
-      { status: 500 }
-    );
+    return successResponse({
+      added: added.length,
+      skipped: skipped.length,
+      errors,
+    });
+  } catch (error) {
+    return handleError(error, '批量添加模型');
   }
 }
