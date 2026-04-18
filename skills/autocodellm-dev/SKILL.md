@@ -1,5 +1,5 @@
 ---
-name: project-dev
+name: autocodellm-dev
 description: A comprehensive development skill for the AutocodeLLM project, encapsulating project architecture, routing, engineering standards, git workflow, page design, and development practices. Use this skill when implementing features, refactoring, or making any code changes in this codebase.
 ---
 
@@ -162,7 +162,7 @@ These guidelines apply to **frontend** code (React/Next.js/Ant Design) but also 
 4. **Perfectionism (完美主义)**
    - Do **not** commit code that is not in a polished state.
    - Eliminate redundant logic, dead code, or commented‑out blocks.
-   - When providing backward compatibility for an endpoint, implement it rigorously—no “temporary” or “will clean later” placeholders.
+   - When providing backward compatibility for an endpoint, implement it rigorously—no "temporary" or "will clean later" placeholders.
    - Every line should have a justified purpose.
 
 5. **Module‑First CSS Strategy (模块至上的CSS策略)**
@@ -172,8 +172,8 @@ These guidelines apply to **frontend** code (React/Next.js/Ant Design) but also 
    - Avoid global stylesheets that affect unrelated components.
 
 6. **Innovative Component Coding (创新的组件编码)**
-   - For common components offered by React, Next.js, or Ant Design, avoid default icons and animations unless they truly fit the product’s visual language.
-   - Example: Replace the default loading spinner with a custom animation that reflects the brand’s identity.
+   - For common components offered by React, Next.js, or Ant Design, avoid default icons and animations unless they truly fit the product's visual language.
+   - Example: Replace the default loading spinner with a custom animation that reflects the brand's identity.
    - Encourage small, purposeful enhancements (e.g., custom hover effects, micro‑interactions) that improve perceived quality without bloat.
 
 7. **Cross‑Platform Unification (多端统一的代码)**
@@ -214,7 +214,7 @@ These guidelines apply to **frontend** code (React/Next.js/Ant Design) but also 
 | `bun run build` | Production build. Outputs to `.next`. | `bun run build` |
 | `bun run start` | Start the production server after building. | `bun run start` |
 | `bun run lint` | Run ESLint across the codebase. | `bun run lint` |
-| `brun run typecheck` | Run TypeScript compiler in check‑only mode. | `bun run typecheck` |
+| `bun run typecheck` | Run TypeScript compiler in check‑only mode. | `bun run typecheck` |
 | `bun run test` | Execute Vitest test suite. | `bun run test` |
 | `bun run db:generate` | Generate Prisma client after schema changes. | `bun run db:generate` |
 | `bun run db:push` | Apply Prisma schema changes to the database. | `bun run db:push` |
@@ -243,11 +243,11 @@ Use the `/question` tool (or ask the AI directly) when you encounter any of the 
 - **Testing Challenges**: Difficulty writing effective unit or integration tests for complex logic.
 - **CSS/Styling Conflicts**: Styles that are not behaving as expected, or need for scoped solutions.
 - **TypeScript Errors**: Persistent type issues that you cannot resolve after reasonable effort.
-- **Any Blocking Issue**: Anything that stops you from making progress for more than 15 minutes.
+- **Any Blocking Issue**: Anything that stops you from making progress for more than 15 minutes.
 
 When asking, provide:
-- A concise summary of what you’re trying to achieve.
-- What you’ve already tried (commands, code snippets, error messages).
+- A concise summary of what you're trying to achieve.
+- What you've already tried (commands, code snippets, error messages).
 - The expected outcome versus the actual result.
 - Relevant file paths or function names.
 
@@ -255,6 +255,6 @@ When asking, provide:
 
 ## Summary
 
-By adhering to this skill, you ensure that every change you make aligns with the project’s vision of **backward compatibility**, **absolute modularity**, **minimalism**, **perfectionism**, **module‑first CSS**, **innovative components**, **cross‑platform unity**, and **precise typography**. Following the routing conventions, engineering standards, and page design principles will keep the codebase clean, maintainable, and ready for rapid iteration.
+By adhering to this skill, you ensure that every change you make aligns with the project's vision of **backward compatibility**, **absolute modularity**, **minimalism**, **perfectionism**, **module‑first CSS**, **innovative components**, **cross‑platform unity**, and **precise typography**. Following the routing conventions, engineering standards, and page design principles will keep the codebase clean, maintainable, and ready for rapid iteration.
 
-Let’s build great software together—clean, correct, and craft‑focused. 🚀
+Let's build great software together—clean, correct, and craft-focused.
