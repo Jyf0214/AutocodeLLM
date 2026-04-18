@@ -39,7 +39,7 @@ interface ApiResponse {
 export default function CloudPage() {
   const router = useRouter();
   const [overview, setOverview] = useState<CloudOverview | null>(null);
-  const [loading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const fetchOverview = useCallback(async () => {
     try {
@@ -50,6 +50,8 @@ export default function CloudPage() {
       }
     } catch {
       // 忽略错误
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -73,7 +75,7 @@ export default function CloudPage() {
 
   if (loading) {
     return (
-      <Flexbox align="center" justify="center" style={{ height: '100%' }}>
+      <Flexbox align="center" justify="center" style={{ minHeight: '50vh' }}>
         <Spin size="large" />
       </Flexbox>
     );

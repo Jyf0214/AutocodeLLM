@@ -35,14 +35,14 @@ import { useIsMobile } from '@/hooks/useMediaQuery';
 const MENU_ITEMS = [
   { key: '/', icon: HomeOutlined, labelKey: 'common.appName' },
   { key: '/workplace', icon: FolderOutlined, labelKey: 'common.workplace' },
-  { key: '/account', icon: UserOutlined, labelKey: 'common.account' },
   { key: '/mcp', icon: SettingOutlined, labelKey: 'common.mcp' },
-  { key: '/provider/[[provider_id]]/model', icon: ApiOutlined, labelKey: 'common.providers' },
+  { key: '/provider', icon: ApiOutlined, labelKey: 'common.providers' },
   { key: '/setting', icon: EnvironmentOutlined, labelKey: 'common.setting' },
-  { key: '/cloud', icon: CloudServerOutlined, labelKey: 'common.cloud' },
   { key: '/agents', icon: TeamOutlined, labelKey: 'common.agents' },
   { key: '/skills', icon: SyncOutlined, labelKey: 'common.skills' },
   { key: '/state', icon: CloudServerOutlined, labelKey: 'common.state' },
+  { key: '/cloud', icon: CloudServerOutlined, labelKey: 'common.cloud' },
+  { key: '/account', icon: UserOutlined, labelKey: 'common.account' },
 ] as const;
 
 /**
