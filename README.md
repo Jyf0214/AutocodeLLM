@@ -19,7 +19,7 @@ AutocodeLLM is a full-stack workspace management platform with AI integration ca
 ## Technology Stack
 
 - **Frontend**: Next.js 16, React 19, TypeScript, Ant Design, Zustand
-- **Backend**: Node.js, Prisma ORM (PostgreSQL)
+- **Backend**: Node.js, Prisma ORM (MySQL)
 - **DevOps**: Docker, Bun runtime, GitHub Actions
 - **AI Integration**: MCP protocol, Function calling, Custom skills
 
@@ -45,13 +45,14 @@ AutocodeLLM is a full-stack workspace management platform with AI integration ca
 
 ## Documentation
 
-- Project architecture and routing: See `skills/project-dev/SKILL.md`
+- Project architecture and routing: See `skills/autocodellm-dev/SKILL.md`
+- Comprehensive project documentation: See `PROJECT.md`
 - API references: Inline JSDoc/TSDoc
 - Database schema: `prisma/schema.prisma`
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the Apache 2.0 License - see the LICENSE file for details.
 
 ## Security
 
