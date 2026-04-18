@@ -630,7 +630,11 @@
     "remotePathRequired": "请输入远程路径",
     "actionSuccess": "操作成功",
     "actionFailed": "操作失败",
-    "configSaved": "配置已保存"
+    "configSaved": "配置已保存",
+    "backupStatus": "备份状态",
+    "remoteConfig": "远程配置",
+    "webdavNotConfigured": "未配置 WebDAV，无法使用备份功能",
+    "none": "无"
   },
   "notFound": {
     "title": "页面未找到",

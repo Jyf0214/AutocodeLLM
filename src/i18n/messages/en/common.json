@@ -556,7 +556,11 @@
     "remotePathRequired": "Please enter remote path",
     "actionSuccess": "Operation successful",
     "actionFailed": "Operation failed",
-    "configSaved": "Config saved"
+    "configSaved": "Config saved",
+    "backupStatus": "Backup Status",
+    "remoteConfig": "Remote Config",
+    "webdavNotConfigured": "WebDAV not configured, backup unavailable",
+    "none": "None"
   },
   "notFound": {
     "title": "Page Not Found",
