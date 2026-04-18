@@ -24,7 +24,6 @@ import {
   SyncOutlined,
   ApiOutlined,
   MenuOutlined,
-  CommentOutlined,
 } from '@ant-design/icons';
 import { Drawer, Typography } from 'antd';
 import { useIsMobile } from '@/hooks/useMediaQuery';
@@ -36,7 +35,6 @@ import { useIsMobile } from '@/hooks/useMediaQuery';
 const MENU_ITEMS = [
   { key: '/', icon: HomeOutlined, labelKey: 'common.appName' },
   { key: '/workplace', icon: FolderOutlined, labelKey: 'common.workplace' },
-  { key: '/chat', icon: CommentOutlined, labelKey: 'common.chat' },
   { key: '/account', icon: UserOutlined, labelKey: 'common.account' },
   { key: '/mcp', icon: SettingOutlined, labelKey: 'common.mcp' },
   { key: '/provider/[[provider_id]]/model', icon: ApiOutlined, labelKey: 'common.providers' },

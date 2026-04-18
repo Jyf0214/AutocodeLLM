@@ -63,13 +63,7 @@ export default function HomePage() {
    * 功能卡片数据
    */
   const features: FeatureCard[] = [
-    {
-      icon: <CodeOutlined style={{ fontSize: 28 }} />,
-      title: 'AI 智能编码',
-      description: '支持函数调用、代码生成、智能补全，提升开发效率',
-      link: '/chat',
-      color: 'var(--lobe-color-primary)',
-    },
+    
     {
       icon: <FolderOutlined style={{ fontSize: 28 }} />,
       title: '工作区管理',
@@ -174,15 +168,7 @@ export default function HomePage() {
                     进入工作区
                   </Button>
                 </Link>
-                <Link href="/chat">
-                  <Button
-                    type="default"
-                    size="large"
-                    icon={<CodeOutlined />}
-                  >
-                    开始聊天
-                  </Button>
-                </Link>
+                
                 <Button
                   type="text"
                   size="large"
