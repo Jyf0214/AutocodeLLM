@@ -153,8 +153,7 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background:
-          'linear-gradient(135deg, var(--color-bg-layout), var(--color-bg))',
+        background: '#ffffff',
         padding: 24,
       }}
     >
@@ -186,16 +185,12 @@ export default function LoginPage() {
             strong
             style={{
               fontSize: 26,
-              background:
-                'linear-gradient(135deg, var(--lobe-color-primary), var(--lobe-color-violet))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              color: '#333333',
             }}
           >
             欢迎登录
           </Text>
-          <Text type="secondary" style={{ fontSize: 14, marginTop: 8 }}>
+          <Text type="secondary" style={{ fontSize: 14, marginTop: 8, color: '#666666' }}>
             AutocodeLLM 智能编码平台
           </Text>
         </Flexbox>

@@ -15,7 +15,6 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
-import OrbitalBackground from '@/components/ui/OrbitalBackground';
 import { message } from 'antd';
 
 /**
@@ -114,11 +113,9 @@ export default function HomePage() {
         minHeight: '100dvh',
         position: 'relative',
         overflow: 'hidden',
+        background: '#ffffff',
       }}
     >
-      {/* 自定义轨道背景动画 */}
-      <OrbitalBackground />
-
       {/* 主内容区 */}
       <div
         style={{
@@ -145,11 +142,7 @@ export default function HomePage() {
               fontSize: 'clamp(32px, 5vw, 56px)',
               fontWeight: 700,
               marginBottom: 16,
-              background:
-                'linear-gradient(135deg, var(--lobe-color-primary), var(--lobe-color-violet))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              color: '#333333',
             }}
           >
             AutocodeLLM
@@ -162,6 +155,7 @@ export default function HomePage() {
               maxWidth: 600,
               marginBottom: 32,
               lineHeight: 1.6,
+              color: '#666666',
             }}
           >
             基于 AI 的智能编码代理平台，支持函数调用、任务代理、文件操作、Web 搜索等完整工具链
@@ -239,6 +233,7 @@ export default function HomePage() {
               textAlign: 'center',
               marginBottom: 40,
               display: 'block',
+              color: '#333333',
             }}
           >
             核心功能
@@ -295,6 +290,7 @@ export default function HomePage() {
                       fontSize: 18,
                       display: 'block',
                       marginBottom: 12,
+                      color: '#333333',
                     }}
                   >
                     {feature.title}
@@ -305,6 +301,7 @@ export default function HomePage() {
                       fontSize: 14,
                       lineHeight: 1.6,
                       display: 'block',
+                      color: '#666666',
                     }}
                   >
                     {feature.description}
@@ -330,6 +327,7 @@ export default function HomePage() {
               fontSize: 'clamp(20px, 3vw, 28px)',
               marginBottom: 16,
               display: 'block',
+              color: '#333333',
             }}
           >
             准备好开始了吗？
@@ -341,6 +339,7 @@ export default function HomePage() {
               display: 'block',
               marginBottom: 32,
               lineHeight: 1.6,
+              color: '#666666',
             }}
           >
             立即登录，体验 AI 驱动的智能编码
