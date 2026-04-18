@@ -10,7 +10,7 @@ import {
   ApiOutlined,
   CloudServerOutlined,
   SecurityScanOutlined,
-  MemoryOutlined,
+  DesktopOutlined,
 } from '@ant-design/icons';
 import { Text, Flexbox, Icon } from '@lobehub/ui';
 import { useTranslations } from 'next-intl';

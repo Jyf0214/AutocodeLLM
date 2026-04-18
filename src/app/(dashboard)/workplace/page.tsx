@@ -34,6 +34,7 @@ interface WorkspaceCardProps {
   onClick: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  t: (key: string, values?: Record<string, string>) => string;
 }
 
 /**
