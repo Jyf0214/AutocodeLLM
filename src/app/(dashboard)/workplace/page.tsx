@@ -151,7 +151,7 @@ function WorkspaceCard({
               lineHeight: 1.5,
             }}
           >
-            {workspace.description || '暂无描述'}
+            {workspace.description || t('noDescription')}
           </Text>
         </div>
       </Flexbox>
@@ -184,7 +184,7 @@ function WorkspaceCard({
           style={{ marginLeft: 'auto' }}
         >
           <Text type="secondary" style={{ fontSize: 12 }}>
-            进入
+            {t('enter')}
           </Text>
           <Icon
             icon={ArrowRightOutlined}
@@ -272,6 +272,7 @@ interface ErrorStateProps {
 }
 
 function ErrorState({ error, onRetry }: ErrorStateProps) {
+  const t = useTranslations('workplace');
   return (
     <div
       style={{
@@ -282,7 +283,7 @@ function ErrorState({ error, onRetry }: ErrorStateProps) {
       }}
     >
       <Modal
-        title="加载失败"
+        title={t('loadFailed')}
         open={true}
         onCancel={() => {}}
         footer={
@@ -292,7 +293,7 @@ function ErrorState({ error, onRetry }: ErrorStateProps) {
             onClick={onRetry}
             style={{ borderRadius: 10 }}
           >
-            重试
+            {t('retry')}
           </Button>
         }
       >
@@ -310,6 +311,7 @@ interface EmptyStateProps {
 }
 
 function EmptyState({ onCreate }: EmptyStateProps) {
+  const t = useTranslations('workplace');
   return (
     <div
       style={{
@@ -347,10 +349,10 @@ function EmptyState({ onCreate }: EmptyStateProps) {
             backgroundClip: 'text',
           }}
         >
-          暂无工作区
+          {t('noWorkspace')}
         </Text>
         <Text type="secondary" style={{ fontSize: 14 }}>
-          创建第一个工作区以开始
+          {t('startByCreatingFirst')}
         </Text>
       </Flexbox>
       <Button
@@ -364,7 +366,7 @@ function EmptyState({ onCreate }: EmptyStateProps) {
           height: 40,
         }}
       >
-        创建工作区
+        {t('create')}
       </Button>
     </div>
   );
@@ -375,6 +377,7 @@ function EmptyState({ onCreate }: EmptyStateProps) {
  */
 export default function WorkplacePage() {
   const t = useTranslations('workplace');
+  const tp = useTranslations('providers');
   const router = useRouter();
   const [workspaces, setWorkspaces] = useState<WorkspaceListItem[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -480,7 +483,7 @@ export default function WorkplacePage() {
       } = await response.json();
 
       if (result.success && result.data) {
-        message.success(editingWorkspace ? '更新成功' : t('createSuccess'));
+        message.success(editingWorkspace ? t('updateSuccess') : t('createSuccess'));
         handleCloseModal();
         fetchWorkspaces();
         if (!editingWorkspace) {
@@ -489,11 +492,11 @@ export default function WorkplacePage() {
       } else {
         message.error(
           result.error?.message ??
-            (editingWorkspace ? '更新失败' : t('createFailed')),
+            (editingWorkspace ? t('updateFailed') : t('createFailed')),
         );
       }
     } catch {
-      message.error(editingWorkspace ? '更新失败' : t('createFailed'));
+      message.error(editingWorkspace ? t('updateFailed') : t('createFailed'));
     } finally {
       setLoading(false);
     }
@@ -505,13 +508,13 @@ export default function WorkplacePage() {
   const handleDelete = useCallback(
     (workspace: WorkspaceListItem) => {
       Modal.confirm({
-        title: '确认删除',
-        content: `确定要删除工作区"${workspace.name}"吗？此操作不可恢复。`,
-        okText: '删除',
+        title: t('confirmDelete'),
+        content: t('deleteWorkspaceConfirm', { name: workspace.name }),
+        okText: t('delete'),
         okButtonProps: {
           danger: true,
         },
-        cancelText: '取消',
+        cancelText: t('cancel'),
         centered: true,
         onOk: async () => {
           try {
@@ -526,13 +529,13 @@ export default function WorkplacePage() {
               error?: { message: string };
             } = await response.json();
             if (result.success) {
-              message.success('删除成功');
+              message.success(t('deleteSuccess'));
               fetchWorkspaces();
             } else {
-              message.error(result.error?.message ?? '删除失败');
+              message.error(result.error?.message ?? t('deleteFailed'));
             }
           } catch {
-            message.error('删除失败');
+            message.error(t('deleteFailed'));
           }
         },
       });
@@ -585,12 +588,12 @@ export default function WorkplacePage() {
               </div>
               <div>
                 <Text strong style={{ fontSize: 22, display: 'block' }}>
-                  工作区
+                  {t('titleShort')}
                 </Text>
                 <Text type="secondary" style={{ fontSize: 13 }}>
                   {workspaces.length > 0
-                    ? `${String(workspaces.length)} 个工作区`
-                    : '创建工作区以开始'}
+                    ? t('workspaceCount', { count: String(workspaces.length) })
+                    : t('startByCreating')}
                 </Text>
               </div>
             </Flexbox>
@@ -605,7 +608,7 @@ export default function WorkplacePage() {
                 height: 40,
               }}
             >
-              新建
+              {t('new')}
             </Button>
           </Flexbox>
         </div>
@@ -631,7 +634,7 @@ export default function WorkplacePage() {
               }}
             >
               <Input
-                placeholder="搜索工作区..."
+                placeholder={t('search')}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 prefix={<SearchOutlined />}
@@ -670,7 +673,7 @@ export default function WorkplacePage() {
                   padding: '60px 0',
                 }}
               >
-                <Text type="secondary">未找到匹配的工作区</Text>
+                <Text type="secondary">{t('noMatchFound')}</Text>
               </div>
             )}
           </>
@@ -679,7 +682,7 @@ export default function WorkplacePage() {
 
       {/* 创建/编辑弹窗 */}
       <Modal
-        title={editingWorkspace ? '编辑工作区' : '新建工作区'}
+        title={editingWorkspace ? t('edit') : t('createNew')}
         open={modalOpen}
         onCancel={handleCloseModal}
         footer={null}
@@ -695,26 +698,26 @@ export default function WorkplacePage() {
         >
           <Form.Item
             name="name"
-            label="名称"
+            label={t('name')}
             rules={[
-              { required: true, message: '请输入工作区名称' },
+              { required: true, message: t('nameRequired') },
               {
                 max: 50,
-                message: '名称长度不能超过 50 个字符',
+                message: t('nameMaxLength'),
               },
             ]}
           >
             <Input
-              placeholder="请输入工作区名称"
+              placeholder={t('namePlaceholder')}
               size="large"
               style={{ borderRadius: 10 }}
               allowClear
             />
           </Form.Item>
-          <Form.Item name="description" label="描述">
+          <Form.Item name="description" label={t('description')}>
             <TextArea
               rows={3}
-              placeholder="工作区描述（可选）"
+              placeholder={t('descriptionPlaceholder')}
               style={{ borderRadius: 10 }}
               showCount
               maxLength={200}
@@ -731,7 +734,7 @@ export default function WorkplacePage() {
                 onClick={handleCloseModal}
                 style={{ borderRadius: 10 }}
               >
-                取消
+                {t('cancel')}
               </Button>
               <Button
                 type="primary"
@@ -742,7 +745,7 @@ export default function WorkplacePage() {
                   padding: '0 24px',
                 }}
               >
-                {editingWorkspace ? '保存' : '创建'}
+                {editingWorkspace ? t('save') : t('createBtn')}
               </Button>
             </Flexbox>
           </Form.Item>

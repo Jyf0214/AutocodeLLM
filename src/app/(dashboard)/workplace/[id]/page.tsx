@@ -53,7 +53,7 @@ export default function WorkspaceDetailPage() {
       const errorMsg = err instanceof Error ? err.message : t('fetchFailed');
       setError(errorMsg);
       message.error(errorMsg);
-      console.error('获取工作区详情失败:', err);
+      console.error('Failed to fetch workspace details:', err);
     } finally {
       setFetching(false);
     }
@@ -66,43 +66,43 @@ export default function WorkspaceDetailPage() {
   const menuItems = [
     {
       icon: <MessageOutlined />,
-      title: 'AI 对话',
-      description: '与 AI 进行对话交流',
+      title: t('aiChat'),
+      description: t('aiChatDesc'),
       path: `/chat/${workspaceId}`,
       color: 'var(--lobe-color-primary)',
     },
     {
       icon: <HomeOutlined />,
-      title: '工作台',
-      description: '工作区仪表板和数据概览',
+      title: t('dashboard'),
+      description: t('dashboardDesc'),
       path: `/workplace/${workspaceId}/dashboard`,
       color: 'var(--lobe-color-violet)',
     },
     {
       icon: <FileTextOutlined />,
-      title: '日志',
-      description: '查看对话历史和运行日志',
+      title: t('logs'),
+      description: t('logsDesc'),
       path: `/workplace/${workspaceId}/logs`,
       color: 'var(--lobe-color-cyan)',
     },
     {
       icon: <TagOutlined />,
-      title: '标签',
-      description: '管理对话标签和分类',
+      title: t('tags'),
+      description: t('tagsDesc'),
       path: `/workplace/${workspaceId}/tags`,
       color: 'var(--lobe-color-orange)',
     },
     {
       icon: <TeamOutlined />,
-      title: '成员',
-      description: '管理工作区成员和权限',
+      title: t('members'),
+      description: t('membersDesc'),
       path: `/workplace/${workspaceId}/members`,
       color: 'var(--lobe-color-pink)',
     },
     {
       icon: <SettingOutlined />,
-      title: '设置',
-      description: '工作区配置和偏好设置',
+      title: t('settings'),
+      description: t('settingsDesc'),
       path: `/workplace/${workspaceId}/settings`,
       color: 'var(--lobe-color-gray)',
     },
@@ -123,7 +123,7 @@ export default function WorkspaceDetailPage() {
               icon={<ArrowLeftOutlined />}
               onClick={() => router.push('/workplace')}
             >
-              返回
+              {t('back')}
             </Button>
           </Flexbox>
           <Flexbox gap={16} align="center" style={{ marginBottom: 32 }}>
@@ -156,22 +156,22 @@ export default function WorkspaceDetailPage() {
               style={{ fontSize: 48, color: 'var(--lobe-color-error)' }}
             />
             <Text strong style={{ fontSize: 18 }}>
-              加载失败
+              {t('loadFailed')}
             </Text>
-            <Text type="secondary">{error || '工作区不存在'}</Text>
+            <Text type="secondary">{error || t('workspaceNotExist')}</Text>
             <Flexbox gap={12} horizontal justify="center">
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={() => router.push('/workplace')}
               >
-                返回列表
+                {t('backToList')}
               </Button>
               <Button
                 type="primary"
                 icon={<ReloadOutlined />}
                 onClick={fetchWorkspace}
               >
-                重试
+                {t('retry')}
               </Button>
             </Flexbox>
           </Flexbox>
@@ -201,7 +201,7 @@ export default function WorkspaceDetailPage() {
               icon={<ArrowLeftOutlined />}
               onClick={() => router.push('/workplace')}
             >
-              返回
+              {t('back')}
             </Button>
           </Flexbox>
         </div>
@@ -225,7 +225,7 @@ export default function WorkspaceDetailPage() {
               {workspace.name}
             </Text>
             <Text type="secondary" style={{ fontSize: 14 }}>
-              {workspace.description || '暂无描述'}
+              {workspace.description || t('noDescription')}
             </Text>
           </div>
           <Button
@@ -233,12 +233,12 @@ export default function WorkspaceDetailPage() {
             icon={<EditOutlined />}
             onClick={() => {}}
           >
-            编辑
+            {t('editWorkspace')}
           </Button>
         </Flexbox>
 
         <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 16 }}>
-          功能入口
+          {t('features')}
         </Text>
 
         <div
@@ -305,10 +305,10 @@ export default function WorkspaceDetailPage() {
           }}
         >
           <Text type="secondary" style={{ fontSize: 12 }}>
-            创建于 {new Date(workspace.createdAt).toLocaleDateString('zh-CN')}
+            {t('createdAt')} {new Date(workspace.createdAt).toLocaleDateString()}
           </Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            更新于 {new Date(workspace.updatedAt).toLocaleDateString('zh-CN')}
+            {t('updatedAt')} {new Date(workspace.updatedAt).toLocaleDateString()}
           </Text>
         </Flexbox>
       </div>
