@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { message, Modal, Form } from 'antd';
@@ -426,9 +426,9 @@ export default function WorkplacePage() {
   /**
    * 初始化加载
    */
-  useState(() => {
+  useEffect(() => {
     fetchWorkspaces();
-  });
+  }, [fetchWorkspaces]);
 
   /**
    * 打开创建/编辑弹窗
