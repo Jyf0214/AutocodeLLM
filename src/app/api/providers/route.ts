@@ -12,9 +12,8 @@ import {
   successResponse,
   errorResponse,
   handleError,
-  validateRequiredFields,
 } from '@/lib/api/response';
-import { encryptValue, maskValue } from '@/lib/providers/qwen-oauth';
+import { encryptValue } from '@/lib/providers/qwen-oauth';
 import { PRESET_PROVIDERS } from '@/lib/providers';
 import type {
   ProviderResponse,
@@ -23,14 +22,6 @@ import type {
   TestProviderRequest,
   TestProviderResponse,
 } from '@/lib/api/provider-types';
-
-/**
- * 脱敏显示 API Key
- */
-function maskApiKey(apiKey: string): string {
-  if (apiKey.length <= 4) return '****';
-  return apiKey.substring(0, 4) + '****' + apiKey.substring(apiKey.length - 4);
-}
 
 /**
  * GET /api/providers - 获取所有提供商列表（预置 + 自定义）
@@ -157,11 +148,13 @@ export async function POST(
       return errorResponse('提供商名称已存在', 'DUPLICATE_KEY', 409);
     }
 
+    const encryptedKey = isOAuth || !apiKey ? '' : encryptValue(apiKey);
+
     const newProvider = await prisma.provider.create({
       data: {
         name,
         baseUrl,
-        apiKey: isOAuth ? '' : encryptValue(apiKey!),
+        apiKey: encryptedKey,
         databaseUrl: databaseUrl ?? null,
         enabled: enabled ?? true,
         providerType: providerType ?? 'custom',

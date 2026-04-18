@@ -8,9 +8,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
-  errorResponse,
   handleError,
-  validateRequiredFields,
 } from '@/lib/api/response';
 import type { WorkspaceResponse, CreateWorkspaceRequest } from '@/lib/api/workspace-types';
 

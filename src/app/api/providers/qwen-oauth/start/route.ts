@@ -4,20 +4,14 @@
  */
 
 import { NextResponse } from 'next/server';
-import {
-  successResponse,
-  errorResponse,
-  handleError,
-} from '@/lib/api/response';
+import { successResponse } from '@/lib/api/response';
 import { startQwenDeviceFlow } from '@/lib/auth/qwen/oauth';
 import type { QwenOAuthStartResponse } from '@/lib/api/provider-types';
 
 /**
  * POST /api/providers/qwen-oauth/start - 启动 Qwen Device Flow
  */
-export async function POST(
-  request: Request,
-): Promise<NextResponse<QwenOAuthStartResponse>> {
+export async function POST(): Promise<NextResponse<QwenOAuthStartResponse>> {
   try {
     const result = await startQwenDeviceFlow();
 

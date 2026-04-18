@@ -49,7 +49,7 @@ export async function GET() {
         return {
           workspaceId: ws.id,
           workspaceName: ws.name,
-          lastBackup: latestBackup?.createdAt?.toISOString() ?? null,
+          lastBackup: latestBackup?.createdAt.toISOString() ?? undefined,
           status: latestBackup ? 'ok' : 'no_backup',
         };
       })

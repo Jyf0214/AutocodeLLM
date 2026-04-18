@@ -157,7 +157,7 @@ export default function SyncPage() {
             icon={<PlayCircleOutlined />}
             loading={loading}
             onClick={() => handleAction('start')}
-            disabled={!status?.enabled || status?.watching}
+            disabled={!status?.enabled || status.watching}
           >
             {t('startWatching')}
           </Button>

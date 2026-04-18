@@ -40,7 +40,7 @@ export default function StatePage() {
     setLoading(true);
     try {
       const response = await fetch('/api/state');
-      const result: { success: boolean; data?: StateInfo; error?: { message: string } } = await response.json();
+      const result = (await response.json()) as { success: boolean; data?: StateInfo; error?: { message: string } };
       if (result.success && result.data) {
         setStateData(result.data);
       } else {
@@ -179,8 +179,10 @@ export default function StatePage() {
           <Statistic
             title={t('state.overallStatus')}
             value={overallStatus === 'healthy' ? t('state.status.healthy') : overallStatus === 'degraded' ? t('state.status.degraded') : t('state.status.unhealthy')}
-            valueStyle={{
-              color: overallStatus === 'healthy' ? '#52c41a' : overallStatus === 'degraded' ? '#faad14' : '#ff4d4f'
+            styles={{
+              content: {
+                color: overallStatus === 'healthy' ? '#52c41a' : overallStatus === 'degraded' ? '#faad14' : '#ff4d4f'
+              }
             }}
             prefix={getStatusIcon(overallStatus)}
           />

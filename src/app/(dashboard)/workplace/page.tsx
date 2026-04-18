@@ -151,7 +151,7 @@ function WorkspaceCard({
               lineHeight: 1.5,
             }}
           >
-            {workspace.description || t('noDescription')}
+            {workspace.description ?? t('noDescription')}
           </Text>
         </div>
       </Flexbox>
@@ -285,7 +285,7 @@ function ErrorState({ error, onRetry }: ErrorStateProps) {
       <Modal
         title={t('loadFailed')}
         open={true}
-        onCancel={() => {}}
+        onCancel={undefined}
         footer={
           <Button
             type="primary"
@@ -377,7 +377,6 @@ function EmptyState({ onCreate }: EmptyStateProps) {
  */
 export default function WorkplacePage() {
   const t = useTranslations('workplace');
-  const tp = useTranslations('providers');
   const router = useRouter();
   const [workspaces, setWorkspaces] = useState<WorkspaceListItem[]>([]);
   const [fetching, setFetching] = useState(true);

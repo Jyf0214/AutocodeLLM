@@ -33,7 +33,7 @@ export async function GET() {
         return {
           workspaceId: ws.id,
           workspaceName: ws.name,
-          lastBackup: latestBackup?.createdAt?.toISOString() ?? null,
+          lastBackup: latestBackup?.createdAt.toISOString() ?? undefined,
           nextBackup: null,
           status: latestBackup ? (hasFailure ? 'failed' : 'ok') : 'no_backup',
           backupCount: backupRecords.length,

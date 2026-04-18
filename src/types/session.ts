@@ -27,13 +27,13 @@ export interface LobeSessionMeta {
 }
 
 export interface LobeSession {
-  config: Record<string, any>;
+  config: Record<string, unknown>;
   createdAt: Date;
   group?: string;
   id: string;
   meta: LobeSessionMeta;
   pinned?: boolean;
-  type?: string | 'group';
+  type?: 'group';
   updatedAt: Date;
 }
 

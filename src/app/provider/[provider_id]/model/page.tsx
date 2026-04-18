@@ -26,7 +26,7 @@ import {
   LinkOutlined,
 } from '@ant-design/icons';
 import { ModelIcon } from '@lobehub/icons';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 interface Provider {
@@ -265,7 +265,6 @@ function PresetCard({
 
 export default function ProviderModelPage() {
   const params = useParams();
-  const router = useRouter();
   const providerId = params.provider_id as string | undefined;
   const t = useTranslations('common.providers');
 

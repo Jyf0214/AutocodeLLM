@@ -129,9 +129,11 @@ export async function POST(
       return modeValidation as unknown as NextResponse<AgentTaskListResponse>;
     }
 
+    const taskName = name ?? '';
+
     const newTask = await prisma.agentTask.create({
       data: {
-        name: name!,
+        name: taskName,
         description: description ?? '',
         mode: mode as 'read_only' | 'yolo',
         status: 'ready',

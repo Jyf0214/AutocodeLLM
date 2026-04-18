@@ -9,8 +9,6 @@ import {
   MobileOutlined,
   ArrowRightOutlined,
 } from '@ant-design/icons';
-import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
 import { message, Card, Radio, type RadioChangeEvent } from 'antd';
 
 /**
@@ -32,14 +30,12 @@ interface CodeResponse {
  * 支持密码登录和验证码登录
  */
 export default function LoginPage() {
-  const t = useTranslations('login');
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loginMode, setLoginMode] = useState<LoginMode>('password');
   const [codeLoading, setCodeLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [username, setUsername] = useState('');
-  const [form] = Form.useForm();
 
   /**
    * 发送验证码

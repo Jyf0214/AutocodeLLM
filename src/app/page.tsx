@@ -13,7 +13,6 @@ import {
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 import { message } from 'antd';
 
@@ -34,7 +33,6 @@ interface FeatureCard {
  */
 export default function HomePage() {
   const t = useTranslations('common.landing');
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   // 检查登录状态

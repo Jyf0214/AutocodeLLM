@@ -158,7 +158,7 @@ export default function WorkspaceDetailPage() {
             <Text strong style={{ fontSize: 18 }}>
               {t('loadFailed')}
             </Text>
-            <Text type="secondary">{error || t('workspaceNotExist')}</Text>
+            <Text type="secondary">{error ?? t('workspaceNotExist')}</Text>
             <Flexbox gap={12} horizontal justify="center">
               <Button
                 icon={<ArrowLeftOutlined />}
@@ -231,7 +231,7 @@ export default function WorkspaceDetailPage() {
           <Button
             type="text"
             icon={<EditOutlined />}
-            onClick={() => {}}
+            onClick={undefined}
           >
             {t('editWorkspace')}
           </Button>
@@ -256,13 +256,15 @@ export default function WorkspaceDetailPage() {
                 transition: 'all 0.2s ease',
               }}
               onClick={() => router.push(item.path)}
-              onMouseEnter={(e: any) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
+              onMouseEnter={(e) => {
+                const target = e.currentTarget as HTMLDivElement;
+                target.style.transform = 'translateY(-2px)';
+                target.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
               }}
-              onMouseLeave={(e: any) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+              onMouseLeave={(e) => {
+                const target = e.currentTarget as HTMLDivElement;
+                target.style.transform = 'translateY(0)';
+                target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
               }}
             >
               <Flexbox gap={16} align="flex-start">
