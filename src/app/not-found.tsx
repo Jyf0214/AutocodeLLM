@@ -3,13 +3,11 @@
 import { Flexbox, Text, Button } from '@lobehub/ui';
 import { HomeOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { memo } from 'react';
 
-/**
- * 404 错误页面组件
- * 提供友好的错误提示和导航选项
- */
-export default function NotFoundPage() {
+export default memo(function NotFoundPage() {
+  const t = useTranslations('notFound');
   const router = useRouter();
 
   return (
@@ -60,7 +58,7 @@ export default function NotFoundPage() {
               backgroundClip: 'text',
             }}
           >
-            页面未找到
+            {t('title')}
           </Text>
           <Text
             type="secondary"
@@ -70,7 +68,7 @@ export default function NotFoundPage() {
               maxWidth: 400,
             }}
           >
-            抱歉，您访问的页面不存在或已被移除
+            {t('description')}
           </Text>
         </Flexbox>
 
@@ -86,7 +84,7 @@ export default function NotFoundPage() {
               padding: '0 24px',
             }}
           >
-            返回首页
+            {t('goHome')}
           </Button>
           <Button
             icon={<ArrowLeftOutlined />}
@@ -97,7 +95,7 @@ export default function NotFoundPage() {
               padding: '0 24px',
             }}
           >
-            返回上一页
+            {t('goBack')}
           </Button>
         </Flexbox>
 
@@ -112,7 +110,7 @@ export default function NotFoundPage() {
           }}
         >
           <Text type="secondary" style={{ fontSize: 13 }}>
-            如果您认为这是一个错误，请{' '}
+            {t('reportIssue')}
             <a
               href="https://github.com/Jyf0214/AutocodeLLM/issues"
               target="_blank"
@@ -122,7 +120,7 @@ export default function NotFoundPage() {
                 textDecoration: 'none',
               }}
             >
-              提交 Issue
+              {t('submitIssue')}
             </a>
           </Text>
         </div>

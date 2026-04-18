@@ -600,5 +600,18 @@
     "ok": "正常",
     "failed": "失败",
     "noBackup": "未备份"
+  },
+  "notFound": {
+    "title": "页面未找到",
+    "description": "抱歉，您访问的页面不存在或已被移除",
+    "goHome": "返回首页",
+    "goBack": "返回上一页",
+    "reportIssue": "如果您认为这是一个错误，请",
+    "submitIssue": "提交 Issue"
+  },
+  "metadata": {
+    "title": "AutocodeLLM — AI 编码代理平台",
+    "description": "基于 LobeHub UI 的 AI 编码代理平台，支持函数调用、任务代理、文件操作、Web 搜索等完整工具链",
+    "keywords": ["AI", "编码", "代理", "LobeHub", "LLM", "自动化工具"]
   }
 }

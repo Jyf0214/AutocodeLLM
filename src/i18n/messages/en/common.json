@@ -526,5 +526,18 @@
     "ok": "OK",
     "failed": "Failed",
     "noBackup": "Not backed up"
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "description": "Sorry, the page you are looking for does not exist or has been removed",
+    "goHome": "Go to Home",
+    "goBack": "Go Back",
+    "reportIssue": "If you think this is an error, please ",
+    "submitIssue": "submit an Issue"
+  },
+  "metadata": {
+    "title": "AutocodeLLM — AI Coding Agent Platform",
+    "description": "AI coding agent platform based on LobeHub UI, supporting function calling, task agents, file operations, web search and more",
+    "keywords": ["AI", "coding", "agent", "LobeHub", "LLM", "automation"]
   }
 }
