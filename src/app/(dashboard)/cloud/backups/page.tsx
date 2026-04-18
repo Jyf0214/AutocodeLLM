@@ -70,8 +70,8 @@ export default function GlobalBackupsPage() {
       title: t('workspace'),
       dataIndex: 'workspaceName',
       key: 'workspaceName',
-      render: (name: unknown) => {
-        const nameStr = String(name ?? '');
+      render: (name: string) => {
+        const nameStr = name;
         return (
           <Flexbox horizontal gap={8} align="center">
             <Avatar size="small" style={{ backgroundColor: '#1677ff' }}>

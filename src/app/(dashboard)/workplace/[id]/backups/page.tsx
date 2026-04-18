@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, Table, Tag, Button, Spin, Space, Descriptions } from 'antd';
+import { Card, Tag, Button, Spin, Descriptions } from 'antd';
 import { useTranslations } from 'next-intl';
 import { ReloadOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined, CloudUploadOutlined } from '@ant-design/icons';
 import { Flexbox, Text } from '@lobehub/ui';
@@ -25,7 +25,7 @@ interface BackupResponse {
 
 export default function WorkplaceBackupsPage() {
   const params = useParams();
-  const workspaceId = params?.id as string;
+  const workspaceId = params.id as string;
   const t = useTranslations('cloud');
   const [backup, setBackup] = useState<BackupInfo | null>(null);
   const [loading, setLoading] = useState(true);

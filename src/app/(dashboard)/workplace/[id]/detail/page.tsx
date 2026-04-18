@@ -25,7 +25,7 @@ interface WorkspaceResponse {
 
 export default function WorkplaceDetailPage() {
   const params = useParams();
-  const workspaceId = params?.id as string;
+  const workspaceId = params.id as string;
   const t = useTranslations();
   const [workspace, setWorkspace] = useState<WorkspaceDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,7 @@ export default function WorkplaceDetailPage() {
       } else {
         setError(data.error?.message ?? '获取工作区详情失败');
       }
-    } catch (err) {
+    } catch {
       setError('网络错误');
     } finally {
       setLoading(false);
@@ -76,7 +76,7 @@ export default function WorkplaceDetailPage() {
       <Flexbox align="center" justify="center" style={{ minHeight: '50vh', padding: 16 }}>
         <Card>
           <Flexbox gap={16} style={{ flexDirection: 'column' }}>
-            <Text type="danger">{error || '工作区不存在'}</Text>
+            <Text type="danger">{error ?? '工作区不存在'}</Text>
             <Button icon={<ReloadOutlined />} onClick={fetchDetail}>
               {t('retry') || '重试'}
             </Button>
@@ -110,7 +110,7 @@ export default function WorkplaceDetailPage() {
             </Space>
           </Descriptions.Item>
           <Descriptions.Item label={t('description') || '描述'}>
-            {workspace.description || '-'}
+            {workspace.description ?? '-'}
           </Descriptions.Item>
           <Descriptions.Item label={t('accessPassword') || '访问密码'}>
             <Tag color={workspace.accessPassword ? 'green' : 'default'}>
