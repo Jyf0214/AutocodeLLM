@@ -17,6 +17,7 @@ import {
   ReloadOutlined,
   TeamOutlined,
   HomeOutlined,
+  ApiOutlined,
 } from '@ant-design/icons';
 import type { WorkspaceListItem } from '@/lib/api/workspace-types';
 
@@ -105,9 +106,15 @@ export default function WorkspaceDetailPage() {
       description: t('settingsDesc'),
       path: `/workplace/${workspaceId}/settings`,
       color: 'var(--lobe-color-gray)',
+  },
+    {
+      icon: <ApiOutlined />,
+      title: t('channel'),
+      description: t('channelDesc'),
+      path: `/workplace/${workspaceId}/channel`,
+      color: 'var(--lobe-color-purple)',
     },
   ];
-
   if (fetching) {
     return (
       <div

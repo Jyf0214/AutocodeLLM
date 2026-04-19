@@ -1,297 +1,262 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Card, Input, Button, Empty, Skeleton, Space } from 'antd';
-import { SendOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import { Flexbox, Text, Avatar } from '@lobehub/ui';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { message as antMessage } from 'antd';
-import type { ApiResponse, PaginatedData, ChannelMessageItem } from '@/lib/api/channel-types';
+import { Button, Text, Flexbox, Avatar } from '@lobehub/ui';
+import { Card, Input, Skeleton, Empty } from 'antd';
+import { SendOutlined, ArrowUpOutlined, UserOutlined } from '@ant-design/icons';
+
+interface ChannelMessageItem {
+  id: string;
+  discordMsgId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string | null;
+  content: string;
+  attachments: string | null;
+  sentFromApp: boolean;
+  createdAt: string;
+}
 
 interface ChannelChatProps {
   channelId: string;
   channelName: string;
 }
 
-/** 每页消息数量 */
-const PAGE_SIZE = 50;
-
+/** 频道聊天组件 — 消息历史 + 发送 */
 export default function ChannelChat({ channelId, channelName }: ChannelChatProps) {
-  const t = useTranslations('channel');
-
+  const t = useTranslations('common');
   const [messages, setMessages] = useState<ChannelMessageItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [sending, setSending] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
-  const listRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [total, setTotal] = useState(0);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const limit = 50;
 
   /** 获取消息列表 */
-  const fetchMessages = useCallback(
-    async (pageNum: number, append = false) => {
+  const fetchMessages = useCallback(async (pageNum: number, append = false) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
       setLoading(true);
-      try {
-        const response = await fetch(
-          `/api/channels/${channelId}/messages?page=${pageNum}&limit=${PAGE_SIZE}`,
-        );
-        if (!response.ok) return;
-        const result = (await response.json()) as ApiResponse<PaginatedData<ChannelMessageItem>>;
-        if (result.success && result.data) {
-          const { items, pagination } = result.data;
-          if (append) {
-            // 加载更多：将旧消息插入顶部
-            setMessages((prev) => [...items, ...prev]);
-          } else {
-            // 首次加载：按时间正序排列（最新在底部）
-            setMessages([...items].reverse());
-          }
-          setHasMore(pagination.page < pagination.totalPages);
-          setPage(pageNum);
+    }
+
+    try {
+      const res = await fetch(
+        `/api/channels/${channelId}/messages?page=${pageNum}&limit=${limit}`,
+      );
+      const result = await res.json();
+      if (result.success && result.data) {
+        const newMessages = (result.data.items ?? []) as ChannelMessageItem[];
+        const pagination = result.data.pagination;
+        setTotal(pagination?.total ?? 0);
+        setHasMore(pageNum < (pagination?.totalPages ?? 1));
+
+        if (append) {
+          setMessages((prev) => [...prev, ...newMessages]);
+        } else {
+          setMessages(newMessages);
         }
-      } catch {
-        // 静默处理
-      } finally {
-        setLoading(false);
       }
-    },
-    [channelId],
-  );
-
-  /** 首次加载 */
-  useEffect(() => {
-    if (channelId) {
-      fetchMessages(1, false);
+    } catch {
+      antMessage.error('获取消息失败');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
-  }, [channelId, fetchMessages]);
+  }, [channelId]);
 
-  /** 首次加载后滚动到底部 */
+  /** 初次加载 */
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length === 0 ? 0 : messages.length]);
+    void fetchMessages(1);
+  }, [fetchMessages]);
 
-  /** 加载更多历史消息 */
-  const handleLoadMore = () => {
-    if (hasMore && !loading) {
-      // 记录当前滚动位置
-      const scrollTop = listRef.current?.scrollTop ?? 0;
-      fetchMessages(page + 1, true).then(() => {
-        // 恢复滚动位置（避免跳动）
-        requestAnimationFrame(() => {
-          if (listRef.current) {
-            listRef.current.scrollTop = scrollTop + 100;
-          }
-        });
-      });
-    }
-  };
+  /** 滚动到底部 */
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  /** 加载更多（更早的消息） */
+  const handleLoadMore = useCallback(async () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    await fetchMessages(nextPage, true);
+  }, [page, fetchMessages]);
 
   /** 发送消息 */
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     const content = inputValue.trim();
     if (!content) return;
 
     setSending(true);
     try {
-      const response = await fetch(`/api/channels/${channelId}/messages`, {
+      const res = await fetch(`/api/channels/${channelId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       });
-      if (!response.ok) {
-        antMessage.error(t('sendMessage'));
-        return;
-      }
-      const result = (await response.json()) as ApiResponse<ChannelMessageItem>;
+      const result = await res.json();
       if (result.success && result.data) {
-        setMessages((prev) => [...prev, result.data!]);
+        setMessages((prev) => [result.data as ChannelMessageItem, ...prev]);
         setInputValue('');
-        // 滚动到底部
-        requestAnimationFrame(() => {
-          bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-        });
       } else {
-        antMessage.error(result.error?.message ?? 'Send failed');
+        antMessage.error(result.error?.message ?? '发送失败');
       }
     } catch {
-      antMessage.error('Send failed');
+      antMessage.error('发送失败');
     } finally {
       setSending(false);
     }
+  }, [inputValue, channelId]);
+
+  /** 格式化时间 */
+  const formatTime = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleString();
+    } catch {
+      return dateStr;
+    }
   };
 
-  /** 格式化时间戳 */
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString('zh-CN', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  if (loading) {
+    return <Card><Skeleton active paragraph={{ rows: 6 }} /></Card>;
+  }
+
+  // 按时间正序显示（最新在底部）
+  const sortedMessages = [...messages].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
 
   return (
     <Card
-      title={t('chatTitle')}
-      size="small"
-      extra={
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          #{channelName}
-        </Text>
+      title={
+        <Flexbox horizontal align="center" gap={8}>
+          <Text strong>{t('channel.chatTitle')}</Text>
+          <Text type="secondary">{channelName}</Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            ({total})
+          </Text>
+        </Flexbox>
       }
     >
-      <Flexbox vertical style={{ height: 420 }}>
+      <Flexbox gap={12} style={{ height: 500, overflow: 'hidden' }}>
         {/* 消息列表区域 */}
         <div
-          ref={listRef}
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '8px 4px',
-            borderRadius: 8,
-            background: 'var(--color-bg-layout, #fafafa)',
+            padding: '8px 0',
           }}
         >
-          {/* 加载更多按钮 */}
           {hasMore && (
-            <Flexbox horizontal justify="center" style={{ padding: '8px 0' }}>
+            <Flexbox horizontal justify="center" style={{ marginBottom: 12 }}>
               <Button
                 type="link"
-                size="small"
                 icon={<ArrowUpOutlined />}
+                loading={loadingMore}
                 onClick={handleLoadMore}
-                loading={loading}
+                size="small"
               >
-                {t('loadMore')}
+                {t('channel.loadMore')}
               </Button>
             </Flexbox>
           )}
 
-          {/* 加载中骨架屏 */}
-          {loading && messages.length === 0 && (
-            <Flexbox vertical gap={12} padding={8}>
-              {[1, 2, 3].map((i) => (
-                <Skeleton.Avatar active key={i} />
-              ))}
-            </Flexbox>
-          )}
-
-          {/* 空状态 */}
-          {!loading && messages.length === 0 && (
+          {sortedMessages.length === 0 ? (
             <Empty
-              description={t('noMessages')}
+              description={t('channel.noMessages')}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
-              style={{ marginTop: 80 }}
             />
-          )}
-
-          {/* 消息列表 */}
-          {messages.map((msg) => (
-            <Flexbox
-              key={msg.id}
-              horizontal
-              gap={8}
-              align="flex-start"
-              style={{
-                padding: '6px 8px',
-                borderRadius: 8,
-                marginBottom: 4,
-                flexDirection: msg.sentFromApp ? 'row-reverse' : 'row',
-                background: msg.sentFromApp
-                  ? 'var(--color-primary-bg, #e6f4ff)'
-                  : 'transparent',
-              }}
-            >
-              {/* 头像 */}
-              <Avatar
-                size={32}
-                src={msg.authorAvatar ?? undefined}
-                style={{
-                  flexShrink: 0,
-                  backgroundColor: msg.sentFromApp
-                    ? 'var(--color-primary, #1677ff)'
-                    : 'var(--color-bg-secondary, #f0f0f0)',
-                }}
-              >
-                {msg.authorName.charAt(0).toUpperCase()}
-              </Avatar>
-
-              {/* 消息内容 */}
+          ) : (
+            sortedMessages.map((msg) => (
               <Flexbox
-                vertical
-                gap={2}
+                key={msg.id}
+                horizontal
+                align="flex-start"
+                gap={8}
                 style={{
-                  maxWidth: '75%',
-                  alignItems: msg.sentFromApp ? 'flex-end' : 'flex-start',
+                  marginBottom: 12,
+                  flexDirection: msg.sentFromApp ? 'row-reverse' : 'row',
                 }}
               >
-                <Flexbox horizontal gap={6} align="center">
-                  <Text strong style={{ fontSize: 13 }}>
-                    {msg.authorName}
-                  </Text>
-                  {msg.sentFromApp && (
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        color: 'var(--color-primary, #1677ff)',
-                        border: '1px solid var(--color-primary, #1677ff)',
-                        borderRadius: 4,
-                        padding: '0 4px',
-                      }}
-                    >
-                      {t('sentFromApp')}
-                    </Text>
-                  )}
-                  <Text type="secondary" style={{ fontSize: 11 }}>
-                    {formatTime(msg.createdAt)}
-                  </Text>
-                </Flexbox>
+                <Avatar
+                  avatar={
+                    msg.authorAvatar ? (
+                      <img src={msg.authorAvatar} alt={msg.authorName} />
+                    ) : (
+                      <UserOutlined />
+                    )
+                  }
+                  size={32}
+                  style={{ flexShrink: 0 }}
+                />
                 <div
                   style={{
-                    padding: '6px 10px',
-                    borderRadius: 8,
+                    maxWidth: '70%',
                     background: msg.sentFromApp
-                      ? 'var(--color-primary, #1677ff)'
-                      : 'var(--color-bg-secondary, #f0f0f0)',
-                    color: msg.sentFromApp ? '#fff' : 'inherit',
-                    wordBreak: 'break-word',
-                    fontSize: 14,
-                    lineHeight: 1.5,
+                      ? 'var(--lobe-color-primary-container, #e8f0fe)'
+                      : 'var(--color-bg-elevated, #f5f5f5)',
+                    borderRadius: 12,
+                    padding: '8px 12px',
                   }}
                 >
-                  {msg.content}
+                  <Flexbox horizontal align="center" gap={4} style={{ marginBottom: 2 }}>
+                    <Text strong style={{ fontSize: 12 }}>
+                      {msg.authorName}
+                    </Text>
+                    {msg.sentFromApp && (
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          color: 'var(--lobe-color-primary)',
+                        }}
+                      >
+                        {t('channel.sentFromApp')}
+                      </Text>
+                    )}
+                  </Flexbox>
+                  <Text style={{ fontSize: 14, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {msg.content}
+                  </Text>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 11 }}>
+                      {formatTime(msg.createdAt)}
+                    </Text>
+                  </div>
                 </div>
               </Flexbox>
-            </Flexbox>
-          ))}
-
-          {/* 底部锚点 */}
-          <div ref={bottomRef} />
+            ))
+          )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* 输入区域 */}
-        <Space.Compact style={{ marginTop: 8, width: '100%' }}>
+        <Flexbox horizontal gap={8} align="center">
           <Input
+            placeholder={t('channel.messagePlaceholder')}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder={t('messagePlaceholder')}
             onPressEnter={handleSend}
             disabled={sending}
-            style={{ borderRadius: '8px 0 0 8px' }}
           />
           <Button
             type="primary"
             icon={<SendOutlined />}
-            onClick={handleSend}
             loading={sending}
-            disabled={!inputValue.trim()}
-            style={{ borderRadius: '0 8px 8px 0' }}
+            onClick={handleSend}
           >
-            {t('sendMessage')}
+            {t('channel.sendMessage')}
           </Button>
-        </Space.Compact>
+        </Flexbox>
       </Flexbox>
     </Card>
   );

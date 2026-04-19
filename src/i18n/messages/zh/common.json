@@ -168,6 +168,8 @@
     "membersDesc": "管理工作区成员和权限",
     "settings": "设置",
     "settingsDesc": "工作区配置和偏好设置",
+    "channel": "Discord 频道",
+    "channelDesc": "接入 Discord 频道实现聊天集成",
     "workspaceNotExist": "工作区不存在",
     "backToList": "返回列表",
     "empty": "暂无工作空间",

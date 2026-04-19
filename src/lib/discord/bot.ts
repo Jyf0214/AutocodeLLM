@@ -136,7 +136,7 @@ export async function sendMessageToChannel(
       return { success: false, error: '频道不存在或非文本频道' };
     }
 
-    const message = await channel.send(content);
+      const message = await (channel as { send: (c: string) => Promise<{ id: string }> }).send(content);
     return { success: true, messageId: message.id };
   } catch (error) {
     const message = error instanceof Error ? error.message : '发送失败';
