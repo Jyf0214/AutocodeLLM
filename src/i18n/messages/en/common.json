@@ -596,5 +596,76 @@
       "LLM",
       "automation"
     ]
+  },
+  "mcp": {
+    "title": "MCP Server Configuration",
+    "description": "Configure and manage MCP (Model Context Protocol) service connections",
+    "addServer": "Add MCP Server",
+    "editServer": "Edit MCP Server",
+    "name": "Name",
+    "nameRequired": "Please enter MCP server name",
+    "namePlaceholder": "e.g., My MCP Server",
+    "url": "URL",
+    "urlRequired": "Please enter MCP server URL",
+    "urlInvalid": "Please enter a valid URL",
+    "enabled": "Enabled",
+    "fetchFailed": "Failed to fetch MCP server list",
+    "createSuccess": "MCP server created successfully",
+    "updateSuccess": "MCP server updated successfully",
+    "deleteSuccess": "MCP server deleted successfully",
+    "createFailed": "Failed to create MCP server",
+    "updateFailed": "Failed to update MCP server",
+    "deleteFailed": "Failed to delete MCP server",
+    "testConnection": "Test Connection",
+    "testSuccess": "Connection test successful",
+    "testFailed": "MCP server connection test failed",
+    "connectionStatus": "Connection Status",
+    "status": "Status",
+    "tools": "Tools Count",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "confirmDelete": "Are you sure you want to delete this MCP server?"
+  },
+  "skills": {
+    "title": "LLM Skills Management",
+    "description": "Description",
+    "addSkill": "Add Skill",
+    "editSkill": "Edit Skill",
+    "name": "Name",
+    "nameRequired": "Please enter a name",
+    "namePlaceholder": "e.g., Code Interpreter",
+    "descriptionPlaceholder": "Describe this skill's functionality...",
+    "enabled": "Enabled",
+    "fetchFailed": "Failed to fetch skills list",
+    "createSuccess": "Created successfully",
+    "updateSuccess": "Updated successfully",
+    "deleteSuccess": "Deleted successfully",
+    "saveFailed": "Save failed",
+    "deleteFailed": "Delete failed",
+    "toggleSuccess": "Operation successful",
+    "noSkills": "No skills yet, please add",
+    "tools": "Tools Count"
+  },
+  "state": {
+    "title": "System Health Check",
+    "description": "Monitor component status to ensure system正常运行",
+    "fetchFailed": "Failed to fetch system status",
+    "overallStatus": "Overall Status",
+    "status": {
+      "healthy": "Healthy",
+      "degraded": "Degraded",
+      "unhealthy": "Unhealthy"
+    },
+    "latency": "Response time: {latency}ms",
+    "components": {
+      "database": "Database",
+      "api": "API Service",
+      "mcp": "MCP Service",
+      "providers": "AI Providers"
+    },
+    "fetchError": "Failed to fetch system status",
+    "health": "Health",
+    "refresh": "Refresh",
+    "retry": "Retry"
   }
 }
