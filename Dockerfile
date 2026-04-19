@@ -1,6 +1,5 @@
 # AutocodeLLM 应用镜像
 # 基于基础镜像（已包含所有依赖），复制源码并预构建
-
 FROM ghcr.io/jyf0214/autocodellm:base AS base
 
 # DEMO_MODE 构建参数（预览镜像设为 true）
@@ -23,15 +22,15 @@ COPY . .
 RUN ln -sf /home/node/.bun/bin/bun /usr/local/bin/bun 2>/dev/null || true && \
     ln -sf /home/node/.bun/bin/bunx /usr/local/bin/bunx 2>/dev/null || true
 
-# 安装依赖并预构建
+# 安装依赖并预构建（node-pty 为可选依赖，编译失败不影响构建）
 RUN rm -rf .next && \
-    bun install --ignore-scripts && \
+    bun install && \
     bun run build && \
     mkdir -p /home/node/.autocodellm/workspaces \
-        /home/node/.autocodellm/skills \
-        /home/node/.autocodellm/config \
-        /home/node/.autocodellm/logs \
-        /home/node/.autocodellm/backups && \
+    /home/node/.autocodellm/skills \
+    /home/node/.autocodellm/config \
+    /home/node/.autocodellm/logs \
+    /home/node/.autocodellm/backups && \
     chown -R 1000:1000 /home/node \
     && chown -R 1000:1000 /app
 

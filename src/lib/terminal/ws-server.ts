@@ -1,14 +1,27 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'http';
-import {
-  createSession,
-  findSessionByWorkspace,
-  getSession,
-  destroySession,
-  type TerminalSession,
-} from './session-manager';
 
 let wss: WebSocketServer | null = null;
+
+// node-pty 是否可用（原生模块可能缺失）
+let ptyAvailable = false;
+let createSession: ((workspaceId: string, cols: number, rows: number) => import('./session-manager').TerminalSession) | null = null;
+let findSessionByWorkspace: ((workspaceId: string) => import('./session-manager').TerminalSession | null) | null = null;
+let destroySession: ((sessionId: string) => void) | null = null;
+
+try {
+  const sessionManager = await import('./session-manager');
+  if (sessionManager.isPtyLoaded()) {
+    createSession = sessionManager.createSession;
+    findSessionByWorkspace = sessionManager.findSessionByWorkspace;
+    destroySession = sessionManager.destroySession;
+    ptyAvailable = true;
+  } else {
+    console.warn('⚠ node-pty 原生模块不可用，终端功能已禁用');
+  }
+} catch (error) {
+  console.warn('⚠ 终端会话管理器加载失败，终端功能已禁用:', (error as Error).message);
+}
 
 // 工作区 → WebSocket 客户端集合
 const workspaceClients = new Map<string, Set<WebSocket>>();
@@ -32,7 +45,7 @@ function broadcastToWorkspace(workspaceId: string, message: string, exclude?: We
 /**
  * 绑定 pty 输出和退出事件到会话（仅绑定一次）
  */
-function attachSessionListeners(session: TerminalSession): void {
+function attachSessionListeners(session: import('./session-manager').TerminalSession): void {
   if (sessionListenersAttached.has(session.id)) return;
   sessionListenersAttached.add(session.id);
 
@@ -45,7 +58,7 @@ function attachSessionListeners(session: TerminalSession): void {
     const msg = JSON.stringify({ type: 'exit', exitCode });
     broadcastToWorkspace(session.workspaceId, msg);
     sessionListenersAttached.delete(session.id);
-    destroySession(session.id);
+    destroySession!(session.id);
   });
 }
 
@@ -65,6 +78,13 @@ export function initTerminalWebSocket(server: Server): void {
   });
 
   wss.on('connection', (ws, request) => {
+    // 如果 node-pty 不可用，通知客户端并关闭
+    if (!ptyAvailable) {
+      ws.send(JSON.stringify({ type: 'error', message: '终端功能不可用：node-pty 原生模块未加载' }));
+      ws.close();
+      return;
+    }
+
     const url = new URL(request.url ?? '', 'http://localhost');
     const workspaceId = url.searchParams.get('workspaceId');
     const cols = parseInt(url.searchParams.get('cols') ?? '80', 10);
@@ -85,9 +105,9 @@ export function initTerminalWebSocket(server: Server): void {
     clients.add(ws);
 
     // 查找或创建终端会话
-    let session = findSessionByWorkspace(workspaceId);
+    let session = findSessionByWorkspace!(workspaceId);
     if (!session) {
-      session = createSession(workspaceId, cols, rows);
+      session = createSession!(workspaceId, cols, rows);
     }
 
     // 绑定 pty 事件监听器（仅首次）
@@ -99,14 +119,14 @@ export function initTerminalWebSocket(server: Server): void {
       try {
         const msg = JSON.parse(raw.toString()) as Record<string, unknown>;
         if (msg.type === 'data' && typeof msg.data === 'string') {
-          const currentSession = findSessionByWorkspace(workspaceId);
+          const currentSession = findSessionByWorkspace!(workspaceId);
           if (currentSession) {
             currentSession.pty.write(msg.data as string);
             currentSession.lastActivity = Date.now();
           }
         }
         if (msg.type === 'resize' && typeof msg.cols === 'number' && typeof msg.rows === 'number') {
-          const currentSession = findSessionByWorkspace(workspaceId);
+          const currentSession = findSessionByWorkspace!(workspaceId);
           if (currentSession) {
             currentSession.pty.resize(msg.cols as number, msg.rows as number);
             currentSession.lastActivity = Date.now();
@@ -139,4 +159,11 @@ export function closeTerminalWebSocket(): void {
   }
   workspaceClients.clear();
   sessionListenersAttached.clear();
+}
+
+/**
+ * 检查 node-pty 是否可用
+ */
+export function isPtyAvailable(): boolean {
+  return ptyAvailable;
 }

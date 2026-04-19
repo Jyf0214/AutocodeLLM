@@ -129,6 +129,11 @@ export default function TerminalPanel({ workspaceId, wsUrl }: TerminalPanelProps
         if (message.type === 'data' && typeof message.data === 'string') {
           term.write(message.data);
         }
+        if (message.type === 'error') {
+          term.writeln('\x1b[31m' + String((message as Record<string, unknown>).message ?? message.data) + '\x1b[0m');
+          setConnected(false);
+          ws.close();
+        }
         if (message.type === 'exit') {
           term.writeln('\x1b[33m终端进程已退出\x1b[0m');
           setConnected(false);

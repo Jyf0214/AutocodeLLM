@@ -1,14 +1,36 @@
-import * as pty from 'node-pty';
+// node-pty 是可选原生模块，可能不可用（如 Docker 容器中缺少编译环境）
+// 使用延迟加载避免模块解析阶段的致命错误
+let ptyModule: typeof import('node-pty') | null = null;
+let ptyLoadAttempted = false;
+
+function loadPty() {
+  if (ptyLoadAttempted) return ptyModule;
+  ptyLoadAttempted = true;
+  try {
+    ptyModule = require('node-pty');
+  } catch {
+    ptyModule = null;
+  }
+  return ptyModule;
+}
+
+/**
+ * 检查 node-pty 是否可用
+ */
+export function isPtyLoaded(): boolean {
+  return loadPty() !== null;
+}
 
 export interface TerminalSession {
   id: string;
   workspaceId: string;
-  pty: pty.IPty;
+  pty: import('node-pty').IPty;
   createdAt: number;
   lastActivity: number;
 }
 
 const SESSIONS = new Map<string, TerminalSession>();
+
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 分钟超时
 
 /**
@@ -18,9 +40,7 @@ const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 分钟超时
  */
 function getWorkspaceCwd(workspaceId: string): string {
   const isDocker = process.env.RUNNING_IN_DOCKER === 'true';
-  const basePath = isDocker
-    ? '/home/node/.autocodellm/workspaces'
-    : process.env.WORKSPACE_BASE_PATH ?? '/home/user/workspace';
+  const basePath = isDocker ? '/home/node/.autocodellm/workspaces' : process.env.WORKSPACE_BASE_PATH ?? '/home/user/workspace';
   return basePath + '/' + workspaceId;
 }
 
@@ -28,6 +48,11 @@ function getWorkspaceCwd(workspaceId: string): string {
  * 创建工作区终端会话
  */
 export function createSession(workspaceId: string, cols: number, rows: number): TerminalSession {
+  const pty = loadPty();
+  if (!pty) {
+    throw new Error('node-pty 原生模块不可用，无法创建终端会话');
+  }
+
   const existing = findSessionByWorkspace(workspaceId);
   if (existing) {
     destroySession(existing.id);

@@ -2,10 +2,20 @@
 /**
  * 独立终端 WebSocket 服务器
  * 用于开发调试或独立部署终端服务
+ * 注意：需要 node-pty 原生模块可用
  */
 import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import * as pty from 'node-pty';
+
+// node-pty 延迟加载（原生模块可能不可用）
+let ptyModule: typeof import('node-pty') | null = null;
+try {
+  ptyModule = require('node-pty');
+} catch {
+  console.error('✗ node-pty 原生模块不可用，独立终端服务器无法启动');
+  console.error('  请确保已安装编译工具链（build-essential, python3）后重新安装依赖');
+  process.exit(1);
+}
 
 const PORT = process.env.TERMINAL_PORT || '7861';
 
@@ -17,7 +27,7 @@ const server = createServer((req, res) => {
 const wss = new WebSocketServer({ noServer: true });
 
 // 会话管理
-const sessions = new Map<string, { pty: pty.IPty; workspaceId: string; lastActivity: number }>();
+const sessions = new Map<string, { pty: import('node-pty').IPty; workspaceId: string; lastActivity: number }>();
 const workspaceClients = new Map<string, Set<WebSocket>>();
 
 server.on('upgrade', (request, socket, head) => {
@@ -52,11 +62,8 @@ wss.on('connection', (ws, req) => {
   let session = sessions.get(workspaceId);
   if (!session) {
     const isDocker = process.env.RUNNING_IN_DOCKER === 'true';
-    const basePath = isDocker
-      ? '/home/node/.autocodellm/workspaces'
-      : process.env.WORKSPACE_BASE_PATH ?? '/home/user/workspace';
-
-    const ptyProcess = pty.spawn('bash', [], {
+    const basePath = isDocker ? '/home/node/.autocodellm/workspaces' : process.env.WORKSPACE_BASE_PATH ?? '/home/user/workspace';
+    const ptyProcess = ptyModule!.spawn('bash', [], {
       name: 'xterm-256color',
       cols,
       rows,
