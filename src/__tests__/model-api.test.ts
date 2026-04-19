@@ -84,7 +84,7 @@ describe('模型管理 API (/api/models)', () => {
 
       const body = await response.json();
       expect(body.success).toBe(false);
-      expect(body.error.code).toBe('FETCH_FAILED');
+      expect(body.error.code).toBe('INTERNAL_ERROR');
     });
   });
 

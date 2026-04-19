@@ -14,13 +14,13 @@ const PUBLIC_PATHS = ['/', '/login', '/demo'] as const;
 const API_PREFIX = '/api/';
 
 /**
- * 中间件函数
+ * 代理函数（原 middleware，Next.js 16 重命名为 proxy）
  * 负责认证检查和路由守卫
  *
  * @param request - 请求对象
  * @returns 重定向或放行
  */
-export function middleware(request: NextRequest): NextResponse {
+export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
 
   // API 请求直接放行，由具体 API 路由处理认证

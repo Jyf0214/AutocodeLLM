@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypto';
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
 // Mock Prisma
 const mockFindMany = vi.fn();
@@ -21,16 +21,16 @@ vi.mock('@/lib/db/prisma', () => ({
 }));
 
 /**
- * 从环境变量派生 32 字节 AES-256 密钥（使用 SHA-256）
- * 与 route.ts 保持一致
+ * 从环境变量派生 32 字节 AES-256 密钥（使用 padEnd 截断）
+ * 与 qwen-oauth.ts 保持一致
  */
 function deriveKey(): Buffer {
   const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
-  return createHash('sha256').update(keyStr).digest();
+  return Buffer.from(keyStr.padEnd(32).slice(0, 32));
 }
 
 /**
- * AES-256-CBC 加密（与 route.ts 保持一致，使用 SHA-256 派生密钥）
+ * AES-256-CBC 加密（与 qwen-oauth.ts 保持一致，使用 padEnd 截断密钥）
  */
 function encryptValue(value: string): string {
   const key = deriveKey();
@@ -137,7 +137,7 @@ describe('环境变量 API (/api/env)', () => {
       expect(response.status).toBe(500);
 
       const body = await response.json() as { error: { code: string } };
-      expect(body.error.code).toBe('FETCH_FAILED');
+      expect(body.error.code).toBe('INTERNAL_ERROR');
     });
 
     it('应该脱敏显示变量值', async () => {

@@ -13,9 +13,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  allowedDevOrigins: ['surtr-twilight-autocodellm.hf.space'],
 };
 
 export default withNextIntl(nextConfig);

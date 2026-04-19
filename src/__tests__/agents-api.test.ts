@@ -94,7 +94,7 @@ describe('任务代理 API (/api/agents)', () => {
 
       const body = await response.json();
       expect(body.success).toBe(false);
-      expect(body.error.code).toBe('FETCH_FAILED');
+      expect(body.error.code).toBe('INTERNAL_ERROR');
     });
   });
 
