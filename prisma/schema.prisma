@@ -113,6 +113,7 @@ model Workspace {
   logs     WorkspaceLog[]
   backups  Backup[]
   channels  Channel[]
+  discordBindings  DiscordBinding[]
 
   @@map("workspaces")
 }
@@ -270,6 +271,23 @@ model ChannelMessage {
 
   @@index([channelId, createdAt])
   @@map("channel_messages")
+}
+
+// Discord 用户绑定
+model DiscordBinding {
+  id              String   @id @default(uuid())
+  discordUserId   String   @unique
+  discordUserName String
+  workspaceId     String
+  code            String?  @unique // 待确认的绑定码
+  codeExpiresAt   DateTime? // 绑定码过期时间
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([code])
+  @@map("discord_bindings")
 }
 
 // 频道类型

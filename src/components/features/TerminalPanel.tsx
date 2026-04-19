@@ -9,18 +9,23 @@ import 'xterm/css/xterm.css';
 
 interface TerminalPanelProps {
   workspaceId: string;
+  wsUrl: string;
 }
 
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_BASE_DELAY = 1000;
 
-function getWebSocketUrl(workspaceId: string): string {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = window.location.host;
-  return `${protocol}//${host}/api/terminal?workspaceId=${encodeURIComponent(workspaceId)}`;
+/**
+ * 构建终端 WebSocket 连接地址
+ * 将 wsUrl 基础地址与 workspaceId 参数拼接
+ */
+function buildWebSocketUrl(wsUrl: string, workspaceId: string): string {
+  const url = new URL(wsUrl);
+  url.searchParams.set('workspaceId', workspaceId);
+  return url.toString();
 }
 
-export default function TerminalPanel({ workspaceId }: TerminalPanelProps) {
+export default function TerminalPanel({ workspaceId, wsUrl }: TerminalPanelProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -28,6 +33,7 @@ export default function TerminalPanel({ workspaceId }: TerminalPanelProps) {
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const connectRef = useRef<(() => void) | null>(null);
+
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
 
@@ -103,7 +109,8 @@ export default function TerminalPanel({ workspaceId }: TerminalPanelProps) {
     term.clear();
     term.writeln('\x1b[33m正在连接终端...\x1b[0m');
 
-    const ws = new WebSocket(getWebSocketUrl(workspaceId));
+    const fullWsUrl = buildWebSocketUrl(wsUrl, workspaceId);
+    const ws = new WebSocket(fullWsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -111,7 +118,6 @@ export default function TerminalPanel({ workspaceId }: TerminalPanelProps) {
       setConnecting(false);
       reconnectAttemptsRef.current = 0;
       term.writeln('\x1b[1;32m终端已连接\x1b[0m');
-
       fitAddon.fit();
       const { cols, rows } = term;
       ws.send(JSON.stringify({ type: 'resize', cols, rows }));
@@ -122,6 +128,10 @@ export default function TerminalPanel({ workspaceId }: TerminalPanelProps) {
         const message: { type: string; data: unknown } = JSON.parse(event.data as string);
         if (message.type === 'data' && typeof message.data === 'string') {
           term.write(message.data);
+        }
+        if (message.type === 'exit') {
+          term.writeln('\x1b[33m终端进程已退出\x1b[0m');
+          setConnected(false);
         }
       } catch {
         const rawData = event.data;
@@ -134,12 +144,10 @@ export default function TerminalPanel({ workspaceId }: TerminalPanelProps) {
     ws.onclose = () => {
       setConnected(false);
       setConnecting(false);
-
       const attempts = reconnectAttemptsRef.current;
       if (attempts < MAX_RECONNECT_ATTEMPTS) {
         const delay = RECONNECT_BASE_DELAY * 2 ** attempts;
         reconnectAttemptsRef.current = attempts + 1;
-
         term.writeln(
           '\x1b[33m连接已断开，' +
             String(delay / 1000) +
@@ -149,7 +157,6 @@ export default function TerminalPanel({ workspaceId }: TerminalPanelProps) {
             String(MAX_RECONNECT_ATTEMPTS) +
             ')...\x1b[0m',
         );
-
         reconnectTimerRef.current = setTimeout(() => {
           connectRef.current?.();
         }, delay);
@@ -176,7 +183,7 @@ export default function TerminalPanel({ workspaceId }: TerminalPanelProps) {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [workspaceId, cleanup]);
+  }, [wsUrl, workspaceId, cleanup]);
 
   useEffect(() => {
     connectRef.current = connectTerminal;

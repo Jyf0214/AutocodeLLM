@@ -12,6 +12,19 @@ const SESSIONS = new Map<string, TerminalSession>();
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 分钟超时
 
 /**
+ * 获取工作区目录路径
+ * Docker 环境使用 /home/node/.autocodellm/workspaces
+ * 本地环境使用 /home/user/workspace
+ */
+function getWorkspaceCwd(workspaceId: string): string {
+  const isDocker = process.env.RUNNING_IN_DOCKER === 'true';
+  const basePath = isDocker
+    ? '/home/node/.autocodellm/workspaces'
+    : process.env.WORKSPACE_BASE_PATH ?? '/home/user/workspace';
+  return basePath + '/' + workspaceId;
+}
+
+/**
  * 创建工作区终端会话
  */
 export function createSession(workspaceId: string, cols: number, rows: number): TerminalSession {
@@ -21,11 +34,13 @@ export function createSession(workspaceId: string, cols: number, rows: number): 
   }
 
   const id = 'term-' + String(Date.now()) + '-' + String(Math.random()).slice(2, 8);
+  const cwd = getWorkspaceCwd(workspaceId);
+
   const ptyProcess = pty.spawn('bash', [], {
     name: 'xterm-256color',
     cols,
     rows,
-    cwd: '/home/user/workspace/' + workspaceId,
+    cwd,
     env: process.env as Record<string, string>,
   });
 
@@ -39,6 +54,7 @@ export function createSession(workspaceId: string, cols: number, rows: number): 
 
   SESSIONS.set(id, session);
 
+  // 超时自动销毁
   setTimeout(() => {
     if (SESSIONS.has(id)) {
       destroySession(id);

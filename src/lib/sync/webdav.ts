@@ -1,5 +1,6 @@
 import { createClient, type WebDAVClient } from 'webdav';
 import { prisma } from '@/lib/db/prisma';
+import { isWatchActive } from './watcher';
 
 /**
  * 创建 WebDAV 客户端
@@ -8,9 +9,7 @@ export async function createWebdavClient(): Promise<WebDAVClient | null> {
   const config = await prisma.webdavConfig.findFirst({
     where: { enabled: true },
   });
-
   if (!config) return null;
-
   return createClient(config.url, {
     username: config.username,
     password: config.password,
@@ -18,12 +17,19 @@ export async function createWebdavClient(): Promise<WebDAVClient | null> {
 }
 
 /**
- * 连接测试
+ * 连接测试（测试配置的远程路径是否可访问）
  */
-export async function testConnection(url: string, username: string, password: string): Promise<boolean> {
+export async function testConnection(
+  url: string,
+  username: string,
+  password: string,
+  remotePath?: string,
+): Promise<boolean> {
   try {
     const client = createClient(url, { username, password });
-    await client.getDirectoryContents('/');
+    // 优先测试配置的远程路径，回退到根目录
+    const testPath = remotePath ?? '/';
+    await client.getDirectoryContents(testPath);
     return true;
   } catch {
     return false;
@@ -36,20 +42,27 @@ export async function testConnection(url: string, username: string, password: st
 export async function pullFromRemote(
   client: WebDAVClient,
   localDir: string,
-  remotePath: string
+  remotePath: string,
 ): Promise<number> {
   let count = 0;
   try {
-    const items = await client.getDirectoryContents(remotePath, { deep: true }) as { type: string; filename: string }[];
+    const items = (await client.getDirectoryContents(remotePath, { deep: true })) as {
+      type: string;
+      filename: string;
+    }[];
+
     const files = items.filter((item) => item.type === 'file');
 
     for (const file of files) {
-      const content = await client.getFileContents(file.filename, { format: 'binary' }) as ArrayBuffer;
+      const content = (await client.getFileContents(file.filename, {
+        format: 'binary',
+      })) as ArrayBuffer;
       const localPath = localDir + file.filename.replace(remotePath, '');
+
       // 使用 Node.js fs 写入
       const fs = await import('fs');
-      const path = await import('path');
-      const dir = path.dirname(localPath);
+      const nodePath = await import('path');
+      const dir = nodePath.dirname(localPath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
@@ -59,7 +72,6 @@ export async function pullFromRemote(
   } catch {
     // 忽略错误，继续处理
   }
-
   return count;
 }
 
@@ -69,12 +81,20 @@ export async function pullFromRemote(
 export async function pushToRemote(
   client: WebDAVClient,
   localPath: string,
-  remotePath: string
+  remotePath: string,
 ): Promise<boolean> {
   try {
     const fs = await import('fs');
+    const nodePath = await import('path');
+
     const content = fs.readFileSync(localPath);
-    const remoteFile = remotePath + localPath.replace(process.env.SYNC_LOCAL_DIR ?? './sync', '');
+    const syncLocalDir = process.env.SYNC_LOCAL_DIR ?? './sync';
+    const remoteFile = remotePath + localPath.replace(syncLocalDir, '');
+
+    // 确保远程目录存在
+    const remoteDir = nodePath.dirname(remoteFile);
+    await ensureRemoteDir(client, remoteDir);
+
     await client.putFileContents(remoteFile, content, { overwrite: true });
     return true;
   } catch {
@@ -83,17 +103,34 @@ export async function pushToRemote(
 }
 
 /**
+ * 确保远程目录存在（递归创建）
+ */
+async function ensureRemoteDir(client: WebDAVClient, remoteDir: string): Promise<void> {
+  const parts = remoteDir.split('/').filter(Boolean);
+  let currentPath = '';
+  for (const part of parts) {
+    currentPath += '/' + part;
+    try {
+      await client.createDirectory(currentPath);
+    } catch {
+      // 目录已存在，忽略错误
+    }
+  }
+}
+
+/**
  * 列出远程文件
  */
 export async function listRemoteFiles(
   client: WebDAVClient,
-  remotePath: string
+  remotePath: string,
 ): Promise<string[]> {
   try {
-    const items = await client.getDirectoryContents(remotePath, { deep: true }) as { type: string; filename: string }[];
-    return items
-      .filter((item) => item.type === 'file')
-      .map((item) => item.filename);
+    const items = (await client.getDirectoryContents(remotePath, { deep: true })) as {
+      type: string;
+      filename: string;
+    }[];
+    return items.filter((item) => item.type === 'file').map((item) => item.filename);
   } catch {
     return [];
   }
@@ -110,7 +147,6 @@ export async function saveWebdavConfig(data: {
   enabled: boolean;
 }): Promise<void> {
   const existing = await prisma.webdavConfig.findFirst();
-
   if (existing) {
     await prisma.webdavConfig.update({
       where: { id: existing.id },
@@ -132,12 +168,11 @@ export async function getSyncStatus(): Promise<{
   lastSync: string | null;
 }> {
   const config = await prisma.webdavConfig.findFirst();
-
   return {
     enabled: config?.enabled ?? false,
-    watching: false,
+    watching: isWatchActive(),
     url: config?.url ?? '',
     remotePath: config?.remotePath ?? '',
-    lastSync: null,
+    lastSync: config?.updatedAt.toISOString() ?? null,
   };
 }

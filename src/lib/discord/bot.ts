@@ -1,9 +1,24 @@
 /**
  * Discord Bot 全局单例管理
  * 通过 globalThis 管理单实例 Bot 客户端生命周期
+ * 支持 /connect 斜杠命令绑定工作区
  */
-import { Client, GatewayIntentBits, type ClientEvents } from 'discord.js';
+import {
+  Client,
+  GatewayIntentBits,
+  SlashCommandBuilder,
+  REST,
+  Routes,
+  Events,
+  type Interaction,
+} from 'discord.js';
 import { handleDiscordMessage } from './events';
+import { handleConnectCommand } from './commands';
+
+/** /connect 斜杠命令定义 */
+const connectCommand = new SlashCommandBuilder()
+  .setName('connect')
+  .setDescription('绑定你的 Discord 账号到 AutocodeLLM 工作区');
 
 /** 全局 Bot 实例存储类型 */
 const globalForDiscord = globalThis as unknown as {
@@ -26,11 +41,33 @@ export function getDiscordBotStatus(): {
   if (!bot?.isReady()) {
     return { connected: false, tag: null, guilds: 0 };
   }
-  return {
-    connected: true,
-    tag: bot.user.tag,
-    guilds: bot.guilds.cache.size,
-  };
+  return { connected: true, tag: bot.user.tag, guilds: bot.guilds.cache.size };
+}
+
+/** 注册斜杠命令到所有服务器 */
+async function registerSlashCommands(client: Client<true>): Promise<void> {
+  const rest = new REST({ version: '10' }).setToken(
+    globalForDiscord.__discordBotToken!,
+  );
+  try {
+    // 逐服务器注册（即时生效，无需全局等待）
+    for (const guild of client.guilds.cache.values()) {
+      await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), {
+        body: [connectCommand.toJSON()],
+      });
+    }
+    console.log('[Discord] /connect 命令注册完成');
+  } catch (error) {
+    console.error('[Discord] /connect 命令注册失败:', error);
+  }
+}
+
+/** 处理斜杠命令交互 */
+function handleInteraction(interaction: Interaction): void {
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName === 'connect') {
+    void handleConnectCommand(interaction);
+  }
 }
 
 /** 连接 Discord Bot */
@@ -38,7 +75,10 @@ export async function connectDiscordBot(
   token: string,
 ): Promise<{ success: boolean; tag?: string; error?: string }> {
   // 如果已有实例且 Token 相同，直接返回
-  if (globalForDiscord.__discordBot?.isReady() && globalForDiscord.__discordBotToken === token) {
+  if (
+    globalForDiscord.__discordBot?.isReady() &&
+    globalForDiscord.__discordBotToken === token
+  ) {
     return { success: true, tag: globalForDiscord.__discordBot.user.tag };
   }
 
@@ -56,11 +96,21 @@ export async function connectDiscordBot(
       ],
     });
 
-    // 注册消息事件
+    // 注册事件
     client.on('messageCreate', handleDiscordMessage);
+    client.on(Events.InteractionCreate, handleInteraction);
 
     // 登录
     await client.login(token);
+
+    // 就绪后注册斜杠命令
+    if (client.isReady()) {
+      await registerSlashCommands(client as Client<true>);
+    } else {
+      client.once(Events.ClientReady, async () => {
+        await registerSlashCommands(client as Client<true>);
+      });
+    }
 
     // 存储到全局
     globalForDiscord.__discordBot = client as Client<true>;
@@ -90,17 +140,12 @@ export async function getDiscordGuildChannels(guildId: string) {
   if (!bot?.isReady()) {
     return [];
   }
-
   try {
     const guild = await bot.guilds.fetch(guildId);
     const channels = await guild.channels.fetch();
     return channels
       .filter((ch): ch is NonNullable<typeof ch> => ch !== null && ch.isTextBased())
-      .map((ch) => ({
-        id: ch.id,
-        name: ch.name,
-        type: ch.type,
-      }));
+      .map((ch) => ({ id: ch.id, name: ch.name, type: ch.type }));
   } catch {
     return [];
   }
@@ -112,7 +157,6 @@ export async function getDiscordGuilds() {
   if (!bot?.isReady()) {
     return [];
   }
-
   return bot.guilds.cache.map((guild) => ({
     id: guild.id,
     name: guild.name,
@@ -129,14 +173,14 @@ export async function sendMessageToChannel(
   if (!bot?.isReady()) {
     return { success: false, error: 'Bot 未连接' };
   }
-
   try {
     const channel = await bot.channels.fetch(channelId);
     if (!channel?.isTextBased()) {
       return { success: false, error: '频道不存在或非文本频道' };
     }
-
-      const message = await (channel as { send: (c: string) => Promise<{ id: string }> }).send(content);
+    const message = await (
+      channel as { send: (c: string) => Promise<{ id: string }> }
+    ).send(content);
     return { success: true, messageId: message.id };
   } catch (error) {
     const message = error instanceof Error ? error.message : '发送失败';

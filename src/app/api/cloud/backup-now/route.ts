@@ -3,7 +3,8 @@ import { prisma } from '@/lib/db/prisma';
 import fs from 'fs';
 import path from 'path';
 
-const BACKUP_LOG_FILE = process.env.BACKUP_LOG_FILE || '/home/node/.autocodellm/backups/backup-logs.json';
+const BACKUP_LOG_FILE =
+  process.env.BACKUP_LOG_FILE || '/home/node/.autocodellm/backups/backup-logs.json';
 
 interface BackupLog {
   timestamp: string;
@@ -48,19 +49,18 @@ export async function POST(request: Request) {
     if (!workspaceId) {
       return NextResponse.json(
         { success: false, error: { message: '缺少工作区 ID' } },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
-      include: { webdavConfig: true },
     });
 
     if (!workspace) {
       return NextResponse.json(
         { success: false, error: { message: '工作区不存在' } },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -72,28 +72,84 @@ export async function POST(request: Request) {
       message: '开始备份...',
     });
 
-    const config = workspace.webdavConfig;
-    if (!config?.enabled || !config.url || !config.username || !config.password) {
+    // WebdavConfig 是全局单例，不属于 Workspace
+    const config = await prisma.webdavConfig.findFirst({ where: { enabled: true } });
+
+    if (!config) {
       appendBackupLog({
         timestamp: new Date().toISOString(),
         workspaceId: workspace.id,
         workspaceName: workspace.name,
         status: 'failed',
-        message: 'WebDAV 未配置',
+        message: 'WebDAV 未配置或未启用',
       });
-
       return NextResponse.json(
-        { success: false, error: { message: 'WebDAV 未配置' } },
-        { status: 400 }
+        { success: false, error: { message: 'WebDAV 未配置或未启用' } },
+        { status: 400 },
       );
     }
 
-    appendBackupLog({
-      timestamp: new Date().toISOString(),
-      workspaceId: workspace.id,
-      workspaceName: workspace.name,
-      status: 'success',
-      message: '备份完成 (模拟)',
+    // 执行实际备份：将工作区数据推送到 WebDAV
+    const { createWebdavClient, pushToRemote } = await import('@/lib/sync/webdav');
+    const client = await createWebdavClient();
+
+    if (!client) {
+      appendBackupLog({
+        timestamp: new Date().toISOString(),
+        workspaceId: workspace.id,
+        workspaceName: workspace.name,
+        status: 'failed',
+        message: 'WebDAV 客户端创建失败',
+      });
+      return NextResponse.json(
+        { success: false, error: { message: 'WebDAV 客户端创建失败' } },
+        { status: 500 },
+      );
+    }
+
+    const localDir = process.env.SYNC_LOCAL_DIR ?? './sync';
+    const workspaceDir = path.join(localDir, workspaceId);
+
+    if (fs.existsSync(workspaceDir)) {
+      let pushedCount = 0;
+      const walkDir = async (dir: string) => {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            await walkDir(fullPath);
+          } else if (entry.isFile()) {
+            const success = await pushToRemote(client, fullPath, config.remotePath + '/' + workspaceId);
+            if (success) pushedCount++;
+          }
+        }
+      };
+      await walkDir(workspaceDir);
+
+      appendBackupLog({
+        timestamp: new Date().toISOString(),
+        workspaceId: workspace.id,
+        workspaceName: workspace.name,
+        status: 'success',
+        message: '备份完成，已推送 ' + String(pushedCount) + ' 个文件',
+      });
+    } else {
+      appendBackupLog({
+        timestamp: new Date().toISOString(),
+        workspaceId: workspace.id,
+        workspaceName: workspace.name,
+        status: 'success',
+        message: '备份完成（工作区目录为空）',
+      });
+    }
+
+    // 记录备份到数据库
+    await prisma.backup.create({
+      data: {
+        workspaceId: workspace.id,
+        name: 'WebDAV 备份 - ' + new Date().toISOString(),
+        status: 'completed',
+      },
     });
 
     return NextResponse.json({ success: true });
@@ -101,7 +157,7 @@ export async function POST(request: Request) {
     console.error('备份请求处理失败:', error);
     return NextResponse.json(
       { success: false, error: { message: '请求处理失败' } },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -114,7 +170,7 @@ export async function GET() {
     console.error('获取备份日志失败:', error);
     return NextResponse.json(
       { success: false, error: { message: '获取日志失败' } },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

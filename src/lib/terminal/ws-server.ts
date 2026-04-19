@@ -1,11 +1,56 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'http';
-import { createSession, findSessionByWorkspace, destroySession } from './session-manager';
+import {
+  createSession,
+  findSessionByWorkspace,
+  getSession,
+  destroySession,
+  type TerminalSession,
+} from './session-manager';
 
 let wss: WebSocketServer | null = null;
 
+// 工作区 → WebSocket 客户端集合
+const workspaceClients = new Map<string, Set<WebSocket>>();
+
+// 会话 → pty 事件监听器已绑定标记
+const sessionListenersAttached = new Set<string>();
+
 /**
- * 初始化 WebSocket 服务器
+ * 向工作区所有客户端广播消息
+ */
+function broadcastToWorkspace(workspaceId: string, message: string, exclude?: WebSocket): void {
+  const clients = workspaceClients.get(workspaceId);
+  if (!clients) return;
+  for (const client of clients) {
+    if (client !== exclude && client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+/**
+ * 绑定 pty 输出和退出事件到会话（仅绑定一次）
+ */
+function attachSessionListeners(session: TerminalSession): void {
+  if (sessionListenersAttached.has(session.id)) return;
+  sessionListenersAttached.add(session.id);
+
+  session.pty.onData((data) => {
+    const msg = JSON.stringify({ type: 'data', data });
+    broadcastToWorkspace(session.workspaceId, msg);
+  });
+
+  session.pty.onExit(({ exitCode }) => {
+    const msg = JSON.stringify({ type: 'exit', exitCode });
+    broadcastToWorkspace(session.workspaceId, msg);
+    sessionListenersAttached.delete(session.id);
+    destroySession(session.id);
+  });
+}
+
+/**
+ * 初始化 WebSocket 服务器（noServer 模式，由 server.ts 的 HTTP 服务器升级调用）
  */
 export function initTerminalWebSocket(server: Server): void {
   wss = new WebSocketServer({ noServer: true });
@@ -31,29 +76,41 @@ export function initTerminalWebSocket(server: Server): void {
       return;
     }
 
+    // 注册客户端到工作区
+    let clients = workspaceClients.get(workspaceId);
+    if (!clients) {
+      clients = new Set();
+      workspaceClients.set(workspaceId, clients);
+    }
+    clients.add(ws);
+
+    // 查找或创建终端会话
     let session = findSessionByWorkspace(workspaceId);
-    session ??= createSession(workspaceId, cols, rows);
+    if (!session) {
+      session = createSession(workspaceId, cols, rows);
+    }
+
+    // 绑定 pty 事件监听器（仅首次）
+    attachSessionListeners(session);
 
     ws.send(JSON.stringify({ type: 'connected', sessionId: session.id }));
-
-    session.pty.onData((data) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'data', data }));
-      }
-    });
 
     ws.on('message', (raw: Buffer) => {
       try {
         const msg = JSON.parse(raw.toString()) as Record<string, unknown>;
-
         if (msg.type === 'data' && typeof msg.data === 'string') {
-          session.pty.write(msg.data);
-          session.lastActivity = Date.now();
+          const currentSession = findSessionByWorkspace(workspaceId);
+          if (currentSession) {
+            currentSession.pty.write(msg.data as string);
+            currentSession.lastActivity = Date.now();
+          }
         }
-
         if (msg.type === 'resize' && typeof msg.cols === 'number' && typeof msg.rows === 'number') {
-          session.pty.resize(msg.cols, msg.rows);
-          session.lastActivity = Date.now();
+          const currentSession = findSessionByWorkspace(workspaceId);
+          if (currentSession) {
+            currentSession.pty.resize(msg.cols as number, msg.rows as number);
+            currentSession.lastActivity = Date.now();
+          }
         }
       } catch {
         // 忽略解析错误
@@ -61,14 +118,13 @@ export function initTerminalWebSocket(server: Server): void {
     });
 
     ws.on('close', () => {
-      // 不立即销毁会话，保留一段时间供重连
-    });
-
-    session.pty.onExit(({ exitCode }) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'exit', exitCode }));
+      const c = workspaceClients.get(workspaceId);
+      if (c) {
+        c.delete(ws);
+        if (c.size === 0) {
+          workspaceClients.delete(workspaceId);
+        }
       }
-      destroySession(session.id);
     });
   });
 }
@@ -81,4 +137,6 @@ export function closeTerminalWebSocket(): void {
     wss.close();
     wss = null;
   }
+  workspaceClients.clear();
+  sessionListenersAttached.clear();
 }

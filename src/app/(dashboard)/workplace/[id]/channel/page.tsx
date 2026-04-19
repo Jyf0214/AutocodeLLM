@@ -54,7 +54,7 @@ export default function ChannelPage() {
           <Text type="secondary" style={{ fontSize: 14 }}>
             {t('channel.subtitle')}
           </Text>
-          <ChannelConnect />
+          <ChannelConnect workspaceId={workspaceId} />
           <ChannelList workspaceId={workspaceId} onChannelClick={handleChannelClick} />
         </Flexbox>
       </div>

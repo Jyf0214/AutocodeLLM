@@ -32,6 +32,7 @@ export default function WorkplaceTerminalPage() {
         setError('无法连接到终端服务器');
       }
     }
+
     if (workspaceId) {
       fetchWsUrl();
     }
@@ -56,7 +57,7 @@ export default function WorkplaceTerminalPage() {
             <div>
               <p>请配置 TERMINAL_WS_URL 环境变量来启用 Web 终端功能。</p>
               <p style={{ marginTop: 8, fontSize: 12 }}>
-                例如：ws://localhost:7861/api/terminal/ws
+                例如：ws://localhost:7860/api/terminal/ws
               </p>
             </div>
           }
@@ -67,7 +68,7 @@ export default function WorkplaceTerminalPage() {
 
   return (
     <div style={{ height: 'calc(100vh - 120px)', padding: '0 16px' }}>
-      <TerminalPanel workspaceId={workspaceId} />
+      <TerminalPanel workspaceId={workspaceId} wsUrl={wsUrl} />
     </div>
   );
 }

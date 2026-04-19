@@ -10,9 +10,6 @@ export async function GET(
 
     const workspace = await prisma.workspace.findUnique({
       where: { id },
-      include: {
-        webdavConfig: true,
-      },
     });
 
     if (!workspace) {
@@ -22,20 +19,20 @@ export async function GET(
       );
     }
 
+    // WebdavConfig 是全局单例，不属于 Workspace
+    const config = await prisma.webdavConfig.findFirst();
+
     const backupInfo = {
       lastBackup: null,
       nextBackup: null,
       status: 'no_backup' as const,
       backupCount: 0,
-      remoteUrl: workspace.webdavConfig?.url ?? null,
-      remotePath: workspace.webdavConfig?.remotePath ?? null,
-      enabled: workspace.webdavConfig?.enabled ?? false,
+      remoteUrl: config?.url ?? null,
+      remotePath: config?.remotePath ?? null,
+      enabled: config?.enabled ?? false,
     };
 
-    return NextResponse.json({
-      success: true,
-      data: backupInfo,
-    });
+    return NextResponse.json({ success: true, data: backupInfo });
   } catch (error) {
     console.error('获取工作区备份信息失败:', error);
     return NextResponse.json(

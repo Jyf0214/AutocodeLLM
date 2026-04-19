@@ -37,6 +37,8 @@ services:
       NODE_ENV: production
       PORT: 3000
       DEMO_MODE: ${DEMO_MODE:-false}
+      # 终端 WebSocket 地址
+      TERMINAL_WS_URL: ${TERMINAL_WS_URL:-ws://localhost:3000/api/terminal/ws}
       # 加密密钥（生产环境必须修改）
       KEY_VAULTS_SECRET: ${KEY_VAULTS_SECRET:-your-key-vaults-secret-here-change-in-production}
       AUTH_SECRET: ${AUTH_SECRET:-your-auth-secret-here-change-in-production}
