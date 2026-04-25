@@ -1,4 +1,4 @@
-import { Flexbox } from '@lobehub/ui';
+import { Flexbox } from '@/lib/ui';
 import { Switch } from 'antd';
 import isEqual from 'fast-deep-equal';
 import { memo } from 'react';

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import TerminalPanel from '@/components/features/TerminalPanel';
 import { useParams } from 'next/navigation';
-import { Flexbox, Text, Alert } from '@lobehub/ui';
+import { Flexbox, Text, Alert } from '@/lib/ui';
 import { CodeOutlined } from '@ant-design/icons';
 
 interface WsConfig {

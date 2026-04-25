@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { message as antMessage } from 'antd';
-import { Button, Text, Flexbox } from '@lobehub/ui';
+import { Button, Text, Flexbox } from '@/lib/ui';
 import { Card, Skeleton } from 'antd';
 import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
 import ChannelChat from '@/components/features/ChannelChat';

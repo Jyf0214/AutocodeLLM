@@ -11,7 +11,7 @@ import {
   Flexbox,
   Icon,
   Skeleton,
-} from '@lobehub/ui';
+} from '@/lib/ui';
 import {
   PlusOutlined,
   ApiOutlined,
@@ -25,7 +25,7 @@ import {
   EyeInvisibleOutlined,
   LinkOutlined,
 } from '@ant-design/icons';
-import { ModelIcon } from '@lobehub/icons';
+import { ModelIcon } from '@/lib/icons';
 
 /**
  * 提供商类型

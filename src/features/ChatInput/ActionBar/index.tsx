@@ -1,5 +1,5 @@
-import { type ChatInputActionsProps } from '@lobehub/editor/react';
-import { ChatInputActions } from '@lobehub/editor/react';
+import { type ChatInputActionsProps } from '@/editor/react';
+import { ChatInputActions } from '@/editor/react';
 import { memo, useMemo } from 'react';
 
 import { useGlobalStore } from '@/store/global';

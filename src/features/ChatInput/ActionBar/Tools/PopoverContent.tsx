@@ -1,5 +1,5 @@
-import { type ItemType } from '@lobehub/ui';
-import { Flexbox, Icon, SearchBar, stopPropagation, usePopoverContext } from '@lobehub/ui';
+import { type ItemType } from '@/lib/ui';
+import { Flexbox, Icon, SearchBar, stopPropagation, usePopoverContext } from '@/lib/ui';
 import { createStaticStyles, cssVar } from 'antd-style';
 import { ChevronRight, ExternalLink, Settings, Store } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';

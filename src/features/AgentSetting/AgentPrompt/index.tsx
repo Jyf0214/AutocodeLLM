@@ -1,7 +1,7 @@
 'use client';
 
-import { Button, Flexbox, Form } from '@lobehub/ui';
-import { EditableMessage } from '@lobehub/ui/chat';
+import { Button, Flexbox, Form } from '@/lib/ui';
+import { EditableMessage } from '@/ui/chat';
 import { PenLineIcon } from 'lucide-react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

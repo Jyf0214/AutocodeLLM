@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { message as antMessage } from 'antd';
-import { Button, Text, Flexbox, Avatar } from '@lobehub/ui';
+import { Button, Text, Flexbox, Avatar } from '@/lib/ui';
 import { Card, Input, Skeleton, Empty } from 'antd';
 import { SendOutlined, ArrowUpOutlined, UserOutlined } from '@ant-design/icons';
 

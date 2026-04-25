@@ -1,4 +1,4 @@
-import { useEditor } from '@lobehub/editor/react';
+import { useEditor } from '@/editor/react';
 import { type ReactNode } from 'react';
 import { memo, useRef } from 'react';
 

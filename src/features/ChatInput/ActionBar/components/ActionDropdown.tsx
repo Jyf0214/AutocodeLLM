@@ -6,7 +6,7 @@ import {
   type MenuItemType,
   type MenuProps,
   type PopoverTrigger,
-} from '@lobehub/ui';
+} from '@/lib/ui';
 import {
   DropdownMenuPopup,
   DropdownMenuPortal,
@@ -14,7 +14,7 @@ import {
   DropdownMenuRoot,
   DropdownMenuTrigger,
   renderDropdownMenuItems,
-} from '@lobehub/ui';
+} from '@/lib/ui';
 import { createStaticStyles, cx } from 'antd-style';
 import { type CSSProperties, type ReactNode } from 'react';
 import {

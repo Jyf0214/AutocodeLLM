@@ -1,6 +1,6 @@
 import { type ConversationContext, type UIChatMessage } from '@lobechat/types';
-import { ModelTag } from '@lobehub/icons';
-import { Avatar, Flexbox, Markdown, Text } from '@lobehub/ui';
+import { ModelTag } from '@/lib/icons';
+import { Avatar, Flexbox, Markdown, Text } from '@/lib/ui';
 import { cx } from 'antd-style';
 import { memo } from 'react';
 

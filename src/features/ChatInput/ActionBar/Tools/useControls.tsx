@@ -4,9 +4,9 @@ import {
   RECOMMENDED_SKILLS,
   RecommendedSkillType,
 } from '@lobechat/const';
-import { type ItemType } from '@lobehub/ui';
-import { Avatar, Icon } from '@lobehub/ui';
-import { McpIcon, SkillsIcon } from '@lobehub/ui/icons';
+import { type ItemType } from '@/lib/ui';
+import { Avatar, Icon } from '@/lib/ui';
+import { McpIcon, SkillsIcon } from '@/lib/ui';
 import isEqual from 'fast-deep-equal';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';

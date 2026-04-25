@@ -1,4 +1,4 @@
-import { Empty, Flexbox } from '@lobehub/ui';
+import { Empty, Flexbox } from '@/lib/ui';
 import { Table } from 'antd';
 import isEqual from 'fast-deep-equal';
 import { Wrench } from 'lucide-react';

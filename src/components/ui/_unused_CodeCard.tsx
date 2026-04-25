@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { Button, Tooltip, CodeEditor, CopyButton } from '@lobehub/ui';
+import { Button, Tooltip, CodeEditor, CopyButton } from '@/lib/ui';
 import { DownloadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 
 interface CodeCardProps {

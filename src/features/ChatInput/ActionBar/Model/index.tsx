@@ -1,6 +1,6 @@
 import { LoadingOutlined } from '@ant-design/icons';
-import { ModelIcon } from '@lobehub/icons';
-import { Center, Flexbox } from '@lobehub/ui';
+import { ModelIcon } from '@/lib/icons';
+import { Center, Flexbox } from '@/lib/ui';
 import { Spin } from 'antd';
 import { createStaticStyles, cx } from 'antd-style';
 import { Settings2Icon } from 'lucide-react';

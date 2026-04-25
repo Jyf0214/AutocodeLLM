@@ -1,4 +1,4 @@
-import { Icon } from '@lobehub/ui';
+import { Icon } from '@/lib/ui';
 import { type MenuItemType } from 'antd/es/menu/interface';
 import { BookText, Bot, BrainCog, Handshake, MessagesSquare, Mic2, UserCircle } from 'lucide-react';
 import { useMemo } from 'react';

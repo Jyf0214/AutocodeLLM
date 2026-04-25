@@ -1,4 +1,4 @@
-import { Icon } from '@lobehub/ui';
+import { Icon } from '@/lib/ui';
 import { MessageSquareText } from 'lucide-react';
 import { useMemo } from 'react';
 

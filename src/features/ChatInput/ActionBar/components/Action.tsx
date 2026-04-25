@@ -1,7 +1,7 @@
 'use client';
 
-import { type ActionIconProps, type PopoverTrigger } from '@lobehub/ui';
-import { ActionIcon } from '@lobehub/ui';
+import { type ActionIconProps, type PopoverTrigger } from '@/lib/ui';
+import { ActionIcon } from '@/lib/ui';
 import { isUndefined } from 'es-toolkit/compat';
 import { memo } from 'react';
 import useMergeState from 'use-merge-value';

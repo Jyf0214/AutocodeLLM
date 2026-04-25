@@ -1,4 +1,4 @@
-import type { IEditor, SlashOptions } from '@lobehub/editor';
+import type { IEditor, SlashOptions } from '@/editor';
 import Fuse from 'fuse.js';
 import { $getSelection, $isRangeSelection } from 'lexical';
 import { ArchiveIcon, MessageSquarePlusIcon } from 'lucide-react';

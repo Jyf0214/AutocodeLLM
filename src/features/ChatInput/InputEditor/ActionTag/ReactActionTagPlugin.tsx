@@ -1,4 +1,4 @@
-import { useLexicalComposerContext } from '@lobehub/editor';
+import { useLexicalComposerContext } from '@/editor';
 import { type FC, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 

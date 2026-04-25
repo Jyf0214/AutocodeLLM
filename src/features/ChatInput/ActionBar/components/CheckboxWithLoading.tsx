@@ -1,4 +1,4 @@
-import { Center, Checkbox, Flexbox, Icon } from '@lobehub/ui';
+import { Center, Checkbox, Flexbox, Icon } from '@/lib/ui';
 import { Loader2 } from 'lucide-react';
 import { type ReactNode } from 'react';
 import { memo, useState } from 'react';

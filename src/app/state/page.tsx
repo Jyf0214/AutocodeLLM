@@ -11,7 +11,7 @@ import {
   CloudServerOutlined,
   SecurityScanOutlined,
 } from '@ant-design/icons';
-import { Text, Flexbox, Icon } from '@lobehub/ui';
+import { Text, Flexbox, Icon } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
 
 interface SystemComponent {

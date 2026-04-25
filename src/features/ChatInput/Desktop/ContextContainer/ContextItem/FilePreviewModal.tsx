@@ -1,6 +1,6 @@
 'use client';
 
-import { Modal } from '@lobehub/ui';
+import { Modal } from '@/lib/ui';
 import { memo } from 'react';
 
 import FileViewer from '@/features/FileViewer';

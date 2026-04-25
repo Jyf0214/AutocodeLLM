@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Text, Empty, Modal, Form, Input as LobeInput, InputNumber } from '@lobehub/ui';
+import { Button, Text, Empty, Modal, Form, Input as LobeInput, InputNumber } from '@/lib/ui';
 import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined, PauseCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import { Table, Tag, Space, Popconfirm, Progress, Collapse, Select as AntdSelect, Input as AntdInput } from 'antd';
 import { useTranslations } from 'next-intl';

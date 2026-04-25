@@ -14,7 +14,7 @@ import {
   CloseCircleOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
-import { Flexbox, Text, Avatar } from '@lobehub/ui';
+import { Flexbox, Text, Avatar } from '@/lib/ui';
 
 interface SyncStatus {
   enabled: boolean;

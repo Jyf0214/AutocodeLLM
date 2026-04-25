@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Flexbox, Text } from '@lobehub/ui';
+import { Button, Flexbox, Text } from '@/lib/ui';
 import {
   ArrowRightOutlined,
   CodeOutlined,

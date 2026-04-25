@@ -3,7 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { ConfigProvider } from 'antd';
-import { ThemeProvider } from '@lobehub/ui';
+import { ThemeProvider } from '@/lib/ui';
 import AppLayout from '@/components/layout/AppLayout';
 import '../styles/globals.css';
 

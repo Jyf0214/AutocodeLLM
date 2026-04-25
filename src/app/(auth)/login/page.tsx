@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Button, Form, Input, InputPassword, Flexbox, Text } from '@lobehub/ui';
+import { Button, Form, Input, InputPassword, Flexbox, Text } from '@/lib/ui';
 import {
   UserOutlined,
   LockOutlined,

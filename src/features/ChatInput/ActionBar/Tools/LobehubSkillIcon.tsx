@@ -1,5 +1,5 @@
 import { type LobehubSkillProviderType } from '@lobechat/const';
-import { Icon } from '@lobehub/ui';
+import { Icon } from '@/lib/ui';
 import { cssVar } from 'antd-style';
 import { memo } from 'react';
 

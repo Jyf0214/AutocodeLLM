@@ -3,7 +3,7 @@ import {
   type getKernelFromEditor,
   ILitexmlService,
   IMarkdownShortCutService,
-} from '@lobehub/editor';
+} from '@/editor';
 import {
   $createParagraphNode,
   $insertNodes,

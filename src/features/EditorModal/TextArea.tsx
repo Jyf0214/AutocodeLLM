@@ -1,4 +1,4 @@
-import { TextArea } from '@lobehub/ui';
+import { TextArea } from '@/lib/ui';
 import { type FC } from 'react';
 
 interface EditorCanvasProps {

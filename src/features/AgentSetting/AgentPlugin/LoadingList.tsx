@@ -1,4 +1,4 @@
-import { Flexbox, Skeleton } from '@lobehub/ui';
+import { Flexbox, Skeleton } from '@/lib/ui';
 
 const LoadingList = () => {
   const loadingItem = {

@@ -1,4 +1,4 @@
-import { ActionIcon, Block, Center, Flexbox, Text } from '@lobehub/ui';
+import { ActionIcon, Block, Center, Flexbox, Text } from '@/lib/ui';
 import { createStaticStyles, cssVar } from 'antd-style';
 import { Trash2Icon } from 'lucide-react';
 import { memo } from 'react';

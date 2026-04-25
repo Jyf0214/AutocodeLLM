@@ -1,7 +1,7 @@
 import { type OpenAIChatMessage } from '@lobechat/types';
-import { type IEditor, type SlashOptions } from '@lobehub/editor';
-import { type ChatInputProps } from '@lobehub/editor/react';
-import { type MenuProps } from '@lobehub/ui';
+import { type IEditor, type SlashOptions } from '@/editor';
+import { type ChatInputProps } from '@/editor/react';
+import { type MenuProps } from '@/lib/ui';
 
 import { type ActionKeys } from '@/features/ChatInput';
 

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, Form, Input, Button, Space, Divider, Switch, Flex } from 'antd';
 import { LockOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons';
-import { Text } from '@lobehub/ui';
+import { Text } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
 import { message } from 'antd';
 import type { SetPasswordResponse } from '@/lib/api/workspace-log-types';

@@ -1,4 +1,4 @@
-import { Flexbox } from '@lobehub/ui';
+import { Flexbox } from '@/lib/ui';
 import { createStaticStyles, cssVar } from 'antd-style';
 import path from 'path-browserify-esm';
 import React from 'react';

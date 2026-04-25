@@ -13,10 +13,10 @@
 'use client';
 
 import { useCallback } from 'react';
-import { Drawer, Flexbox, Text } from '@lobehub/ui';
+import { Drawer, Flexbox, Text } from '@/lib/ui';
 import { Tag } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
-import { ModelIcon } from '@lobehub/icons';
+import { ModelIcon } from '@/lib/icons';
 
 interface Model {
   id: string;

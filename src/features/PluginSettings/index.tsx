@@ -1,5 +1,5 @@
 import { type ToolManifestSettings } from '@lobechat/types';
-import { Form, Markdown } from '@lobehub/ui';
+import { Form, Markdown } from '@/lib/ui';
 import { Form as AForm } from 'antd';
 import { createStaticStyles } from 'antd-style';
 import isEqual from 'fast-deep-equal';

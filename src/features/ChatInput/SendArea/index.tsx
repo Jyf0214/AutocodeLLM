@@ -1,4 +1,4 @@
-import { Flexbox } from '@lobehub/ui';
+import { Flexbox } from '@/lib/ui';
 import isEqual from 'fast-deep-equal';
 import { memo, useMemo } from 'react';
 

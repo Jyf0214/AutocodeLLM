@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { Flexbox, Text, Button } from '@lobehub/ui';
+import { Flexbox, Text, Button } from '@/lib/ui';
 import { PoweroffOutlined, ReloadOutlined } from '@ant-design/icons';
 import 'xterm/css/xterm.css';
 

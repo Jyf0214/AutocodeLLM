@@ -1,4 +1,4 @@
-import { Flexbox } from '@lobehub/ui';
+import { Flexbox } from '@/lib/ui';
 import { memo } from 'react';
 
 import ContextList from './ContextList';

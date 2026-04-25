@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { message as antMessage } from 'antd';
-import { Button, Text, Flexbox } from '@lobehub/ui';
+import { Button, Text, Flexbox } from '@/lib/ui';
 import { Card, Input, Tag, Skeleton, Table, Modal } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {

@@ -1,5 +1,5 @@
 import { isDesktop } from '@lobechat/const';
-import { Flexbox, Icon, Text } from '@lobehub/ui';
+import { Flexbox, Icon, Text } from '@/lib/ui';
 import { Button, Divider, Input, Space, Switch } from 'antd';
 import { FolderOpen } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';

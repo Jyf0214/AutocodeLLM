@@ -13,8 +13,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { ActionIcon, Text, Flexbox } from '@lobehub/ui';
-import { ChatInputArea, ChatInputActionBar } from '@lobehub/ui/chat';
+import { ActionIcon, Text, Flexbox } from '@/lib/ui';
+import { ChatInputArea, ChatInputActionBar } from '@/ui/chat';
 import {
   GlobalOutlined,
   PaperClipOutlined,

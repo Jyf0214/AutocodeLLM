@@ -1,6 +1,6 @@
 'use client';
 
-import { Flexbox, Text, Button } from '@lobehub/ui';
+import { Flexbox, Text, Button } from '@/lib/ui';
 import { HomeOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';

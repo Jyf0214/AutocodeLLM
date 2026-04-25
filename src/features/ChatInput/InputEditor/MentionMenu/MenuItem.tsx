@@ -1,4 +1,4 @@
-import type { ISlashMenuOption } from '@lobehub/editor';
+import type { ISlashMenuOption } from '@/editor';
 import { cx } from 'antd-style';
 import { createElement, isValidElement, type MouseEvent, type ReactNode } from 'react';
 import { memo } from 'react';

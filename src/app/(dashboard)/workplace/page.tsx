@@ -12,7 +12,7 @@ import {
   Avatar,
   Skeleton,
   TextArea,
-} from '@lobehub/ui';
+} from '@/lib/ui';
 import {
   PlusOutlined,
   FolderOutlined,

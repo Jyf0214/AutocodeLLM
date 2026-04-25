@@ -1,5 +1,5 @@
-import { Avatar, Icon } from '@lobehub/ui';
-import { SkillsIcon } from '@lobehub/ui/icons';
+import { Avatar, Icon } from '@/lib/ui';
+import { SkillsIcon } from '@/lib/ui';
 import { Bot, MessageSquareText, Users, Wrench } from 'lucide-react';
 import { createElement, useMemo } from 'react';
 

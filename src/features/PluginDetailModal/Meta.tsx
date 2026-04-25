@@ -1,4 +1,4 @@
-import { Block, Flexbox, Text } from '@lobehub/ui';
+import { Block, Flexbox, Text } from '@/lib/ui';
 import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 

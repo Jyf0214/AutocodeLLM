@@ -12,7 +12,7 @@ import {
   ThemeSwitch,
   Layout,
   LayoutMain,
-} from '@lobehub/ui';
+} from '@/lib/ui';
 import {
   HomeOutlined,
   FolderOutlined,

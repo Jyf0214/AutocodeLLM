@@ -1,4 +1,4 @@
-import type { ISlashMenuOption } from '@lobehub/editor';
+import type { ISlashMenuOption } from '@/editor';
 import { ArrowLeft } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import { memo } from 'react';

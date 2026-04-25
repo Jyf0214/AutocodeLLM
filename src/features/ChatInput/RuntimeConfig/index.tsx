@@ -1,6 +1,6 @@
 import { isDesktop } from '@lobechat/const';
 import { type RuntimeEnvMode } from '@lobechat/types';
-import { Flexbox, Icon, Popover, Skeleton, Tooltip } from '@lobehub/ui';
+import { Flexbox, Icon, Popover, Skeleton, Tooltip } from '@/lib/ui';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
 import {
   ChevronDownIcon,

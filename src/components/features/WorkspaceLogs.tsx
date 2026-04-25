@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, Table, Tag, Space, Select, Button } from 'antd';
 import { FunctionOutlined, MessageOutlined, ReloadOutlined } from '@ant-design/icons';
-import { Text } from '@lobehub/ui';
+import { Text } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
 import { message } from 'antd';
 import type { WorkspaceLog, WorkspaceLogListResponse } from '@/lib/api/workspace-log-types';

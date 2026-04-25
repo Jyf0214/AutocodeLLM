@@ -1,4 +1,4 @@
-import { Flexbox, Text } from '@lobehub/ui';
+import { Flexbox, Text } from '@/lib/ui';
 import { memo, Suspense } from 'react';
 
 import DebugNode from '@/components/DebugNode';

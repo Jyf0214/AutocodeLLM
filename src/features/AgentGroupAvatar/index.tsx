@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar } from '@lobehub/ui';
+import { Avatar } from '@/lib/ui';
 import { memo } from 'react';
 
 import GroupAvatar from '@/features/GroupAvatar';

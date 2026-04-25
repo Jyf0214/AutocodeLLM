@@ -1,5 +1,5 @@
-import type { ISlashMenuOption, ISlashOption } from '@lobehub/editor';
-import { LOBE_THEME_APP_ID } from '@lobehub/ui';
+import type { ISlashMenuOption, ISlashOption } from '@/editor';
+import { LOBE_THEME_APP_ID } from '@/lib/ui';
 import type { FC, RefObject } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';

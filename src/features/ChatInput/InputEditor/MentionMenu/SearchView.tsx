@@ -1,4 +1,4 @@
-import type { ISlashMenuOption } from '@lobehub/editor';
+import type { ISlashMenuOption } from '@/editor';
 import { memo } from 'react';
 
 import MenuItem from './MenuItem';

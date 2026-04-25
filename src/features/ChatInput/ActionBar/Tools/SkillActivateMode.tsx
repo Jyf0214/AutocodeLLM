@@ -1,4 +1,4 @@
-import { Icon, Segmented, Tooltip } from '@lobehub/ui';
+import { Icon, Segmented, Tooltip } from '@/lib/ui';
 import { SlidersHorizontal, Sparkles } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';

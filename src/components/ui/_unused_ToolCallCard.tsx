@@ -13,7 +13,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Text, Collapse } from '@lobehub/ui';
+import { Text, Collapse } from '@/lib/ui';
 import { CheckCircleOutlined, CloseCircleOutlined, ToolOutlined } from '@ant-design/icons';
 
 interface ToolCallCardProps {

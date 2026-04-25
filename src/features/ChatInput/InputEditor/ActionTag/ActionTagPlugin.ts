@@ -2,7 +2,7 @@ import {
   type getKernelFromEditor,
   ILitexmlService,
   IMarkdownShortCutService,
-} from '@lobehub/editor';
+} from '@/editor';
 import type { LexicalEditor, LexicalNode } from 'lexical';
 
 import { $isActionTagNode, ActionTagNode, type SerializedActionTagNode } from './ActionTagNode';

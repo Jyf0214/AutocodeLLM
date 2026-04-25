@@ -1,5 +1,5 @@
-import { type MenuProps } from '@lobehub/ui';
-import { Button, Center, DropdownMenu, Flexbox, Icon, Tooltip } from '@lobehub/ui';
+import { type MenuProps } from '@/lib/ui';
+import { Button, Center, DropdownMenu, Flexbox, Icon, Tooltip } from '@/lib/ui';
 import { createStaticStyles } from 'antd-style';
 import { Check, ChevronDown, Hand, ListChecks, Zap } from 'lucide-react';
 import { type LucideIcon } from 'lucide-react';

@@ -8,7 +8,7 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
-import { Flexbox, Text } from '@lobehub/ui';
+import { Flexbox, Text } from '@/lib/ui';
 
 interface SyncStatus {
   enabled: boolean;

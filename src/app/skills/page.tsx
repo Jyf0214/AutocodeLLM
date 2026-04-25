@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Table, Tag, Space, Button, message, Empty, Switch, Modal, Form, Input as AntdInput } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { Text, Input as LobeInput } from '@lobehub/ui';
+import { Text, Input as LobeInput } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
 
 interface Skill {

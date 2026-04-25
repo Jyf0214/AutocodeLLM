@@ -1,7 +1,7 @@
 'use client';
 
-import { ChatInput, ChatInputActionBar } from '@lobehub/editor/react';
-import { Flexbox } from '@lobehub/ui';
+import { ChatInput, ChatInputActionBar } from '@/editor/react';
+import { Flexbox } from '@/lib/ui';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
 import { memo } from 'react';
 

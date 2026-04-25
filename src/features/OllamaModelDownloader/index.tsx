@@ -1,5 +1,5 @@
-import { Ollama } from '@lobehub/icons';
-import { Alert, Button, Center, Flexbox, Input } from '@lobehub/ui';
+import { Ollama } from '@/lib/icons';
+import { Alert, Button, Center, Flexbox, Input } from '@/lib/ui';
 import { Progress } from 'antd';
 import { cssVar } from 'antd-style';
 import { type ReactNode } from 'react';

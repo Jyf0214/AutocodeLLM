@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, Table, Tag, Button, Spin, Space } from 'antd';
 import { useTranslations } from 'next-intl';
 import { ReloadOutlined, EyeOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { Flexbox, Text, Avatar } from '@lobehub/ui';
+import { Flexbox, Text, Avatar } from '@/lib/ui';
 import { useRouter } from 'next/navigation';
 
 interface WorkspaceBackup {

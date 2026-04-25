@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Button, Text, Flexbox } from '@lobehub/ui';
+import { Button, Text, Flexbox } from '@/lib/ui';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import ChannelConnect from '@/components/features/ChannelConnect';
 import ChannelList from '@/components/features/ChannelList';

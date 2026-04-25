@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { Text } from '@lobehub/ui';
+import { Text } from '@/lib/ui';
 import { Select, Spin, Empty } from 'antd';
 
 interface GuildInfo {

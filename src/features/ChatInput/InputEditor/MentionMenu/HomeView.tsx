@@ -1,4 +1,4 @@
-import type { ISlashMenuOption } from '@lobehub/editor';
+import type { ISlashMenuOption } from '@/editor';
 import { ChevronRight } from 'lucide-react';
 import { memo } from 'react';
 

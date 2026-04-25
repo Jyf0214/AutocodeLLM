@@ -1,4 +1,4 @@
-import { ActionIcon } from '@lobehub/ui';
+import { ActionIcon } from '@/lib/ui';
 import { Bot } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';

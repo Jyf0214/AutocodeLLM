@@ -1,4 +1,4 @@
-import { Flexbox } from '@lobehub/ui';
+import { Flexbox } from '@/lib/ui';
 import { Divider } from 'antd';
 import { cssVar } from 'antd-style';
 import numeral from 'numeral';

@@ -1,7 +1,7 @@
 'use client';
 
 import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Flexbox } from '@lobehub/ui';
+import { Button, Flexbox } from '@/lib/ui';
 import { Input, Modal, Spin } from 'antd';
 import { createStaticStyles, cx } from 'antd-style';
 import { ChevronLeft, ChevronRight, Expand, FileText } from 'lucide-react';

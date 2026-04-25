@@ -1,4 +1,4 @@
-import { SendButton as Send } from '@lobehub/editor/react';
+import { SendButton as Send } from '@/editor/react';
 import isEqual from 'fast-deep-equal';
 import { memo } from 'react';
 

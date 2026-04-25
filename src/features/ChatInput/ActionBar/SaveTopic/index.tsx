@@ -1,4 +1,4 @@
-import { ActionIcon, Flexbox, Hotkey } from '@lobehub/ui';
+import { ActionIcon, Flexbox, Hotkey } from '@/lib/ui';
 import { Popconfirm } from 'antd';
 import { LucideGalleryVerticalEnd, LucideMessageSquarePlus } from 'lucide-react';
 import { memo, useState } from 'react';

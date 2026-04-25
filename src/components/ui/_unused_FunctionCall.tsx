@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Tag, Icon, Collapse, Text, CodeEditor } from '@lobehub/ui';
+import { Tag, Icon, Collapse, Text, CodeEditor } from '@/lib/ui';
 import { RightOutlined } from '@ant-design/icons';
 
 interface FunctionCallProps {

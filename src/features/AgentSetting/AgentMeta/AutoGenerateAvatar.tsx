@@ -1,4 +1,4 @@
-import { ActionIcon, Flexbox } from '@lobehub/ui';
+import { ActionIcon, Flexbox } from '@/lib/ui';
 import { cssVar } from 'antd-style';
 import { Wand2 } from 'lucide-react';
 import { memo } from 'react';

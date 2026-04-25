@@ -1,4 +1,4 @@
-import { Tag } from '@lobehub/ui';
+import { Tag } from '@/lib/ui';
 import { MessageSquarePlusIcon } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';

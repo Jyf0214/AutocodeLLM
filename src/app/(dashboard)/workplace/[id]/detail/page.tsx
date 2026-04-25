@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, Descriptions, Tag, Button, Spin, Space } from 'antd';
 import { useTranslations } from 'next-intl';
 import { ReloadOutlined, CopyOutlined } from '@ant-design/icons';
-import { Flexbox, Text } from '@lobehub/ui';
+import { Flexbox, Text } from '@/lib/ui';
 import { useParams } from 'next/navigation';
 import { message } from 'antd';
 

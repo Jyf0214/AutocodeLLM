@@ -1,4 +1,4 @@
-import { Tag } from '@lobehub/ui';
+import { Tag } from '@/lib/ui';
 import React, { memo } from 'react';
 
 import { useTokenCount } from '@/hooks/useTokenCount';

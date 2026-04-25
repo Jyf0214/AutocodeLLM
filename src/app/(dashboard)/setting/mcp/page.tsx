@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-import { Text } from '@lobehub/ui';
+import { Text } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
 import {
   Table,

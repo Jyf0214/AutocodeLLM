@@ -1,4 +1,4 @@
-import { BrainOffIcon } from '@lobehub/ui/icons';
+import { BrainOffIcon } from '@/lib/ui';
 import { cssVar } from 'antd-style';
 import { Brain } from 'lucide-react';
 import { memo } from 'react';

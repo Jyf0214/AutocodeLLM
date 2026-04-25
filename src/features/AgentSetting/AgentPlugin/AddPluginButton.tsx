@@ -1,5 +1,5 @@
-import { type ButtonProps } from '@lobehub/ui';
-import { Button } from '@lobehub/ui';
+import { type ButtonProps } from '@/lib/ui';
+import { Button } from '@/lib/ui';
 import { Grid2x2Plus } from 'lucide-react';
 import { type Ref } from 'react';
 import { useState } from 'react';

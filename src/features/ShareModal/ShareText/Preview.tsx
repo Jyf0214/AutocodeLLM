@@ -1,4 +1,4 @@
-import { Markdown } from '@lobehub/ui';
+import { Markdown } from '@/lib/ui';
 import { cx } from 'antd-style';
 import { memo } from 'react';
 

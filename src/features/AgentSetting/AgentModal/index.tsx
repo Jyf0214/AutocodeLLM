@@ -1,7 +1,7 @@
 'use client';
 
-import { type FormGroupItemType, type FormItemProps } from '@lobehub/ui';
-import { Flexbox, Form, Select, SliderWithInput } from '@lobehub/ui';
+import { type FormGroupItemType, type FormItemProps } from '@/lib/ui';
+import { Flexbox, Form, Select, SliderWithInput } from '@/lib/ui';
 import { Form as AntdForm, Switch } from 'antd';
 import { createStaticStyles } from 'antd-style';
 import isEqual from 'fast-deep-equal';

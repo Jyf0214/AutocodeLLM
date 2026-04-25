@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Modal, Form, Input, Button, Space } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
-import { Text } from '@lobehub/ui';
+import { Text } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
 import { message } from 'antd';
 import type { VerifyPasswordResponse } from '@/lib/api/workspace-log-types';

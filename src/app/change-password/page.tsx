@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button, Form, InputPassword, Text, Alert } from '@lobehub/ui';
+import { Button, Form, InputPassword, Text, Alert } from '@/lib/ui';
 import { LockOutlined, SafetyOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import type { ChangePasswordResponse } from '@/lib/api/types';

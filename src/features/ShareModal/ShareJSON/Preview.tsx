@@ -1,4 +1,4 @@
-import { Highlighter } from '@lobehub/ui';
+import { Highlighter } from '@/lib/ui';
 import { cx } from 'antd-style';
 import { memo } from 'react';
 

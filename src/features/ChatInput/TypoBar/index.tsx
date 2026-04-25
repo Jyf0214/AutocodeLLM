@@ -1,6 +1,6 @@
-import { getHotkeyById, HotkeyEnum } from '@lobehub/editor';
-import { type ChatInputActionsProps } from '@lobehub/editor/react';
-import { ChatInputActionBar, ChatInputActions, useEditorState } from '@lobehub/editor/react';
+import { getHotkeyById, HotkeyEnum } from '@/editor';
+import { type ChatInputActionsProps } from '@/editor/react';
+import { ChatInputActionBar, ChatInputActions, useEditorState } from '@/editor/react';
 import { cssVar } from 'antd-style';
 import {
   BoldIcon,

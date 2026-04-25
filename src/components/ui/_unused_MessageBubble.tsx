@@ -12,8 +12,8 @@
 
 'use client';
 
-import { ChatItem, type MetaData } from '@lobehub/ui/chat';
-import { Markdown, Collapse } from '@lobehub/ui';
+import { ChatItem, type MetaData } from '@/ui/chat';
+import { Markdown, Collapse } from '@/lib/ui';
 import ToolCallCard from './ToolCallCard';
 
 interface ToolCall {

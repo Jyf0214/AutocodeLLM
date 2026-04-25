@@ -1,4 +1,4 @@
-import { createRawModal, Flexbox, Tag, Tooltip } from '@lobehub/ui';
+import { createRawModal, Flexbox, Tag, Tooltip } from '@/lib/ui';
 import { Progress } from 'antd';
 import { createStaticStyles, cssVar } from 'antd-style';
 import { memo } from 'react';

@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { message } from 'antd';
-import { Button, Text, Flexbox, Icon, Avatar } from '@lobehub/ui';
+import { Button, Text, Flexbox, Icon, Avatar } from '@/lib/ui';
 import { Card, Skeleton } from 'antd';
 import {
   FolderOutlined,

@@ -1,7 +1,7 @@
 'use client';
 
-import { type FormGroupItemType } from '@lobehub/ui';
-import { Form, SliderWithInput } from '@lobehub/ui';
+import { type FormGroupItemType } from '@/lib/ui';
+import { Form, SliderWithInput } from '@/lib/ui';
 import { Switch } from 'antd';
 import isEqual from 'fast-deep-equal';
 import { memo } from 'react';

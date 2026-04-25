@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button, Text, Empty, Modal, Form, Input as LobeInput } from '@lobehub/ui';
+import { Button, Text, Empty, Modal, Form, Input as LobeInput } from '@/lib/ui';
 import {
   PlusOutlined,
   EditOutlined,
