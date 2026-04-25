@@ -1,46 +1,15 @@
-{ pkgs, ... }: {
-  channel = "stable-24.05";
-
+# To learn more about how to use Nix to configure your environment
+# see: https://developers.google.com/idx/guides/customize-idx-env
+{pkgs}: {
+  # Which nixpkgs channel to use.
+  channel = "stable-24.05"; # or "unstable"
+  # Use https://search.nixos.org/packages to find packages
   packages = [
-    pkgs.git
-    pkgs.openssl
-    pkgs.curl
-    pkgs.gh
-    pkgs.wget
     pkgs.nodejs_22
-    pkgs.python313
-    pkgs.docker
-    pkgs.rclone
-    pkgs.sudo
+    pkgs.yarn
+    pkgs.nodePackages.pnpm
+    pkgs.bun
+    pkgs.gh
+    pkgs.openssl
     pkgs.openssh
-    pkgs.cloudflared
-    # node-pty 编译依赖
-    pkgs.gcc
-    pkgs.gnumake
-    pkgs.pkg-config
-  ];
-
-  env = {
-    # node-pty 编译时需要 python（node-gyp 依赖）
-    npm_config_python = "${pkgs.python313}/bin/python3";
-  };
-
-  idx.extensions = [
-    "qwenlm.qwen-code-vscode-ide-companion"
-  ];
-
-  idx.previews = {
-    enable = true;
-  };
-
-  idx.workspace.onCreate = {
-    install-gemini-cli = ''
-      npm uninstall -g @google/gemini-cli 2>/dev/null || true
-      npm install -g @google/gemini-cli
-    '';
-    install-qwen-code = ''
-      npm uninstall -g @qwen-code/qwen-code 2>/dev/null || true
-      npm install -g @qwen-code/qwen-code@latest
-    '';
-  };
-}
+  ]
