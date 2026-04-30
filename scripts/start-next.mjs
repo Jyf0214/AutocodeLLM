@@ -1,6 +1,5 @@
 /**
- * 启动 Next.js 服务器
- * 使用自定义 server.ts 以支持终端 WebSocket 连接
+ * 启动 Next.js 服务器（使用构建产物）
  */
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -10,10 +9,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, '..');
 
 export function startNextServer() {
-  const env = { ...process.env };
+  const env = { ...process.env, NODE_ENV: 'production' };
 
-  // 使用自定义 server.ts 启动，集成终端 WebSocket 服务
-  console.log(' 🚀 启动 Next.js 服务器（含终端 WebSocket 支持）...');
+  console.log(' 🚀 使用构建产物启动 Next.js 服务器...');
 
   const child = spawn('bun', ['run', 'server.ts'], {
     cwd: rootDir,
