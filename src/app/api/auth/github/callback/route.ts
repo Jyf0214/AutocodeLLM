@@ -1,0 +1,47 @@
+import { NextResponse } from 'next/server';
+import { getGitHubAccessToken, getGitHubUser, loginWithGitHub } from '@/lib/auth/github';
+
+/**
+ * GET /api/auth/github/callback
+ * GitHub OAuth 回调处理
+ */
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const code = searchParams.get('code');
+  const error = searchParams.get('error');
+
+  if (error) {
+    return NextResponse.redirect(
+      new URL(`/login?error=${encodeURIComponent(error)}`, request.url),
+    );
+  }
+
+  if (!code) {
+    return NextResponse.redirect(
+      new URL('/login?error=missing_code', request.url),
+    );
+  }
+
+  try {
+    const token = await getGitHubAccessToken(code);
+    const githubUser = await getGitHubUser(token);
+    const result = await loginWithGitHub(githubUser);
+
+    const response = NextResponse.redirect(new URL('/workplace', request.url));
+
+    response.cookies.set('userId', result.userId, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
+
+    return response;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'GitHub 登录失败';
+    return NextResponse.redirect(
+      new URL(`/login?error=${encodeURIComponent(message)}`, request.url),
+    );
+  }
+}

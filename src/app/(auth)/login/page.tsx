@@ -8,6 +8,7 @@ import {
   SafetyOutlined,
   MobileOutlined,
   ArrowRightOutlined,
+  GithubOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { message, Card, Radio, type RadioChangeEvent } from 'antd';
@@ -301,6 +302,35 @@ export default function LoginPage() {
               {loginMode === 'password' ? '登录' : '验证码登录'}
             </Button>
           </Form.Item>
+
+          {/* GitHub OAuth 登录 */}
+          <div style={{ marginTop: 12 }}>
+            <Button
+              block
+              size="large"
+              icon={<GithubOutlined />}
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/auth/github');
+                  const data = await res.json();
+                  if (data.success && data.data.url) {
+                    window.location.href = data.data.url;
+                  }
+                } catch {
+                  message.error('获取 GitHub 授权链接失败');
+                }
+              }}
+              style={{
+                borderRadius: 10,
+                height: 44,
+                background: '#24292e',
+                color: '#fff',
+                border: 'none',
+              }}
+            >
+              使用 GitHub 登录
+            </Button>
+          </div>
         </Form>
 
         {loginMode === 'verificationCode' && (
