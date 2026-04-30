@@ -1,8 +1,8 @@
 // AutocodeLLM 数据库 Schema
 
 generator client {
-  provider      = "prisma-client-js"
-  engineType    = "library"
+  provider    = "prisma-client-js"
+  engineType  = "library"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
@@ -11,129 +11,165 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 用户认证
+// ============================================================
+// 用户与权限
+// ============================================================
+
 model User {
   id                  String   @id @default(uuid())
   username            String   @unique @default("admin")
   passwordHash        String
+  role                String   @default("admin") // admin, user, viewer
   forceChangePassword Boolean  @default(true)
   isInitialPassword   Boolean  @default(true)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  passwordAudits    PasswordAudit[]
+  passwordAudits PasswordAudit[]
+  apiKeys        ApiKey[]
 
   @@map("users")
 }
 
-// 密码审计日志
 model PasswordAudit {
-  id              String   @id @default(uuid())
-  userId          String
-  action          String   // PASSWORD_CHANGED, LOGIN_ATTEMPT, LOGIN_SUCCESS, LOGIN_FAILED
-  submittedHash   String?  // 用户提交的密码哈希（用于登录尝试）
-  storedHash      String?  // 当时系统存储的哈希值
-  ipAddress       String?
-  userAgent       String?
-  success         Boolean  @default(true)
-  message         String?
-  createdAt       DateTime @default(now())
+  id           String    @id @default(uuid())
+  userId       String
+  action       String    // PASSWORD_CHANGED, LOGIN_SUCCESS, LOGIN_FAILED
+  submittedHash String?
+  storedHash   String?
+  ipAddress    String?
+  userAgent    String?
+  success      Boolean   @default(true)
+  message      String?
+  createdAt    DateTime  @default(now())
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
   @@map("password_audits")
 }
 
-// API 提供商配置
+// API Key（用于系统调用 API）
+model ApiKey {
+  id          String    @id @default(uuid())
+  userId      String
+  name        String    // 密钥名称
+  keyHash     String    @unique // SHA-256 哈希
+  prefix      String    // 前 8 位，用于识别
+  permissions String    @default("[]") // JSON 数组：["read", "write", "admin"]
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  enabled     Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([keyHash])
+  @@index([userId])
+  @@map("api_keys")
+}
+
+// ============================================================
+// AI 提供商
+// ============================================================
+
 model Provider {
-  id                String   @id @default(uuid())
-  name              String   @unique
-  baseUrl           String
-  apiKey            String   // 加密存储的 API 密钥
-  databaseUrl       String?
-  enabled           Boolean  @default(true)
-  providerType      String   @default("custom")  // preset（预置）或 custom（自定义）
-  sdkType           String   @default("openai")  // openai, anthropic, google, ollama, azure 等
-  authType          String   @default("apiKey")  // apiKey, oauth
-  oauthAccessToken  String?  @db.Text  // OAuth access token（加密存储）
-  oauthRefreshToken String?  @db.Text  // OAuth refresh token（加密存储）
-  oauthExpiresAt    DateTime? // OAuth token 过期时间
-  oauthClientId     String?  // OAuth client ID
-  oauthDeviceCode   String?  @db.Text  // OAuth device code（用于轮询）
-  metadata          String?  @default("{}")  // 额外配置信息（JSON 字符串）
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String    @id @default(uuid())
+  name             String    @unique
+  baseUrl          String
+  apiKey           String    // 加密存储
+  databaseUrl      String?
+  enabled          Boolean   @default(true)
+  providerType     String    @default("custom") // preset, custom
+  sdkType          String    @default("openai") // openai, anthropic, google, ollama, azure
+  authType         String    @default("apiKey") // apiKey, oauth
+  oauthAccessToken String?   @db.Text
+  oauthRefreshToken String?  @db.Text
+  oauthExpiresAt   DateTime?
+  oauthClientId    String?
+  oauthDeviceCode  String?   @db.Text
+  metadata         String?   @default("{}") // JSON
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@map("providers")
 }
 
-// MCP 服务器配置
+// ============================================================
+// MCP 服务器
+// ============================================================
+
 model McpServer {
   id        String   @id @default(uuid())
   name      String   @unique
   url       String
   enabled   Boolean  @default(true)
   status    String   @default("disconnected")
-  tools     String   @default("[]")  // JSON 字符串
+  tools     String   @default("[]") // JSON
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("mcp_servers")
 }
 
-// 聊天全局配置
+// ============================================================
+// 聊天配置
+// ============================================================
+
 model ChatConfig {
-  id                     String   @id @default(uuid())
-  temperature            Float    @default(0.7)
-  maxTokens              Int      @default(4096)
-  topP                   Float    @default(1.0)
-  frequencyPenalty       Float    @default(0.0)
-  presencePenalty        Float    @default(0.0)
-  maxToolCallsPerMessage Int      @default(10)
-  enableStreaming        Boolean  @default(true)
-  enableFunctionCall     Boolean  @default(true)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                      String   @id @default(uuid())
+  temperature             Float    @default(0.7)
+  maxTokens               Int      @default(4096)
+  topP                    Float    @default(1.0)
+  frequencyPenalty        Float    @default(0.0)
+  presencePenalty         Float    @default(0.0)
+  maxToolCallsPerMessage  Int      @default(10)
+  enableStreaming          Boolean  @default(true)
+  enableFunctionCall      Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   @@map("chat_configs")
 }
 
+// ============================================================
 // 工作区
+// ============================================================
+
 model Workspace {
-  id             String   @id @default(uuid())
-  name           String
-  description    String   @default("")
-  accessPassword String?  // 工作区进入密码（可选）
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String    @id @default(uuid())
+  name            String
+  description     String    @default("")
+  accessPassword  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  messages ChatMessage[]
-  logs     WorkspaceLog[]
-  backups  Backup[]
-  channels  Channel[]
-  discordBindings  DiscordBinding[]
+  messages        ChatMessage[]
+  logs            WorkspaceLog[]
+  backups         Backup[]
+  channels        Channel[]
+  discordBindings DiscordBinding[]
 
+  @@index([name])
   @@map("workspaces")
 }
 
-// 聊天对话记录
 model ChatMessage {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   workspaceId String
-  role        String   // user | assistant | system | tool
-  content     String   // 内容
-  toolCalls   String?  // 工具调用记录 (JSON 字符串)
+  role        String    // user, assistant, system, tool
+  content     String
+  toolCalls   String?   // JSON
   toolCallId  String?
-  tokensUsed  Int      @default(0)
-  inputTokens Int      @default(0)
-  outputTokens Int     @default(0)
-  totalTokens Int      @default(0)
-  model       String?  // 使用的模型
-  providerId  String?  // 使用的提供商 ID
-  parentId    String?  // 关联的父消息 ID（用于对话对）
-  createdAt   DateTime @default(now())
+  tokensUsed  Int       @default(0)
+  inputTokens Int       @default(0)
+  outputTokens Int      @default(0)
+  totalTokens Int       @default(0)
+  model       String?
+  providerId  String?
+  parentId    String?
+  createdAt   DateTime  @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
@@ -143,21 +179,10 @@ model ChatMessage {
   @@map("chat_messages")
 }
 
-// WebDAV 备份配置
-model WebdavConfig {
-  id         String   @id @default(uuid())
-  url        String   // WebDAV 服务器地址
-  username   String
-  password   String   // 加密存储
-  remotePath String   @default("/autocodellm") // 远程路径
-  enabled    Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@map("webdav_configs")
-}
-
+// ============================================================
 // 环境变量
+// ============================================================
+
 model EnvironmentVariable {
   id          String   @id @default(uuid())
   key         String   @unique
@@ -170,40 +195,23 @@ model EnvironmentVariable {
   @@map("environment_variables")
 }
 
-// 工作节点
-model Worker {
-  id           String    @id @default(uuid())
-  name         String    @unique
-  type         String    // compute, storage, inference
-  status       String    @default("offline") // online, offline, busy, error
-  url          String
-  lastHeartbeat DateTime?
-  metadata     String?  // 额外配置信息 (JSON 字符串)
-  enabled      Boolean  @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+// ============================================================
+// WebDAV 备份
+// ============================================================
 
-  @@map("workers")
+model WebdavConfig {
+  id         String   @id @default(uuid())
+  url        String
+  username   String
+  password   String   // 加密存储
+  remotePath String   @default("/autocodellm")
+  enabled    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("webdav_configs")
 }
 
-// 任务代理
-model AgentTask {
-  id          String   @id @default(uuid())
-  name        String
-  description String   @default("")
-  mode        String   // read_only, yolo
-  status      String   @default("ready") // ready, running, completed, failed
-  maxAgents   Int      @default(5)
-  progress    Int      @default(0)
-  logs        String?  // 执行日志 (JSON 字符串)
-  result      String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("agent_tasks")
-}
-
-// 备份记录
 model Backup {
   id          String   @id @default(uuid())
   workspaceId String
@@ -219,24 +227,69 @@ model Backup {
   @@map("backups")
 }
 
+// ============================================================
 // 工作区日志
-model WorkspaceLog {
-  id           String   @id @default(uuid())
-  workspaceId  String
-  type         String   // "function_call" | "chat_message"
-  functionName String?  // 函数名（仅 function_call 类型）
-  summary      String?  // 参数摘要/消息摘要
-  status       String?  // "success" | "error" | "pending"
-  createdAt    DateTime @default(now())
+// ============================================================
 
-  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+model WorkspaceLog {
+  id          String   @id @default(uuid())
+  workspaceId String
+  type        String   // function_call, chat_message
+  functionName String?
+  summary     String?
+  status      String?  // success, error, pending
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
   @@index([createdAt])
   @@map("workspace_logs")
 }
 
-// Discord 频道
+// ============================================================
+// 工作节点
+// ============================================================
+
+model Worker {
+  id            String    @id @default(uuid())
+  name          String    @unique
+  type          String    // compute, storage, inference
+  status        String    @default("offline") // online, offline, busy, error
+  url           String
+  lastHeartbeat DateTime?
+  metadata      String?   // JSON
+  enabled       Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("workers")
+}
+
+// ============================================================
+// 任务代理
+// ============================================================
+
+model AgentTask {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @default("")
+  mode        String   // read_only, yolo
+  status      String   @default("ready") // ready, running, completed, failed
+  maxAgents   Int      @default(5)
+  progress    Int      @default(0)
+  logs        String?  // JSON
+  result      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("agent_tasks")
+}
+
+// ============================================================
+// Discord 集成
+// ============================================================
+
 model Channel {
   id               String      @id @default(uuid())
   workspaceId      String
@@ -248,49 +301,49 @@ model Channel {
   lastSyncedAt     DateTime?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
-  workspace        Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  messages         ChannelMessage[]
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  messages  ChannelMessage[]
 
   @@index([workspaceId])
   @@map("channels")
 }
 
-// Discord 频道消息
 model ChannelMessage {
-  id            String   @id @default(uuid())
-  channelId     String
-  discordMsgId  String   @unique
-  authorId      String
-  authorName    String
-  authorAvatar  String?
-  content       String   @db.LongText
-  attachments   String?  @db.Text
-  sentFromApp   Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  channel       Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  id           String   @id @default(uuid())
+  channelId    String
+  discordMsgId String   @unique
+  authorId     String
+  authorName   String
+  authorAvatar String?
+  content      String   @db.LongText
+  attachments  String?  @db.Text
+  sentFromApp  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
   @@index([channelId, createdAt])
   @@map("channel_messages")
 }
 
-// Discord 用户绑定
 model DiscordBinding {
-  id              String   @id @default(uuid())
-  discordUserId   String   @unique
+  id             String    @id @default(uuid())
+  discordUserId  String    @unique
   discordUserName String
-  workspaceId     String
-  code            String?  @unique // 待确认的绑定码
-  codeExpiresAt   DateTime? // 绑定码过期时间
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  workspace       Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId    String
+  code           String?   @unique
+  codeExpiresAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
   @@index([code])
   @@map("discord_bindings")
 }
 
-// 频道类型
 enum ChannelType {
   TEXT
   VOICE
