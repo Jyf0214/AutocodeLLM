@@ -23,6 +23,7 @@ export async function initAdminAccount() {
         data: {
           username: 'admin',
           passwordHash,
+          role: 'admin',
           forceChangePassword: true,
           isInitialPassword: true,
         },

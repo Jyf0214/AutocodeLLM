@@ -128,6 +128,7 @@ export async function POST(request: Request) {
       data: {
         userId: user.id,
         username: user.username,
+        role: user.role || 'admin',
         forceChangePassword: user.forceChangePassword,
       },
     });
