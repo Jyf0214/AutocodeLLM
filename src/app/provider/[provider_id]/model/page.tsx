@@ -566,7 +566,7 @@ export default function ProviderModelPage() {
                   width: 40,
                   height: 40,
                   borderRadius: 10,
-                  background: 'var(--lobe-color-primary)',
+                  background: 'var(--text-primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -609,7 +609,7 @@ export default function ProviderModelPage() {
           }}
         >
           <Flexbox gap={16} horizontal align="center">
-            <Icon icon={LockOutlined} size={20} color="var(--lobe-color-primary)" />
+            <Icon icon={LockOutlined} size={20} color="var(--text-primary)" />
             <div style={{ flex: 1 }}>
               <Text strong>{t('qwenOAuth')}</Text>
               <Text type="secondary" style={{ display: 'block', fontSize: 12, marginTop: 4 }}>
@@ -647,7 +647,7 @@ export default function ProviderModelPage() {
               }}
             >
               <Flexbox gap={8} horizontal align="center" style={{ marginBottom: 8 }}>
-                <Icon icon={LinkOutlined} size={14} color="var(--lobe-color-primary)" />
+                <Icon icon={LinkOutlined} size={14} color="var(--text-primary)" />
                 <Text strong style={{ fontSize: 13 }}>
                   {t('authLinkTip')}
                 </Text>
@@ -663,7 +663,7 @@ export default function ProviderModelPage() {
                     fontSize: 12,
                     fontFamily: 'monospace',
                     wordBreak: 'break-all',
-                    color: 'var(--lobe-color-primary)',
+                    color: 'var(--text-primary)',
                     maxHeight: 48,
                     overflow: 'hidden',
                     lineHeight: 1.4,

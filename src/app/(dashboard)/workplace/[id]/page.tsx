@@ -70,49 +70,49 @@ export default function WorkspaceDetailPage() {
       title: t('aiChat'),
       description: t('aiChatDesc'),
       path: `/chat/${workspaceId}`,
-      color: 'var(--lobe-color-primary)',
+      color: 'var(--text-primary)',
     },
     {
       icon: <HomeOutlined />,
       title: t('dashboard'),
       description: t('dashboardDesc'),
       path: `/workplace/${workspaceId}/dashboard`,
-      color: 'var(--lobe-color-violet)',
+      color: 'var(--text-primary)',
     },
     {
       icon: <FileTextOutlined />,
       title: t('logs'),
       description: t('logsDesc'),
       path: `/workplace/${workspaceId}/logs`,
-      color: 'var(--lobe-color-cyan)',
+      color: 'var(--text-primary)',
     },
     {
       icon: <TagOutlined />,
       title: t('tags'),
       description: t('tagsDesc'),
       path: `/workplace/${workspaceId}/tags`,
-      color: 'var(--lobe-color-orange)',
+      color: 'var(--text-primary)',
     },
     {
       icon: <TeamOutlined />,
       title: t('members'),
       description: t('membersDesc'),
       path: `/workplace/${workspaceId}/members`,
-      color: 'var(--lobe-color-pink)',
+      color: 'var(--text-primary)',
     },
     {
       icon: <SettingOutlined />,
       title: t('settings'),
       description: t('settingsDesc'),
       path: `/workplace/${workspaceId}/settings`,
-      color: 'var(--lobe-color-gray)',
+      color: 'var(--text-primary)',
   },
     {
       icon: <ApiOutlined />,
       title: t('channel'),
       description: t('channelDesc'),
       path: `/workplace/${workspaceId}/channel`,
-      color: 'var(--lobe-color-purple)',
+      color: 'var(--text-primary)',
     },
   ];
   if (fetching) {
@@ -160,7 +160,7 @@ export default function WorkspaceDetailPage() {
           <Flexbox gap={16} direction="vertical">
             <Icon
               icon={FolderOutlined}
-              style={{ fontSize: 48, color: 'var(--lobe-color-error)' }}
+              style={{ fontSize: 48, color: 'var(--text-primary)' }}
             />
             <Text strong style={{ fontSize: 18 }}>
               {t('loadFailed')}
@@ -223,7 +223,7 @@ export default function WorkspaceDetailPage() {
           <Avatar
             avatar={<FolderOutlined style={{ fontSize: 28 }} />}
             size={64}
-            background="var(--lobe-color-primary)"
+            background="var(--text-primary)"
             shape="square"
             style={{ borderRadius: 16 }}
           />

@@ -59,7 +59,7 @@ function WorkspaceCard({
         background: 'var(--color-bg)',
         borderRadius: 16,
         border: `1px solid ${
-          hovered ? 'var(--lobe-color-primary)' : 'var(--color-border)'
+          hovered ? 'var(--text-primary)' : 'var(--color-border)'
         }`,
         padding: 20,
         cursor: 'pointer',
@@ -92,7 +92,7 @@ function WorkspaceCard({
               borderRadius: 6,
               background: 'var(--color-fill-quaternary)',
               cursor: 'pointer',
-              color: 'var(--lobe-color-primary)',
+              color: 'var(--text-primary)',
             }}
           />
           <Icon
@@ -104,7 +104,7 @@ function WorkspaceCard({
               borderRadius: 6,
               background: 'var(--color-fill-quaternary)',
               cursor: 'pointer',
-              color: 'var(--lobe-color-error)',
+              color: 'var(--text-primary)',
             }}
           />
         </div>
@@ -116,7 +116,7 @@ function WorkspaceCard({
           avatar={<FolderOutlined style={{ fontSize: 22 }} />}
           size={48}
           background={
-            hovered ? 'var(--lobe-color-primary)' : 'var(--color-fill-quaternary)'
+            hovered ? 'var(--text-primary)' : 'var(--color-fill-quaternary)'
           }
           shape="square"
           style={{
@@ -190,7 +190,7 @@ function WorkspaceCard({
           <Icon
             icon={ArrowRightOutlined}
             size={12}
-            color="var(--lobe-color-primary)"
+            color="var(--text-primary)"
           />
         </Flexbox>
       </Flexbox>
@@ -330,7 +330,7 @@ function EmptyState({ onCreate }: EmptyStateProps) {
           height: 80,
           borderRadius: 20,
           background:
-            'linear-gradient(135deg, var(--lobe-color-primary), var(--lobe-color-violet))',
+            'linear-gradient(135deg, var(--text-primary), var(--text-primary))',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -344,7 +344,7 @@ function EmptyState({ onCreate }: EmptyStateProps) {
           style={{
             fontSize: 20,
             background:
-              'linear-gradient(135deg, var(--lobe-color-primary), var(--lobe-color-violet))',
+              'linear-gradient(135deg, var(--text-primary), var(--text-primary))',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
@@ -578,7 +578,7 @@ export default function WorkplacePage() {
                   width: 40,
                   height: 40,
                   borderRadius: 10,
-                  background: 'var(--lobe-color-primary)',
+                  background: 'var(--text-primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

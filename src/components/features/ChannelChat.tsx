@@ -217,7 +217,7 @@ export default function ChannelChat({ channelId, channelName }: ChannelChatProps
                       <Text
                         style={{
                           fontSize: 10,
-                          color: 'var(--lobe-color-primary)',
+                          color: 'var(--text-primary)',
                         }}
                       >
                         {t('channel.sentFromApp')}

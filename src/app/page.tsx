@@ -65,35 +65,35 @@ export default function HomePage() {
       title: t('workspaceManagement'),
       description: t('workspaceManagementDesc'),
       link: '/workplace',
-      color: 'var(--lobe-color-success)',
+      color: 'var(--text-primary)',
     },
     {
       icon: <ApiOutlined style={{ fontSize: 28 }} />,
       title: t('multiModelSupport'),
       description: t('multiModelSupportDesc'),
       link: '/provider',
-      color: 'var(--lobe-color-warning)',
+      color: 'var(--text-primary)',
     },
     {
       icon: <TeamOutlined style={{ fontSize: 28 }} />,
       title: t('taskAgent'),
       description: t('taskAgentDesc'),
       link: '/agents',
-      color: 'var(--lobe-color-purple)',
+      color: 'var(--text-primary)',
     },
     {
       icon: <SettingOutlined style={{ fontSize: 28 }} />,
       title: t('mcpConfig'),
       description: t('mcpConfigDesc'),
       link: '/setting/mcp',
-      color: 'var(--lobe-color-cyan)',
+      color: 'var(--text-primary)',
     },
     {
       icon: <CloudServerOutlined style={{ fontSize: 28 }} />,
       title: t('cloudService'),
       description: t('cloudServiceDesc'),
       link: '/cloud',
-      color: 'var(--lobe-color-violet)',
+      color: 'var(--text-primary)',
     },
   ];
 
@@ -103,7 +103,7 @@ export default function HomePage() {
         minHeight: '100dvh',
         position: 'relative',
         overflow: 'hidden',
-        background: '#ffffff',
+        background: 'var(--bg-primary)',
       }}
     >
       {/* 主内容区 */}
@@ -132,7 +132,7 @@ export default function HomePage() {
               fontSize: 'clamp(32px, 5vw, 56px)',
               fontWeight: 700,
               marginBottom: 16,
-              color: '#333333',
+              color: 'var(--text-primary)',
             }}
           >
             AutocodeLLM
@@ -145,7 +145,7 @@ export default function HomePage() {
               maxWidth: 600,
               marginBottom: 32,
               lineHeight: 1.6,
-              color: '#666666',
+              color: 'var(--text-secondary)',
             }}
           >
             {t('subtitle')}
@@ -206,7 +206,7 @@ export default function HomePage() {
               textAlign: 'center',
               marginBottom: 40,
               display: 'block',
-              color: '#333333',
+              color: 'var(--text-primary)',
             }}
           >
             {t('coreFeatures')}
@@ -263,7 +263,7 @@ export default function HomePage() {
                       fontSize: 18,
                       display: 'block',
                       marginBottom: 12,
-                      color: '#333333',
+                      color: 'var(--text-primary)',
                     }}
                   >
                     {feature.title}
@@ -274,7 +274,7 @@ export default function HomePage() {
                       fontSize: 14,
                       lineHeight: 1.6,
                       display: 'block',
-                      color: '#666666',
+                      color: 'var(--text-secondary)',
                     }}
                   >
                     {feature.description}
@@ -300,7 +300,7 @@ export default function HomePage() {
               fontSize: 'clamp(20px, 3vw, 28px)',
               marginBottom: 16,
               display: 'block',
-              color: '#333333',
+              color: 'var(--text-primary)',
             }}
           >
             {t('cta.title')}
@@ -312,7 +312,7 @@ export default function HomePage() {
               display: 'block',
               marginBottom: 32,
               lineHeight: 1.6,
-              color: '#666666',
+              color: 'var(--text-secondary)',
             }}
           >
             {t('cta.desc')}

@@ -25,7 +25,7 @@ export default function GlobalError({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#ffffff',
+            background: 'var(--bg-primary)',
             padding: 24,
           }}
         >
@@ -45,7 +45,7 @@ export default function GlobalError({
                 {showDetail && error.stack && (
                   <pre
                     style={{
-                      background: '#f5f5f5',
+                      background: 'var(--bg-secondary)',
                       padding: 12,
                       borderRadius: 8,
                       fontSize: 12,

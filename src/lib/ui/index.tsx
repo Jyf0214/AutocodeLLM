@@ -895,3 +895,112 @@ export interface LayoutMainProps {
 export const LayoutMain: React.FC<LayoutMainProps> = ({ children, style }) => (
   <div style={{ height: '100%', ...style }}>{children}</div>
 );
+
+// ============================================================
+// 统一页面容器（黑白极简风）
+// ============================================================
+
+export interface PageContainerProps {
+  children?: React.ReactNode;
+  title?: string;
+  subtitle?: string;
+  extra?: React.ReactNode;
+  maxWidth?: number;
+}
+
+export const PageContainer: React.FC<PageContainerProps> = ({
+  children,
+  title,
+  subtitle,
+  extra,
+  maxWidth = 1200,
+}) => (
+  <div style={{ maxWidth, margin: '0 auto', padding: '32px 16px' }}>
+    {(title || extra) && (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          marginBottom: 24,
+          flexWrap: 'wrap',
+          gap: 12,
+        }}
+      >
+        <div>
+          {title && (
+            <h1
+              style={{
+                fontSize: 24,
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                margin: 0,
+                lineHeight: 1.3,
+              }}
+            >
+              {title}
+            </h1>
+          )}
+          {subtitle && (
+            <p
+              style={{
+                fontSize: 14,
+                color: 'var(--text-tertiary)',
+                margin: '4px 0 0',
+              }}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
+        {extra && <div>{extra}</div>}
+      </div>
+    )}
+    {children}
+  </div>
+);
+
+export interface PageCardProps {
+  children?: React.ReactNode;
+  style?: React.CSSProperties;
+  onClick?: () => void;
+  hover?: boolean;
+}
+
+export const PageCard: React.FC<PageCardProps> = ({
+  children,
+  style,
+  onClick,
+  hover = true,
+}) => (
+  <div
+    onClick={onClick}
+    style={{
+      background: 'var(--bg-primary)',
+      border: '1px solid var(--border-primary)',
+      borderRadius: 8,
+      padding: 20,
+      cursor: onClick ? 'pointer' : 'default',
+      transition: hover ? 'all 0.2s ease' : undefined,
+      ...style,
+    }}
+    onMouseEnter={
+      hover && onClick
+        ? (e) => {
+            e.currentTarget.style.borderColor = 'var(--text-primary)';
+            e.currentTarget.style.boxShadow = 'var(--shadow-hover)';
+          }
+        : undefined
+    }
+    onMouseLeave={
+      hover && onClick
+        ? (e) => {
+            e.currentTarget.style.borderColor = 'var(--border-primary)';
+            e.currentTarget.style.boxShadow = 'none';
+          }
+        : undefined
+    }
+  >
+    {children}
+  </div>
+);

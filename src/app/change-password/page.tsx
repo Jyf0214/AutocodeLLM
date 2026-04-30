@@ -73,16 +73,16 @@ export default function ChangePasswordPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#ffffff',
+        background: 'var(--bg-primary)',
       }}
     >
       <Card style={{ width: 450 }} variant="borderless">
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <Text strong style={{ fontSize: 20, display: 'block', marginBottom: 8, color: '#333333' }}>
+          <Text strong style={{ fontSize: 20, display: 'block', marginBottom: 8, color: 'var(--text-primary)' }}>
             <SafetyOutlined style={{ marginRight: 8 }} />
             强制修改密码
           </Text>
-          <Text type="secondary" style={{ color: '#666666' }}>首次登录，为了安全请修改初始密码</Text>
+          <Text type="secondary" style={{ color: 'var(--text-secondary)' }}>首次登录，为了安全请修改初始密码</Text>
         </div>
 
         <Alert

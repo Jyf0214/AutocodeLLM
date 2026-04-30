@@ -169,7 +169,7 @@ export default function CloudPage() {
               >
                 <Flexbox horizontal justify="space-between" wrap gap={8}>
                   <Flexbox horizontal gap={8} align="center">
-                    <Avatar size="small" style={{ backgroundColor: '#1677ff' }}>
+                    <Avatar size="small" style={{ backgroundColor: 'var(--text-primary)' }}>
                       {ws.workspaceName.charAt(0)}
                     </Avatar>
                     <Text style={{ fontWeight: 500 }}>{ws.workspaceName}</Text>
@@ -225,7 +225,7 @@ export default function CloudPage() {
             <List.Item>
               <Flexbox horizontal gap={8} style={{ width: '100%' }}>
                 {item.status === 'running' ? (
-                  <LoadingOutlined spin style={{ color: '#1677ff' }} />
+                  <LoadingOutlined spin style={{ color: 'var(--text-primary)' }} />
                 ) : item.status === 'success' ? (
                   <CheckCircleOutlined style={{ color: '#52c41a' }} />
                 ) : (
