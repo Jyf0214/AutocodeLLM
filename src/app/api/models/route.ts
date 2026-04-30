@@ -23,7 +23,7 @@ import type {
 /**
  * GET /api/models - 获取所有模型配置列表
  */
-export async function GET(): Promise<NextResponse<ModelConfigResponse>> {
+export async function GET(): Promise<NextResponse> {
   try {
     const providers = await prisma.provider.findMany({
       orderBy: { createdAt: 'desc' },
@@ -51,7 +51,7 @@ export async function GET(): Promise<NextResponse<ModelConfigResponse>> {
  */
 export async function POST(
   request: Request,
-): Promise<NextResponse<ModelConfigResponse>> {
+): Promise<NextResponse> {
   try {
     const body = (await request.json()) as CreateModelConfigRequest;
     const { name, provider, apiKey, baseUrl, enabled } = body;
@@ -102,7 +102,7 @@ export async function POST(
  */
 export async function PUT(
   request: Request,
-): Promise<NextResponse<ModelConfigResponse>> {
+): Promise<NextResponse> {
   try {
     const body = (await request.json()) as UpdateModelConfigRequest & {
       id?: string;
@@ -161,7 +161,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-): Promise<NextResponse<ModelConfigResponse>> {
+): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

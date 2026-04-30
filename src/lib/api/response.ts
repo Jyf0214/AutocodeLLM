@@ -219,3 +219,12 @@ export async function parseJsonBody<T>(
 export function isErrorResponse(response: unknown): response is NextResponse<ApiResponse<never>> {
   return response instanceof NextResponse && response.status >= 400;
 }
+
+/**
+ * 掩码敏感值（用于日志/响应）
+ */
+export function maskValue(value: string | undefined | null): string {
+  if (!value) return '****';
+  if (value.length <= 8) return '****';
+  return value.slice(0, 4) + '****' + value.slice(-4);
+}

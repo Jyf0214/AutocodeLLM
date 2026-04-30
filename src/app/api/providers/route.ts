@@ -12,6 +12,7 @@ import {
   successResponse,
   errorResponse,
   handleError,
+  maskValue,
 } from '@/lib/api/response';
 import { encryptValue } from '@/lib/providers/qwen-oauth';
 import { PRESET_PROVIDERS } from '@/lib/providers';
@@ -26,7 +27,7 @@ import type {
 /**
  * GET /api/providers - 获取所有提供商列表（预置 + 自定义）
  */
-export async function GET(): Promise<NextResponse<ProviderResponse>> {
+export async function GET(): Promise<NextResponse> {
   try {
     const providers = await prisma.provider.findMany({
       orderBy: { createdAt: 'desc' },
@@ -109,7 +110,7 @@ export async function GET(): Promise<NextResponse<ProviderResponse>> {
  */
 export async function POST(
   request: Request,
-): Promise<NextResponse<ProviderResponse>> {
+): Promise<NextResponse> {
   try {
     const body = (await request.json()) as CreateProviderRequest;
     const {
@@ -209,7 +210,7 @@ export async function POST(
  */
 export async function PUT(
   request: Request,
-): Promise<NextResponse<ProviderResponse>> {
+): Promise<NextResponse> {
   try {
     const body = (await request.json()) as UpdateProviderRequest;
     const {
@@ -302,7 +303,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-): Promise<NextResponse<ProviderResponse>> {
+): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, Row, Col, Tag, Progress, Statistic, message, Spin, Empty, Button } from 'antd';
 import {
   CheckCircleOutlined,
@@ -10,6 +10,7 @@ import {
   ApiOutlined,
   CloudServerOutlined,
   SecurityScanOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import { Text, Flexbox, Icon } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
@@ -214,7 +215,7 @@ export default function StatePage() {
           {renderComponentCard(stateData.mcp, <Icon icon={SecurityScanOutlined} />, t('state.components.mcp'))}
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          {renderComponentCard(stateData.providers, <Icon icon={MemoryOutlined} />, t('state.components.providers'))}
+          {renderComponentCard(stateData.providers, <Icon icon={AppstoreOutlined} />, t('state.components.providers'))}
         </Col>
       </Row>
     </div>

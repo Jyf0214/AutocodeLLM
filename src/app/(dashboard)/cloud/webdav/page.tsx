@@ -120,15 +120,15 @@ export default function WebDAVPage() {
         size="small"
       >
         <Space style={{ width: '100%', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-          <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
+          <Flexbox horizontal justify="space-between" wrap gap={8}>
             <Text type="secondary">{t('serverUrl')}</Text>
             <Text style={{ wordBreak: 'break-all' }}>{status?.url ?? t('notConfigured')}</Text>
           </Flexbox>
-          <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
+          <Flexbox horizontal justify="space-between" wrap gap={8}>
             <Text type="secondary">{t('remotePath')}</Text>
             <Text style={{ wordBreak: 'break-all' }}>{status?.remotePath ?? t('notConfigured')}</Text>
           </Flexbox>
-          <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
+          <Flexbox horizontal justify="space-between" wrap gap={8}>
             <Text type="secondary">{t('syncStatus')}</Text>
             <Text>{status?.watching ? t('running') : t('stopped')}</Text>
           </Flexbox>

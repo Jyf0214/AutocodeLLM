@@ -51,12 +51,18 @@ export async function handleConnectCommand(
         data: { code, codeExpiresAt },
       });
     } else {
-      // 创建新记录（workspaceId 临时占位，Web 端确认时更新）
+      // 创建待绑定记录，查找默认工作区
+      let defaultWorkspace = await prisma.workspace.findFirst({ orderBy: { createdAt: 'asc' } });
+      if (!defaultWorkspace) {
+        defaultWorkspace = await prisma.workspace.create({
+          data: { name: 'Discord 默认工作区', description: 'Discord 绑定自动创建' },
+        });
+      }
       await prisma.discordBinding.create({
         data: {
           discordUserId,
           discordUserName,
-          workspaceId: 'pending', // 待 Web 端确认时覆盖
+          workspaceId: defaultWorkspace.id,
           code,
           codeExpiresAt,
         },

@@ -238,7 +238,7 @@ export default function TerminalPanel({ workspaceId, wsUrl }: TerminalPanelProps
         <Flexbox horizontal gap={8}>
           <Button
             size="small"
-            icon={ReloadOutlined}
+            icon={<ReloadOutlined />}
             onClick={handleReconnect}
             disabled={!connected && !connecting}
           >
@@ -247,7 +247,7 @@ export default function TerminalPanel({ workspaceId, wsUrl }: TerminalPanelProps
           <Button
             size="small"
             danger
-            icon={PoweroffOutlined}
+            icon={<PoweroffOutlined />}
             onClick={handleDisconnect}
             disabled={!connected}
           >

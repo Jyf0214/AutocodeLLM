@@ -79,7 +79,7 @@ function ProviderCard({
     moonshot: ({ size }) => <ModelIcon model="moonshot" size={size ?? 20} />,
   };
 
-  const IconComponent = iconMap[provider.sdkType] ?? iconMap.openai;
+  const IconComponent: React.ComponentType<{ size?: number }> = (iconMap[provider.sdkType] as React.ComponentType<{ size?: number }>) ?? iconMap.openai!;
 
   return (
     <Card
@@ -211,7 +211,7 @@ function PresetCard({
     moonshot: ({ size }) => <ModelIcon model="moonshot" size={size ?? 24} />,
   };
 
-  const IconComponent = iconMap[preset.sdkType] ?? iconMap.openai;
+  const IconComponent: React.ComponentType<{ size?: number }> = (iconMap[preset.sdkType] as React.ComponentType<{ size?: number }>) ?? iconMap.openai!;
 
   return (
     <div

@@ -135,11 +135,11 @@ export default function CloudPage() {
 
       <Card title={t('webdavSyncStatus')} extra={getSyncStatusTag()} size="small">
         <Space style={{ width: '100%', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-          <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
+          <Flexbox horizontal justify="space-between" wrap gap={8}>
             <Text type="secondary">{t('serverUrl')}</Text>
             <Text style={{ wordBreak: 'break-all' }}>{overview?.sync?.url ?? t('notConfigured')}</Text>
           </Flexbox>
-          <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
+          <Flexbox horizontal justify="space-between" wrap gap={8}>
             <Text type="secondary">{t('remotePath')}</Text>
             <Text style={{ wordBreak: 'break-all' }}>{overview?.sync?.remotePath ?? t('notConfigured')}</Text>
           </Flexbox>
@@ -167,7 +167,7 @@ export default function CloudPage() {
                 style={{ cursor: 'pointer' }}
                 onClick={() => navigateTo(`/workplace/${ws.workspaceId}/backups`)}
               >
-                <Flexbox horizontal justify="space-between" wrap="wrap" gap={8}>
+                <Flexbox horizontal justify="space-between" wrap gap={8}>
                   <Flexbox horizontal gap={8} align="center">
                     <Avatar size="small" style={{ backgroundColor: '#1677ff' }}>
                       {ws.workspaceName.charAt(0)}

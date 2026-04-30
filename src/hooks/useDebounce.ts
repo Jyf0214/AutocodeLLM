@@ -74,6 +74,7 @@ export function useThrottle<T>(value: T, interval: number = 300): T {
     if (now - lastUpdateRef.current >= interval) {
       lastUpdateRef.current = now;
       setThrottledValue(value);
+      return;
     } else {
       const timer = setTimeout(() => {
         lastUpdateRef.current = Date.now();

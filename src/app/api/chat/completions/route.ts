@@ -57,6 +57,9 @@ export async function POST(request: Request) {
         throw new Error('无效的加密格式');
       }
       const [ivHex, encryptedData] = parts;
+      if (!ivHex || !encryptedData) {
+        throw new Error('无效的加密格式');
+      }
       const iv = Buffer.from(ivHex, 'hex');
       const decipher = createDecipheriv('aes-256-cbc', key, iv);
       apiKey = decipher.update(encryptedData, 'hex', 'utf8');

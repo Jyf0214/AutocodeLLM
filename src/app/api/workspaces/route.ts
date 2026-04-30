@@ -9,6 +9,8 @@ import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
   handleError,
+  validateRequiredFields,
+  type ApiResponse,
 } from '@/lib/api/response';
 import type { WorkspaceResponse, CreateWorkspaceRequest } from '@/lib/api/workspace-types';
 

@@ -24,7 +24,7 @@ import type {
 /**
  * GET /api/env - 获取所有环境变量列表
  */
-export async function GET(): Promise<NextResponse<EnvVariableResponse>> {
+export async function GET(): Promise<NextResponse> {
   try {
     const envVars = await prisma.environmentVariable.findMany({
       orderBy: { createdAt: 'desc' },
@@ -51,7 +51,7 @@ export async function GET(): Promise<NextResponse<EnvVariableResponse>> {
  */
 export async function POST(
   request: Request,
-): Promise<NextResponse<EnvVariableResponse>> {
+): Promise<NextResponse> {
   try {
     const body = (await request.json()) as CreateEnvVariableRequest;
     const { key, value, description, enabled } = body;
@@ -101,7 +101,7 @@ export async function POST(
  */
 export async function PUT(
   request: Request,
-): Promise<NextResponse<EnvVariableResponse>> {
+): Promise<NextResponse> {
   try {
     const body = (await request.json()) as UpdateEnvVariableRequest;
     const { id, key, value, description, enabled } = body;
@@ -156,7 +156,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-): Promise<NextResponse<EnvVariableResponse>> {
+): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

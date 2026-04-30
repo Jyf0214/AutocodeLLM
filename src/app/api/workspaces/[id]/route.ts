@@ -18,7 +18,7 @@ import type { WorkspaceResponse } from '@/lib/api/workspace-types';
  * 解析工作区 ID 参数
  */
 async function getWorkspaceId(params: unknown): Promise<string> {
-  const paramsObj = await params;
+  const paramsObj = await params as { id: string };
   return paramsObj.id as string;
 }
 
@@ -28,7 +28,7 @@ async function getWorkspaceId(params: unknown): Promise<string> {
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse<WorkspaceResponse>> {
+): Promise<NextResponse> {
   try {
     const id = await getWorkspaceId(params);
 
@@ -59,7 +59,7 @@ export async function GET(
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse<WorkspaceResponse>> {
+): Promise<NextResponse> {
   try {
     const id = await getWorkspaceId(params);
     const body = (await request.json()) as { name?: string; description?: string };
@@ -107,7 +107,7 @@ export async function PUT(
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse<WorkspaceResponse>> {
+): Promise<NextResponse> {
   try {
     const id = await getWorkspaceId(params);
 

@@ -152,7 +152,7 @@ export default function HomePage() {
             {t('subtitle')}
           </Text>
 
-          <Flexbox gap={16} horizontal wrap="wrap" justify="center">
+          <Flexbox gap={16} horizontal wrap justify="center">
             {isLoggedIn ? (
               <>
                 <Link href="/workplace">

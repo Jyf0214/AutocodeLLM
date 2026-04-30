@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { successResponse } from '@/lib/api/response';
+import { successResponse, handleError } from '@/lib/api/response';
 import { startQwenDeviceFlow } from '@/lib/auth/qwen/oauth';
 import type { QwenOAuthStartResponse } from '@/lib/api/provider-types';
 

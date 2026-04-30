@@ -33,16 +33,16 @@ import { useIsMobile } from '@/hooks/useMediaQuery';
  * 定义导航菜单的结构和图标
  */
 const MENU_ITEMS = [
-  { key: '/', icon: HomeOutlined, labelKey: 'common.appName' },
-  { key: '/workplace', icon: FolderOutlined, labelKey: 'common.workplace' },
-  { key: '/mcp', icon: SettingOutlined, labelKey: 'common.mcp' },
-  { key: '/provider', icon: ApiOutlined, labelKey: 'common.providers' },
-  { key: '/setting', icon: EnvironmentOutlined, labelKey: 'common.setting' },
-  { key: '/agents', icon: TeamOutlined, labelKey: 'common.agents' },
-  { key: '/skills', icon: SyncOutlined, labelKey: 'common.skills' },
-  { key: '/state', icon: CloudServerOutlined, labelKey: 'common.state' },
-  { key: '/cloud', icon: CloudServerOutlined, labelKey: 'common.cloud' },
-  { key: '/account', icon: UserOutlined, labelKey: 'common.account' },
+  { key: '/', icon: <HomeOutlined />, labelKey: 'common.appName' },
+  { key: '/workplace', icon: <FolderOutlined />, labelKey: 'common.workplace' },
+  { key: '/mcp', icon: <SettingOutlined />, labelKey: 'common.mcp' },
+  { key: '/provider', icon: <ApiOutlined />, labelKey: 'common.providers' },
+  { key: '/setting', icon: <EnvironmentOutlined />, labelKey: 'common.setting' },
+  { key: '/agents', icon: <TeamOutlined />, labelKey: 'common.agents' },
+  { key: '/skills', icon: <SyncOutlined />, labelKey: 'common.skills' },
+  { key: '/state', icon: <CloudServerOutlined />, labelKey: 'common.state' },
+  { key: '/cloud', icon: <CloudServerOutlined />, labelKey: 'common.cloud' },
+  { key: '/account', icon: <UserOutlined />, labelKey: 'common.account' },
 ] as const;
 
 /**
@@ -244,8 +244,8 @@ export default function AppLayout({
           actions={
             isMobile ? (
               <ActionIcon
-                icon={MenuOutlined}
-                size="large"
+                icon={<MenuOutlined />}
+                size={24}
                 onClick={() => setMobileOpen(true)}
               />
             ) : undefined

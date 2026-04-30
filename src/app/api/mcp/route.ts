@@ -36,7 +36,7 @@ function parseTools(toolsJson: string): string[] {
 /**
  * GET /api/mcp - 获取所有 MCP 服务列表
  */
-export async function GET(): Promise<NextResponse<McpServerResponse>> {
+export async function GET(): Promise<NextResponse> {
   try {
     const servers = await prisma.mcpServer.findMany({
       orderBy: { createdAt: 'desc' },
@@ -64,7 +64,7 @@ export async function GET(): Promise<NextResponse<McpServerResponse>> {
  */
 export async function POST(
   request: Request,
-): Promise<NextResponse<McpServerResponse>> {
+): Promise<NextResponse> {
   try {
     const body = (await request.json()) as CreateMcpServerRequest;
     const { name, url, enabled } = body;
@@ -116,7 +116,7 @@ export async function POST(
  */
 export async function PUT(
   request: Request,
-): Promise<NextResponse<McpServerResponse>> {
+): Promise<NextResponse> {
   try {
     const body = (await request.json()) as UpdateMcpServerRequest;
     const { id, name, url, enabled, status, tools } = body;
@@ -149,7 +149,7 @@ export async function PUT(
         ...(url !== undefined && { url }),
         ...(enabled !== undefined && { enabled }),
         ...(status !== undefined && { status }),
-        ...(tools !== undefined && { tools: JSON.stringify(toools) }),
+        ...(tools !== undefined && { tools: JSON.stringify(tools) }),
       },
     });
 
@@ -173,7 +173,7 @@ export async function PUT(
  */
 export async function DELETE(
   request: Request,
-): Promise<NextResponse<McpServerResponse>> {
+): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
