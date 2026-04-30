@@ -271,7 +271,7 @@ export interface IconProps {
 
 export const Icon: React.FC<IconProps> = ({ icon, size = 24, onClick, style, className, color }) => {
   // 支持 antd 图标组件引用（ForwardRefExoticComponent 等）和 ReactNode
-  let renderedIcon: React.ReactNode = icon;
+  let renderedIcon: React.ReactNode = icon as React.ReactNode;
   if (icon && !React.isValidElement(icon)) {
     renderedIcon = React.createElement(icon as React.ComponentType<any>, { size, style: { color } });
   }

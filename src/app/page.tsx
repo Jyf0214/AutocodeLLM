@@ -3,7 +3,6 @@
 import { Button, Flexbox, Text } from '@/lib/ui';
 import {
   ArrowRightOutlined,
-  CodeOutlined,
   ApiOutlined,
   TeamOutlined,
   LogoutOutlined,
@@ -185,15 +184,6 @@ export default function HomePage() {
                     icon={<ArrowRightOutlined />}
                   >
                     {t('startNow')}
-                  </Button>
-                </Link>
-                <Link href="/demo">
-                  <Button
-                    type="default"
-                    size="large"
-                    icon={<CodeOutlined />}
-                  >
-                    {t('onlineDemo')}
                   </Button>
                 </Link>
               </>
