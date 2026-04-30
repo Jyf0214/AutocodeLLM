@@ -40,5 +40,5 @@ USER node
 # 暴露端口
 EXPOSE 7860
 
-# 使用构建产物直接启动（bun run server.ts 加载 .next 构建产物）
-CMD ["bun", "run", "server.ts"]
+# 启动命令（直接启动，无需构建）
+CMD ["bun", "run", "scripts/start.mjs"]

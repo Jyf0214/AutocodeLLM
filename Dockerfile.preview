@@ -38,4 +38,4 @@ USER node
 EXPOSE 7860
 
 # 使用构建产物直接启动
-CMD ["bun", "run", "server.ts"]
+CMD ["bun", "run", "scripts/start.mjs"]
