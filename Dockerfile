@@ -1,44 +1,60 @@
-# AutocodeLLM 应用镜像
-# 基于基础镜像（已包含所有依赖），复制源码并预构建
-FROM ghcr.io/jyf0214/autocodellm:base AS base
+# AutocodeLLM 自包含构建镜像
+# 基于 node:24-slim，安装所有依赖并构建
 
-# DEMO_MODE 构建参数（预览镜像设为 true）
+FROM node:24-slim
+
+# 构建参数
 ARG DEMO_MODE=false
 ENV DEMO_MODE=${DEMO_MODE}
-
-# 标记此镜像在 Docker 环境中运行
 ENV RUNNING_IN_DOCKER=true
-
-# HF Spaces 使用 7860 端口
 ENV PORT=7860
 
-# 设置工作目录
 WORKDIR /app
 
-# 复制源代码
+# 安装系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    pkg-config \
+    python3-full \
+    python3-pip \
+    golang-go \
+    php-cli \
+    git \
+    openssh-client \
+    openssl \
+    curl \
+    wget \
+    unzip \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装 Bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
+
+# 复制项目文件
+COPY package.json bun.lock* ./
+
+# 安装依赖
+RUN bun install --frozen-lockfile || bun install
+
+# 复制源码
 COPY . .
 
-# 确保 bun 和 bunx 可用（创建符号链接）
-RUN ln -sf /home/node/.bun/bin/bun /usr/local/bin/bun 2>/dev/null || true && \
-    ln -sf /home/node/.bun/bin/bunx /usr/local/bin/bunx 2>/dev/null || true
+# 构建项目
+RUN bun run build
 
-# 安装依赖并预构建（node-pty 为可选依赖，编译失败不影响构建）
-RUN rm -rf .next && \
-    bun install && \
-    bun run build && \
-    mkdir -p /home/node/.autocodellm/workspaces \
+# 创建工作目录
+RUN mkdir -p /home/node/.autocodellm/workspaces \
     /home/node/.autocodellm/skills \
     /home/node/.autocodellm/config \
     /home/node/.autocodellm/logs \
-    /home/node/.autocodellm/backups && \
-    chown -R 1000:1000 /home/node \
+    /home/node/.autocodellm/backups \
+    && chown -R 1000:1000 /home/node \
     && chown -R 1000:1000 /app
 
-# 切换到非 root 用户
 USER node
 
-# 暴露端口
 EXPOSE 7860
 
-# 启动命令（直接启动，无需构建）
 CMD ["bun", "run", "scripts/start.mjs"]
