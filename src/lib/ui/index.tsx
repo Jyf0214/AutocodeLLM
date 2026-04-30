@@ -270,10 +270,11 @@ export interface IconProps {
 }
 
 export const Icon: React.FC<IconProps> = ({ icon, size = 24, onClick, style, className, color }) => {
-  // 支持 antd 图标组件引用（如 <SettingOutlined />）和 ReactNode
-  const renderedIcon = icon && typeof icon === 'function'
-    ? React.createElement(icon as React.ComponentType<any>, { size, style: { color } })
-    : icon;
+  // 支持 antd 图标组件引用（ForwardRefExoticComponent 等）和 ReactNode
+  let renderedIcon: React.ReactNode = icon;
+  if (icon && !React.isValidElement(icon)) {
+    renderedIcon = React.createElement(icon as React.ComponentType<any>, { size, style: { color } });
+  }
 
   return (
     <div
