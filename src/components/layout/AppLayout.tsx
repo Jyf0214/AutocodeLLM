@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
-import { ActionIcon, ThemeSwitch } from '@/lib/ui';
+import { ThemeSwitch } from '@/lib/ui';
 import {
   HomeOutlined,
   FolderOutlined,
@@ -89,20 +89,37 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div style={{ minHeight: '100vh', position: 'relative' }}>
       {/* 左上角菜单按钮 — 首页和认证页不显示 */}
       {!isHomePage && !isAuthPage && (
-        <div
+        <button
+          onClick={() => setDrawerOpen(true)}
+          aria-label="打开菜单"
           style={{
             position: 'fixed',
             top: 12,
             left: 12,
             zIndex: 1000,
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid var(--border-primary)',
+            borderRadius: 8,
+            background: 'var(--bg-primary)',
+            cursor: 'pointer',
+            padding: 0,
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--bg-secondary)';
+            e.currentTarget.style.borderColor = 'var(--text-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--bg-primary)';
+            e.currentTarget.style.borderColor = 'var(--border-primary)';
           }}
         >
-          <ActionIcon
-            icon={<MenuOutlined />}
-            size={36}
-            onClick={() => setDrawerOpen(true)}
-          />
-        </div>
+          <MenuOutlined style={{ fontSize: 18, color: 'var(--text-primary)' }} />
+        </button>
       )}
 
       {/* 左侧抽屉导航 */}
@@ -110,10 +127,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         placement="left"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        width={260}
-        styles={{ body: { padding: 0 } }}
+        width={240}
+        closable={false}
+        styles={{
+          body: { padding: 0 },
+          header: { padding: '16px 16px 8px', borderBottom: 'none' },
+        }}
         title={
-          <span style={{ fontSize: 16, fontWeight: 600 }}>AutocodeLLM</span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+            AutocodeLLM
+          </span>
         }
         extra={
           <ThemeSwitch
