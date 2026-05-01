@@ -4,20 +4,18 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { message } from 'antd';
-import { Button, Text, Flexbox, Icon, Avatar } from '@/lib/ui';
-import { Card, Skeleton } from 'antd';
+import { Button, Text, Flexbox } from '@/lib/ui';
+import { Skeleton } from 'antd';
 import {
   FolderOutlined,
   MessageOutlined,
   SettingOutlined,
-  FileTextOutlined,
-  TagOutlined,
   EditOutlined,
   ArrowLeftOutlined,
   ReloadOutlined,
-  TeamOutlined,
-  HomeOutlined,
   ApiOutlined,
+  ArrowRightOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 import type { WorkspaceListItem } from '@/lib/api/workspace-types';
 
@@ -35,26 +33,19 @@ export default function WorkspaceDetailPage() {
     setError(null);
     try {
       const response = await fetch(`/api/workspaces/${workspaceId}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${String(response.status)}`);
-      }
-      const result: {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json() as {
         success: boolean;
         data?: WorkspaceListItem;
         error?: { message: string };
-      } = await response.json();
+      };
       if (result.success && result.data) {
         setWorkspace(result.data);
       } else {
-        const errorMsg = result.error?.message ?? t('fetchFailed');
-        setError(errorMsg);
-        message.error(errorMsg);
+        setError(result.error?.message ?? t('fetchFailed'));
       }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : t('fetchFailed');
-      setError(errorMsg);
-      message.error(errorMsg);
-      console.error('Failed to fetch workspace details:', err);
+      setError(err instanceof Error ? err.message : t('fetchFailed'));
     } finally {
       setFetching(false);
     }
@@ -65,261 +56,162 @@ export default function WorkspaceDetailPage() {
   }, [fetchWorkspace]);
 
   const menuItems = [
-    {
-      icon: <MessageOutlined />,
-      title: t('aiChat'),
-      description: t('aiChatDesc'),
-      path: `/chat/${workspaceId}`,
-      color: 'var(--text-primary)',
-    },
-    {
-      icon: <HomeOutlined />,
-      title: t('dashboard'),
-      description: t('dashboardDesc'),
-      path: `/project/${workspaceId}/dashboard`,
-      color: 'var(--text-primary)',
-    },
-    {
-      icon: <FileTextOutlined />,
-      title: t('logs'),
-      description: t('logsDesc'),
-      path: `/project/${workspaceId}/logs`,
-      color: 'var(--text-primary)',
-    },
-    {
-      icon: <TagOutlined />,
-      title: t('tags'),
-      description: t('tagsDesc'),
-      path: `/project/${workspaceId}/tags`,
-      color: 'var(--text-primary)',
-    },
-    {
-      icon: <TeamOutlined />,
-      title: t('members'),
-      description: t('membersDesc'),
-      path: `/project/${workspaceId}/members`,
-      color: 'var(--text-primary)',
-    },
-    {
-      icon: <SettingOutlined />,
-      title: t('settings'),
-      description: t('settingsDesc'),
-      path: `/project/${workspaceId}/settings`,
-      color: 'var(--text-primary)',
-  },
-    {
-      icon: <ApiOutlined />,
-      title: t('channel'),
-      description: t('channelDesc'),
-      path: `/project/${workspaceId}/channel`,
-      color: 'var(--text-primary)',
-    },
+    { icon: <MessageOutlined />, title: t('aiChat'), desc: t('aiChatDesc'), path: `/chat/${workspaceId}` },
+    { icon: <SettingOutlined />, title: t('settings'), desc: t('settingsDesc'), path: `/project/${workspaceId}/detail` },
+    { icon: <ApiOutlined />, title: t('channel'), desc: t('channelDesc'), path: `/project/${workspaceId}/channel` },
   ];
+
   if (fetching) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: 'var(--color-bg-layout)',
-        }}
-      >
-        <div style={{ maxWidth: 900, margin: '0 auto', padding: '28px 24px' }}>
-          <Flexbox align="center" gap={12} style={{ marginBottom: 24 }}>
-            <Button
-              type="text"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => router.push('/project')}
-            >
-              {t('back')}
-            </Button>
-          </Flexbox>
-          <Flexbox gap={16} align="center" style={{ marginBottom: 32 }}>
-            <Skeleton.Avatar active size={64} shape="square" />
-            <div style={{ flex: 1 }}>
-              <Skeleton.Input active style={{ width: '40%', marginBottom: 8 }} />
-              <Skeleton.Input active style={{ width: '60%' }} />
-            </div>
-          </Flexbox>
-        </div>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px' }}>
+        <Skeleton active paragraph={{ rows: 4 }} />
       </div>
     );
   }
 
   if (error || !workspace) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: 'var(--color-bg-layout)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Card style={{ maxWidth: 400, textAlign: 'center', padding: 24 }}>
-          <Flexbox gap={16} direction="vertical">
-            <Icon
-              icon={FolderOutlined}
-              style={{ fontSize: 48, color: 'var(--text-primary)' }}
-            />
-            <Text strong style={{ fontSize: 18 }}>
-              {t('loadFailed')}
-            </Text>
-            <Text type="secondary">{error ?? t('workspaceNotExist')}</Text>
-            <Flexbox gap={12} horizontal justify="center">
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => router.push('/project')}
-              >
-                {t('backToList')}
-              </Button>
-              <Button
-                type="primary"
-                icon={<ReloadOutlined />}
-                onClick={fetchWorkspace}
-              >
-                {t('retry')}
-              </Button>
-            </Flexbox>
-          </Flexbox>
-        </Card>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px', textAlign: 'center' }}>
+        <FolderOutlined style={{ fontSize: 48, color: 'var(--text-tertiary)', marginBottom: 16 }} />
+        <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 8 }}>{t('loadFailed')}</Text>
+        <Text type="secondary">{error ?? t('workspaceNotExist')}</Text>
+        <Flexbox gap={12} horizontal justify="center" style={{ marginTop: 24 }}>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/project')}>{t('backToList')}</Button>
+          <Button icon={<ReloadOutlined />} onClick={fetchWorkspace}>{t('retry')}</Button>
+        </Flexbox>
       </div>
     );
   }
 
+  const created = new Date(workspace.createdAt);
+  const updated = new Date(workspace.updatedAt);
+  const fmt = (d: Date) => `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--color-bg-layout)',
-      }}
-    >
-      <div
-        style={{
-          background: 'var(--color-bg)',
-          borderBottom: '1px solid var(--color-border)',
-          padding: '16px 24px',
-        }}
-      >
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <Flexbox horizontal align="center" gap={12}>
-            <Button
-              type="text"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => router.push('/project')}
-            >
-              {t('back')}
-            </Button>
-          </Flexbox>
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px' }}>
+      {/* 头部 */}
+      <div style={{ marginBottom: 32 }}>
+        <button
+          onClick={() => router.push('/project')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: 13,
+            color: 'var(--text-tertiary)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
+            marginBottom: 20,
+          }}
+        >
+          <ArrowLeftOutlined style={{ fontSize: 12 }} />
+          {t('back')}
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 10,
+              background: 'var(--bg-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <FolderOutlined style={{ fontSize: 22, color: 'var(--text-secondary)' }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Text strong style={{ fontSize: 20 }}>{workspace.name}</Text>
+              <button
+                onClick={() => {
+                  // TODO: 编辑项目
+                }}
+                style={{
+                  width: 28,
+                  height: 28,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid var(--border-primary)',
+                  borderRadius: 6,
+                  background: 'var(--bg-primary)',
+                  cursor: 'pointer',
+                  color: 'var(--text-tertiary)',
+                  fontSize: 13,
+                }}
+              >
+                <EditOutlined />
+              </button>
+            </div>
+            <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 4, fontStyle: workspace.description ? 'normal' : 'italic' }}>
+              {workspace.description || t('noDescription')}
+            </Text>
+            <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <ClockCircleOutlined style={{ fontSize: 11 }} />
+                创建于 {fmt(created)}
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                更新于 {fmt(updated)}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '28px 24px' }}>
-        <Flexbox
-          gap={20}
-          align="center"
-          style={{ marginBottom: 32 }}
-        >
-          <Avatar
-            avatar={<FolderOutlined style={{ fontSize: 28 }} />}
-            size={64}
-            background="var(--text-primary)"
-            shape="square"
-            style={{ borderRadius: 16 }}
-          />
-          <div style={{ flex: 1 }}>
-            <Text strong style={{ fontSize: 24, display: 'block', marginBottom: 4 }}>
-              {workspace.name}
-            </Text>
-            <Text type="secondary" style={{ fontSize: 14 }}>
-              {workspace.description || t('noDescription')}
-            </Text>
-          </div>
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={undefined}
+      {/* 功能入口 */}
+      <Text strong style={{ fontSize: 14, display: 'block', marginBottom: 12, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        {t('features')}
+      </Text>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {menuItems.map((item) => (
+          <div
+            key={item.path}
+            onClick={() => router.push(item.path)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              padding: '14px 16px',
+              borderRadius: 8,
+              cursor: 'pointer',
+              transition: 'background 0.1s ease',
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'var(--bg-secondary)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
           >
-            {t('editWorkspace')}
-          </Button>
-        </Flexbox>
-
-        <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 16 }}>
-          {t('features')}
-        </Text>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: 16,
-          }}
-        >
-          {menuItems.map((item) => (
-            <Card
-              key={item.path}
+            <div
               style={{
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onClick={() => router.push(item.path)}
-              onMouseEnter={(e) => {
-                const target = e.currentTarget as HTMLDivElement;
-                target.style.transform = 'translateY(-2px)';
-                target.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
-              }}
-              onMouseLeave={(e) => {
-                const target = e.currentTarget as HTMLDivElement;
-                target.style.transform = 'translateY(0)';
-                target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                background: 'var(--bg-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                color: 'var(--text-secondary)',
+                fontSize: 16,
               }}
             >
-              <Flexbox gap={16} align="flex-start">
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 12,
-                    background: item.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon icon={item.icon} size={20} color="#fff" />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <Text strong style={{ display: 'block', marginBottom: 4 }}>
-                    {item.title}
-                  </Text>
-                  <Text
-                    type="secondary"
-                    style={{ fontSize: 13, display: 'block' }}
-                  >
-                    {item.description}
-                  </Text>
-                </div>
-              </Flexbox>
-            </Card>
-          ))}
-        </div>
-
-        <Flexbox
-          gap={12}
-          style={{
-            marginTop: 32,
-            paddingTop: 24,
-            borderTop: '1px solid var(--color-border)',
-          }}
-        >
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {t('createdAt')} {new Date(workspace.createdAt).toLocaleDateString()}
-          </Text>
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {t('updatedAt')} {new Date(workspace.updatedAt).toLocaleDateString()}
-          </Text>
-        </Flexbox>
+              {item.icon}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Text style={{ fontSize: 14, display: 'block' }}>{item.title}</Text>
+              <Text type="secondary" style={{ fontSize: 12, display: 'block', marginTop: 2 }}>
+                {item.desc}
+              </Text>
+            </div>
+            <ArrowRightOutlined style={{ fontSize: 12, color: 'var(--text-tertiary)' }} />
+          </div>
+        ))}
       </div>
     </div>
   );
