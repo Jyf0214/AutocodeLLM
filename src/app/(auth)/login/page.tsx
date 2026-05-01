@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button, Form, Input, InputPassword, Flexbox, Text } from '@lobehub/ui';
 import {
   UserOutlined,
@@ -11,89 +11,102 @@ import {
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { message, Card, Radio, type RadioChangeEvent } from 'antd';
+import { message, Card, Radio } from 'antd';
+import type { RadioChangeEvent } from 'antd';
 
-/**
- * 登录模式类型
- */
+/** 登录模式 */
 type LoginMode = 'password' | 'verificationCode';
 
-/**
- * 验证码响应类型
- */
+/** 登录 API 响应 */
+interface LoginResponse {
+  success: boolean;
+  data?: {
+    userId: string;
+    username: string;
+    role: string;
+    forceChangePassword: boolean;
+  };
+  error?: { message: string; code: string };
+}
+
+/** 验证码 API 响应 */
 interface CodeResponse {
   success: boolean;
   error?: { message: string };
   data?: { message: string };
 }
 
-/**
- * 登录页面组件
- * 支持密码登录和验证码登录
- */
+/** 登录表单值 */
+interface LoginFormValues {
+  username: string;
+  password?: string;
+  verificationCode?: string;
+}
+
 export default function LoginPage() {
   const t = useTranslations('login');
   const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [loginMode, setLoginMode] = useState<LoginMode>('password');
   const [codeLoading, setCodeLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [username, setUsername] = useState('');
-  const [form] = Form.useForm();
 
-  /**
-   * 发送验证码
-   */
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // 清理倒计时
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, []);
+
+  /** 发送验证码 */
   const handleSendCode = useCallback(async () => {
-    if (!username) {
-      message.warning('请先输入用户名');
+    if (!username.trim()) {
+      message.warning(t('enterUsernameFirst'));
       return;
     }
 
     setCodeLoading(true);
     try {
-      const response = await fetch('/api/auth/verification-code', {
+      const res = await fetch('/api/auth/verification-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ username: username.trim() }),
       });
-      const result: CodeResponse = await response.json();
+      const result: CodeResponse = await res.json();
 
       if (result.success) {
-        message.success('验证码已生成，请查看服务器控制台');
+        message.success(t('codeSent'));
         setCountdown(60);
-        const timer = setInterval(() => {
+        countdownRef.current = setInterval(() => {
           setCountdown((prev) => {
             if (prev <= 1) {
-              clearInterval(timer);
+              if (countdownRef.current) clearInterval(countdownRef.current);
               return 0;
             }
             return prev - 1;
           });
         }, 1000);
       } else {
-        message.error(result.error?.message ?? '验证码生成失败');
+        message.error(result.error?.message ?? t('codeSendFailed'));
       }
     } catch {
-      message.error('网络错误，请重试');
+      message.error(t('networkError'));
     } finally {
       setCodeLoading(false);
     }
-  }, [username]);
+  }, [username, t]);
 
-  /**
-   * 表单提交处理
-   */
+  /** 表单提交 */
   const onFinish = useCallback(
-    async (values: {
-      username: string;
-      password?: string;
-      verificationCode?: string;
-    }) => {
+    async (values: LoginFormValues) => {
       setLoading(true);
       try {
         const body: Record<string, unknown> = {
-          username: values.username,
+          username: values.username.trim(),
           useVerificationCode: loginMode === 'verificationCode',
         };
 
@@ -103,47 +116,51 @@ export default function LoginPage() {
           body.verificationCode = values.verificationCode;
         }
 
-        const response = await fetch('/api/auth/login', {
+        const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
 
-        const result: {
-          success: boolean;
-          data?: {
-            userId: string;
-            username: string;
-            forceChangePassword: boolean;
-          };
-          error?: { message: string };
-        } = await response.json();
+        const result: LoginResponse = await res.json();
 
-        if (result.success) {
-          sessionStorage.setItem('userId', result.data?.userId ?? '');
-          sessionStorage.setItem('username', result.data?.username ?? '');
-          sessionStorage.setItem(
-            'forceChangePassword',
-            String(result.data?.forceChangePassword),
-          );
-
-          if (result.data?.forceChangePassword) {
-            message.warning('首次登录，请修改初始密码');
+        if (result.success && result.data) {
+          if (result.data.forceChangePassword) {
+            message.warning(t('firstLoginWarning'));
             router.push('/change-password');
           } else {
-            message.success('登录成功');
+            message.success(t('loginSuccess'));
             router.push('/workplace');
           }
         } else {
-          message.error(result.error?.message ?? '登录失败');
+          // 根据错误码显示对应消息
+          const errorCode = result.error?.code;
+          let errorMsg = result.error?.message ?? t('loginFailed');
+
+          switch (errorCode) {
+            case 'USER_NOT_FOUND':
+              errorMsg = t('userNotFound');
+              break;
+            case 'INVALID_CREDENTIALS':
+              errorMsg = t('wrongPassword');
+              break;
+            case 'CODE_EXPIRED':
+              errorMsg = t('codeExpired');
+              break;
+            case 'INVALID_CODE':
+              errorMsg = t('codeInvalid');
+              break;
+          }
+
+          message.error(errorMsg);
         }
       } catch {
-        message.error('网络错误，请重试');
+        message.error(t('networkError'));
       } finally {
         setLoading(false);
       }
     },
-    [loginMode, router],
+    [loginMode, router, t],
   );
 
   return (
@@ -165,14 +182,15 @@ export default function LoginPage() {
           borderRadius: 16,
         }}
       >
-        {/* 标题区域 */}
+        {/* 标题 */}
         <Flexbox align="center" gap={8} style={{ marginBottom: 32, textAlign: 'center' }}>
           <div
             style={{
               width: 48,
               height: 48,
               borderRadius: 12,
-              background: 'linear-gradient(135deg, var(--lobe-color-primary), var(--lobe-color-violet))',
+              background:
+                'linear-gradient(135deg, var(--lobe-color-primary), var(--lobe-color-violet))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -181,17 +199,11 @@ export default function LoginPage() {
           >
             <UserOutlined style={{ fontSize: 24, color: '#fff' }} />
           </div>
-          <Text
-            strong
-            style={{
-              fontSize: 26,
-              color: '#333333',
-            }}
-          >
-            欢迎登录
+          <Text strong style={{ fontSize: 26, color: '#333333' }}>
+            {t('title')}
           </Text>
           <Text type="secondary" style={{ fontSize: 14, marginTop: 8, color: '#666666' }}>
-            AutocodeLLM 智能编码平台
+            {t('subtitle')}
           </Text>
         </Flexbox>
 
@@ -211,7 +223,7 @@ export default function LoginPage() {
                 gap: 8,
               }}
             >
-              <LockOutlined /> 密码登录
+              <LockOutlined /> {t('passwordLogin')}
             </Radio.Button>
             <Radio.Button
               value="verificationCode"
@@ -222,7 +234,7 @@ export default function LoginPage() {
                 gap: 8,
               }}
             >
-              <SafetyOutlined /> 验证码
+              <SafetyOutlined /> {t('codeLogin')}
             </Radio.Button>
           </Radio.Group>
         </div>
@@ -231,12 +243,12 @@ export default function LoginPage() {
         <Form name="login" onFinish={onFinish} size="large" layout="vertical">
           <Form.Item
             name="username"
-            label="用户名"
-            rules={[{ required: true, message: '请输入用户名' }]}
+            label={t('username')}
+            rules={[{ required: true, message: t('usernameRequired') }]}
           >
             <Input
               prefix={<UserOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />}
-              placeholder="请输入用户名"
+              placeholder={t('usernamePlaceholder')}
               onChange={(e) => setUsername(e.target.value)}
               style={{ borderRadius: 10, height: 44 }}
               allowClear
@@ -246,26 +258,24 @@ export default function LoginPage() {
           {loginMode === 'password' ? (
             <Form.Item
               name="password"
-              label="密码"
-              rules={[{ required: true, message: '请输入密码' }]}
+              label={t('password')}
+              rules={[{ required: true, message: t('passwordRequired') }]}
             >
               <InputPassword
                 prefix={<LockOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />}
-                placeholder="请输入密码"
+                placeholder={t('passwordPlaceholder')}
                 style={{ borderRadius: 10, height: 44 }}
               />
             </Form.Item>
           ) : (
             <Form.Item
               name="verificationCode"
-              label="验证码"
-              rules={[{ required: true, message: '请输入验证码' }]}
+              label={t('verificationCode')}
+              rules={[{ required: true, message: t('verificationCodeRequired') }]}
             >
               <Input
-                prefix={
-                  <MobileOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />
-                }
-                placeholder="请输入 12 位验证码"
+                prefix={<MobileOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />}
+                placeholder={t('verificationCodePlaceholder')}
                 maxLength={12}
                 style={{ borderRadius: 10, height: 44 }}
                 suffix={
@@ -280,7 +290,7 @@ export default function LoginPage() {
                     }}
                     style={{ padding: 0, minWidth: 'auto' }}
                   >
-                    {countdown > 0 ? `${String(countdown)}s` : '获取验证码'}
+                    {countdown > 0 ? `${String(countdown)}s` : t('getCode')}
                   </Button>
                 }
               />
@@ -295,21 +305,18 @@ export default function LoginPage() {
               block
               size="large"
               icon={<ArrowRightOutlined />}
-              style={{
-                borderRadius: 10,
-                height: 44,
-                fontWeight: 600,
-              }}
+              style={{ borderRadius: 10, height: 44, fontWeight: 600 }}
             >
-              {loginMode === 'password' ? '登录' : '验证码登录'}
+              {loginMode === 'password' ? t('submitPassword') : t('submitCode')}
             </Button>
           </Form.Item>
         </Form>
 
+        {/* 验证码提示 */}
         {loginMode === 'verificationCode' && (
           <div style={{ textAlign: 'center', marginTop: 16 }}>
             <Text type="secondary" style={{ fontSize: 12 }}>
-              验证码将显示在服务器控制台，有效期 5 分钟
+              {t('codeHint')}
             </Text>
           </div>
         )}
@@ -325,7 +332,7 @@ export default function LoginPage() {
           }}
         >
           <Text type="secondary" style={{ fontSize: 12 }}>
-            💡 提示：默认用户名 <code>admin</code>，密码 <code>admin123</code>
+            💡 {t('demoHint')}
           </Text>
         </div>
       </Card>
