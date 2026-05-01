@@ -1,351 +1,296 @@
 'use client';
 
-import { Button, Flexbox, Text } from '@/lib/ui';
+import { Button, Text } from '@/lib/ui';
 import {
   ArrowRightOutlined,
   ApiOutlined,
-  TeamOutlined,
-  LogoutOutlined,
   FolderOutlined,
-  SettingOutlined,
   CloudServerOutlined,
+  CodeOutlined,
+  SafetyOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import { message } from 'antd';
 
-/**
- * 功能卡片数据类型
- */
-interface FeatureCard {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  link: string;
-  color: string;
-}
-
-/**
- * 首页组件
- * 展示应用功能卡片和登录/登出逻辑
- */
 export default function HomePage() {
   const t = useTranslations('common.landing');
   const [isLoading, setIsLoading] = useState(false);
 
-  // 检查登录状态
   const isLoggedIn =
     typeof window !== 'undefined' &&
     !!sessionStorage.getItem('userId');
 
-  /**
-   * 登出处理
-   */
   const handleLogout = useCallback(() => {
     setIsLoading(true);
     try {
       sessionStorage.clear();
       message.success(t('logoutSuccess'));
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      setTimeout(() => window.location.reload(), 500);
     } catch {
       message.error(t('logoutFailed'));
       setIsLoading(false);
     }
   }, [t]);
 
-  /**
-   * 功能卡片数据
-   */
-  const features: FeatureCard[] = [
-    {
-      icon: <FolderOutlined style={{ fontSize: 28 }} />,
-      title: t('workspaceManagement'),
-      description: t('workspaceManagementDesc'),
-      link: '/project',
-      color: 'var(--text-primary)',
-    },
-    {
-      icon: <ApiOutlined style={{ fontSize: 28 }} />,
-      title: t('multiModelSupport'),
-      description: t('multiModelSupportDesc'),
-      link: '/provider',
-      color: 'var(--text-primary)',
-    },
-    {
-      icon: <TeamOutlined style={{ fontSize: 28 }} />,
-      title: t('taskAgent'),
-      description: t('taskAgentDesc'),
-      link: '/agents',
-      color: 'var(--text-primary)',
-    },
-    {
-      icon: <SettingOutlined style={{ fontSize: 28 }} />,
-      title: t('mcpConfig'),
-      description: t('mcpConfigDesc'),
-      link: '/setting/mcp',
-      color: 'var(--text-primary)',
-    },
-    {
-      icon: <CloudServerOutlined style={{ fontSize: 28 }} />,
-      title: t('cloudService'),
-      description: t('cloudServiceDesc'),
-      link: '/cloud',
-      color: 'var(--text-primary)',
-    },
+  const features = [
+    { icon: <FolderOutlined />, title: t('workspaceManagement'), desc: t('workspaceManagementDesc'), link: '/project' },
+    { icon: <CodeOutlined />, title: t('featureAI.title'), desc: t('featureAI.desc'), link: '/project' },
+    { icon: <ApiOutlined />, title: t('multiModelSupport'), desc: t('multiModelSupportDesc'), link: '/provider' },
+    { icon: <ThunderboltOutlined />, title: t('taskAgent'), desc: t('taskAgentDesc'), link: '/project' },
+    { icon: <CloudServerOutlined />, title: t('cloudService'), desc: t('cloudServiceDesc'), link: '/cloud' },
+    { icon: <SafetyOutlined />, title: t('featureModels.title'), desc: t('featureModels.desc'), link: '/provider' },
   ];
 
   return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        position: 'relative',
-        overflow: 'hidden',
-        background: 'var(--bg-primary)',
-      }}
-    >
-      {/* 主内容区 */}
-      <div
+    <div style={{ background: 'var(--bg-primary)' }}>
+      {/* Hero */}
+      <section
         style={{
-          position: 'relative',
-          zIndex: 1,
-          minHeight: '100dvh',
+          padding: '120px 16px 80px',
+          textAlign: 'center',
+          maxWidth: 720,
+          margin: '0 auto',
         }}
       >
-        {/* Hero 区域 */}
-        <div
+        <h1
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '60vh',
-            textAlign: 'center',
-            padding: '48px 16px',
+            fontSize: 'clamp(36px, 6vw, 56px)',
+            fontWeight: 800,
+            color: 'var(--text-primary)',
+            margin: '0 0 16px',
+            letterSpacing: '-1px',
+            lineHeight: 1.1,
           }}
         >
-          <Text
-            strong
-            style={{
-              fontSize: 'clamp(32px, 5vw, 56px)',
-              fontWeight: 700,
-              marginBottom: 16,
-              color: 'var(--text-primary)',
-            }}
-          >
-            AutocodeLLM
-          </Text>
+          AutocodeLLM
+        </h1>
 
-          <Text
-            type="secondary"
-            style={{
-              fontSize: 'clamp(16px, 2.5vw, 20px)',
-              maxWidth: 600,
-              marginBottom: 32,
-              lineHeight: 1.6,
-              color: 'var(--text-secondary)',
-            }}
-          >
-            {t('subtitle')}
-          </Text>
-
-          <Flexbox gap={16} horizontal wrap justify="center">
-            {isLoggedIn ? (
-              <>
-                <Link href="/project">
-                  <Button
-                    type="primary"
-                    size="large"
-                    icon={<FolderOutlined />}
-                    loading={isLoading}
-                  >
-                    {t('enterWorkspace')}
-                  </Button>
-                </Link>
-                
-                <Button
-                  type="text"
-                  size="large"
-                  icon={<LogoutOutlined />}
-                  onClick={handleLogout}
-                  loading={isLoading}
-                >
-                  {t('logout')}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link href="/login">
-                  <Button
-                    type="primary"
-                    size="large"
-                    icon={<ArrowRightOutlined />}
-                  >
-                    {t('startNow')}
-                  </Button>
-                </Link>
-              </>
-            )}
-          </Flexbox>
-        </div>
-
-        {/* 功能卡片区 */}
-        <div
+        <p
           style={{
-            maxWidth: 1200,
-            margin: '0 auto',
-            padding: '48px 16px',
+            fontSize: 'clamp(16px, 2.5vw, 18px)',
+            color: 'var(--text-tertiary)',
+            margin: '0 auto 40px',
+            maxWidth: 520,
+            lineHeight: 1.7,
           }}
         >
-          <Text
-            strong
-            style={{
-              fontSize: 'clamp(20px, 3vw, 28px)',
-              textAlign: 'center',
-              marginBottom: 40,
-              display: 'block',
-              color: 'var(--text-primary)',
-            }}
-          >
-            {t('coreFeatures')}
-          </Text>
+          {t('subtitle')}
+        </p>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: 24,
-            }}
-          >
-            {features.map((feature, index) => (
-              <Link
-                key={String(index)}
-                href={feature.link}
+        {isLoggedIn ? (
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/project">
+              <button
                 style={{
-                  textDecoration: 'none',
+                  height: 48,
+                  padding: '0 28px',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: '#fff',
+                  background: 'var(--text-primary)',
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <FolderOutlined />
+                {t('enterWorkspace')}
+              </button>
+            </Link>
+            <button
+              onClick={handleLogout}
+              disabled={isLoading}
+              style={{
+                height: 48,
+                padding: '0 28px',
+                fontSize: 15,
+                fontWeight: 500,
+                color: 'var(--text-secondary)',
+                background: 'transparent',
+                border: '1px solid var(--border-primary)',
+                borderRadius: 10,
+                cursor: 'pointer',
+              }}
+            >
+              {t('logout')}
+            </button>
+          </div>
+        ) : (
+          <Link href="/login">
+            <button
+              style={{
+                height: 52,
+                padding: '0 36px',
+                fontSize: 16,
+                fontWeight: 600,
+                color: '#fff',
+                background: 'var(--text-primary)',
+                border: 'none',
+                borderRadius: 12,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                transition: 'opacity 0.2s',
+              }}
+            >
+              {t('startNow')}
+              <ArrowRightOutlined style={{ fontSize: 18 }} />
+            </button>
+          </Link>
+        )}
+      </section>
+
+      {/* Features */}
+      <section
+        style={{
+          maxWidth: 960,
+          margin: '0 auto',
+          padding: '0 16px 80px',
+        }}
+      >
+        <h2
+          style={{
+            fontSize: 24,
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            textAlign: 'center',
+            margin: '0 0 48px',
+          }}
+        >
+          {t('coreFeatures')}
+        </h2>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {features.map((f, i) => (
+            <Link
+              key={i}
+              href={f.link}
+              style={{ textDecoration: 'none' }}
+            >
+              <div
+                style={{
+                  padding: '24px 20px',
+                  borderRadius: 10,
+                  border: '1px solid var(--border-primary)',
+                  background: 'var(--bg-primary)',
+                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                  height: '100%',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--text-primary)';
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-primary)';
+                  (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
                 }}
               >
                 <div
                   style={{
-                    padding: 24,
-                    borderRadius: 16,
-                    background: 'var(--color-bg)',
-                    border: '1px solid var(--color-border)',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                    height: '100%',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = feature.color;
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = `0 8px 24px ${feature.color}20`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--color-border)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
+                    width: 40,
+                    height: 40,
+                    borderRadius: 8,
+                    background: 'var(--bg-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 16,
+                    color: 'var(--text-primary)',
+                    fontSize: 20,
                   }}
                 >
-                  <div
-                    style={{
-                      color: feature.color,
-                      marginBottom: 16,
-                      transition: 'transform 0.3s ease',
-                    }}
-                  >
-                    {feature.icon}
-                  </div>
-                  <Text
-                    strong
-                    style={{
-                      fontSize: 18,
-                      display: 'block',
-                      marginBottom: 12,
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    {feature.title}
-                  </Text>
-                  <Text
-                    type="secondary"
-                    style={{
-                      fontSize: 14,
-                      lineHeight: 1.6,
-                      display: 'block',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    {feature.description}
-                  </Text>
+                  {f.icon}
                 </div>
-              </Link>
-            ))}
-          </div>
+                <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 6 }}>
+                  {f.title}
+                </Text>
+                <Text type="secondary" style={{ fontSize: 13, lineHeight: 1.6 }}>
+                  {f.desc}
+                </Text>
+              </div>
+            </Link>
+          ))}
         </div>
+      </section>
 
-        {/* CTA 区域 */}
-        <div
+      {/* CTA */}
+      <section
+        style={{
+          background: 'var(--text-primary)',
+          padding: '80px 16px',
+          textAlign: 'center',
+        }}
+      >
+        <h2
           style={{
-            maxWidth: 600,
-            margin: '0 auto',
-            padding: '64px 16px',
-            textAlign: 'center',
+            fontSize: 24,
+            fontWeight: 700,
+            color: 'var(--bg-primary)',
+            margin: '0 0 12px',
           }}
         >
-          <Text
-            strong
+          {t('cta.title')}
+        </h2>
+        <p
+          style={{
+            fontSize: 15,
+            color: 'var(--bg-secondary)',
+            margin: '0 auto 32px',
+            maxWidth: 400,
+            lineHeight: 1.6,
+            opacity: 0.7,
+          }}
+        >
+          {t('cta.desc')}
+        </p>
+        <Link href="/login">
+          <button
             style={{
-              fontSize: 'clamp(20px, 3vw, 28px)',
-              marginBottom: 16,
-              display: 'block',
+              height: 48,
+              padding: '0 32px',
+              fontSize: 15,
+              fontWeight: 600,
               color: 'var(--text-primary)',
+              background: 'var(--bg-primary)',
+              border: 'none',
+              borderRadius: 10,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
             }}
           >
-            {t('cta.title')}
-          </Text>
-          <Text
-            type="secondary"
-            style={{
-              fontSize: 16,
-              display: 'block',
-              marginBottom: 32,
-              lineHeight: 1.6,
-              color: 'var(--text-secondary)',
-            }}
-          >
-            {t('cta.desc')}
-          </Text>
-          <Link href="/login">
-            <Button
-              type="primary"
-              size="large"
-              icon={<ArrowRightOutlined />}
-              style={{
-                borderRadius: 12,
-                padding: '0 32px',
-                height: 44,
-              }}
-            >
-              {t('cta.loginBtn')}
-            </Button>
-          </Link>
-        </div>
+            {t('cta.loginBtn')}
+            <ArrowRightOutlined />
+          </button>
+        </Link>
+      </section>
 
-        {/* 页脚 */}
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '32px 16px',
-            borderTop: '1px solid var(--color-border)',
-          }}
-        >
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            © 2026 {t('footer')}
-          </Text>
-        </div>
-      </div>
+      {/* Footer */}
+      <footer
+        style={{
+          textAlign: 'center',
+          padding: '32px 16px',
+          borderTop: '1px solid var(--border-primary)',
+        }}
+      >
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          © 2026 {t('footer')}
+        </Text>
+      </footer>
     </div>
   );
 }
