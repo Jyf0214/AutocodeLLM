@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 
-interface WorkspaceBackup {
-  workspaceId: string;
-  workspaceName: string;
+interface ProjectBackup {
+  projectId: string;
+  projectName: string;
   lastBackup: string | null;
   nextBackup: string | null;
   status: 'ok' | 'failed' | 'no_backup';
@@ -12,7 +12,7 @@ interface WorkspaceBackup {
 
 export async function GET() {
   try {
-    const workspaces = await prisma.workspace.findMany({
+    const projects = await prisma.project.findMany({
       select: {
         id: true,
         name: true,
@@ -20,10 +20,10 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    const backups: WorkspaceBackup[] = await Promise.all(
-      workspaces.map(async (ws) => {
+    const backups: ProjectBackup[] = await Promise.all(
+      projects.map(async (ws) => {
         const backupRecords = await prisma.backup.findMany({
-          where: { workspaceId: ws.id },
+          where: { projectId: ws.id },
           orderBy: { createdAt: 'desc' },
         });
 
@@ -31,8 +31,8 @@ export async function GET() {
         const hasFailure = backupRecords.some((b) => b.status === 'failed');
 
         return {
-          workspaceId: ws.id,
-          workspaceName: ws.name,
+          projectId: ws.id,
+          projectName: ws.name,
           lastBackup: latestBackup?.createdAt.toISOString() ?? null,
           nextBackup: null,
           status: latestBackup ? (hasFailure ? 'failed' : 'ok') : 'no_backup',

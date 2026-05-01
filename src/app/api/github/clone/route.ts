@@ -4,7 +4,7 @@ import { cloneRepo, installPlugin, getGitHubAppConfig } from '@/lib/github/app';
 
 /**
  * POST /api/github/clone
- * 克隆 GitHub 仓库到工作区
+ * 克隆 GitHub 仓库到项目
  */
 export async function POST(request: Request) {
   const auth = await requireAuth(request, 'write');
@@ -20,19 +20,19 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as {
     repo: string;
-    workspaceId: string;
+    projectId: string;
     branch?: string;
     isPrivate?: boolean;
   };
 
-  if (!body.repo || !body.workspaceId) {
+  if (!body.repo || !body.projectId) {
     return NextResponse.json(
-      { success: false, error: { message: '缺少 repo 或 workspaceId', code: 'MISSING_PARAMS' } },
+      { success: false, error: { message: '缺少 repo 或 projectId', code: 'MISSING_PARAMS' } },
       { status: 400 },
     );
   }
 
-  const targetDir = `/home/node/.autocodellm/workspaces/${body.workspaceId}`;
+  const targetDir = `/home/node/.autocodellm/projects/${body.projectId}`;
 
   const result = await cloneRepo({
     repo: body.repo,

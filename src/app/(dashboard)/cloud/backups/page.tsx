@@ -7,9 +7,9 @@ import { ReloadOutlined, EyeOutlined, CheckCircleOutlined, CloseCircleOutlined, 
 import { Flexbox, Text, Avatar } from '@/lib/ui';
 import { useRouter } from 'next/navigation';
 
-interface WorkspaceBackup {
-  workspaceId: string;
-  workspaceName: string;
+interface ProjectBackup {
+  projectId: string;
+  projectName: string;
   lastBackup: string | null;
   nextBackup: string | null;
   status: 'ok' | 'failed' | 'no_backup';
@@ -18,14 +18,14 @@ interface WorkspaceBackup {
 
 interface GlobalBackupsResponse {
   success: boolean;
-  data?: WorkspaceBackup[];
+  data?: ProjectBackup[];
   error?: { message: string };
 }
 
 export default function GlobalBackupsPage() {
   const router = useRouter();
   const t = useTranslations('cloud');
-  const [backups, setBackups] = useState<WorkspaceBackup[]>([]);
+  const [backups, setBackups] = useState<ProjectBackup[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchBackups = useCallback(async () => {
@@ -67,9 +67,9 @@ export default function GlobalBackupsPage() {
 
   const columns = [
     {
-      title: t('workspace'),
-      dataIndex: 'workspaceName',
-      key: 'workspaceName',
+      title: t('project'),
+      dataIndex: 'projectName',
+      key: 'projectName',
       render: (name: string) => {
         const nameStr = name;
         return (
@@ -109,13 +109,13 @@ export default function GlobalBackupsPage() {
     {
       title: t('actions'),
       key: 'action',
-      render: (_: unknown, record: WorkspaceBackup) => (
+      render: (_: unknown, record: ProjectBackup) => (
         <Space>
           <Button
             type="link"
             size="small"
             icon={<EyeOutlined />}
-            onClick={() => router.push(`/project/${record.workspaceId}/backups`)}
+            onClick={() => router.push(`/project/${record.projectId}/backups`)}
           >
             {t('viewDetails')}
           </Button>
@@ -158,7 +158,7 @@ export default function GlobalBackupsPage() {
           <Table
             columns={columns}
             dataSource={backups}
-            rowKey="workspaceId"
+            rowKey="projectId"
             pagination={false}
           />
         )}

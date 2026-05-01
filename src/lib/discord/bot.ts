@@ -1,7 +1,7 @@
 /**
  * Discord Bot 全局单例管理
  * 通过 globalThis 管理单实例 Bot 客户端生命周期
- * 支持 /connect 斜杠命令绑定工作区
+ * 支持 /connect 斜杠命令绑定项目
  */
 import {
   Client,
@@ -18,7 +18,7 @@ import { handleConnectCommand } from './commands';
 /** /connect 斜杠命令定义 */
 const connectCommand = new SlashCommandBuilder()
   .setName('connect')
-  .setDescription('绑定你的 Discord 账号到 AutocodeLLM 工作区');
+  .setDescription('绑定你的 Discord 账号到 AutocodeLLM 项目');
 
 /** 全局 Bot 实例存储类型 */
 const globalForDiscord = globalThis as unknown as {

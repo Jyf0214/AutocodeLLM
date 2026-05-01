@@ -18,7 +18,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     const channel = await prisma.channel.findUnique({
       where: { id },
       include: {
-        workspace: { select: { id: true, name: true } },
+        project: { select: { id: true, name: true } },
         _count: { select: { messages: true } },
       },
     });

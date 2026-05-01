@@ -6,31 +6,31 @@ import { LockOutlined } from '@ant-design/icons';
 import { Text } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
 import { message } from 'antd';
-import type { VerifyPasswordResponse } from '@/lib/api/workspace-log-types';
+import type { VerifyPasswordResponse } from '@/lib/api/project-log-types';
 
-interface WorkspacePasswordModalProps {
+interface ProjectPasswordModalProps {
   open: boolean;
-  workspaceId: string;
-  workspaceName: string;
+  projectId: string;
+  projectName: string;
   onVerified: () => void;
   onCancel: () => void;
 }
 
-export default function WorkspacePasswordModal({
+export default function ProjectPasswordModal({
   open,
-  workspaceId,
-  workspaceName,
+  projectId,
+  projectName,
   onVerified,
   onCancel,
-}: WorkspacePasswordModalProps) {
-  const t = useTranslations('workspace');
+}: ProjectPasswordModalProps) {
+  const t = useTranslations('project');
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (values: { password: string }) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/verify`, {
+      const response = await fetch(`/api/projects/${projectId}/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: values.password }),
@@ -83,7 +83,7 @@ export default function WorkspacePasswordModal({
       closable
     >
       <div style={{ marginBottom: 16 }}>
-        <Text type="secondary">{t('workspaceName')}: {workspaceName}</Text>
+        <Text type="secondary">{t('projectName')}: {projectName}</Text>
       </div>
       <Form form={form} onFinish={handleSubmit} layout="vertical">
         <Form.Item

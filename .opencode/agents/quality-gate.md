@@ -274,7 +274,7 @@ Legacy Code Exemption:
 - If a file is marked with `@pre-commit-guardian ignore` (in a comment on the first line), log the exemption but still scan for secrets. Security is non-negotiable.
 
 Monorepo Context:
-- In monorepos, run builds from the correct sub-package root. Detect workspace configurations (`pnpm-workspace.yaml`, `lerna.json`, Cargo workspaces) and validate inter-package dependencies.
+- In monorepos, run builds from the correct sub-package root. Detect 项目 configurations (`pnpm-项目.yaml`, `lerna.json`, Cargo 项目s) and validate inter-package dependencies.
 
 Generated Code:
 - If a file contains `GENERATED CODE - DO NOT EDIT`, reduce syntax strictness but still scan for secrets and malicious injections. Generated code must not contain backdoors.

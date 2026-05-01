@@ -10,15 +10,15 @@
    - 可扩展的设计
 
 2. **Zustand状态管理**
-   - `chatSlice`: 聊天核心（初始化、加载工作区）
+   - `chatSlice`: 聊天核心（初始化、加载项目）
    - `messagesSlice`: 消息管理（CRUD、乐观更新）
    - `agentSlice`: Agent调度（运行、取消、状态管理）
    - `inputSlice`: 输入状态（文本、附件）
    - `uiSlice`: UI状态（面板开关、滚动、错误对话框）
 
 3. **补充的API路由**
-   - `GET /api/workspaces/[id]` - 获取单个工作区
-   - `PUT /api/workspaces/[id]` - 更新工作区
+   - `GET /api/projects/[id]` - 获取单个项目
+   - `PUT /api/projects/[id]` - 更新项目
 
 4. **核心UI组件**
    - `ChatLayout`: 三栏布局（Header/Messages/Input）
@@ -32,21 +32,21 @@
 
 6. **页面路由**
    - `/chat` - 聊天列表页
-   - `/chat/[workspaceId]` - 聊天详情页
+   - `/chat/[项目Id]` - 聊天详情页
 
 ## 🚀 如何使用
 
 ### 访问聊天系统
 
-1. **从工作区列表跳转**
+1. **从项目列表跳转**
    ```typescript
    // 在workplace页面添加链接
-   router.push(`/chat/${workspaceId}`);
+   router.push(`/chat/${项目Id}`);
    ```
 
 2. **直接访问**
    ```
-   http://localhost:3000/chat/{workspaceId}
+   http://localhost:3000/chat/{项目Id}
    ```
 
 ### 基本功能

@@ -23,7 +23,7 @@
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | id | String (@id) | 主键 |
-| workspaceId | String | 关联工作区 |
+| 项目Id | String | 关联工作区 |
 | name | String | 频道显示名称 |
 | discordGuildId | String | Discord 服务器 ID |
 | discordChannelId | String | Discord 频道 ID（唯一） |

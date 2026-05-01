@@ -27,6 +27,13 @@ export async function GET(request: Request) {
     const githubUser = await getGitHubUser(token);
     const result = await loginWithGitHub(githubUser);
 
+    // 如果需要绑定已有账户
+    if (result.needsBinding) {
+      return NextResponse.redirect(
+        new URL(`/login?binding=github&githubId=${result.githubId}`, request.url),
+      );
+    }
+
     const response = NextResponse.redirect(new URL('/project', request.url));
 
     response.cookies.set('userId', result.userId, {

@@ -15,7 +15,7 @@
 1. **双重聊天实现**: `[id]/page.tsx`（简易版）和 `conversation/`（完整版276个文件）功能重叠但互不通信
 2. **状态管理混乱**: 三层不同策略（useState / Zustand slices / 全局store）
 3. **Conversation未启用**: 完整的LobeChat移植聊天引擎未被任何页面使用
-4. **缺失API路由**: PUT `/api/workspaces/[id]` 被调用但不存在
+4. **缺失API路由**: PUT `/api/projects/[id]` 被调用但不存在
 5. **代码重复严重**: 模型选择器、错误处理、API调用到处复制
 
 ### 1.2 设计目标
@@ -37,7 +37,7 @@
 ```
 src/app/chat/                          # 全新聊天模块
 ├── page.tsx                           # 聊天列表页
-└── [workspaceId]/
+└── [项目Id]/
     ├── page.tsx                       # 统一聊天页面（入口）
     ├── components/                    # 页面级组件
     │   ├── ChatHeader.tsx             # 顶部栏（返回、标题、模型选择）
@@ -59,7 +59,7 @@ src/app/chat/                          # 全新聊天模块
     │   │   ├── AgentCard.tsx          # 单个Agent卡片
     │   │   ├── GroupOrchestrator.tsx  # 编排器可视化
     │   │   └── SupervisorView.tsx     # 监督者视图
-    │   └── WorkspaceInfo/             # 工作区信息
+    │   └── 项目Info/             # 项目信息
     │       └── index.tsx
     ├── store/                         # Zustand Store（统一状态）
     │   ├── index.ts                   # Store创建+导出
@@ -127,8 +127,8 @@ src/app/chat/                          # 全新聊天模块
                     ↓
 ┌─────────────────────────────────────────┐
 │       API层 (Route Handlers)             │
-│   - GET/PUT /api/workspaces/[id]        │
-│   - POST /api/chats/[workspaceId]       │
+│   - GET/PUT /api/projects/[id]        │
+│   - POST /api/chats/[项目Id]       │
 │   - Agent Runtime API                   │
 └─────────────────────────────────────────┘
 ```
@@ -142,8 +142,8 @@ src/app/chat/                          # 全新聊天模块
 ```typescript
 interface ChatStoreState {
   // === 聊天核心 ===
-  workspaceId: string;
-  workspace: WorkspaceInfo | null;
+  项目Id: string;
+  项目: 项目Info | null;
   messages: ChatMessage[];
   isLoading: boolean;
   error: ChatError | null;
@@ -187,13 +187,13 @@ interface ChatStoreState {
 ```typescript
 interface ChatSlice {
   // Actions
-  initializeChat: (workspaceId: string) => Promise<void>;
-  loadWorkspace: () => Promise<void>;
+  initializeChat: (项目Id: string) => Promise<void>;
+  load项目: () => Promise<void>;
   clearChat: () => void;
   
   // State
-  workspaceId: string;
-  workspace: WorkspaceInfo | null;
+  项目Id: string;
+  项目: 项目Info | null;
   isLoading: boolean;
   error: ChatError | null;
 }
@@ -297,7 +297,7 @@ const handleSend = async (content: string) => {
   await runSingleAgent({
     message: content,
     model: selectedModel,
-    workspaceId,
+    项目Id,
   });
   
   // 4. Agent通过StreamingHandler流式返回结果
@@ -325,7 +325,7 @@ const handleSend = async (content: string) => {
 ```
 ┌─────────────────────────────────────┐
 │         ChatHeader                   │
-│  ← 返回 | 工作区名称 | 模型选择 ▼    │
+│  ← 返回 | 项目名称 | 模型选择 ▼    │
 ├─────────────────────────────────────┤
 │                                     │
 │         MessageList                  │
@@ -375,14 +375,14 @@ const handleSend = async (content: string) => {
 
 | 方法 | 路径 | 状态 | 说明 |
 |------|------|------|------|
-| GET | `/api/workspaces` | ✅ 存在 | 获取工作区列表 |
-| GET | `/api/workspaces/[id]` | ❌ 新增 | 获取单个工作区 |
-| POST | `/api/workspaces` | ✅ 存在 | 创建工作区 |
-| PUT | `/api/workspaces/[id]` | ❌ 新增 | 更新工作区 |
-| DELETE | `/api/workspaces/[id]` | ✅ 存在 | 删除工作区 |
-| POST | `/api/chats/[workspaceId]` | ❌ 新增 | 发送聊天消息 |
-| GET | `/api/chats/[workspaceId]` | ❌ 新增 | 获取聊天历史 |
-| DELETE | `/api/chats/[workspaceId]/[msgId]` | ❌ 新增 | 删除消息 |
+| GET | `/api/projects` | ✅ 存在 | 获取项目列表 |
+| GET | `/api/projects/[id]` | ❌ 新增 | 获取单个项目 |
+| POST | `/api/projects` | ✅ 存在 | 创建项目 |
+| PUT | `/api/projects/[id]` | ❌ 新增 | 更新项目 |
+| DELETE | `/api/projects/[id]` | ✅ 存在 | 删除项目 |
+| POST | `/api/chats/[项目Id]` | ❌ 新增 | 发送聊天消息 |
+| GET | `/api/chats/[项目Id]` | ❌ 新增 | 获取聊天历史 |
+| DELETE | `/api/chats/[项目Id]/[msgId]` | ❌ 新增 | 删除消息 |
 
 ### 6.2 API响应格式
 
@@ -413,8 +413,8 @@ const handleSend = async (content: string) => {
 ### 阶段1：基础设施（1-2天）
 - [ ] 创建 `src/app/chat/` 目录结构
 - [ ] 实现基础Zustand Store + 所有Slices
-- [ ] 新增 `GET /api/workspaces/[id]` 路由
-- [ ] 新增 `PUT /api/workspaces/[id]` 路由
+- [ ] 新增 `GET /api/projects/[id]` 路由
+- [ ] 新增 `PUT /api/projects/[id]` 路由
 
 ### 阶段2：核心UI（2-3天）
 - [ ] 实现 `ChatLayout` 布局组件
@@ -490,9 +490,9 @@ const handleSend = async (content: string) => {
 
 ### 从旧workplace迁移
 
-1. **用户路由**: 添加从 `/workplace/[id]` 到 `/chat/[workspaceId]` 的重定向
-2. **数据兼容**: 保持workspace数据模型不变
-3. **API向后**: 保留旧的 `/api/workspaces/[id]/chat` 路由（标记废弃）
+1. **用户路由**: 添加从 `/workplace/[id]` 到 `/chat/[项目Id]` 的重定向
+2. **数据兼容**: 保持项目数据模型不变
+3. **API向后**: 保留旧的 `/api/projects/[id]/chat` 路由（标记废弃）
 4. **功能对等**: 确保新系统覆盖旧系统所有功能
 
 ### 废弃文件清单

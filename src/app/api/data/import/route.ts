@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 
 interface ImportData {
-  workspaces?: Array<{
+  projects?: Array<{
     id?: string;
     name: string;
     description?: string;
@@ -63,30 +63,30 @@ export async function POST(request: Request) {
 
   const { data } = body;
 
-  // 导入工作区
-  if (data.workspaces?.length) {
+  // 导入项目
+  if (data.projects?.length) {
     if (mode === 'overwrite') {
-      await prisma.workspace.deleteMany();
-      progress.push('已清除现有工作区');
+      await prisma.project.deleteMany();
+      progress.push('已清除现有项目');
     }
-    for (const ws of data.workspaces) {
+    for (const ws of data.projects) {
       try {
         if (mode === 'merge' && ws.id) {
-          await prisma.workspace.upsert({
+          await prisma.project.upsert({
             where: { id: ws.id },
             update: { name: ws.name, description: ws.description || '' },
             create: { name: ws.name, description: ws.description || '' },
           });
         } else {
-          await prisma.workspace.create({
+          await prisma.project.create({
             data: { name: ws.name, description: ws.description || '' },
           });
         }
         imported++;
-        progress.push(`工作区 "${ws.name}" 导入成功`);
+        progress.push(`项目 "${ws.name}" 导入成功`);
       } catch (err) {
         failed++;
-        progress.push(`工作区 "${ws.name}" 导入失败: ${err instanceof Error ? err.message : '未知错误'}`);
+        progress.push(`项目 "${ws.name}" 导入失败: ${err instanceof Error ? err.message : '未知错误'}`);
       }
     }
   }

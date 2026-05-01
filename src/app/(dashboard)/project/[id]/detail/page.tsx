@@ -7,58 +7,44 @@ import { ReloadOutlined, CopyOutlined } from '@ant-design/icons';
 import { Flexbox, Text } from '@/lib/ui';
 import { useParams } from 'next/navigation';
 import { message } from 'antd';
+import type { ProjectDetail, ProjectResponse } from '@/lib/api/project-types';
 
-interface WorkspaceDetail {
-  id: string;
-  name: string;
-  description: string | null;
-  accessPassword: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface WorkspaceResponse {
-  success: boolean;
-  data?: WorkspaceDetail;
-  error?: { message: string };
-}
-
-export default function WorkplaceDetailPage() {
+export default function ProjectDetailPage() {
   const params = useParams();
-  const workspaceId = params.id as string;
+  const projectId = params.id as string;
   const t = useTranslations();
-  const [workspace, setWorkspace] = useState<WorkspaceDetail | null>(null);
+  const [project, setProject] = useState<ProjectDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchDetail = useCallback(async () => {
-    if (!workspaceId) return;
+    if (!projectId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/workspaces/${workspaceId}`);
-      const data: WorkspaceResponse = await res.json();
+      const res = await fetch(`/api/projects/${projectId}`);
+      const data: ProjectResponse = await res.json();
       if (data.success && data.data) {
-        setWorkspace(data.data);
+        setProject(data.data as ProjectDetail);
       } else {
-        setError(data.error?.message ?? '获取工作区详情失败');
+        setError(data.error?.message ?? '获取项目详情失败');
       }
     } catch {
       setError('网络错误');
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [projectId]);
 
   useEffect(() => {
-    if (workspaceId) {
+    if (projectId) {
       fetchDetail();
     }
-  }, [workspaceId, fetchDetail]);
+  }, [projectId, fetchDetail]);
 
   const copyId = () => {
-    if (workspace?.id) {
-      navigator.clipboard.writeText(workspace.id);
+    if (project?.id) {
+      navigator.clipboard.writeText(project.id);
       message.success('ID 已复制');
     }
   };
@@ -71,12 +57,12 @@ export default function WorkplaceDetailPage() {
     );
   }
 
-  if (error || !workspace) {
+  if (error || !project) {
     return (
       <Flexbox align="center" justify="center" style={{ minHeight: '50vh', padding: 16 }}>
         <Card>
           <Flexbox gap={16} style={{ flexDirection: 'column' }}>
-            <Text type="danger">{error ?? '工作区不存在'}</Text>
+            <Text type="danger">{error ?? '项目不存在'}</Text>
             <Button icon={<ReloadOutlined />} onClick={fetchDetail}>
               {t('retry') || '重试'}
             </Button>
@@ -93,14 +79,14 @@ export default function WorkplaceDetailPage() {
   return (
     <Flexbox gap={16} style={{ flexDirection: 'column', padding: '0 16px' }}>
       <Text style={{ fontSize: 20, fontWeight: 700 }}>
-        {workspace.name}
+        {project.name}
       </Text>
 
       <Card>
         <Descriptions column={1} bordered size="small">
           <Descriptions.Item label="ID">
             <Space>
-              <Text style={{ fontFamily: 'monospace' }}>{workspace.id}</Text>
+              <Text style={{ fontFamily: 'monospace' }}>{project.id}</Text>
               <Button
                 type="text"
                 size="small"
@@ -110,18 +96,18 @@ export default function WorkplaceDetailPage() {
             </Space>
           </Descriptions.Item>
           <Descriptions.Item label={t('description') || '描述'}>
-            {workspace.description ?? '-'}
+            {project.description ?? '-'}
           </Descriptions.Item>
           <Descriptions.Item label={t('accessPassword') || '访问密码'}>
-            <Tag color={workspace.accessPassword ? 'green' : 'default'}>
-              {workspace.accessPassword ? t('enabled') || '已启用' : t('disabled') || '未启用'}
+            <Tag color={project.accessPassword ? 'green' : 'default'}>
+              {project.accessPassword ? t('enabled') || '已启用' : t('disabled') || '未启用'}
             </Tag>
           </Descriptions.Item>
           <Descriptions.Item label={t('createdAt') || '创建时间'}>
-            {formatDate(workspace.createdAt)}
+            {formatDate(project.createdAt)}
           </Descriptions.Item>
           <Descriptions.Item label={t('updatedAt') || '更新时间'}>
-            {formatDate(workspace.updatedAt)}
+            {formatDate(project.updatedAt)}
           </Descriptions.Item>
         </Descriptions>
       </Card>

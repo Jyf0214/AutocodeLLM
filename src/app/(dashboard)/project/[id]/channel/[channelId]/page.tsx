@@ -23,7 +23,7 @@ export default function ChannelChatPage() {
   const t = useTranslations('common');
   const router = useRouter();
   const resolvedParams = useParams();
-  const workspaceId = resolvedParams.id as string;
+  const projectId = resolvedParams.id as string;
   const channelId = resolvedParams.channelId as string;
 
   const [channel, setChannel] = useState<ChannelDetailData | null>(null);
@@ -86,7 +86,7 @@ export default function ChannelChatPage() {
             <Flexbox gap={12} horizontal justify="center">
               <Button
                 icon={<ArrowLeftOutlined />}
-                onClick={() => router.push(`/project/${workspaceId}/channel`)}
+                onClick={() => router.push(`/project/${projectId}/channel`)}
               >
                 {t('workplace.back')}
               </Button>
@@ -115,7 +115,7 @@ export default function ChannelChatPage() {
             <Button
               type="text"
               icon={<ArrowLeftOutlined />}
-              onClick={() => router.push(`/project/${workspaceId}/channel`)}
+              onClick={() => router.push(`/project/${projectId}/channel`)}
             >
               {t('workplace.back')}
             </Button>

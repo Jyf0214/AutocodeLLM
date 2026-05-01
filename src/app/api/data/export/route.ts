@@ -11,15 +11,15 @@ export async function GET(request: Request) {
   if (auth.error) return auth.error;
 
   const { searchParams } = new URL(request.url);
-  const scope = searchParams.get('scope') || 'all'; // all, workspaces, providers, settings
+  const scope = searchParams.get('scope') || 'all'; // all, projects, providers, settings
 
   const data: Record<string, unknown> = {
     exportedAt: new Date().toISOString(),
     version: '1.0',
   };
 
-  if (scope === 'all' || scope === 'workspaces') {
-    data.workspaces = await prisma.workspace.findMany({
+  if (scope === 'all' || scope === 'projects') {
+    data.projects = await prisma.project.findMany({
       select: { id: true, name: true, description: true, createdAt: true, updatedAt: true },
     });
   }

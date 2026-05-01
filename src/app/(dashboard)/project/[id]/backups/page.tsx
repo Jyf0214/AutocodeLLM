@@ -23,18 +23,18 @@ interface BackupResponse {
   error?: { message: string };
 }
 
-export default function WorkplaceBackupsPage() {
+export default function ProjectBackupsPage() {
   const params = useParams();
-  const workspaceId = params.id as string;
+  const projectId = params.id as string;
   const t = useTranslations('cloud');
   const [backup, setBackup] = useState<BackupInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchBackup = useCallback(async () => {
-    if (!workspaceId) return;
+    if (!projectId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/workspaces/${workspaceId}/backups`);
+      const res = await fetch(`/api/projects/${projectId}/backups`);
       const data: BackupResponse = await res.json();
       if (data.success && data.data) {
         setBackup(data.data);
@@ -44,7 +44,7 @@ export default function WorkplaceBackupsPage() {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [projectId]);
 
   useEffect(() => {
     fetchBackup();

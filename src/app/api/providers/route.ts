@@ -14,7 +14,6 @@ import {
   handleError,
   maskValue,
 } from '@/lib/api/response';
-import { encryptValue } from '@/lib/providers/qwen-oauth';
 import { PRESET_PROVIDERS } from '@/lib/providers';
 import type {
   ProviderResponse,

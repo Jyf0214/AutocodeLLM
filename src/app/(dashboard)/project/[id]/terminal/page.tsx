@@ -12,9 +12,9 @@ interface WsConfig {
   error?: { message: string };
 }
 
-export default function WorkplaceTerminalPage() {
+export default function ProjectTerminalPage() {
   const params = useParams();
-  const workspaceId = params.id as string;
+  const projectId = params.id as string;
   const [wsUrl, setWsUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,15 +33,15 @@ export default function WorkplaceTerminalPage() {
       }
     }
 
-    if (workspaceId) {
+    if (projectId) {
       fetchWsUrl();
     }
-  }, [workspaceId]);
+  }, [projectId]);
 
-  if (!workspaceId) {
+  if (!projectId) {
     return (
       <Flexbox align="center" justify="center" style={{ minHeight: '50vh' }}>
-        <Text>{'工作区 ID 不存在'}</Text>
+        <Text>{'项目 ID 不存在'}</Text>
       </Flexbox>
     );
   }
@@ -68,7 +68,7 @@ export default function WorkplaceTerminalPage() {
 
   return (
     <div style={{ height: 'calc(100vh - 120px)', padding: '0 16px' }}>
-      <TerminalPanel workspaceId={workspaceId} wsUrl={wsUrl} />
+      <TerminalPanel projectId={projectId} wsUrl={wsUrl} />
     </div>
   );
 }

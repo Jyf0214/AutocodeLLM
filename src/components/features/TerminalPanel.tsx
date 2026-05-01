@@ -8,7 +8,7 @@ import { PoweroffOutlined, ReloadOutlined } from '@ant-design/icons';
 import 'xterm/css/xterm.css';
 
 interface TerminalPanelProps {
-  workspaceId: string;
+  projectId: string;
   wsUrl: string;
 }
 
@@ -17,15 +17,15 @@ const RECONNECT_BASE_DELAY = 1000;
 
 /**
  * 构建终端 WebSocket 连接地址
- * 将 wsUrl 基础地址与 workspaceId 参数拼接
+ * 将 wsUrl 基础地址与 projectId 参数拼接
  */
-function buildWebSocketUrl(wsUrl: string, workspaceId: string): string {
+function buildWebSocketUrl(wsUrl: string, projectId: string): string {
   const url = new URL(wsUrl);
-  url.searchParams.set('workspaceId', workspaceId);
+  url.searchParams.set('projectId', projectId);
   return url.toString();
 }
 
-export default function TerminalPanel({ workspaceId, wsUrl }: TerminalPanelProps) {
+export default function TerminalPanel({ projectId, wsUrl }: TerminalPanelProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -109,7 +109,7 @@ export default function TerminalPanel({ workspaceId, wsUrl }: TerminalPanelProps
     term.clear();
     term.writeln('\x1b[33m正在连接终端...\x1b[0m');
 
-    const fullWsUrl = buildWebSocketUrl(wsUrl, workspaceId);
+    const fullWsUrl = buildWebSocketUrl(wsUrl, projectId);
     const ws = new WebSocket(fullWsUrl);
     wsRef.current = ws;
 
@@ -188,7 +188,7 @@ export default function TerminalPanel({ workspaceId, wsUrl }: TerminalPanelProps
     return () => {
       resizeObserver.disconnect();
     };
-  }, [wsUrl, workspaceId, cleanup]);
+  }, [wsUrl, projectId, cleanup]);
 
   useEffect(() => {
     connectRef.current = connectTerminal;
@@ -232,7 +232,7 @@ export default function TerminalPanel({ workspaceId, wsUrl }: TerminalPanelProps
             {connected ? '🟢 已连接' : connecting ? '🟡 连接中...' : '🔴 已断开'}
           </Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            工作区: {workspaceId}
+             项目: {projectId}
           </Text>
         </Flexbox>
         <Flexbox horizontal gap={8}>

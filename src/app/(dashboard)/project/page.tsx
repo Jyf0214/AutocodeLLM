@@ -16,20 +16,20 @@ import {
   SearchOutlined,
   MoreOutlined,
 } from '@ant-design/icons';
-import type { WorkspaceListItem } from '@/lib/api/workspace-types';
+import type { ProjectListItem } from '@/lib/api/project-types';
 import { Input } from 'antd';
 
-interface WorkspaceCardProps {
-  workspace: WorkspaceListItem;
+interface ProjectCardProps {
+  project: ProjectListItem;
   onClick: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-function WorkspaceCard({ workspace, onClick, onEdit, onDelete }: WorkspaceCardProps) {
-  const t = useTranslations('workplace');
+function ProjectCard({ project, onClick, onEdit, onDelete }: ProjectCardProps) {
+  const t = useTranslations('project');
   const [hovered, setHovered] = useState(false);
-  const date = new Date(workspace.createdAt);
+  const date = new Date(project.createdAt);
   const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
   const menuItems = [
@@ -89,7 +89,7 @@ function WorkspaceCard({ workspace, onClick, onEdit, onDelete }: WorkspaceCardPr
                 whiteSpace: 'nowrap',
               }}
             >
-              {workspace.name}
+              {project.name}
             </Text>
             <Dropdown
               menu={{
@@ -136,10 +136,10 @@ function WorkspaceCard({ workspace, onClick, onEdit, onDelete }: WorkspaceCardPr
               fontSize: 13,
               display: 'block',
               marginTop: 4,
-              fontStyle: workspace.description ? 'normal' : 'italic',
+              fontStyle: project.description ? 'normal' : 'italic',
             }}
           >
-            {workspace.description || t('noDescription')}
+            {project.description || t('noDescription')}
           </Text>
         </div>
       </div>
@@ -180,19 +180,19 @@ function WorkspaceCard({ workspace, onClick, onEdit, onDelete }: WorkspaceCardPr
 
 export default function ProjectPage() {
   const router = useRouter();
-  const t = useTranslations('workplace');
-  const [workspaces, setWorkspaces] = useState<WorkspaceListItem[]>([]);
+  const t = useTranslations('project');
+  const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [editModal, setEditModal] = useState<{ open: boolean; workspace?: WorkspaceListItem }>({ open: false });
+  const [editModal, setEditModal] = useState<{ open: boolean; project?: ProjectListItem }>({ open: false });
   const [createModal, setCreateModal] = useState(false);
   const [form] = Form.useForm();
 
-  const fetchWorkspaces = useCallback(async () => {
+  const fetchProjects = useCallback(async () => {
     try {
-      const res = await fetch('/api/workspaces');
+      const res = await fetch('/api/projects');
       const data = await res.json();
-      if (data.success) setWorkspaces(data.data || []);
+      if (data.success) setProjects(data.data || []);
     } catch {
       message.error(t('fetchFailed'));
     } finally {
@@ -201,19 +201,19 @@ export default function ProjectPage() {
   }, [t]);
 
   useEffect(() => {
-    fetchWorkspaces();
-  }, [fetchWorkspaces]);
+    fetchProjects();
+  }, [fetchProjects]);
 
   const filtered = useMemo(() => {
-    if (!search) return workspaces;
+    if (!search) return projects;
     const q = search.toLowerCase();
-    return workspaces.filter((w) => w.name.toLowerCase().includes(q));
-  }, [workspaces, search]);
+    return projects.filter((w) => w.name.toLowerCase().includes(q));
+  }, [projects, search]);
 
   const handleCreate = useCallback(async () => {
     try {
       const values = await form.validateFields();
-      const res = await fetch('/api/workspaces', {
+      const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
@@ -223,23 +223,23 @@ export default function ProjectPage() {
         message.success(t('createSuccess'));
         setCreateModal(false);
         form.resetFields();
-        fetchWorkspaces();
+        fetchProjects();
       } else {
         message.error(data.error?.message || t('createFailed'));
       }
     } catch {
       // form validation error
     }
-  }, [form, t, fetchWorkspaces]);
+  }, [form, t, fetchProjects]);
 
   const handleDelete = useCallback(
     async (id: string) => {
       try {
-        const res = await fetch(`/api/workspaces/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) {
           message.success(t('deleteSuccess'));
-          fetchWorkspaces();
+          fetchProjects();
         } else {
           message.error(data.error?.message || t('deleteFailed'));
         }
@@ -247,13 +247,13 @@ export default function ProjectPage() {
         message.error(t('deleteFailed'));
       }
     },
-    [t, fetchWorkspaces],
+    [t, fetchProjects],
   );
 
   return (
     <PageContainer
       title={t('title')}
-      subtitle={workspaces.length > 0 ? t('workspaceCount', { count: String(workspaces.length) }) : t('startByCreating')}
+      subtitle={projects.length > 0 ? t('projectCount', { count: String(projects.length) }) : t('startByCreating')}
       extra={
         <Button icon={<PlusOutlined />} onClick={() => setCreateModal(true)}>
           {t('new')}
@@ -295,31 +295,31 @@ export default function ProjectPage() {
           <FolderOutlined style={{ fontSize: 40, marginBottom: 12, display: 'block' }} />
           <Text type="secondary">{search ? t('noMatchFound') : t('empty')}</Text>
         </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {filtered.map((ws) => (
-            <WorkspaceCard
-              key={ws.id}
-              workspace={ws}
-              onClick={() => router.push(`/project/${ws.id}`)}
-              onEdit={() => {
-                setEditModal({ open: true, workspace: ws });
-                form.setFieldsValue(ws);
-              }}
-              onDelete={() => {
-                Modal.confirm({
-                  title: t('confirmDelete'),
-                  content: t('deleteWorkspaceConfirm', { name: ws.name }),
-                  okText: t('delete'),
-                  cancelText: t('cancel'),
-                  okButtonProps: { danger: true },
-                  onOk: () => handleDelete(ws.id),
-                });
-              }}
-            />
-          ))}
-        </div>
-      )}
+       ) : (
+         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+           {filtered.map((proj) => (
+             <ProjectCard
+               key={proj.id}
+               project={proj}
+               onClick={() => router.push(`/project/${proj.id}`)}
+               onEdit={() => {
+                 setEditModal({ open: true, project: proj });
+                 form.setFieldsValue(proj);
+               }}
+               onDelete={() => {
+                 Modal.confirm({
+                   title: t('confirmDelete'),
+                   content: t('deleteProjectConfirm', { name: proj.name }),
+                   okText: t('delete'),
+                   cancelText: t('cancel'),
+                   okButtonProps: { danger: true },
+                   onOk: () => handleDelete(proj.id),
+                 });
+               }}
+             />
+           ))}
+         </div>
+       )}
 
       {/* 创建弹窗 */}
       <Modal
@@ -336,25 +336,25 @@ export default function ProjectPage() {
         <Form form={form} layout="vertical">
           <Form.Item
             name="name"
-            label={t('workspaceName')}
-            rules={[{ required: true, message: t('workspaceNameRequired') }]}
+            label={t('projectName')}
+            rules={[{ required: true, message: t('projectNameRequired') }]}
           >
-            <Input placeholder={t('workspaceNamePlaceholder')} />
+            <Input placeholder={t('projectNamePlaceholder')} />
           </Form.Item>
-          <Form.Item name="description" label={t('workspaceDescription')}>
-            <Input.TextArea rows={3} placeholder={t('workspaceDescriptionPlaceholder')} />
+          <Form.Item name="description" label={t('projectDescription')}>
+            <Input.TextArea rows={3} placeholder={t('projectDescriptionPlaceholder')} />
           </Form.Item>
         </Form>
       </Modal>
 
       {/* 编辑弹窗 */}
       <Modal
-        title={t('editWorkspace')}
+        title={t('editProject')}
         open={editModal.open}
         onOk={async () => {
           try {
             const values = await form.validateFields();
-            const res = await fetch(`/api/workspaces/${editModal.workspace?.id}`, {
+            const res = await fetch(`/api/projects/${editModal.project?.id}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(values),
@@ -364,7 +364,7 @@ export default function ProjectPage() {
               message.success(t('updateSuccess'));
               setEditModal({ open: false });
               form.resetFields();
-              fetchWorkspaces();
+              fetchProjects();
             } else {
               message.error(data.error?.message || t('updateFailed'));
             }
@@ -382,13 +382,13 @@ export default function ProjectPage() {
         <Form form={form} layout="vertical">
           <Form.Item
             name="name"
-            label={t('workspaceName')}
-            rules={[{ required: true, message: t('workspaceNameRequired') }]}
+            label={t('projectName')}
+            rules={[{ required: true, message: t('projectNameRequired') }]}
           >
-            <Input placeholder={t('workspaceNamePlaceholder')} />
+            <Input placeholder={t('projectNamePlaceholder')} />
           </Form.Item>
-          <Form.Item name="description" label={t('workspaceDescription')}>
-            <Input.TextArea rows={3} placeholder={t('workspaceDescriptionPlaceholder')} />
+          <Form.Item name="description" label={t('projectDescription')}>
+            <Input.TextArea rows={3} placeholder={t('projectDescriptionPlaceholder')} />
           </Form.Item>
         </Form>
       </Modal>

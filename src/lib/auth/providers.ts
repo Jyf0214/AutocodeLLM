@@ -74,19 +74,36 @@ export interface ClerkWebhookPayload {
 /**
  * Clerk Webhook 处理
  * 当 Clerk 用户创建/更新/删除时同步到本地数据库
+ * 如果 Clerk 未启用，直接返回不做处理
  */
 export async function handleClerkWebhook(payload: ClerkWebhookPayload): Promise<void> {
+  // 如果 Clerk 未启用，直接返回
+  const { isClerkEnabled } = await import('./clerk-config');
+  if (!isClerkEnabled()) {
+    console.log('[Clerk] Clerk 未启用，跳过 Webhook 处理');
+    return;
+  }
+
   const { prisma } = await import('@/lib/db/prisma');
   const { randomBytes, createHash } = await import('node:crypto');
 
   const { type, data } = payload;
   const email = data.email_addresses?.[0]?.email_address || '';
   const username = data.username || email.split('@')[0] || data.id;
-  const displayName = [data.first_name, data.last_name].filter(Boolean).join(' ') || username;
 
   try {
     switch (type) {
       case 'user.created': {
+        // 检查是否已存在相同 clerkId 的用户
+        const existingByClerkId = await prisma.user.findFirst({
+          where: { clerkId: data.id },
+        });
+
+        if (existingByClerkId) {
+          console.log('[Clerk] 用户已存在 (clerkId):', username, data.id);
+          return;
+        }
+
         // 为新用户生成随机密码（Clerk 用户不通过本地密码登录）
         const salt = randomBytes(16).toString('hex');
         const placeholderHash = createHash('sha256')
@@ -101,6 +118,7 @@ export async function handleClerkWebhook(payload: ClerkWebhookPayload): Promise<
             role: 'user',
             forceChangePassword: false,
             isInitialPassword: false,
+            clerkId: data.id,
           },
         });
         console.log('[Clerk] 用户已创建:', username, data.id);
@@ -108,24 +126,35 @@ export async function handleClerkWebhook(payload: ClerkWebhookPayload): Promise<
       }
 
       case 'user.updated': {
-        const existing = await prisma.user.findUnique({ where: { id: data.id } });
+        // 首先通过 clerkId 查找
+        const existing = await prisma.user.findFirst({
+          where: { clerkId: data.id },
+        });
+
         if (existing) {
           await prisma.user.update({
-            where: { id: data.id },
+            where: { id: existing.id },
             data: { username },
           });
           console.log('[Clerk] 用户已更新:', username, data.id);
         } else {
-          console.warn('[Clerk] 用户不存在，无法更新:', data.id);
+          console.warn('[Clerk] 用户不存在 (clerkId):', data.id);
         }
         break;
       }
 
       case 'user.deleted': {
-        await prisma.user.delete({ where: { id: data.id } }).catch(() => {
-          console.warn('[Clerk] 用户不存在，跳过删除:', data.id);
+        // 通过 clerkId 查找并删除
+        const existing = await prisma.user.findFirst({
+          where: { clerkId: data.id },
         });
-        console.log('[Clerk] 用户已删除:', data.id);
+
+        if (existing) {
+          await prisma.user.delete({ where: { id: existing.id } });
+          console.log('[Clerk] 用户已删除:', data.id);
+        } else {
+          console.warn('[Clerk] 用户不存在，跳过删除:', data.id);
+        }
         break;
       }
     }

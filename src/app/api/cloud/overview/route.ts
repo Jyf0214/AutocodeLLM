@@ -9,16 +9,16 @@ interface SyncStatus {
   remotePath: string;
 }
 
-interface WorkspaceBackupStatus {
-  workspaceId: string;
-  workspaceName: string;
+interface ProjectBackupStatus {
+  projectId: string;
+  projectName: string;
   lastBackup: string | null;
   status: 'ok' | 'failed' | 'no_backup';
 }
 
 interface CloudOverview {
   sync: SyncStatus | null;
-  workspaceBackups: WorkspaceBackupStatus[];
+  projectBackups: ProjectBackupStatus[];
 }
 
 export async function GET() {
@@ -31,7 +31,7 @@ export async function GET() {
       remotePath: config?.remotePath ?? '',
     };
 
-    const workspaces = await prisma.workspace.findMany({
+    const projects = await prisma.project.findMany({
       select: {
         id: true,
         name: true,
@@ -39,16 +39,16 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    const workspaceBackups: WorkspaceBackupStatus[] = await Promise.all(
-      workspaces.map(async (ws) => {
+    const projectBackups: ProjectBackupStatus[] = await Promise.all(
+      projects.map(async (ws) => {
         const latestBackup = await prisma.backup.findFirst({
-          where: { workspaceId: ws.id },
+          where: { projectId: ws.id },
           orderBy: { createdAt: 'desc' },
         });
 
         return {
-          workspaceId: ws.id,
-          workspaceName: ws.name,
+          projectId: ws.id,
+          projectName: ws.name,
           lastBackup: latestBackup?.createdAt.toISOString() ?? null,
           status: latestBackup ? 'ok' : 'no_backup',
         };
@@ -57,7 +57,7 @@ export async function GET() {
 
     const overview: CloudOverview = {
       sync: syncStatus,
-      workspaceBackups,
+      projectBackups,
     };
 
     return NextResponse.json({ success: true, data: overview });

@@ -23,11 +23,11 @@ interface BindingItem {
 }
 
 interface ChannelConnectProps {
-  workspaceId: string;
+  projectId: string;
 }
 
 /** Discord Bot 连接配置 + 绑定管理组件 */
-export default function ChannelConnect({ workspaceId }: ChannelConnectProps) {
+export default function ChannelConnect({ projectId }: ChannelConnectProps) {
   const t = useTranslations('common');
   const [token, setToken] = useState('');
   const [connecting, setConnecting] = useState(false);
@@ -67,7 +67,7 @@ export default function ChannelConnect({ workspaceId }: ChannelConnectProps) {
   const fetchBindings = useCallback(async () => {
     setLoadingBindings(true);
     try {
-      const res = await fetch(`/api/discord/bind?workspaceId=${workspaceId}`);
+      const res = await fetch(`/api/discord/bind?projectId=${projectId}`);
       const result = await res.json();
       if (result.success && result.data) {
         setBindings(result.data as BindingItem[]);
@@ -77,7 +77,7 @@ export default function ChannelConnect({ workspaceId }: ChannelConnectProps) {
     } finally {
       setLoadingBindings(false);
     }
-  }, [workspaceId]);
+  }, [projectId]);
 
   useEffect(() => {
     void fetchStatus();
@@ -137,7 +137,7 @@ export default function ChannelConnect({ workspaceId }: ChannelConnectProps) {
       const res = await fetch('/api/discord/bind', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: bindCode.trim(), workspaceId }),
+        body: JSON.stringify({ code: bindCode.trim(), projectId }),
       });
       const result = await res.json();
       if (result.success) {
@@ -154,7 +154,7 @@ export default function ChannelConnect({ workspaceId }: ChannelConnectProps) {
     } finally {
       setBinding(false);
     }
-  }, [bindCode, workspaceId, t, fetchBindings]);
+  }, [bindCode, projectId, t, fetchBindings]);
 
   /** 解绑用户 */
   const handleUnbind = useCallback(

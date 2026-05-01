@@ -28,13 +28,13 @@ export async function handleConnectCommand(
     // 检查是否已有绑定
     const existing = await prisma.discordBinding.findUnique({
       where: { discordUserId },
-      include: { workspace: { select: { name: true } } },
+      include: { project: { select: { name: true } } },
     });
 
     if (existing && !existing.code) {
       // 已完成绑定
       await interaction.reply({
-        content: `✅ 你已绑定到工作区「${existing.workspace.name}」。如需重新绑定，请先在 Web 端解绑。`,
+        content: `✅ 你已绑定到项目「${existing.project.name}」。如需重新绑定，请先在 Web 端解绑。`,
         ephemeral: true,
       });
       return;
@@ -51,18 +51,18 @@ export async function handleConnectCommand(
         data: { code, codeExpiresAt },
       });
     } else {
-      // 创建待绑定记录，查找默认工作区
-      let defaultWorkspace = await prisma.workspace.findFirst({ orderBy: { createdAt: 'asc' } });
-      if (!defaultWorkspace) {
-        defaultWorkspace = await prisma.workspace.create({
-          data: { name: 'Discord 默认工作区', description: 'Discord 绑定自动创建' },
+      // 创建待绑定记录，查找默认项目
+      let defaultProject = await prisma.project.findFirst({ orderBy: { createdAt: 'asc' } });
+      if (!defaultProject) {
+        defaultProject = await prisma.project.create({
+          data: { name: 'Discord 默认项目', description: 'Discord 绑定自动创建' },
         });
       }
       await prisma.discordBinding.create({
         data: {
           discordUserId,
           discordUserName,
-          workspaceId: defaultWorkspace.id,
+          projectId: defaultProject.id,
           code,
           codeExpiresAt,
         },

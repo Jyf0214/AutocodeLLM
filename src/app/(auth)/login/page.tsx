@@ -43,6 +43,16 @@ interface LoginFormValues {
   verificationCode?: string;
 }
 
+/** 认证配置 */
+interface AuthConfig {
+  clerkEnabled: boolean;
+  providers: {
+    password: boolean;
+    verificationCode: boolean;
+    clerk: boolean;
+  };
+}
+
 export default function LoginPage() {
   const t = useTranslations('login');
   const router = useRouter();
@@ -52,8 +62,18 @@ export default function LoginPage() {
   const [codeLoading, setCodeLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [username, setUsername] = useState('');
+  const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
+  const [clerkLoading, setClerkLoading] = useState(false);
 
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // 获取认证配置
+  useEffect(() => {
+    fetch('/api/auth/config')
+      .then(res => res.json())
+      .then(setAuthConfig)
+      .catch(err => console.error('Failed to fetch auth config:', err));
+  }, []);
 
   // 清理倒计时
   useEffect(() => {
@@ -100,6 +120,38 @@ export default function LoginPage() {
     }
   }, [username, t]);
 
+  /** Clerk 登录 */
+  const handleClerkLogin = useCallback(async () => {
+    setClerkLoading(true);
+    try {
+      const res = await fetch('/api/auth/clerk/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      const result = await res.json();
+
+      if (result.success && result.data) {
+        if (result.data.forceChangePassword) {
+          message.warning(t('firstLoginWarning'));
+          router.push('/change-password');
+        } else {
+          message.success(t('loginSuccess'));
+          router.push('/project');
+        }
+      } else {
+        message.error(result.error?.message ?? 'Clerk login failed');
+      }
+    } catch {
+      message.error(t('networkError'));
+    } finally {
+      setClerkLoading(false);
+    }
+  }, [router, t]);
+
   /** 表单提交 */
   const onFinish = useCallback(
     async (values: LoginFormValues) => {
@@ -130,10 +182,9 @@ export default function LoginPage() {
             router.push('/change-password');
           } else {
             message.success(t('loginSuccess'));
-            router.push('/workplace');
+            router.push('/project');
           }
         } else {
-          // 根据错误码显示对应消息
           const errorCode = result.error?.code;
           let errorMsg = result.error?.message ?? t('loginFailed');
 
@@ -319,6 +370,37 @@ export default function LoginPage() {
               {t('codeHint')}
             </Text>
           </div>
+        )}
+
+        {/* Clerk 登录选项 */}
+        {authConfig?.clerkEnabled && (
+          <>
+            <div style={{ margin: '24px 0', textAlign: 'center' }}>
+              <div style={{ position: 'relative', margin: '16px 0' }}>
+                <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: 1, background: 'var(--color-border)' }} />
+                <span style={{ position: 'relative', padding: '0 12px', background: '#fff', color: '#999', fontSize: 12 }}>
+                  {t('orContinueWith') || '或使用以下方式登录'}
+                </span>
+              </div>
+            </div>
+            <Button
+              block
+              size="large"
+              loading={clerkLoading}
+              onClick={handleClerkLogin}
+              style={{ borderRadius: 10, height: 44, fontWeight: 600, borderColor: '#ddd' }}
+              icon={
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+              }
+            >
+              {t('clerkLogin') || '使用 Clerk 登录'}
+            </Button>
+          </>
         )}
 
         {/* 演示提示 */}

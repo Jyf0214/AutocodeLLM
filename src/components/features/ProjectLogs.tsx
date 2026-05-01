@@ -6,15 +6,15 @@ import { FunctionOutlined, MessageOutlined, ReloadOutlined } from '@ant-design/i
 import { Text } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
 import { message } from 'antd';
-import type { WorkspaceLog, WorkspaceLogListResponse } from '@/lib/api/workspace-log-types';
+import type { ProjectLog, ProjectLogListResponse } from '@/lib/api/project-log-types';
 
-interface WorkspaceLogsProps {
-  workspaceId: string;
+interface ProjectLogsProps {
+  projectId: string;
 }
 
-export default function WorkspaceLogs({ workspaceId }: WorkspaceLogsProps) {
-  const t = useTranslations('workspace');
-  const [logs, setLogs] = useState<WorkspaceLog[]>([]);
+export default function ProjectLogs({ projectId }: ProjectLogsProps) {
+  const t = useTranslations('project');
+  const [logs, setLogs] = useState<ProjectLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterType, setFilterType] = useState('all');
 
@@ -26,14 +26,14 @@ export default function WorkspaceLogs({ workspaceId }: WorkspaceLogsProps) {
         params.set('type', filterType);
       }
 
-      const response = await fetch(`/api/workspaces/${workspaceId}/logs?${params}`);
+      const response = await fetch(`/api/projects/${projectId}/logs?${params}`);
 
       if (!response.ok) {
         message.error(t('fetchLogsFailed'));
         return;
       }
 
-      const result = (await response.json()) as WorkspaceLogListResponse;
+      const result = (await response.json()) as ProjectLogListResponse;
 
       if (result.success) {
         setLogs(result.data ?? []);
@@ -45,7 +45,7 @@ export default function WorkspaceLogs({ workspaceId }: WorkspaceLogsProps) {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, filterType, t]);
+  }, [projectId, filterType, t]);
 
   useEffect(() => {
     fetchLogs();
@@ -120,7 +120,7 @@ export default function WorkspaceLogs({ workspaceId }: WorkspaceLogsProps) {
 
   return (
     <Card
-      title={t('workspaceLogs')}
+      title={t('projectLogs')}
       size="small"
       extra={
         <Space>

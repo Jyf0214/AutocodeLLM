@@ -17,33 +17,33 @@ import {
   ArrowRightOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
-import type { WorkspaceListItem } from '@/lib/api/workspace-types';
+import type { ProjectListItem } from '@/lib/api/project-types';
 
-export default function WorkspaceDetailPage() {
-  const t = useTranslations('workplace');
+export default function ProjectDetailPage() {
+  const t = useTranslations('project');
   const router = useRouter();
   const resolvedParams = useParams();
-  const workspaceId = resolvedParams.id as string;
-  const [workspace, setWorkspace] = useState<WorkspaceListItem | null>(null);
+  const projectId = resolvedParams.id as string;
+  const [project, setProject] = useState<ProjectListItem | null>(null);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editForm] = Form.useForm();
   const [saving, setSaving] = useState(false);
 
-  const fetchWorkspace = useCallback(async () => {
+  const fetchProject = useCallback(async () => {
     setFetching(true);
     setError(null);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}`);
+      const response = await fetch(`/api/projects/${projectId}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const result = await response.json() as {
         success: boolean;
-        data?: WorkspaceListItem;
+        data?: ProjectListItem;
         error?: { message: string };
       };
       if (result.success && result.data) {
-        setWorkspace(result.data);
+        setProject(result.data);
       } else {
         setError(result.error?.message ?? t('fetchFailed'));
       }
@@ -52,17 +52,17 @@ export default function WorkspaceDetailPage() {
     } finally {
       setFetching(false);
     }
-  }, [workspaceId, t]);
+  }, [projectId, t]);
 
   useEffect(() => {
-    fetchWorkspace();
-  }, [fetchWorkspace]);
+    fetchProject();
+  }, [fetchProject]);
 
   const handleEdit = useCallback(async () => {
     try {
       const values = await editForm.validateFields();
       setSaving(true);
-      const res = await fetch(`/api/workspaces/${workspaceId}`, {
+      const res = await fetch(`/api/projects/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
@@ -72,7 +72,7 @@ export default function WorkspaceDetailPage() {
         message.success(t('updateSuccess'));
         setEditModalOpen(false);
         editForm.resetFields();
-        fetchWorkspace();
+        fetchProject();
       } else {
         message.error(data.error?.message || t('updateFailed'));
       }
@@ -81,22 +81,22 @@ export default function WorkspaceDetailPage() {
     } finally {
       setSaving(false);
     }
-  }, [editForm, workspaceId, t, fetchWorkspace]);
+  }, [editForm, projectId, t, fetchProject]);
 
   const openEditModal = useCallback(() => {
-    if (workspace) {
+    if (project) {
       editForm.setFieldsValue({
-        name: workspace.name,
-        description: workspace.description || '',
+        name: project.name,
+        description: project.description || '',
       });
       setEditModalOpen(true);
     }
-  }, [workspace, editForm]);
+  }, [project, editForm]);
 
   const menuItems = [
-    { icon: <MessageOutlined />, title: t('aiChat'), desc: t('aiChatDesc'), path: `/chat/${workspaceId}` },
-    { icon: <SettingOutlined />, title: t('settings'), desc: t('settingsDesc'), path: `/project/${workspaceId}/detail` },
-    { icon: <ApiOutlined />, title: t('channel'), desc: t('channelDesc'), path: `/project/${workspaceId}/channel` },
+    { icon: <MessageOutlined />, title: t('aiChat'), desc: t('aiChatDesc'), path: `/chat/${projectId}` },
+    { icon: <SettingOutlined />, title: t('settings'), desc: t('settingsDesc'), path: `/project/${projectId}/detail` },
+    { icon: <ApiOutlined />, title: t('channel'), desc: t('channelDesc'), path: `/project/${projectId}/channel` },
   ];
 
   if (fetching) {
@@ -107,22 +107,22 @@ export default function WorkspaceDetailPage() {
     );
   }
 
-  if (error || !workspace) {
+  if (error || !project) {
     return (
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px', textAlign: 'center' }}>
         <FolderOutlined style={{ fontSize: 48, color: 'var(--text-tertiary)', marginBottom: 16 }} />
         <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 8 }}>{t('loadFailed')}</Text>
-        <Text type="secondary">{error ?? t('workspaceNotExist')}</Text>
+        <Text type="secondary">{error ?? t('projectNotExist')}</Text>
         <Flexbox gap={12} horizontal justify="center" style={{ marginTop: 24 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/project')}>{t('backToList')}</Button>
-          <Button icon={<ReloadOutlined />} onClick={fetchWorkspace}>{t('retry')}</Button>
+           <Button icon={<ReloadOutlined />} onClick={fetchProject}>{t('retry')}</Button>
         </Flexbox>
       </div>
     );
   }
 
-  const created = new Date(workspace.createdAt);
-  const updated = new Date(workspace.updatedAt);
+  const created = new Date(project.createdAt);
+  const updated = new Date(project.updatedAt);
   const fmt = (d: Date) => `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
 
   return (
@@ -165,7 +165,7 @@ export default function WorkspaceDetailPage() {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Text strong style={{ fontSize: 20 }}>{workspace.name}</Text>
+              <Text strong style={{ fontSize: 20 }}>{project.name}</Text>
               <button
                 onClick={openEditModal}
                 style={{
@@ -185,8 +185,8 @@ export default function WorkspaceDetailPage() {
                 <EditOutlined />
               </button>
             </div>
-            <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 4, fontStyle: workspace.description ? 'normal' : 'italic' }}>
-              {workspace.description || t('noDescription')}
+            <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 4, fontStyle: project.description ? 'normal' : 'italic' }}>
+              {project.description || t('noDescription')}
             </Text>
             <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
               <span style={{ fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -252,7 +252,7 @@ export default function WorkspaceDetailPage() {
 
       {/* 编辑弹窗 */}
       <Modal
-        title={t('editWorkspace')}
+        title={t('editProject')}
         open={editModalOpen}
         onOk={handleEdit}
         confirmLoading={saving}
@@ -266,13 +266,13 @@ export default function WorkspaceDetailPage() {
         <Form form={editForm} layout="vertical">
           <Form.Item
             name="name"
-            label={t('workspaceName')}
-            rules={[{ required: true, message: t('workspaceNameRequired') }]}
+            label={t('projectName')}
+            rules={[{ required: true, message: t('projectNameRequired') }]}
           >
-            <Input placeholder={t('workspaceNamePlaceholder')} />
+            <Input placeholder={t('projectNamePlaceholder')} />
           </Form.Item>
-          <Form.Item name="description" label={t('workspaceDescription')}>
-            <Input.TextArea rows={3} placeholder={t('workspaceDescriptionPlaceholder')} />
+          <Form.Item name="description" label={t('projectDescription')}>
+            <Input.TextArea rows={3} placeholder={t('projectDescriptionPlaceholder')} />
           </Form.Item>
         </Form>
       </Modal>

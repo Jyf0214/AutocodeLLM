@@ -58,10 +58,10 @@ export function proxy(request: NextRequest): NextResponse {
   const userIdFromHeader = request.headers.get('x-user-id');
   const isLoggedIn = !!userIdFromCookie || !!userIdFromHeader;
 
-  // 已登录用户访问登录页，重定向到工作台
+  // 已登录用户访问登录页，重定向到项目
   if (isLoggedIn && pathname === '/login') {
-    const workplaceUrl = new URL('/project', request.url);
-    return NextResponse.redirect(workplaceUrl);
+    const projectUrl = new URL('/project', request.url);
+    return NextResponse.redirect(projectUrl);
   }
 
   // 受保护路径：未登录用户重定向到登录页

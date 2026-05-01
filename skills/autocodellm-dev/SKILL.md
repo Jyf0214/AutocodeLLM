@@ -39,7 +39,7 @@ AutocodeLLM 是基于 Next.js 16 + React 19 + TypeScript + Prisma ORM + Ant Desi
 
 ## 路由与页面结构
 
-项目采用扁平化路由设计，主要分为工作区管理、系统配置、云服务、开发调试四大模块。
+项目采用扁平化路由设计，主要分为项目管理、系统配置、云服务、开发调试四大模块。
 
 ### 路由组
 
@@ -53,10 +53,10 @@ AutocodeLLM 是基于 Next.js 16 + React 19 + TypeScript + Prisma ORM + Ant Desi
 | 路由 | 功能说明 | 备注 |
 |------|----------|------|
 | `/` | 首页 | 应用入口，展示功能卡片和登录/登出逻辑 |
-| `/workplace` | 工作区概览 | 仅展示所有工作区列表，不提供具体操作功能 |
-| `/workplace/[id]` | 特定工作区 | 动态路由，`[id]` 为工作区唯一标识符，进入后可执行该工作区的具体功能（含聊天界面） |
-| `/chat` | 聊天工作区列表 | 聊天入口，列出所有工作区，支持新建 |
-| `/chat/[workspaceId]` | 工作区聊天会话 | 独立聊天页面，使用 Zustand 5 切片 store（agent/chat/input/messages/ui），含 AgentPanel、ChatInput、MessageList 等模块化组件 |
+| `/workplace` | 项目概览 | 仅展示所有项目列表，不提供具体操作功能 |
+| `/workplace/[id]` | 特定项目 | 动态路由，`[id]` 为项目唯一标识符，进入后可执行该项目的具体功能（含聊天界面） |
+| `/chat` | 聊天项目列表 | 聊天入口，列出所有项目，支持新建 |
+| `/chat/[workspaceId]` | 项目聊天会话 | 独立聊天页面，使用 Zustand 5 切片 store（agent/chat/input/messages/ui），含 AgentPanel、ChatInput、MessageList 等模块化组件 |
 | `/change-password` | 修改密码 | 处理强制密码修改（`forceChangePassword` 标志） |
 | `/model` | 模型管理 | 纯重定向页面，自动跳转至 `/provider` |
 
@@ -79,7 +79,7 @@ AutocodeLLM 是基于 Next.js 16 + React 19 + TypeScript + Prisma ORM + Ant Desi
 |------|----------|
 | `/cloud` | 云存储服务总览与配置入口 |
 | `/cloud/webdav` | WebDAV 协议配置页，用于设置云存储连接 |
-| `/cloud/backups` | 全局备份监控，只读视图，可查看各工作区 WebDAV 同步状态 |
+| `/cloud/backups` | 全局备份监控，只读视图，可查看各项目 WebDAV 同步状态 |
 
 ### 认证与中间件
 
@@ -92,12 +92,12 @@ AutocodeLLM 是基于 Next.js 16 + React 19 + TypeScript + Prisma ORM + Ant Desi
 
 | 方法 | 路由 | 说明 |
 |------|------|------|
-| GET, POST | `/api/workspaces` | 列出/创建工作区 |
-| GET, PUT, DELETE | `/api/workspaces/[id]` | 获取/更新/删除单个工作区 |
-| POST | `/api/workspaces/[id]/verify` | 验证工作区进入密码 |
-| POST | `/api/workspaces/[id]/set-password` | 设置工作区进入密码 |
-| GET, POST | `/api/workspaces/[id]/logs` | 获取/创建工作区日志 |
-| POST | `/api/workspaces/[id]/chat` | 向工作区发送聊天消息 |
+| GET, POST | `/api/projects` | 列出/创建项目 |
+| GET, PUT, DELETE | `/api/projects/[id]` | 获取/更新/删除单个项目 |
+| POST | `/api/projects/[id]/verify` | 验证项目进入密码 |
+| POST | `/api/projects/[id]/set-password` | 设置项目进入密码 |
+| GET, POST | `/api/projects/[id]/logs` | 获取/创建项目日志 |
+| POST | `/api/projects/[id]/chat` | 向项目发送聊天消息 |
 | GET, POST | `/api/workers` | 列出/创建工作节点 |
 | GET, POST | `/api/sync` | 获取同步状态/更新同步配置 |
 | GET, POST, PUT, DELETE | `/api/providers` | AI 提供商完整 CRUD |
@@ -169,11 +169,11 @@ AutocodeLLM 是基于 Next.js 16 + React 19 + TypeScript + Prisma ORM + Ant Desi
 
 ### Workplace 页设计原则
 
-`/workplace` 路由仅作为工作区列表展示，所有具体功能操作必须进入单个工作区（`/workplace/[id]`）后才能执行。此外，`/workplace` 本身包含聊天路由入口。
+`/workplace` 路由仅作为项目列表展示，所有具体功能操作必须进入单个项目（`/workplace/[id]`）后才能执行。此外，`/workplace` 本身包含聊天路由入口。
 
-- 避免在 `/workplace` 页面放置任何修改工作区状态的按钮、表单或交互元素
-- 保持布局极简：干净的工作区卡片列表（或网格），每张卡片显示工作区名称、图标和简短状态指示
-- 点击工作区卡片应导航至 `/workplace/[id]`，在那里提供完整功能套件
+- 避免在 `/workplace` 页面放置任何修改项目状态的按钮、表单或交互元素
+- 保持布局极简：干净的项目卡片列表（或网格），每张卡片显示项目名称、图标和简短状态指示
+- 点击项目卡片应导航至 `/workplace/[id]`，在那里提供完整功能套件
 - 确保列表视图响应式：移动端卡片垂直堆叠，触控目标足够大
 
 ---

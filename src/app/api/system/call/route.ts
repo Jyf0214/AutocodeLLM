@@ -8,7 +8,7 @@ import { prisma } from '@/lib/db/prisma';
  *
  * 请求体：
  * {
- *   "action": "listWorkspaces" | "createWorkspace" | "listProviders" | "getStatus",
+ *   "action": "listProjects" | "createProject" | "listProviders" | "getStatus",
  *   "params": { ... }
  * }
  */
@@ -30,29 +30,29 @@ export async function POST(request: Request) {
 
   try {
     switch (body.action) {
-      case 'listWorkspaces': {
-        const workspaces = await prisma.workspace.findMany({
+      case 'listProjects': {
+        const projects = await prisma.project.findMany({
           select: { id: true, name: true, description: true, createdAt: true },
           orderBy: { createdAt: 'desc' },
         });
-        return NextResponse.json({ success: true, data: workspaces });
+        return NextResponse.json({ success: true, data: projects });
       }
 
-      case 'createWorkspace': {
+      case 'createProject': {
         const { name, description } = (body.params || {}) as {
           name?: string;
           description?: string;
         };
         if (!name) {
           return NextResponse.json(
-            { success: false, error: { message: '缺少工作区名称', code: 'MISSING_NAME' } },
+            { success: false, error: { message: '缺少项目名称', code: 'MISSING_NAME' } },
             { status: 400 },
           );
         }
-        const workspace = await prisma.workspace.create({
+        const project = await prisma.project.create({
           data: { name, description: description || '' },
         });
-        return NextResponse.json({ success: true, data: workspace });
+        return NextResponse.json({ success: true, data: project });
       }
 
       case 'listProviders': {
@@ -64,9 +64,9 @@ export async function POST(request: Request) {
       }
 
       case 'getStatus': {
-        const [userCount, workspaceCount, providerCount] = await Promise.all([
+        const [userCount, projectCount, providerCount] = await Promise.all([
           prisma.user.count(),
-          prisma.workspace.count(),
+          prisma.project.count(),
           prisma.provider.count(),
         ]);
         return NextResponse.json({
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
             status: 'healthy',
             uptime: process.uptime(),
             users: userCount,
-            workspaces: workspaceCount,
+            projects: projectCount,
             providers: providerCount,
             nodeVersion: process.version,
           },

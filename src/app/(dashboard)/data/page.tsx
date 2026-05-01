@@ -86,7 +86,7 @@ export default function DataPage() {
         {/* 导出 */}
         <Card title="导出数据" size="small">
           <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-            导出所有工作区、提供商、环境变量和 MCP 配置为 JSON 文件
+            导出所有项目、提供商、环境变量和 MCP 配置为 JSON 文件
           </Text>
           <Button
             icon={<DownloadOutlined />}

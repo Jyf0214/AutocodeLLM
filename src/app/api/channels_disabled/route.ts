@@ -1,6 +1,6 @@
 /**
  * 频道列表 / 创建
- * GET /api/channels?workspaceId=xxx
+ * GET /api/channels?projectId=xxx
  * POST /api/channels
  */
 import { NextRequest } from 'next/server';
@@ -19,12 +19,12 @@ import type { CreateChannelRequest } from '@/lib/api/channel-types';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
-    const workspaceId = searchParams.get('workspaceId');
+    const projectId = searchParams.get('projectId');
 
     const channels = await prisma.channel.findMany({
-      where: workspaceId ? { workspaceId } : undefined,
+      where: projectId ? { projectId } : undefined,
       include: {
-        workspace: { select: { id: true, name: true } },
+        project: { select: { id: true, name: true } },
         _count: { select: { messages: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -43,19 +43,19 @@ export async function POST(request: NextRequest) {
     if (isErrorResponse(body)) return body;
 
     const validation = validateRequiredFields({
-      workspaceId: body.workspaceId,
+      projectId: body.projectId,
       name: body.name,
       discordGuildId: body.discordGuildId,
       discordChannelId: body.discordChannelId,
     });
     if (validation) return validation;
 
-    // 检查工作区是否存在
-    const workspace = await prisma.workspace.findUnique({
-      where: { id: body.workspaceId },
+    // 检查项目是否存在
+    const project = await prisma.project.findUnique({
+      where: { id: body.projectId },
     });
-    if (!workspace) {
-      return errorResponse('工作区不存在', 'NOT_FOUND', 404);
+    if (!project) {
+      return errorResponse('项目不存在', 'NOT_FOUND', 404);
     }
 
     // 检查 Discord 频道是否已绑定
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     const channel = await prisma.channel.create({
       data: {
-        workspaceId: body.workspaceId,
+        projectId: body.projectId,
         name: body.name,
         discordGuildId: body.discordGuildId,
         discordChannelId: body.discordChannelId,

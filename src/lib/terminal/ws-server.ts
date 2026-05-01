@@ -5,15 +5,15 @@ let wss: WebSocketServer | null = null;
 
 // node-pty 是否可用（原生模块可能缺失）
 let ptyAvailable = false;
-let createSession: ((workspaceId: string, cols: number, rows: number) => import('./session-manager').TerminalSession) | null = null;
-let findSessionByWorkspace: ((workspaceId: string) => import('./session-manager').TerminalSession | null) | null = null;
+let createSession: ((projectId: string, cols: number, rows: number) => import('./session-manager').TerminalSession) | null = null;
+let findSessionByProject: ((projectId: string) => import('./session-manager').TerminalSession | null) | null = null;
 let destroySession: ((sessionId: string) => void) | null = null;
 
 try {
   const sessionManager = await import('./session-manager');
   if (sessionManager.isPtyLoaded()) {
     createSession = sessionManager.createSession;
-    findSessionByWorkspace = sessionManager.findSessionByWorkspace;
+    findSessionByProject = sessionManager.findSessionByProject;
     destroySession = sessionManager.destroySession;
     ptyAvailable = true;
   } else {
@@ -23,17 +23,17 @@ try {
   console.warn('⚠ 终端会话管理器加载失败，终端功能已禁用:', (error as Error).message);
 }
 
-// 工作区 → WebSocket 客户端集合
-const workspaceClients = new Map<string, Set<WebSocket>>();
+// 项目 → WebSocket 客户端集合
+const projectClients = new Map<string, Set<WebSocket>>();
 
 // 会话 → pty 事件监听器已绑定标记
 const sessionListenersAttached = new Set<string>();
 
 /**
- * 向工作区所有客户端广播消息
+ * 向项目所有客户端广播消息
  */
-function broadcastToWorkspace(workspaceId: string, message: string, exclude?: WebSocket): void {
-  const clients = workspaceClients.get(workspaceId);
+function broadcastToProject(projectId: string, message: string, exclude?: WebSocket): void {
+  const clients = projectClients.get(projectId);
   if (!clients) return;
   for (const client of clients) {
     if (client !== exclude && client.readyState === WebSocket.OPEN) {
@@ -51,12 +51,12 @@ function attachSessionListeners(session: import('./session-manager').TerminalSes
 
   session.pty.onData((data) => {
     const msg = JSON.stringify({ type: 'data', data });
-    broadcastToWorkspace(session.workspaceId, msg);
+    broadcastToProject(session.projectId, msg);
   });
 
   session.pty.onExit(({ exitCode }) => {
     const msg = JSON.stringify({ type: 'exit', exitCode });
-    broadcastToWorkspace(session.workspaceId, msg);
+    broadcastToProject(session.projectId, msg);
     sessionListenersAttached.delete(session.id);
     destroySession!(session.id);
   });
@@ -86,28 +86,28 @@ export function initTerminalWebSocket(server: Server): void {
     }
 
     const url = new URL(request.url ?? '', 'http://localhost');
-    const workspaceId = url.searchParams.get('workspaceId');
+    const projectId = url.searchParams.get('projectId');
     const cols = parseInt(url.searchParams.get('cols') ?? '80', 10);
     const rows = parseInt(url.searchParams.get('rows') ?? '24', 10);
 
-    if (!workspaceId) {
-      ws.send(JSON.stringify({ type: 'error', message: '缺少 workspaceId' }));
+    if (!projectId) {
+      ws.send(JSON.stringify({ type: 'error', message: '缺少 projectId' }));
       ws.close();
       return;
     }
 
-    // 注册客户端到工作区
-    let clients = workspaceClients.get(workspaceId);
+    // 注册客户端到项目
+    let clients = projectClients.get(projectId);
     if (!clients) {
       clients = new Set();
-      workspaceClients.set(workspaceId, clients);
+      projectClients.set(projectId, clients);
     }
     clients.add(ws);
 
     // 查找或创建终端会话
-    let session = findSessionByWorkspace!(workspaceId);
+    let session = findSessionByProject!(projectId);
     if (!session) {
-      session = createSession!(workspaceId, cols, rows);
+      session = createSession!(projectId, cols, rows);
     }
 
     // 绑定 pty 事件监听器（仅首次）
@@ -119,14 +119,14 @@ export function initTerminalWebSocket(server: Server): void {
       try {
         const msg = JSON.parse(raw.toString()) as Record<string, unknown>;
         if (msg.type === 'data' && typeof msg.data === 'string') {
-          const currentSession = findSessionByWorkspace!(workspaceId);
+          const currentSession = findSessionByProject!(projectId);
           if (currentSession) {
             currentSession.pty.write(msg.data as string);
             currentSession.lastActivity = Date.now();
           }
         }
         if (msg.type === 'resize' && typeof msg.cols === 'number' && typeof msg.rows === 'number') {
-          const currentSession = findSessionByWorkspace!(workspaceId);
+          const currentSession = findSessionByProject!(projectId);
           if (currentSession) {
             currentSession.pty.resize(msg.cols as number, msg.rows as number);
             currentSession.lastActivity = Date.now();
@@ -138,11 +138,11 @@ export function initTerminalWebSocket(server: Server): void {
     });
 
     ws.on('close', () => {
-      const c = workspaceClients.get(workspaceId);
+      const c = projectClients.get(projectId);
       if (c) {
         c.delete(ws);
         if (c.size === 0) {
-          workspaceClients.delete(workspaceId);
+          projectClients.delete(projectId);
         }
       }
     });
@@ -157,7 +157,7 @@ export function closeTerminalWebSocket(): void {
     wss.close();
     wss = null;
   }
-  workspaceClients.clear();
+  projectClients.clear();
   sessionListenersAttached.clear();
 }
 

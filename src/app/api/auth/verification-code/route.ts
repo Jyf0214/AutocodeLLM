@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { randomBytes } from 'node:crypto';
 import { verificationCodes } from '../login/route';
+import { bindingCodes } from '../bind/route';
 
 // 生成 12 位数字验证码
 function generateCode(): string {
@@ -17,8 +18,13 @@ function generateCode(): string {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { username: string };
-    const { username } = body;
+    const body = (await request.json()) as { 
+      username: string; 
+      forBinding?: boolean;
+      targetType?: string;
+      targetId?: string;
+    };
+    const { username, forBinding, targetType, targetId } = body;
 
     if (!username) {
       return NextResponse.json(
@@ -30,15 +36,31 @@ export async function POST(request: Request) {
     const code = generateCode();
     const expiresAt = Date.now() + 5 * 60 * 1000; // 5 分钟过期
 
-    verificationCodes.set(username, { code, expiresAt });
+    if (forBinding && targetType && targetId) {
+      // 绑定验证码
+      bindingCodes.set(username, { code, expiresAt, targetType, targetId });
+      
+      // 打印到服务器控制台
+      console.log('\n========================================');
+      console.log('  🔐 绑定验证码请求');
+      console.log(`  👤 用户名: ${username}`);
+      console.log(`  🔢 验证码: ${code}`);
+      console.log(`  🎯 绑定类型: ${targetType}`);
+      console.log(`  🆔 目标ID: ${targetId}`);
+      console.log(`  ⏰ 有效期: 5 分钟`);
+      console.log('========================================\n');
+    } else {
+      // 登录验证码
+      verificationCodes.set(username, { code, expiresAt });
 
-    // 打印到服务器控制台
-    console.log('\n========================================');
-    console.log('  🔐 验证码登录请求');
-    console.log(`  👤 用户名: ${username}`);
-    console.log(`  🔢 验证码: ${code}`);
-    console.log(`  ⏰ 有效期: 5 分钟`);
-    console.log('========================================\n');
+      // 打印到服务器控制台
+      console.log('\n========================================');
+      console.log('  🔐 验证码登录请求');
+      console.log(`  👤 用户名: ${username}`);
+      console.log(`  🔢 验证码: ${code}`);
+      console.log(`  ⏰ 有效期: 5 分钟`);
+      console.log('========================================\n');
+    }
 
     return NextResponse.json({
       success: true,

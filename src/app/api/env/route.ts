@@ -14,7 +14,8 @@ import {
   handleError,
   validateRequiredFields,
 } from '@/lib/api/response';
-import { encryptValue, decryptValue, maskValue } from '@/lib/providers/qwen-oauth';
+import { encryptValue, decryptValue } from '@/lib/providers/api-client';
+import { maskValue } from '@/lib/api/response';
 import type {
   EnvVariableResponse,
   CreateEnvVariableRequest,

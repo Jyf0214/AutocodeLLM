@@ -6,9 +6,9 @@
 
 ## Overview
 
-AutocodeLLM is a full-stack workspace management platform with AI integration capabilities. It provides:
+AutocodeLLM is a full-stack 项目 management platform with AI integration capabilities. It provides:
 
-- Multi-workspace management with isolated environments
+- Multi-项目 management with isolated environments
 - Model Context Protocol (MCP) server configuration
 - AI provider and model management
 - WebDAV cloud storage integration

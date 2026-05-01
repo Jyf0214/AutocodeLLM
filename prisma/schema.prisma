@@ -22,6 +22,13 @@ model User {
   role                String   @default("admin") // admin, user, viewer
   forceChangePassword Boolean  @default(true)
   isInitialPassword   Boolean  @default(true)
+
+  // 第三方认证绑定
+  githubId            String?  @unique // GitHub OAuth/App 的用户ID
+  githubUsername      String?  // GitHub 用户名
+  clerkId             String?  @unique // Clerk 用户ID
+  supabaseId          String?  @unique // Supabase 用户ID
+
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -97,23 +104,6 @@ model Provider {
 }
 
 // ============================================================
-// MCP 服务器
-// ============================================================
-
-model McpServer {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  url       String
-  enabled   Boolean  @default(true)
-  status    String   @default("disconnected")
-  tools     String   @default("[]") // JSON
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("mcp_servers")
-}
-
-// ============================================================
 // 聊天配置
 // ============================================================
 
@@ -134,10 +124,10 @@ model ChatConfig {
 }
 
 // ============================================================
-// 工作区
+// 项目
 // ============================================================
 
-model Workspace {
+model Project {
   id              String    @id @default(uuid())
   name            String
   description     String    @default("")
@@ -146,7 +136,7 @@ model Workspace {
   updatedAt       DateTime  @updatedAt
 
   messages        ChatMessage[]
-  logs            WorkspaceLog[]
+  logs            ProjectLog[]
   backups         Backup[]
   channels        Channel[]
   discordBindings DiscordBinding[]
@@ -157,7 +147,7 @@ model Workspace {
 
 model ChatMessage {
   id          String    @id @default(uuid())
-  workspaceId String
+  projectId String
   role        String    // user, assistant, system, tool
   content     String
   toolCalls   String?   // JSON
@@ -171,9 +161,9 @@ model ChatMessage {
   parentId    String?
   createdAt   DateTime  @default(now())
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@index([workspaceId])
+  @@index([projectId])
   @@index([createdAt])
   @@index([providerId])
   @@map("chat_messages")
@@ -214,76 +204,37 @@ model WebdavConfig {
 
 model Backup {
   id          String   @id @default(uuid())
-  workspaceId String
+  projectId String
   name        String
   size        Int      @default(0)
   status      String   @default("pending") // pending, completed, failed
   createdAt   DateTime @default(now())
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@index([workspaceId])
+  @@index([projectId])
   @@index([createdAt])
   @@map("backups")
 }
 
 // ============================================================
-// 工作区日志
+// 项目日志
 // ============================================================
 
-model WorkspaceLog {
+model ProjectLog {
   id          String   @id @default(uuid())
-  workspaceId String
+  projectId   String
   type        String   // function_call, chat_message
   functionName String?
   summary     String?
   status      String?  // success, error, pending
   createdAt   DateTime @default(now())
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@index([workspaceId])
+  @@index([projectId])
   @@index([createdAt])
   @@map("workspace_logs")
-}
-
-// ============================================================
-// 工作节点
-// ============================================================
-
-model Worker {
-  id            String    @id @default(uuid())
-  name          String    @unique
-  type          String    // compute, storage, inference
-  status        String    @default("offline") // online, offline, busy, error
-  url           String
-  lastHeartbeat DateTime?
-  metadata      String?   // JSON
-  enabled       Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  @@map("workers")
-}
-
-// ============================================================
-// 任务代理
-// ============================================================
-
-model AgentTask {
-  id          String   @id @default(uuid())
-  name        String
-  description String   @default("")
-  mode        String   // read_only, yolo
-  status      String   @default("ready") // ready, running, completed, failed
-  maxAgents   Int      @default(5)
-  progress    Int      @default(0)
-  logs        String?  // JSON
-  result      String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("agent_tasks")
 }
 
 // ============================================================
@@ -292,7 +243,7 @@ model AgentTask {
 
 model Channel {
   id               String      @id @default(uuid())
-  workspaceId      String
+  projectId      String
   name             String
   discordGuildId   String
   discordChannelId String      @unique
@@ -302,10 +253,10 @@ model Channel {
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   messages  ChannelMessage[]
 
-  @@index([workspaceId])
+  @@index([projectId])
   @@map("channels")
 }
 
@@ -331,15 +282,15 @@ model DiscordBinding {
   id             String    @id @default(uuid())
   discordUserId  String    @unique
   discordUserName String
-  workspaceId    String
+  projectId    String
   code           String?   @unique
   codeExpiresAt  DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@index([workspaceId])
+  @@index([projectId])
   @@index([code])
   @@map("discord_bindings")
 }

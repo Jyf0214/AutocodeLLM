@@ -9,24 +9,55 @@ import {
   CodeOutlined,
   SafetyOutlined,
   ThunderboltOutlined,
+  GithubOutlined,
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { message } from 'antd';
+
+interface AuthStatus {
+  availableMethods: {
+    local: boolean;
+    github: boolean;
+    githubApp: boolean;
+    clerk: boolean;
+  };
+  user: {
+    id: string;
+    username: string;
+    role: string;
+  } | null;
+}
 
 export default function HomePage() {
   const t = useTranslations('common.landing');
   const [isLoading, setIsLoading] = useState(false);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>({
+    availableMethods: { local: true, github: false, githubApp: false, clerk: false },
+    user: null,
+  });
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
-  const isLoggedIn =
-    typeof window !== 'undefined' &&
-    !!sessionStorage.getItem('userId');
+  useEffect(() => {
+    fetch('/api/auth/status')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setAuthStatus(data.data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingAuth(false));
+  }, []);
+
+  const isLoggedIn = !!authStatus.user;
 
   const handleLogout = useCallback(() => {
     setIsLoading(true);
     try {
-      sessionStorage.clear();
+      // 清除 cookie
+      document.cookie = 'userId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       message.success(t('logoutSuccess'));
       setTimeout(() => window.location.reload(), 500);
     } catch {
@@ -36,10 +67,9 @@ export default function HomePage() {
   }, [t]);
 
   const features = [
-    { icon: <FolderOutlined />, title: t('workspaceManagement'), desc: t('workspaceManagementDesc'), link: '/project' },
+    { icon: <FolderOutlined />, title: t('projectManagement'), desc: t('projectManagementDesc'), link: '/project' },
     { icon: <CodeOutlined />, title: t('featureAI.title'), desc: t('featureAI.desc'), link: '/project' },
     { icon: <ApiOutlined />, title: t('multiModelSupport'), desc: t('multiModelSupportDesc'), link: '/provider' },
-    { icon: <ThunderboltOutlined />, title: t('taskAgent'), desc: t('taskAgentDesc'), link: '/project' },
     { icon: <CloudServerOutlined />, title: t('cloudService'), desc: t('cloudServiceDesc'), link: '/cloud' },
     { icon: <SafetyOutlined />, title: t('featureModels.title'), desc: t('featureModels.desc'), link: '/provider' },
   ];
@@ -80,7 +110,9 @@ export default function HomePage() {
           {t('subtitle')}
         </p>
 
-        {isLoggedIn ? (
+        {loadingAuth ? (
+          <div style={{ margin: '20px 0' }}>{t('loading') || '加载中...'}</div>
+        ) : isLoggedIn ? (
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/project">
               <button
@@ -100,7 +132,7 @@ export default function HomePage() {
                 }}
               >
                 <FolderOutlined />
-                {t('enterWorkspace')}
+                {t('enterProject')}
               </button>
             </Link>
             <button
@@ -122,28 +154,80 @@ export default function HomePage() {
             </button>
           </div>
         ) : (
-          <Link href="/login">
-            <button
-              style={{
-                height: 52,
-                padding: '0 36px',
-                fontSize: 16,
-                fontWeight: 600,
-                color: '#fff',
-                background: 'var(--text-primary)',
-                border: 'none',
-                borderRadius: 12,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                transition: 'opacity 0.2s',
-              }}
-            >
-              {t('startNow')}
-              <ArrowRightOutlined style={{ fontSize: 18 }} />
-            </button>
-          </Link>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+            <Link href="/login">
+              <button
+                style={{
+                  height: 52,
+                  padding: '0 36px',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: '#fff',
+                  background: 'var(--text-primary)',
+                  border: 'none',
+                  borderRadius: 12,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  transition: 'opacity 0.2s',
+                }}
+              >
+                {t('startNow')}
+                <ArrowRightOutlined style={{ fontSize: 18 }} />
+              </button>
+            </Link>
+
+            {/* 第三方登录方式 */}
+            {(authStatus.availableMethods.github || authStatus.availableMethods.clerk) && (
+              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                {authStatus.availableMethods.github && (
+                  <a href="/api/auth/github" style={{ textDecoration: 'none' }}>
+                    <button
+                      style={{
+                        height: 44,
+                        padding: '0 20px',
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: 'var(--text-secondary)',
+                        background: 'transparent',
+                        border: '1px solid var(--border-primary)',
+                        borderRadius: 10,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <GithubOutlined />
+                      GitHub
+                    </button>
+                  </a>
+                )}
+                {authStatus.availableMethods.clerk && (
+                  <button
+                    onClick={() => message.info(t('clerkLoginNotImplemented') || 'Clerk 登录尚未实现')}
+                    style={{
+                      height: 44,
+                      padding: '0 20px',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: 'var(--text-secondary)',
+                      background: 'transparent',
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: 10,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    Clerk
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </section>
 
@@ -227,57 +311,59 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section
-        style={{
-          background: 'var(--text-primary)',
-          padding: '80px 16px',
-          textAlign: 'center',
-        }}
-      >
-        <h2
+      {!isLoggedIn && (
+        <section
           style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: 'var(--bg-primary)',
-            margin: '0 0 12px',
+            background: 'var(--text-primary)',
+            padding: '80px 16px',
+            textAlign: 'center',
           }}
         >
-          {t('cta.title')}
-        </h2>
-        <p
-          style={{
-            fontSize: 15,
-            color: 'var(--bg-secondary)',
-            margin: '0 auto 32px',
-            maxWidth: 400,
-            lineHeight: 1.6,
-            opacity: 0.7,
-          }}
-        >
-          {t('cta.desc')}
-        </p>
-        <Link href="/login">
-          <button
+          <h2
             style={{
-              height: 48,
-              padding: '0 32px',
-              fontSize: 15,
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              background: 'var(--bg-primary)',
-              border: 'none',
-              borderRadius: 10,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
+              fontSize: 24,
+              fontWeight: 700,
+              color: 'var(--bg-primary)',
+              margin: '0 0 12px',
             }}
           >
-            {t('cta.loginBtn')}
-            <ArrowRightOutlined />
-          </button>
-        </Link>
-      </section>
+            {t('cta.title')}
+          </h2>
+          <p
+            style={{
+              fontSize: 15,
+              color: 'var(--bg-secondary)',
+              margin: '0 auto 32px',
+              maxWidth: 400,
+              lineHeight: 1.6,
+              opacity: 0.7,
+            }}
+          >
+            {t('cta.desc')}
+          </p>
+          <Link href="/login">
+            <button
+              style={{
+                height: 48,
+                padding: '0 32px',
+                fontSize: 15,
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                background: 'var(--bg-primary)',
+                border: 'none',
+                borderRadius: 10,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              {t('cta.loginBtn')}
+              <ArrowRightOutlined />
+            </button>
+          </Link>
+        </section>
+      )}
 
       {/* Footer */}
       <footer

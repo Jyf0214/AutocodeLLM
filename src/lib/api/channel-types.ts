@@ -13,12 +13,12 @@ export interface ChannelListItem {
   enabled: boolean;
   lastSyncedAt: string | null;
   createdAt: string;
-  workspaceId: string;
+  projectId: string;
 }
 
 /** 频道详情 */
 export interface ChannelDetail extends ChannelListItem {
-  workspace: {
+  project: {
     id: string;
     name: string;
   };
@@ -29,7 +29,7 @@ export interface ChannelDetail extends ChannelListItem {
 
 /** 创建频道请求 */
 export interface CreateChannelRequest {
-  workspaceId: string;
+  projectId: string;
   name: string;
   discordGuildId: string;
   discordChannelId: string;

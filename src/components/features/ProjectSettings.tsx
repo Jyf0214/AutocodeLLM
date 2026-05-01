@@ -6,20 +6,20 @@ import { LockOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Text } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
 import { message } from 'antd';
-import type { SetPasswordResponse } from '@/lib/api/workspace-log-types';
+import type { SetPasswordResponse } from '@/lib/api/project-log-types';
 
-interface WorkspaceSettingsProps {
-  workspaceId: string;
+interface ProjectSettingsProps {
+  projectId: string;
   hasPassword: boolean;
   onPasswordChanged?: () => void;
 }
 
-export default function WorkspaceSettings({
-  workspaceId,
+export default function ProjectSettings({
+  projectId,
   hasPassword,
   onPasswordChanged,
-}: WorkspaceSettingsProps) {
-  const t = useTranslations('workspace');
+}: ProjectSettingsProps) {
+  const t = useTranslations('project');
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [enablePassword, setEnablePassword] = useState(hasPassword);
@@ -32,7 +32,7 @@ export default function WorkspaceSettings({
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/set-password`, {
+      const response = await fetch(`/api/projects/${projectId}/set-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: values.password || '' }),
@@ -63,7 +63,7 @@ export default function WorkspaceSettings({
   const handleRemovePassword = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/workspaces/${workspaceId}/set-password`, {
+      const response = await fetch(`/api/projects/${projectId}/set-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: '' }),
@@ -92,7 +92,7 @@ export default function WorkspaceSettings({
   };
 
   return (
-    <Card title={t('workspaceSettings')} size="small">
+    <Card title={t('projectSettings')} size="small">
       <Flex vertical gap={16}>
         <div>
           <Flex align="center" justify="space-between">

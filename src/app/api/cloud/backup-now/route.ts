@@ -8,8 +8,8 @@ const BACKUP_LOG_FILE =
 
 interface BackupLog {
   timestamp: string;
-  workspaceId: string;
-  workspaceName: string;
+  projectId: string;
+  projectName: string;
   status: 'running' | 'success' | 'failed';
   message: string;
 }
@@ -44,42 +44,42 @@ function appendBackupLog(log: BackupLog) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { workspaceId } = body;
+    const { projectId } = body;
 
-    if (!workspaceId) {
+    if (!projectId) {
       return NextResponse.json(
-        { success: false, error: { message: '缺少工作区 ID' } },
+         { success: false, error: { message: '缺少项目 ID' } },
         { status: 400 },
       );
     }
 
-    const workspace = await prisma.workspace.findUnique({
-      where: { id: workspaceId },
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
     });
 
-    if (!workspace) {
+    if (!project) {
       return NextResponse.json(
-        { success: false, error: { message: '工作区不存在' } },
+         { success: false, error: { message: '项目不存在' } },
         { status: 404 },
       );
     }
 
     appendBackupLog({
       timestamp: new Date().toISOString(),
-      workspaceId: workspace.id,
-      workspaceName: workspace.name,
+      projectId: project.id,
+      projectName: project.name,
       status: 'running',
       message: '开始备份...',
     });
 
-    // WebdavConfig 是全局单例，不属于 Workspace
+    // WebdavConfig 是全局单例，不属于 Project
     const config = await prisma.webdavConfig.findFirst({ where: { enabled: true } });
 
     if (!config) {
       appendBackupLog({
         timestamp: new Date().toISOString(),
-        workspaceId: workspace.id,
-        workspaceName: workspace.name,
+        projectId: project.id,
+        projectName: project.name,
         status: 'failed',
         message: 'WebDAV 未配置或未启用',
       });
@@ -89,15 +89,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // 执行实际备份：将工作区数据推送到 WebDAV
+    // 执行实际备份：将项目数据推送到 WebDAV
     const { createWebdavClient, pushToRemote } = await import('@/lib/sync/webdav');
     const client = await createWebdavClient();
 
     if (!client) {
       appendBackupLog({
         timestamp: new Date().toISOString(),
-        workspaceId: workspace.id,
-        workspaceName: workspace.name,
+        projectId: project.id,
+        projectName: project.name,
         status: 'failed',
         message: 'WebDAV 客户端创建失败',
       });
@@ -108,9 +108,9 @@ export async function POST(request: Request) {
     }
 
     const localDir = process.env.SYNC_LOCAL_DIR ?? './sync';
-    const workspaceDir = path.join(localDir, workspaceId);
+    const projectDir = path.join(localDir, projectId);
 
-    if (fs.existsSync(workspaceDir)) {
+    if (fs.existsSync(projectDir)) {
       let pushedCount = 0;
       const walkDir = async (dir: string) => {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -119,34 +119,34 @@ export async function POST(request: Request) {
           if (entry.isDirectory()) {
             await walkDir(fullPath);
           } else if (entry.isFile()) {
-            const success = await pushToRemote(client, fullPath, config.remotePath + '/' + workspaceId);
+            const success = await pushToRemote(client, fullPath, config.remotePath + '/' + projectId);
             if (success) pushedCount++;
           }
         }
       };
-      await walkDir(workspaceDir);
+      await walkDir(projectDir);
 
       appendBackupLog({
         timestamp: new Date().toISOString(),
-        workspaceId: workspace.id,
-        workspaceName: workspace.name,
+        projectId: project.id,
+        projectName: project.name,
         status: 'success',
         message: '备份完成，已推送 ' + String(pushedCount) + ' 个文件',
       });
     } else {
       appendBackupLog({
         timestamp: new Date().toISOString(),
-        workspaceId: workspace.id,
-        workspaceName: workspace.name,
+        projectId: project.id,
+        projectName: project.name,
         status: 'success',
-        message: '备份完成（工作区目录为空）',
+        message: '备份完成（项目目录为空）',
       });
     }
 
     // 记录备份到数据库
     await prisma.backup.create({
       data: {
-        workspaceId: workspace.id,
+        projectId: project.id,
         name: 'WebDAV 备份 - ' + new Date().toISOString(),
         status: 'completed',
       },

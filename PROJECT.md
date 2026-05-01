@@ -32,7 +32,7 @@
 
 ## 二、路由与页面结构
 
-项目采用扁平化路由设计，主要分为工作区管理、系统配置、云服务、开发调试四大模块。
+项目采用扁平化路由设计，主要分为项目管理、系统配置、云服务、开发调试四大模块。
 
 ### 路由组
 
@@ -46,10 +46,10 @@
 | 路由 | 功能说明 | 备注 |
 |------|----------|------|
 | `/` | 首页 | 应用入口，展示功能卡片和登录/登出逻辑 |
-| `/workplace` | 工作区概览 | 仅展示所有工作区列表，不提供具体操作功能 |
-| `/workplace/[id]` | 特定工作区 | 动态路由，`[id]` 为工作区唯一标识符，进入后可执行该工作区的具体功能（含聊天界面） |
-| `/chat` | 聊天工作区列表 | 聊天入口，列出所有工作区，支持新建 |
-| `/chat/[workspaceId]` | 工作区聊天会话 | 独立聊天页面，使用 Zustand 5 切片 store（agent/chat/input/messages/ui），含 AgentPanel、ChatInput、MessageList 等模块化组件 |
+| `/workplace` | 项目概览 | 仅展示所有项目列表，不提供具体操作功能 |
+| `/workplace/[id]` | 特定项目 | 动态路由，`[id]` 为项目唯一标识符，进入后可执行该项目的具体功能（含聊天界面） |
+| `/chat` | 聊天项目列表 | 聊天入口，列出所有项目，支持新建 |
+| `/chat/[workspaceId]` | 项目聊天会话 | 独立聊天页面，使用 Zustand 5 切片 store（agent/chat/input/messages/ui），含 AgentPanel、ChatInput、MessageList 等模块化组件 |
 | `/change-password` | 修改密码 | 处理强制密码修改（`forceChangePassword` 标志） |
 | `/model` | 模型管理 | 纯重定向页面，自动跳转至 `/provider` |
 
@@ -72,7 +72,7 @@
 |------|----------|
 | `/cloud` | 云存储服务总览与配置入口 |
 | `/cloud/webdav` | WebDAV 协议配置页，用于设置云存储连接 |
-| `/cloud/backups` | 全局备份监控，只读视图，可查看各工作区 WebDAV 同步状态 |
+| `/cloud/backups` | 全局备份监控，只读视图，可查看各项目 WebDAV 同步状态 |
 
 ### 认证与中间件
 
@@ -85,12 +85,12 @@
 
 | 方法 | 路由 | 说明 |
 |------|------|------|
-| GET, POST | `/api/workspaces` | 列出/创建工作区 |
-| GET, PUT, DELETE | `/api/workspaces/[id]` | 获取/更新/删除单个工作区 |
-| POST | `/api/workspaces/[id]/verify` | 验证工作区进入密码 |
-| POST | `/api/workspaces/[id]/set-password` | 设置工作区进入密码 |
-| GET, POST | `/api/workspaces/[id]/logs` | 获取/创建工作区日志 |
-| POST | `/api/workspaces/[id]/chat` | 向工作区发送聊天消息 |
+| GET, POST | `/api/projects` | 列出/创建项目 |
+| GET, PUT, DELETE | `/api/projects/[id]` | 获取/更新/删除单个项目 |
+| POST | `/api/projects/[id]/verify` | 验证项目进入密码 |
+| POST | `/api/projects/[id]/set-password` | 设置项目进入密码 |
+| GET, POST | `/api/projects/[id]/logs` | 获取/创建项目日志 |
+| POST | `/api/projects/[id]/chat` | 向项目发送聊天消息 |
 | GET, POST | `/api/workers` | 列出/创建工作节点 |
 | GET, POST | `/api/sync` | 获取同步状态/更新同步配置 |
 | GET, POST, PUT, DELETE | `/api/providers` | AI 提供商完整 CRUD |
@@ -269,13 +269,13 @@
 | Provider | providers | AI 提供商配置，含加密 API Key、OAuth Token |
 | McpServer | mcp_servers | MCP 服务器配置 |
 | ChatConfig | chat_configs | 聊天全局配置（温度、Token 限制等） |
-| Workspace | workspaces | 工作区 |
+| Workspace | workspaces | 项目 |
 | ChatMessage | chat_messages | 聊天对话记录，含 Token 统计 |
 | WebdavConfig | webdav_configs | WebDAV 备份配置 |
 | EnvironmentVariable | environment_variables | 加密环境变量 |
 | Worker | workers | 工作节点（compute/storage/inference） |
 | AgentTask | agent_tasks | 任务代理（read_only/yolo 模式） |
-| WorkspaceLog | workspace_logs | 工作区日志（函数调用/聊天消息） |
+| WorkspaceLog | workspace_logs | 项目日志（函数调用/聊天消息） |
 
 ---
 
@@ -339,7 +339,7 @@ AutocodeLLM/
 │   ├── app/                    # Next.js App Router
 │   │   ├── (auth)/login/       # 登录页
 │   │   ├── (dashboard)/        # 已认证页面（共享侧边栏布局）
-│   │   │   ├── workplace/      # 工作区列表 + [id] 详情
+│   │   │   ├── workplace/      # 项目列表 + [id] 详情
 │   │   │   ├── chat/           # 聊天列表 + [workspaceId] 会话
 │   │   │   ├── provider/       # AI 提供商管理
 │   │   │   ├── setting/mcp/    # MCP 配置

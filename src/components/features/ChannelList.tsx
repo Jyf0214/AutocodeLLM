@@ -22,7 +22,7 @@ interface ChannelItem {
   enabled: boolean;
   lastSyncedAt: string | null;
   createdAt: string;
-  workspace: { id: string; name: string };
+  project: { id: string; name: string };
   _count: { messages: number };
 }
 
@@ -39,12 +39,12 @@ interface ChannelInfo {
 }
 
 interface ChannelListProps {
-  workspaceId: string;
+  projectId: string;
   onChannelClick?: (channelId: string, channelName: string) => void;
 }
 
 /** 频道列表组件 */
-export default function ChannelList({ workspaceId, onChannelClick }: ChannelListProps) {
+export default function ChannelList({ projectId, onChannelClick }: ChannelListProps) {
   const t = useTranslations('common');
   const [channels, setChannels] = useState<ChannelItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +67,7 @@ export default function ChannelList({ workspaceId, onChannelClick }: ChannelList
   const fetchChannels = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/channels?workspaceId=${workspaceId}`);
+      const res = await fetch(`/api/channels?projectId=${projectId}`);
       const result = await res.json();
       if (result.success && result.data) {
         setChannels(result.data as ChannelItem[]);
@@ -77,7 +77,7 @@ export default function ChannelList({ workspaceId, onChannelClick }: ChannelList
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [projectId]);
 
   useEffect(() => {
     fetchChannels();
@@ -149,7 +149,7 @@ export default function ChannelList({ workspaceId, onChannelClick }: ChannelList
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          workspaceId,
+          projectId,
           name: formName.trim(),
           discordGuildId: formGuildId,
           discordChannelId: formChannelId,
@@ -169,7 +169,7 @@ export default function ChannelList({ workspaceId, onChannelClick }: ChannelList
     } finally {
       setConfirmLoading(false);
     }
-  }, [formName, formGuildId, formChannelId, formType, workspaceId, t, fetchChannels]);
+  }, [formName, formGuildId, formChannelId, formType, projectId, t, fetchChannels]);
 
   /** 删除频道 */
   const handleDelete = useCallback(async (channelId: string) => {

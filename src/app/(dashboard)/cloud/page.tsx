@@ -23,16 +23,16 @@ interface SyncStatus {
   remotePath: string;
 }
 
-interface WorkspaceBackupStatus {
-  workspaceId: string;
-  workspaceName: string;
+interface ProjectBackupStatus {
+  projectId: string;
+  projectName: string;
   lastBackup: string | null;
   status: 'ok' | 'failed' | 'no_backup';
 }
 
 interface CloudOverview {
   sync: SyncStatus | null;
-  workspaceBackups: WorkspaceBackupStatus[];
+  projectBackups: ProjectBackupStatus[];
 }
 
 interface ApiResponse {
@@ -48,7 +48,7 @@ export default function CloudPage() {
   const [loading, setLoading] = useState(true);
   const [backupModalOpen, setBackupModalOpen] = useState(false);
   const [backingUpId, setBackingUpId] = useState<string | null>(null);
-  const [backupLogs, setBackupLogs] = useState<Array<{timestamp: string; workspaceId: string; workspaceName: string; status: string; message: string}>>([]);
+  const [backupLogs, setBackupLogs] = useState<Array<{timestamp: string; projectId: string; projectName: string; status: string; message: string}>>([]);
 
   const fetchOverview = useCallback(async () => {
     try {
@@ -68,14 +68,14 @@ export default function CloudPage() {
     fetchOverview();
   }, [fetchOverview]);
 
-  const handleBackupNow = async (workspaceId: string, workspaceName: string, e: React.MouseEvent) => {
+  const handleBackupNow = async (projectId: string, projectName: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setBackingUpId(workspaceId);
+    setBackingUpId(projectId);
     try {
       const res = await fetch('/api/cloud/backup-now', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workspaceId }),
+        body: JSON.stringify({ projectId }),
       });
       const data = await res.json();
       if (data.success) {
@@ -100,7 +100,7 @@ export default function CloudPage() {
     }
   };
 
-  const openBackupLogs = (workspaceId: string, e: React.MouseEvent) => {
+  const openBackupLogs = (projectId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     fetchBackupLogs();
     setBackupModalOpen(true);
@@ -157,22 +157,22 @@ export default function CloudPage() {
         </Space>
       </Card>
 
-      <Card title={t('workspaceBackupStatus')} size="small">
-        {overview?.workspaceBackups && overview.workspaceBackups.length > 0 ? (
+      <Card title={t('projectBackupStatus')} size="small">
+        {overview?.projectBackups && overview.projectBackups.length > 0 ? (
           <Flexbox gap={8} style={{ flexDirection: 'column' }}>
-            {overview.workspaceBackups.map((ws) => (
+            {overview.projectBackups.map((ws) => (
               <Card
-                key={ws.workspaceId}
+                key={ws.projectId}
                 size="small"
                 style={{ cursor: 'pointer' }}
-                onClick={() => navigateTo(`/project/${ws.workspaceId}/backups`)}
+                onClick={() => navigateTo(`/project/${ws.projectId}/backups`)}
               >
                 <Flexbox horizontal justify="space-between" wrap gap={8}>
                   <Flexbox horizontal gap={8} align="center">
                     <Avatar size="small" style={{ backgroundColor: 'var(--text-primary)' }}>
-                      {ws.workspaceName.charAt(0)}
+                      {ws.projectName.charAt(0)}
                     </Avatar>
-                    <Text style={{ fontWeight: 500 }}>{ws.workspaceName}</Text>
+                    <Text style={{ fontWeight: 500 }}>{ws.projectName}</Text>
                   </Flexbox>
                   <Flexbox horizontal gap={8} align="center">
                     {ws.status === 'ok' ? (
@@ -186,15 +186,15 @@ export default function CloudPage() {
                       type="text"
                       size="small"
                       icon={<PlayCircleOutlined />}
-                      loading={backingUpId === ws.workspaceId}
-                      onClick={(e) => handleBackupNow(ws.workspaceId, ws.workspaceName, e)}
+                      loading={backingUpId === ws.projectId}
+                      onClick={(e) => handleBackupNow(ws.projectId, ws.projectName, e)}
                       title={t('backupNow') || '立即备份'}
                     />
                     <Button
                       type="text"
                       size="small"
                       icon={<CloudUploadOutlined />}
-                      onClick={(e) => openBackupLogs(ws.workspaceId, e)}
+                      onClick={(e) => openBackupLogs(ws.projectId, e)}
                       title={t('viewLogs') || '查看日志'}
                     />
                     <RightOutlined style={{ fontSize: 12, color: '#999' }} />
@@ -205,7 +205,7 @@ export default function CloudPage() {
           </Flexbox>
         ) : (
           <Flexbox align="center" justify="center" style={{ padding: 24 }}>
-            <Text type="secondary">{t('noWorkspaceData')}</Text>
+            <Text type="secondary">{t('noProjectData')}</Text>
           </Flexbox>
         )}
       </Card>
@@ -219,7 +219,7 @@ export default function CloudPage() {
       >
         <List
           dataSource={backupLogs.filter(
-            (log) => overview?.workspaceBackups?.some((ws) => ws.workspaceId === log.workspaceId)
+            (log) => overview?.projectBackups?.some((ws) => ws.projectId === log.projectId)
           )}
           renderItem={(item) => (
             <List.Item>
@@ -231,7 +231,7 @@ export default function CloudPage() {
                 ) : (
                   <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
                 )}
-                <Text style={{ flex: 1 }}>{item.workspaceName}</Text>
+                <Text style={{ flex: 1 }}>{item.projectName}</Text>
                 <Text type="secondary" style={{ fontSize: 12 }}>
                   {item.message}
                 </Text>

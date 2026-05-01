@@ -23,7 +23,7 @@ export function isPtyLoaded(): boolean {
 
 export interface TerminalSession {
   id: string;
-  workspaceId: string;
+  projectId: string;
   pty: import('node-pty').IPty;
   createdAt: number;
   lastActivity: number;
@@ -34,32 +34,32 @@ const SESSIONS = new Map<string, TerminalSession>();
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 分钟超时
 
 /**
- * 获取工作区目录路径
- * Docker 环境使用 /home/node/.autocodellm/workspaces
- * 本地环境使用 /home/user/workspace
+ * 获取项目目录路径
+ * Docker 环境使用 /home/node/.autocodellm/projects
+ * 本地环境使用 /home/user/project
  */
-function getWorkspaceCwd(workspaceId: string): string {
+function getProjectCwd(projectId: string): string {
   const isDocker = process.env.RUNNING_IN_DOCKER === 'true';
-  const basePath = isDocker ? '/home/node/.autocodellm/workspaces' : process.env.WORKSPACE_BASE_PATH ?? '/home/user/workspace';
-  return basePath + '/' + workspaceId;
+  const basePath = isDocker ? '/home/node/.autocodellm/projects' : process.env.PROJECT_BASE_PATH ?? '/home/user/project';
+  return basePath + '/' + projectId;
 }
 
 /**
- * 创建工作区终端会话
+ * 创建项目终端会话
  */
-export function createSession(workspaceId: string, cols: number, rows: number): TerminalSession {
+export function createSession(projectId: string, cols: number, rows: number): TerminalSession {
   const pty = loadPty();
   if (!pty) {
     throw new Error('node-pty 原生模块不可用，无法创建终端会话');
   }
 
-  const existing = findSessionByWorkspace(workspaceId);
+  const existing = findSessionByProject(projectId);
   if (existing) {
     destroySession(existing.id);
   }
 
   const id = 'term-' + String(Date.now()) + '-' + String(Math.random()).slice(2, 8);
-  const cwd = getWorkspaceCwd(workspaceId);
+  const cwd = getProjectCwd(projectId);
 
   const ptyProcess = pty.spawn('bash', [], {
     name: 'xterm-256color',
@@ -71,7 +71,7 @@ export function createSession(workspaceId: string, cols: number, rows: number): 
 
   const session: TerminalSession = {
     id,
-    workspaceId,
+    projectId,
     pty: ptyProcess,
     createdAt: Date.now(),
     lastActivity: Date.now(),
@@ -101,11 +101,11 @@ export function getSession(sessionId: string): TerminalSession | null {
 }
 
 /**
- * 根据工作区 ID 查找会话
+ * 根据项目 ID 查找会话
  */
-export function findSessionByWorkspace(workspaceId: string): TerminalSession | null {
+export function findSessionByProject(projectId: string): TerminalSession | null {
   for (const session of SESSIONS.values()) {
-    if (session.workspaceId === workspaceId) {
+    if (session.projectId === projectId) {
       return session;
     }
   }
@@ -138,10 +138,10 @@ export function cleanupExpiredSessions(): void {
 /**
  * 获取所有活跃会话
  */
-export function getActiveSessions(): { id: string; workspaceId: string; createdAt: number }[] {
+export function getActiveSessions(): { id: string; projectId: string; createdAt: number }[] {
   return Array.from(SESSIONS.values()).map((s) => ({
     id: s.id,
-    workspaceId: s.workspaceId,
+    projectId: s.projectId,
     createdAt: s.createdAt,
   }));
 }

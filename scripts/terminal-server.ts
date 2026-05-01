@@ -62,7 +62,7 @@ wss.on('connection', (ws, req) => {
   let session = sessions.get(workspaceId);
   if (!session) {
     const isDocker = process.env.RUNNING_IN_DOCKER === 'true';
-    const basePath = isDocker ? '/home/node/.autocodellm/workspaces' : process.env.WORKSPACE_BASE_PATH ?? '/home/user/workspace';
+    const basePath = isDocker ? '/home/node/.autocodellm/projects' : process.env.PROJECT_BASE_PATH ?? '/home/user/workspace';
     const ptyProcess = ptyModule!.spawn('bash', [], {
       name: 'xterm-256color',
       cols,

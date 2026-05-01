@@ -8,18 +8,18 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import ChannelConnect from '@/components/features/ChannelConnect';
 import ChannelList from '@/components/features/ChannelList';
 
-/** 工作区频道管理页面 */
+/** 项目频道管理页面 */
 export default function ChannelPage() {
   const t = useTranslations('common');
   const router = useRouter();
   const resolvedParams = useParams();
-  const workspaceId = resolvedParams.id as string;
+  const projectId = resolvedParams.id as string;
 
   const handleChannelClick = useCallback(
     (channelId: string) => {
-      router.push(`/project/${workspaceId}/channel/${channelId}`);
+      router.push(`/project/${projectId}/channel/${channelId}`);
     },
-    [router, workspaceId],
+    [router, projectId],
   );
 
   return (
@@ -37,7 +37,7 @@ export default function ChannelPage() {
             <Button
               type="text"
               icon={<ArrowLeftOutlined />}
-              onClick={() => router.push(`/project/${workspaceId}`)}
+              onClick={() => router.push(`/project/${projectId}`)}
             >
               {t('workplace.back')}
             </Button>
@@ -54,8 +54,8 @@ export default function ChannelPage() {
           <Text type="secondary" style={{ fontSize: 14 }}>
             {t('channel.subtitle')}
           </Text>
-          <ChannelConnect workspaceId={workspaceId} />
-          <ChannelList workspaceId={workspaceId} onChannelClick={handleChannelClick} />
+          <ChannelConnect projectId={projectId} />
+          <ChannelList projectId={projectId} onChannelClick={handleChannelClick} />
         </Flexbox>
       </div>
     </div>
