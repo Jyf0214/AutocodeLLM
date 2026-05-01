@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { logger } from '@/lib/log';
 import {
   successResponse,
   handleError,
@@ -22,6 +23,8 @@ export async function GET(): Promise<NextResponse<WorkspaceResponse>> {
     const workspaces = await prisma.workspace.findMany({
       orderBy: { createdAt: 'desc' },
     });
+
+    logger.info(`获取项目列表: ${workspaces.length} 个`);
 
     const data = workspaces.map((workspace) => ({
       id: workspace.id,
