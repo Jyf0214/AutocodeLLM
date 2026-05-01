@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button, Form, Input, InputPassword, Flexbox, Text } from '@/lib/ui';
 import {
   UserOutlined,
@@ -38,6 +38,15 @@ export default function LoginPage() {
   const [codeLoading, setCodeLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [username, setUsername] = useState('');
+  const [githubAvailable, setGithubAvailable] = useState(false);
+
+  // 检查 GitHub OAuth 是否已配置
+  useEffect(() => {
+    fetch('/api/auth/github')
+      .then((r) => r.json())
+      .then((d) => setGithubAvailable(d.success))
+      .catch(() => setGithubAvailable(false));
+  }, []);
 
   /**
    * 发送验证码
@@ -303,7 +312,8 @@ export default function LoginPage() {
             </Button>
           </Form.Item>
 
-          {/* GitHub OAuth 登录 */}
+          {/* GitHub OAuth 登录 — 仅配置后显示 */}
+          {githubAvailable && (
           <div style={{ marginTop: 12 }}>
             <Button
               block
@@ -331,6 +341,7 @@ export default function LoginPage() {
               使用 GitHub 登录
             </Button>
           </div>
+          )}
         </Form>
 
         {loginMode === 'verificationCode' && (

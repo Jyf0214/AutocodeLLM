@@ -10,6 +10,14 @@ export async function POST(request: Request) {
   const auth = await requireAuth(request, 'write');
   if (auth.error) return auth.error;
 
+  const config = getGitHubAppConfig();
+  if (!config) {
+    return NextResponse.json(
+      { success: false, error: { message: 'GitHub App 未配置', code: 'GITHUB_NOT_CONFIGURED' } },
+      { status: 503 },
+    );
+  }
+
   const body = (await request.json()) as {
     repo: string;
     workspaceId: string;

@@ -6,6 +6,14 @@ import { verifyGitHubWebhook } from '@/lib/github/app';
  * GitHub App Webhook 入口
  */
 export async function POST(request: Request) {
+  const secret = process.env.GITHUB_APP_WEBHOOK_SECRET;
+  if (!secret) {
+    return NextResponse.json(
+      { success: false, error: { message: 'GitHub Webhook 未配置', code: 'GITHUB_NOT_CONFIGURED' } },
+      { status: 503 },
+    );
+  }
+
   const signature = request.headers.get('x-hub-signature-256') || '';
   const event = request.headers.get('x-github-event') || '';
   const deliveryId = request.headers.get('x-github-delivery') || '';
@@ -13,7 +21,6 @@ export async function POST(request: Request) {
   const payload = await request.text();
 
   // 验证 webhook 签名
-  const secret = process.env.GITHUB_APP_WEBHOOK_SECRET || '';
   if (secret && !verifyGitHubWebhook(payload, signature, secret)) {
     return NextResponse.json(
       { success: false, error: { message: '签名验证失败' } },
