@@ -49,8 +49,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // 首页不显示导航
+  // 首页和登录页不显示导航
   const isHomePage = pathname === '/';
+  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/change-password');
 
   const selectedKey = useMemo(() => {
     return MENU_ITEMS.find((item) => pathname.startsWith(item.key))?.key ?? '/';
@@ -86,8 +87,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
-      {/* 左上角菜单按钮 — 首页不显示 */}
-      {!isHomePage && (
+      {/* 左上角菜单按钮 — 首页和认证页不显示 */}
+      {!isHomePage && !isAuthPage && (
         <div
           style={{
             position: 'fixed',
@@ -139,7 +140,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             : {
                 maxWidth: 1200,
                 margin: '0 auto',
-                padding: isHomePage ? 0 : '48px 16px 24px',
+                padding: isHomePage || isAuthPage ? 0 : '48px 16px 24px',
               }
         }
       >

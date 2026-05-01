@@ -351,21 +351,6 @@ export default function LoginPage() {
             </Text>
           </div>
         )}
-
-        {/* 演示提示 */}
-        <div
-          style={{
-            marginTop: 24,
-            padding: '12px 16px',
-            borderRadius: 8,
-            background: 'var(--color-fill-quaternary)',
-            border: '1px solid var(--color-border)',
-          }}
-        >
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            💡 提示：默认用户名 <code>admin</code>，密码 <code>admin123</code>
-          </Text>
-        </div>
       </Card>
     </div>
   );
