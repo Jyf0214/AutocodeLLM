@@ -130,7 +130,7 @@ export default function LoginPage() {
             router.push('/change-password');
           } else {
             message.success('登录成功');
-            router.push('/workplace');
+            router.push('/project');
           }
         } else {
           message.error(result.error?.message ?? '登录失败');

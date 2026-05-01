@@ -76,42 +76,42 @@ export default function WorkspaceDetailPage() {
       icon: <HomeOutlined />,
       title: t('dashboard'),
       description: t('dashboardDesc'),
-      path: `/workplace/${workspaceId}/dashboard`,
+      path: `/project/${workspaceId}/dashboard`,
       color: 'var(--text-primary)',
     },
     {
       icon: <FileTextOutlined />,
       title: t('logs'),
       description: t('logsDesc'),
-      path: `/workplace/${workspaceId}/logs`,
+      path: `/project/${workspaceId}/logs`,
       color: 'var(--text-primary)',
     },
     {
       icon: <TagOutlined />,
       title: t('tags'),
       description: t('tagsDesc'),
-      path: `/workplace/${workspaceId}/tags`,
+      path: `/project/${workspaceId}/tags`,
       color: 'var(--text-primary)',
     },
     {
       icon: <TeamOutlined />,
       title: t('members'),
       description: t('membersDesc'),
-      path: `/workplace/${workspaceId}/members`,
+      path: `/project/${workspaceId}/members`,
       color: 'var(--text-primary)',
     },
     {
       icon: <SettingOutlined />,
       title: t('settings'),
       description: t('settingsDesc'),
-      path: `/workplace/${workspaceId}/settings`,
+      path: `/project/${workspaceId}/settings`,
       color: 'var(--text-primary)',
   },
     {
       icon: <ApiOutlined />,
       title: t('channel'),
       description: t('channelDesc'),
-      path: `/workplace/${workspaceId}/channel`,
+      path: `/project/${workspaceId}/channel`,
       color: 'var(--text-primary)',
     },
   ];
@@ -128,7 +128,7 @@ export default function WorkspaceDetailPage() {
             <Button
               type="text"
               icon={<ArrowLeftOutlined />}
-              onClick={() => router.push('/workplace')}
+              onClick={() => router.push('/project')}
             >
               {t('back')}
             </Button>
@@ -169,7 +169,7 @@ export default function WorkspaceDetailPage() {
             <Flexbox gap={12} horizontal justify="center">
               <Button
                 icon={<ArrowLeftOutlined />}
-                onClick={() => router.push('/workplace')}
+                onClick={() => router.push('/project')}
               >
                 {t('backToList')}
               </Button>
@@ -206,7 +206,7 @@ export default function WorkspaceDetailPage() {
             <Button
               type="text"
               icon={<ArrowLeftOutlined />}
-              onClick={() => router.push('/workplace')}
+              onClick={() => router.push('/project')}
             >
               {t('back')}
             </Button>

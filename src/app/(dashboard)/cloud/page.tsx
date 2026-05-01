@@ -165,7 +165,7 @@ export default function CloudPage() {
                 key={ws.workspaceId}
                 size="small"
                 style={{ cursor: 'pointer' }}
-                onClick={() => navigateTo(`/workplace/${ws.workspaceId}/backups`)}
+                onClick={() => navigateTo(`/project/${ws.workspaceId}/backups`)}
               >
                 <Flexbox horizontal justify="space-between" wrap gap={8}>
                   <Flexbox horizontal gap={8} align="center">

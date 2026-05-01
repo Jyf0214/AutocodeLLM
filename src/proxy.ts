@@ -40,7 +40,7 @@ export function proxy(request: NextRequest): NextResponse {
 
   // 已登录用户访问登录页，重定向到工作台
   if (isLoggedIn && pathname === '/login') {
-    const workplaceUrl = new URL('/workplace', request.url);
+    const workplaceUrl = new URL('/project', request.url);
     return NextResponse.redirect(workplaceUrl);
   }
 

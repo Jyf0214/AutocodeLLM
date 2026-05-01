@@ -24,7 +24,7 @@ import { Drawer, Menu } from 'antd';
  */
 const MENU_ITEMS = [
   { key: '/', icon: <HomeOutlined />, labelKey: 'common.appName' },
-  { key: '/workplace', icon: <FolderOutlined />, labelKey: 'common.workplace' },
+  { key: '/project', icon: <FolderOutlined />, labelKey: 'common.workplace' },
   { key: '/mcp', icon: <SettingOutlined />, labelKey: 'common.mcp' },
   { key: '/provider', icon: <ApiOutlined />, labelKey: 'common.providers' },
   { key: '/setting', icon: <EnvironmentOutlined />, labelKey: 'common.setting' },

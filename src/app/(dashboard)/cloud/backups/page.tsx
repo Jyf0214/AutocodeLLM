@@ -115,7 +115,7 @@ export default function GlobalBackupsPage() {
             type="link"
             size="small"
             icon={<EyeOutlined />}
-            onClick={() => router.push(`/workplace/${record.workspaceId}/backups`)}
+            onClick={() => router.push(`/project/${record.workspaceId}/backups`)}
           >
             {t('viewDetails')}
           </Button>

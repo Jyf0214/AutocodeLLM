@@ -17,7 +17,7 @@ export default function ChannelPage() {
 
   const handleChannelClick = useCallback(
     (channelId: string) => {
-      router.push(`/workplace/${workspaceId}/channel/${channelId}`);
+      router.push(`/project/${workspaceId}/channel/${channelId}`);
     },
     [router, workspaceId],
   );
@@ -37,7 +37,7 @@ export default function ChannelPage() {
             <Button
               type="text"
               icon={<ArrowLeftOutlined />}
-              onClick={() => router.push(`/workplace/${workspaceId}`)}
+              onClick={() => router.push(`/project/${workspaceId}`)}
             >
               {t('workplace.back')}
             </Button>

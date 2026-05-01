@@ -64,7 +64,7 @@ export default function HomePage() {
       icon: <FolderOutlined style={{ fontSize: 28 }} />,
       title: t('workspaceManagement'),
       description: t('workspaceManagementDesc'),
-      link: '/workplace',
+      link: '/project',
       color: 'var(--text-primary)',
     },
     {
@@ -154,7 +154,7 @@ export default function HomePage() {
           <Flexbox gap={16} horizontal wrap justify="center">
             {isLoggedIn ? (
               <>
-                <Link href="/workplace">
+                <Link href="/project">
                   <Button
                     type="primary"
                     size="large"

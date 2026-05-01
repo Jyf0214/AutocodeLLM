@@ -9,8 +9,8 @@ export default async function RedirectPage({ params }: RedirectPageProps) {
   const { id, chat_history } = resolvedParams;
 
   const targetPath = chat_history
-    ? `/workplace/${id}/chat/${chat_history}`
-    : `/workplace/${id}/chat`;
+    ? `/project/${id}/chat/${chat_history}`
+    : `/project/${id}/chat`;
 
   redirect(targetPath);
 }

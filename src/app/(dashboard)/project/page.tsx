@@ -487,7 +487,7 @@ export default function WorkplacePage() {
         handleCloseModal();
         fetchWorkspaces();
         if (!editingWorkspace) {
-          router.push(`/workplace/${result.data.id}`);
+          router.push(`/project/${result.data.id}`);
         }
       } else {
         message.error(
@@ -658,7 +658,7 @@ export default function WorkplacePage() {
                   key={workspace.id}
                   workspace={workspace}
                   onClick={() =>
-                    router.push(`/workplace/${workspace.id}`)
+                    router.push(`/project/${workspace.id}`)
                   }
                   onEdit={() => handleOpenModal(workspace)}
                   onDelete={() => handleDelete(workspace)}

@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     const githubUser = await getGitHubUser(token);
     const result = await loginWithGitHub(githubUser);
 
-    const response = NextResponse.redirect(new URL('/workplace', request.url));
+    const response = NextResponse.redirect(new URL('/project', request.url));
 
     response.cookies.set('userId', result.userId, {
       httpOnly: false,
