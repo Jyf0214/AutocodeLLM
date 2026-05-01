@@ -7,7 +7,7 @@ import { execSync } from 'node:child_process';
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
 
-function sleep(ms: number) {
+function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
