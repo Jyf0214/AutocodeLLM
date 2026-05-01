@@ -4,6 +4,7 @@
     "login": "Login",
     "logout": "Logout",
     "workplace": "Project",
+    "project": "Project",
     "settings": "Settings",
     "agents": "Task Agents",
     "models": "Model Management",

@@ -147,7 +147,7 @@ model Project {
 
 model ChatMessage {
   id          String    @id @default(uuid())
-  projectId String
+  projectId   String    @map("workspaceId")
   role        String    // user, assistant, system, tool
   content     String
   toolCalls   String?   // JSON
@@ -204,7 +204,7 @@ model WebdavConfig {
 
 model Backup {
   id          String   @id @default(uuid())
-  projectId String
+  projectId   String   @map("workspaceId")
   name        String
   size        Int      @default(0)
   status      String   @default("pending") // pending, completed, failed
@@ -223,7 +223,7 @@ model Backup {
 
 model ProjectLog {
   id          String   @id @default(uuid())
-  projectId   String
+  projectId   String   @map("workspaceId")
   type        String   // function_call, chat_message
   functionName String?
   summary     String?
@@ -243,7 +243,7 @@ model ProjectLog {
 
 model Channel {
   id               String      @id @default(uuid())
-  projectId      String
+  projectId        String      @map("workspaceId")
   name             String
   discordGuildId   String
   discordChannelId String      @unique
@@ -282,7 +282,7 @@ model DiscordBinding {
   id             String    @id @default(uuid())
   discordUserId  String    @unique
   discordUserName String
-  projectId    String
+  projectId      String    @map("workspaceId")
   code           String?   @unique
   codeExpiresAt  DateTime?
   createdAt      DateTime  @default(now())
