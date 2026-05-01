@@ -31,6 +31,7 @@ const MENU_ITEMS = [
   { key: '/agents', icon: <TeamOutlined />, labelKey: 'common.agents' },
   { key: '/skills', icon: <SyncOutlined />, labelKey: 'common.skills' },
   { key: '/state', icon: <CloudServerOutlined />, labelKey: 'common.state' },
+  { key: '/logs', icon: <CloudServerOutlined />, labelKey: 'common.logs' },
   { key: '/cloud', icon: <CloudServerOutlined />, labelKey: 'common.cloud' },
   { key: '/account', icon: <UserOutlined />, labelKey: 'common.account' },
 ] as const;

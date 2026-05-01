@@ -119,7 +119,8 @@
       "noBoundUsers": "No bound Discord users yet",
       "discordUser": "Discord User",
       "bindTime": "Bound At"
-    }
+    },
+    "logs": "日志"
   },
   "login": {
     "title": "Login",
@@ -667,5 +668,8 @@
     "health": "Health",
     "refresh": "Refresh",
     "retry": "Retry"
+  },
+  "logs": {
+    "title": "System Logs"
   }
 }

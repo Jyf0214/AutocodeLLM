@@ -119,7 +119,8 @@
       "noBoundUsers": "暂无已绑定的 Discord 用户",
       "discordUser": "Discord 用户",
       "bindTime": "绑定时间"
-    }
+    },
+    "logs": "日志"
   },
   "login": {
     "title": "登录",
@@ -667,5 +668,8 @@
       "LLM",
       "自动化工具"
     ]
+  },
+  "logs": {
+    "title": "系统日志"
   }
 }
