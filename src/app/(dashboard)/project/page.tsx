@@ -3,16 +3,8 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { message, Modal, Form } from 'antd';
-import {
-  Button,
-  Text,
-  Flexbox,
-  Icon,
-  Avatar,
-  Skeleton,
-  TextArea,
-} from '@/lib/ui';
+import { message, Modal, Form, Dropdown } from 'antd';
+import { PageContainer, Button, Text, Flexbox } from '@/lib/ui';
 import {
   PlusOutlined,
   FolderOutlined,
@@ -22,13 +14,11 @@ import {
   ClockCircleOutlined,
   ReloadOutlined,
   SearchOutlined,
+  MoreOutlined,
 } from '@ant-design/icons';
 import type { WorkspaceListItem } from '@/lib/api/workspace-types';
 import { Input } from 'antd';
 
-/**
- * 工作区卡片属性
- */
 interface WorkspaceCardProps {
   workspace: WorkspaceListItem;
   onClick: () => void;
@@ -36,19 +26,16 @@ interface WorkspaceCardProps {
   onDelete: () => void;
 }
 
-/**
- * 工作区卡片组件
- * 展示单个工作区的信息和操作按钮
- */
-function WorkspaceCard({
-  workspace,
-  onClick,
-  onEdit,
-  onDelete,
-}: WorkspaceCardProps) {
+function WorkspaceCard({ workspace, onClick, onEdit, onDelete }: WorkspaceCardProps) {
   const t = useTranslations('workplace');
   const [hovered, setHovered] = useState(false);
-  const createdDate = new Date(workspace.createdAt).toLocaleDateString('zh-CN');
+  const date = new Date(workspace.createdAt);
+  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+  const menuItems = [
+    { key: 'edit', icon: <EditOutlined />, label: t('edit') },
+    { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true },
+  ];
 
   return (
     <div
@@ -56,701 +43,355 @@ function WorkspaceCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'var(--color-bg)',
-        borderRadius: 16,
-        border: `1px solid ${
-          hovered ? 'var(--text-primary)' : 'var(--color-border)'
-        }`,
-        padding: 20,
+        background: 'var(--bg-primary)',
+        borderRadius: 8,
+        border: '1px solid var(--border-primary)',
+        padding: '16px 20px',
         cursor: 'pointer',
-        transition: 'all 0.25s ease',
-        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
-        boxShadow: hovered
-          ? '0 8px 24px rgba(0,0,0,0.12)'
-          : '0 2px 8px rgba(0,0,0,0.04)',
-        position: 'relative',
+        transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+        boxShadow: hovered ? '0 2px 12px rgba(0,0,0,0.06)' : 'none',
+        borderColor: hovered ? 'var(--text-primary)' : 'var(--border-primary)',
       }}
     >
-      {/* 操作按钮 - 悬停时显示 */}
-      {hovered && (
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+        {/* 图标 */}
         <div
           style={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
+            width: 40,
+            height: 40,
+            borderRadius: 8,
+            background: hovered ? 'var(--text-primary)' : 'var(--bg-secondary)',
             display: 'flex',
-            gap: 8,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'background 0.15s ease',
           }}
-          onClick={(e) => e.stopPropagation()}
         >
-          <Icon
-            icon={EditOutlined}
-            size={18}
-            onClick={onEdit}
+          <FolderOutlined
             style={{
-              padding: 6,
-              borderRadius: 6,
-              background: 'var(--color-fill-quaternary)',
-              cursor: 'pointer',
-              color: 'var(--text-primary)',
-            }}
-          />
-          <Icon
-            icon={DeleteOutlined}
-            size={18}
-            onClick={onDelete}
-            style={{
-              padding: 6,
-              borderRadius: 6,
-              background: 'var(--color-fill-quaternary)',
-              cursor: 'pointer',
-              color: 'var(--text-primary)',
+              fontSize: 18,
+              color: hovered ? '#fff' : 'var(--text-secondary)',
+              transition: 'color 0.15s ease',
             }}
           />
         </div>
-      )}
 
-      {/* 图标 + 标题 */}
-      <Flexbox gap={14} align="flex-start">
-        <Avatar
-          avatar={<FolderOutlined style={{ fontSize: 22 }} />}
-          size={48}
-          background={
-            hovered ? 'var(--text-primary)' : 'var(--color-fill-quaternary)'
-          }
-          shape="square"
-          style={{
-            borderRadius: 12,
-            transition: 'all 0.25s ease',
-          }}
-        />
-        <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            paddingRight: hovered ? 60 : 0,
-          }}
-        >
-          <Text
-            strong
-            style={{
-              fontSize: 17,
-              display: 'block',
-              marginBottom: 6,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {workspace.name}
-          </Text>
+        {/* 内容 */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Text
+              strong
+              style={{
+                fontSize: 15,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {workspace.name}
+            </Text>
+            <Dropdown
+              menu={{
+                items: menuItems.map((item) => ({
+                  key: item.key,
+                  icon: item.icon,
+                  label: item.label,
+                  danger: item.danger,
+                })),
+                onClick: ({ key, domEvent }) => {
+                  domEvent.stopPropagation();
+                  if (key === 'edit') onEdit();
+                  if (key === 'delete') onDelete();
+                },
+              }}
+              trigger={['click']}
+            >
+              <button
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: 28,
+                  height: 28,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: 'none',
+                  borderRadius: 6,
+                  background: hovered ? 'var(--bg-secondary)' : 'transparent',
+                  cursor: 'pointer',
+                  color: 'var(--text-tertiary)',
+                  flexShrink: 0,
+                  opacity: hovered ? 1 : 0,
+                  transition: 'opacity 0.15s ease',
+                }}
+              >
+                <MoreOutlined style={{ fontSize: 16 }} />
+              </button>
+            </Dropdown>
+          </div>
+
           <Text
             type="secondary"
             style={{
               fontSize: 13,
               display: 'block',
-              lineHeight: 1.5,
+              marginTop: 4,
+              fontStyle: workspace.description ? 'normal' : 'italic',
             }}
           >
-            {(workspace.description) || ('No description')}
+            {workspace.description || t('noDescription')}
           </Text>
         </div>
-      </Flexbox>
+      </div>
 
-      {/* 底部信息 */}
-      <Flexbox
-        gap={12}
-        horizontal
-        align="center"
-        style={{
-          marginTop: 16,
-          paddingTop: 14,
-          borderTop: '1px solid var(--color-border)',
-        }}
-      >
-        <Flexbox gap={4} horizontal align="center">
-          <Icon
-            icon={ClockCircleOutlined}
-            size={12}
-            color="var(--color-text-tertiary)"
-          />
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {createdDate}
-          </Text>
-        </Flexbox>
-        <Flexbox
-          gap={4}
-          horizontal
-          align="center"
-          style={{ marginLeft: 'auto' }}
-        >
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {t('enter')}
-          </Text>
-          <Icon
-            icon={ArrowRightOutlined}
-            size={12}
-            color="var(--text-primary)"
-          />
-        </Flexbox>
-      </Flexbox>
-    </div>
-  );
-}
-
-/**
- * 加载骨架屏组件
- */
-function LoadingSkeleton() {
-  return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-        gap: 20,
-      }}
-    >
-      {[1, 2, 3].map((i) => (
-        <div
-          key={i}
-          style={{
-            background: 'var(--color-bg)',
-            borderRadius: 16,
-            border: '1px solid var(--color-border)',
-            padding: 20,
-          }}
-        >
-          <Flexbox gap={14} align="flex-start">
-            <Skeleton.Avatar active size={48} shape="square" />
-            <div style={{ flex: 1 }}>
-              <div
-                style={{
-                  width: '60%',
-                  height: 20,
-                  marginBottom: 8,
-                  background: 'var(--color-fill-quaternary)',
-                  borderRadius: 4,
-                }}
-              />
-              <div
-                style={{
-                  width: '80%',
-                  height: 16,
-                  background: 'var(--color-fill-quaternary)',
-                  borderRadius: 4,
-                }}
-              />
-            </div>
-          </Flexbox>
-          <div
-            style={{
-              marginTop: 16,
-              paddingTop: 14,
-              borderTop: '1px solid var(--color-border)',
-            }}
-          >
-            <div
-              style={{
-                width: 80,
-                height: 14,
-                background: 'var(--color-fill-quaternary)',
-                borderRadius: 4,
-              }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/**
- * 错误状态组件
- */
-interface ErrorStateProps {
-  error: string;
-  onRetry: () => void;
-}
-
-function ErrorState({ error, onRetry }: ErrorStateProps) {
-  const t = useTranslations('workplace');
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 400,
-      }}
-    >
-      <Modal
-        title={t('loadFailed')}
-        open={true}
-        onCancel={undefined}
-        footer={
-          <Button
-            type="primary"
-            icon={<ReloadOutlined />}
-            onClick={onRetry}
-            style={{ borderRadius: 10 }}
-          >
-            {t('retry')}
-          </Button>
-        }
-      >
-        <Text type="secondary">{error}</Text>
-      </Modal>
-    </div>
-  );
-}
-
-/**
- * 空状态组件
- */
-interface EmptyStateProps {
-  onCreate: () => void;
-}
-
-function EmptyState({ onCreate }: EmptyStateProps) {
-  const t = useTranslations('workplace');
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 400,
-        gap: 24,
-      }}
-    >
+      {/* 底部 */}
       <div
         style={{
-          width: 80,
-          height: 80,
-          borderRadius: 20,
-          background:
-            'linear-gradient(135deg, var(--text-primary), var(--text-primary))',
           display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
-          justifyContent: 'center',
+          marginTop: 14,
+          paddingTop: 12,
+          borderTop: '1px solid var(--border-primary)',
         }}
       >
-        <FolderOutlined style={{ fontSize: 40, color: '#fff' }} />
-      </div>
-      <Flexbox gap={8} align="center">
-        <Text
-          strong
+        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <ClockCircleOutlined style={{ fontSize: 12 }} />
+          创建于 {dateStr}
+        </span>
+        <span
           style={{
-            fontSize: 20,
-            background:
-              'linear-gradient(135deg, var(--text-primary), var(--text-primary))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
+            fontSize: 13,
+            fontWeight: 500,
+            color: hovered ? 'var(--text-primary)' : 'var(--text-tertiary)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            transition: 'color 0.15s ease',
           }}
         >
-          {t('noWorkspace')}
-        </Text>
-        <Text type="secondary" style={{ fontSize: 14 }}>
-          {t('startByCreatingFirst')}
-        </Text>
-      </Flexbox>
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        onClick={onCreate}
-        size="large"
-        style={{
-          borderRadius: 12,
-          padding: '0 32px',
-          height: 40,
-        }}
-      >
-        {t('create')}
-      </Button>
+          {t('enter')}
+          <ArrowRightOutlined style={{ fontSize: 12 }} />
+        </span>
+      </div>
     </div>
   );
 }
 
-/**
- * 工作区列表页面组件
- */
-export default function WorkplacePage() {
-  const t = useTranslations('workplace');
+export default function ProjectPage() {
   const router = useRouter();
+  const t = useTranslations('workplace');
   const [workspaces, setWorkspaces] = useState<WorkspaceListItem[]>([]);
-  const [fetching, setFetching] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingWorkspace, setEditingWorkspace] =
-    useState<WorkspaceListItem | null>(null);
-  const [searchText, setSearchText] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [editModal, setEditModal] = useState<{ open: boolean; workspace?: WorkspaceListItem }>({ open: false });
+  const [createModal, setCreateModal] = useState(false);
   const [form] = Form.useForm();
 
-  /**
-   * 获取工作区列表
-   */
   const fetchWorkspaces = useCallback(async () => {
-    setFetching(true);
-    setError(null);
     try {
-      const response = await fetch('/api/workspaces');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${String(response.status)}`);
-      }
-      const result: {
-        success: boolean;
-        data?: WorkspaceListItem[];
-        error?: { message: string };
-      } = await response.json();
-      if (result.success) {
-        setWorkspaces(result.data ?? []);
-      } else {
-        const errorMsg = result.error?.message ?? t('fetchFailed');
-        setError(errorMsg);
-        message.error(errorMsg);
-      }
-    } catch (err) {
-      const errorMsg =
-        err instanceof Error ? err.message : t('fetchFailed');
-      setError(errorMsg);
-      message.error(errorMsg);
-      console.error('获取工作区列表失败:', err);
+      const res = await fetch('/api/workspaces');
+      const data = await res.json();
+      if (data.success) setWorkspaces(data.data || []);
+    } catch {
+      message.error(t('fetchFailed'));
     } finally {
-      setFetching(false);
+      setLoading(false);
     }
   }, [t]);
 
-  /**
-   * 初始化加载
-   */
   useEffect(() => {
     fetchWorkspaces();
   }, [fetchWorkspaces]);
 
-  /**
-   * 打开创建/编辑弹窗
-   */
-  const handleOpenModal = (workspace?: WorkspaceListItem) => {
-    if (workspace) {
-      setEditingWorkspace(workspace);
-      form.setFieldsValue({
-        name: workspace.name,
-        description: workspace.description,
-      });
-    } else {
-      setEditingWorkspace(null);
-      form.resetFields();
-    }
-    setModalOpen(true);
-  };
+  const filtered = useMemo(() => {
+    if (!search) return workspaces;
+    const q = search.toLowerCase();
+    return workspaces.filter((w) => w.name.toLowerCase().includes(q));
+  }, [workspaces, search]);
 
-  /**
-   * 关闭弹窗
-   */
-  const handleCloseModal = () => {
-    setModalOpen(false);
-    setEditingWorkspace(null);
-    form.resetFields();
-  };
-
-  /**
-   * 提交表单
-   */
-  const handleSubmit = async (values: {
-    name: string;
-    description?: string;
-  }) => {
-    setLoading(true);
+  const handleCreate = useCallback(async () => {
     try {
-      const url = editingWorkspace
-        ? `/api/workspaces/${editingWorkspace.id}`
-        : '/api/workspaces';
-      const method = editingWorkspace ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
+      const values = await form.validateFields();
+      const res = await fetch('/api/workspaces', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
       });
-
-      const result: {
-        success: boolean;
-        data?: WorkspaceListItem;
-        error?: { message: string };
-      } = await response.json();
-
-      if (result.success && result.data) {
-        message.success(editingWorkspace ? t('updateSuccess') : t('createSuccess'));
-        handleCloseModal();
+      const data = await res.json();
+      if (data.success) {
+        message.success(t('createSuccess'));
+        setCreateModal(false);
+        form.resetFields();
         fetchWorkspaces();
-        if (!editingWorkspace) {
-          router.push(`/project/${result.data.id}`);
-        }
       } else {
-        message.error(
-          result.error?.message ??
-            (editingWorkspace ? t('updateFailed') : t('createFailed')),
-        );
+        message.error(data.error?.message || t('createFailed'));
       }
     } catch {
-      message.error(editingWorkspace ? t('updateFailed') : t('createFailed'));
-    } finally {
-      setLoading(false);
+      // form validation error
     }
-  };
+  }, [form, t, fetchWorkspaces]);
 
-  /**
-   * 删除工作区
-   */
   const handleDelete = useCallback(
-    (workspace: WorkspaceListItem) => {
-      Modal.confirm({
-        title: t('confirmDelete'),
-        content: t('deleteWorkspaceConfirm', { name: workspace.name }),
-        okText: t('delete'),
-        okButtonProps: {
-          danger: true,
-        },
-        cancelText: t('cancel'),
-        centered: true,
-        onOk: async () => {
-          try {
-            const response = await fetch(
-              `/api/workspaces/${workspace.id}`,
-              {
-                method: 'DELETE',
-              },
-            );
-            const result: {
-              success: boolean;
-              error?: { message: string };
-            } = await response.json();
-            if (result.success) {
-              message.success(t('deleteSuccess'));
-              fetchWorkspaces();
-            } else {
-              message.error(result.error?.message ?? t('deleteFailed'));
-            }
-          } catch {
-            message.error(t('deleteFailed'));
-          }
-        },
-      });
+    async (id: string) => {
+      try {
+        const res = await fetch(`/api/workspaces/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          message.success(t('deleteSuccess'));
+          fetchWorkspaces();
+        } else {
+          message.error(data.error?.message || t('deleteFailed'));
+        }
+      } catch {
+        message.error(t('deleteFailed'));
+      }
     },
-    [fetchWorkspaces],
+    [t, fetchWorkspaces],
   );
 
-  /**
-   * 过滤后的工作区列表（支持搜索）
-   */
-  const filteredWorkspaces = useMemo(() => {
-    if (!searchText) return workspaces;
-    return workspaces.filter(
-      (ws) =>
-        ws.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        ws.description.toLowerCase().includes(searchText.toLowerCase()),
-    );
-  }, [workspaces, searchText]);
-
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--color-bg-layout)',
-      }}
+    <PageContainer
+      title={t('title')}
+      subtitle={workspaces.length > 0 ? t('workspaceCount', { count: String(workspaces.length) }) : t('startByCreating')}
+      extra={
+        <Button icon={<PlusOutlined />} onClick={() => setCreateModal(true)}>
+          {t('new')}
+        </Button>
+      }
     >
-      {/* 顶部标题栏 */}
-      <div
-        style={{
-          background: 'var(--color-bg)',
-          borderBottom: '1px solid var(--color-border)',
-          padding: '20px 24px',
-        }}
-      >
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <Flexbox horizontal align="center" justify="space-between">
-            <Flexbox gap={12} horizontal align="center">
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 10,
-                  background: 'var(--text-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Icon icon={FolderOutlined} size={20} color="#fff" />
-              </div>
-              <div>
-                <Text strong style={{ fontSize: 22, display: 'block' }}>
-                  {t('titleShort')}
-                </Text>
-                <Text type="secondary" style={{ fontSize: 13 }}>
-                  {workspaces.length > 0
-                    ? t('workspaceCount', { count: String(workspaces.length) })
-                    : t('startByCreating')}
-                </Text>
-              </div>
-            </Flexbox>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              size="large"
-              onClick={() => handleOpenModal()}
-              style={{
-                borderRadius: 10,
-                padding: '0 20px',
-                height: 40,
-              }}
-            >
-              {t('new')}
-            </Button>
-          </Flexbox>
-        </div>
-      </div>
+      {/* 搜索 */}
+      <Input
+        prefix={<SearchOutlined style={{ color: 'var(--text-tertiary)' }} />}
+        placeholder={t('search')}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        allowClear
+        style={{ marginBottom: 20 }}
+      />
 
-      {/* 主内容区 */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px' }}>
-        {error ? (
-          <ErrorState error={error} onRetry={fetchWorkspaces} />
-        ) : fetching ? (
-          <LoadingSkeleton />
-        ) : workspaces.length === 0 ? (
-          <EmptyState onCreate={() => handleOpenModal()} />
-        ) : (
-          <>
-            {/* 搜索框 */}
+      {/* 列表 */}
+      {loading ? (
+        <Flexbox gap={12}>
+          {[1, 2, 3].map((i) => (
             <div
+              key={i}
               style={{
-                marginBottom: 24,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
+                height: 100,
+                borderRadius: 8,
+                background: 'var(--bg-secondary)',
               }}
-            >
-              <Input
-                placeholder={t('search')}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                prefix={<SearchOutlined />}
-                style={{
-                  maxWidth: 320,
-                  borderRadius: 10,
-                }}
-              />
-            </div>
-
-            {/* 工作区网格 */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: `repeat(auto-fill, minmax(340px, 1fr))`,
-                gap: 20,
-              }}
-            >
-              {filteredWorkspaces.map((workspace) => (
-                <WorkspaceCard
-                  key={workspace.id}
-                  workspace={workspace}
-                  onClick={() =>
-                    router.push(`/project/${workspace.id}`)
-                  }
-                  onEdit={() => handleOpenModal(workspace)}
-                  onDelete={() => handleDelete(workspace)}
-                />
-              ))}
-            </div>
-
-            {filteredWorkspaces.length === 0 && searchText && (
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: '60px 0',
-                }}
-              >
-                <Text type="secondary">{t('noMatchFound')}</Text>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* 创建/编辑弹窗 */}
-      <Modal
-        title={editingWorkspace ? t('edit') : t('createNew')}
-        open={modalOpen}
-        onCancel={handleCloseModal}
-        footer={null}
-        destroyOnHidden
-        centered
-        width={480}
-      >
-        <Form
-          form={form}
-          onFinish={handleSubmit}
-          layout="vertical"
-          style={{ marginTop: 20 }}
+            />
+          ))}
+        </Flexbox>
+      ) : filtered.length === 0 ? (
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '48px 0',
+            color: 'var(--text-tertiary)',
+          }}
         >
+          <FolderOutlined style={{ fontSize: 40, marginBottom: 12, display: 'block' }} />
+          <Text type="secondary">{search ? t('noMatchFound') : t('empty')}</Text>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {filtered.map((ws) => (
+            <WorkspaceCard
+              key={ws.id}
+              workspace={ws}
+              onClick={() => router.push(`/project/${ws.id}`)}
+              onEdit={() => {
+                setEditModal({ open: true, workspace: ws });
+                form.setFieldsValue(ws);
+              }}
+              onDelete={() => {
+                Modal.confirm({
+                  title: t('confirmDelete'),
+                  content: t('deleteWorkspaceConfirm', { name: ws.name }),
+                  okText: t('delete'),
+                  cancelText: t('cancel'),
+                  okButtonProps: { danger: true },
+                  onOk: () => handleDelete(ws.id),
+                });
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* 创建弹窗 */}
+      <Modal
+        title={t('createNew')}
+        open={createModal}
+        onOk={handleCreate}
+        onCancel={() => {
+          setCreateModal(false);
+          form.resetFields();
+        }}
+        okText={t('createBtn')}
+        cancelText={t('cancel')}
+      >
+        <Form form={form} layout="vertical">
           <Form.Item
             name="name"
-            label={t('name')}
-            rules={[
-              { required: true, message: t('nameRequired') },
-              {
-                max: 50,
-                message: t('nameMaxLength'),
-              },
-            ]}
+            label={t('workspaceName')}
+            rules={[{ required: true, message: t('workspaceNameRequired') }]}
           >
-            <Input
-              placeholder={t('namePlaceholder')}
-              size="large"
-              style={{ borderRadius: 10 }}
-              allowClear
-            />
+            <Input placeholder={t('workspaceNamePlaceholder')} />
           </Form.Item>
-          <Form.Item name="description" label={t('description')}>
-            <TextArea
-              rows={3}
-              placeholder={t('descriptionPlaceholder')}
-              style={{ borderRadius: 10 }}
-              showCount
-              maxLength={200}
-            />
-          </Form.Item>
-          <Form.Item
-            style={{
-              marginBottom: 0,
-              marginTop: 24,
-            }}
-          >
-            <Flexbox gap={12} horizontal justify="flex-end">
-              <Button
-                onClick={handleCloseModal}
-                style={{ borderRadius: 10 }}
-              >
-                {t('cancel')}
-              </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={loading}
-                style={{
-                  borderRadius: 10,
-                  padding: '0 24px',
-                }}
-              >
-                {editingWorkspace ? t('save') : t('createBtn')}
-              </Button>
-            </Flexbox>
+          <Form.Item name="description" label={t('workspaceDescription')}>
+            <Input.TextArea rows={3} placeholder={t('workspaceDescriptionPlaceholder')} />
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+
+      {/* 编辑弹窗 */}
+      <Modal
+        title={t('editWorkspace')}
+        open={editModal.open}
+        onOk={async () => {
+          try {
+            const values = await form.validateFields();
+            const res = await fetch(`/api/workspaces/${editModal.workspace?.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(values),
+            });
+            const data = await res.json();
+            if (data.success) {
+              message.success(t('updateSuccess'));
+              setEditModal({ open: false });
+              form.resetFields();
+              fetchWorkspaces();
+            } else {
+              message.error(data.error?.message || t('updateFailed'));
+            }
+          } catch {
+            // validation error
+          }
+        }}
+        onCancel={() => {
+          setEditModal({ open: false });
+          form.resetFields();
+        }}
+        okText={t('update')}
+        cancelText={t('cancel')}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="name"
+            label={t('workspaceName')}
+            rules={[{ required: true, message: t('workspaceNameRequired') }]}
+          >
+            <Input placeholder={t('workspaceNamePlaceholder')} />
+          </Form.Item>
+          <Form.Item name="description" label={t('workspaceDescription')}>
+            <Input.TextArea rows={3} placeholder={t('workspaceDescriptionPlaceholder')} />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </PageContainer>
   );
 }
