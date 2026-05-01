@@ -1,115 +1,108 @@
 'use client';
 
-import { Flexbox, Text, Button } from '@/lib/ui';
-import { HomeOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { memo } from 'react';
+import { HomeOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 
-export default memo(function NotFoundPage() {
+export default function NotFoundPage() {
   const t = useTranslations('notFound');
   const router = useRouter();
 
   return (
-    <Flexbox
-      align="center"
-      justify="center"
+    <div
       style={{
         minHeight: '100vh',
-        background: 'var(--color-bg-layout)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-primary)',
         padding: 24,
       }}
     >
-      <Flexbox gap={32} align="center" style={{ maxWidth: 480, textAlign: 'center' }}>
-        {/* 404 视觉元素 */}
+      <div style={{ maxWidth: 400, textAlign: 'center' }}>
+        {/* 404 数字 */}
         <div
           style={{
-            width: 140,
-            height: 140,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--text-primary), var(--text-primary))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 48,
-            fontWeight: 'bold',
-            color: '#fff',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+            fontSize: 120,
+            fontWeight: 800,
+            color: 'var(--text-primary)',
+            lineHeight: 1,
+            marginBottom: 16,
+            letterSpacing: '-4px',
+            opacity: 0.15,
           }}
         >
           404
         </div>
 
-        {/* 错误信息 */}
-        <Flexbox gap={12} align="center">
-          <Text
-            strong
-            style={{
-              fontSize: 28,
-              background: 'linear-gradient(135deg, var(--text-primary), var(--text-primary))',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            {t('title')}
-          </Text>
-          <Text
-            type="secondary"
-            style={{
-              fontSize: 16,
-              lineHeight: 1.6,
-              maxWidth: 400,
-            }}
-          >
-            {t('description')}
-          </Text>
-        </Flexbox>
-
-        {/* 操作按钮 */}
-        <Flexbox gap={12} horizontal>
-          <Button
-            type="primary"
-            icon={<HomeOutlined />}
-            size="large"
-            onClick={() => router.push('/')}
-            style={{ borderRadius: 10, padding: '0 24px' }}
-          >
-            {t('goHome')}
-          </Button>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            size="large"
-            onClick={() => router.back()}
-            style={{ borderRadius: 10, padding: '0 24px' }}
-          >
-            {t('goBack')}
-          </Button>
-        </Flexbox>
-
-        {/* 帮助提示 */}
-        <div
+        {/* 标题 */}
+        <h2
           style={{
-            marginTop: 24,
-            padding: '12px 16px',
-            borderRadius: 8,
-            background: 'var(--color-fill-quaternary)',
-            border: '1px solid var(--color-border)',
+            fontSize: 20,
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+            margin: '0 0 8px',
           }}
         >
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            {t('reportIssue')}
-            <a
-              href="https://github.com/Jyf0214/AutocodeLLM/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: 'var(--text-primary)', textDecoration: 'none' }}
-            >
-              {t('submitIssue')}
-            </a>
-          </Text>
+          {t('title')}
+        </h2>
+
+        {/* 描述 */}
+        <p
+          style={{
+            fontSize: 14,
+            color: 'var(--text-tertiary)',
+            margin: '0 0 32px',
+            lineHeight: 1.6,
+          }}
+        >
+          {t('description')}
+        </p>
+
+        {/* 按钮 */}
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <button
+            onClick={() => router.push('/')}
+            style={{
+              height: 40,
+              padding: '0 20px',
+              fontSize: 14,
+              fontWeight: 500,
+              color: '#fff',
+              background: 'var(--text-primary)',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <HomeOutlined />
+            {t('goHome')}
+          </button>
+          <button
+            onClick={() => router.back()}
+            style={{
+              height: 40,
+              padding: '0 20px',
+              fontSize: 14,
+              fontWeight: 500,
+              color: 'var(--text-primary)',
+              background: 'transparent',
+              border: '1px solid var(--border-primary)',
+              borderRadius: 8,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <ArrowLeftOutlined />
+            {t('goBack')}
+          </button>
         </div>
-      </Flexbox>
-    </Flexbox>
+      </div>
+    </div>
   );
-});
+}
