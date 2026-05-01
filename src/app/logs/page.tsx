@@ -92,7 +92,7 @@ export default function LogsPage() {
       {data?.stats && (
         <Flexbox gap={12} style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Tag color="blue">总计: {data.stats.total}</Tag>
+            <Tag color="default">总计: {data.stats.total}</Tag>
             <Tag color="green">最近5分钟: {data.stats.last5min}</Tag>
             <Tag color="purple">最近1小时: {data.stats.last1hour}</Tag>
             <Tag color="red">错误: {data.stats.errors}</Tag>

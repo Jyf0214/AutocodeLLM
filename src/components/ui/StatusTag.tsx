@@ -20,7 +20,7 @@ const defaultStatusMap: Record<string, { color: string; text: string }> = {
   success: { color: 'green', text: '成功' },
   error: { color: 'red', text: '失败' },
   failed: { color: 'red', text: '失败' },
-  running: { color: 'blue', text: '运行中' },
+  running: { color: 'default', text: '运行中' },
   stopped: { color: 'default', text: '已停止' },
 };
 

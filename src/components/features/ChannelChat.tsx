@@ -203,7 +203,7 @@ export default function ChannelChat({ channelId, channelName }: ChannelChatProps
                   style={{
                     maxWidth: '70%',
                     background: msg.sentFromApp
-                      ? 'var(--lobe-color-primary-container, #e8f0fe)'
+                      ? 'var(--bg-secondary)'
                       : 'var(--color-bg-elevated, #f5f5f5)',
                     borderRadius: 12,
                     padding: '8px 12px',

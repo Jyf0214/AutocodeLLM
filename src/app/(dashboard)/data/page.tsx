@@ -143,7 +143,7 @@ export default function DataPage() {
                 <Text strong>导入结果</Text>
                 <div style={{ display: 'flex', gap: 16 }}>
                   <Tag color="green">成功: {result.imported}</Tag>
-                  <Tag color="blue">跳过: {result.skipped}</Tag>
+                  <Tag color="default">跳过: {result.skipped}</Tag>
                   <Tag color="red">失败: {result.failed}</Tag>
                 </div>
                 <div style={{ maxHeight: 200, overflow: 'auto', marginTop: 8 }}>

@@ -41,6 +41,7 @@ export default async function RootLayout({
               <ConfigProvider
                 theme={{
                   token: {
+                    colorPrimary: '#000000',
                     borderRadius: 6,
                     fontFamily:
                       "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif",

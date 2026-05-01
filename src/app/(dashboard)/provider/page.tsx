@@ -121,7 +121,7 @@ function ProviderCard({
           </Flexbox>
           <Flexbox gap={8} horizontal style={{ marginTop: 6 }}>
             <Tag style={{ fontSize: 11 }}>{provider.sdkType}</Tag>
-            {provider.authType === 'oauth' && <Tag color="blue">OAuth</Tag>}
+            {provider.authType === 'oauth' && <Tag color="default">OAuth</Tag>}
           </Flexbox>
           <div
             style={{

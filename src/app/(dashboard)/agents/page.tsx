@@ -17,7 +17,7 @@ interface AgentTaskFormData {
 }
 
 const STATUS_COLORS = {
-  ready: 'blue',
+  ready: 'default',
   running: 'green',
   completed: 'default',
   failed: 'red',
