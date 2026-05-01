@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { message } from 'antd';
+import { message, Modal, Form, Input } from 'antd';
 import { Button, Text, Flexbox } from '@/lib/ui';
 import { Skeleton } from 'antd';
 import {
@@ -27,6 +27,9 @@ export default function WorkspaceDetailPage() {
   const [workspace, setWorkspace] = useState<WorkspaceListItem | null>(null);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editForm] = Form.useForm();
+  const [saving, setSaving] = useState(false);
 
   const fetchWorkspace = useCallback(async () => {
     setFetching(true);
@@ -54,6 +57,41 @@ export default function WorkspaceDetailPage() {
   useEffect(() => {
     fetchWorkspace();
   }, [fetchWorkspace]);
+
+  const handleEdit = useCallback(async () => {
+    try {
+      const values = await editForm.validateFields();
+      setSaving(true);
+      const res = await fetch(`/api/workspaces/${workspaceId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
+      const data = await res.json();
+      if (data.success) {
+        message.success(t('updateSuccess'));
+        setEditModalOpen(false);
+        editForm.resetFields();
+        fetchWorkspace();
+      } else {
+        message.error(data.error?.message || t('updateFailed'));
+      }
+    } catch {
+      // 表单验证失败
+    } finally {
+      setSaving(false);
+    }
+  }, [editForm, workspaceId, t, fetchWorkspace]);
+
+  const openEditModal = useCallback(() => {
+    if (workspace) {
+      editForm.setFieldsValue({
+        name: workspace.name,
+        description: workspace.description || '',
+      });
+      setEditModalOpen(true);
+    }
+  }, [workspace, editForm]);
 
   const menuItems = [
     { icon: <MessageOutlined />, title: t('aiChat'), desc: t('aiChatDesc'), path: `/chat/${workspaceId}` },
@@ -129,9 +167,7 @@ export default function WorkspaceDetailPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <Text strong style={{ fontSize: 20 }}>{workspace.name}</Text>
               <button
-                onClick={() => {
-                  // TODO: 编辑项目
-                }}
+                onClick={openEditModal}
                 style={{
                   width: 28,
                   height: 28,
@@ -213,6 +249,33 @@ export default function WorkspaceDetailPage() {
           </div>
         ))}
       </div>
+
+      {/* 编辑弹窗 */}
+      <Modal
+        title={t('editWorkspace')}
+        open={editModalOpen}
+        onOk={handleEdit}
+        confirmLoading={saving}
+        onCancel={() => {
+          setEditModalOpen(false);
+          editForm.resetFields();
+        }}
+        okText={t('update')}
+        cancelText={t('cancel')}
+      >
+        <Form form={editForm} layout="vertical">
+          <Form.Item
+            name="name"
+            label={t('workspaceName')}
+            rules={[{ required: true, message: t('workspaceNameRequired') }]}
+          >
+            <Input placeholder={t('workspaceNamePlaceholder')} />
+          </Form.Item>
+          <Form.Item name="description" label={t('workspaceDescription')}>
+            <Input.TextArea rows={3} placeholder={t('workspaceDescriptionPlaceholder')} />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

@@ -75,8 +75,8 @@ function extractLarkContent(msg: Record<string, unknown>): string {
 }
 
 /**
- * 飞书 WebSocket 连接（占位 — 需要飞书 SDK）
- * 飞书使用长连接接收事件，需要先获取 WebSocket URL
+ * 飞书 WebSocket 长连接
+ * 通过飞书开放平台 WebSocket 接口接收实时事件
  */
 export async function connectLarkWebSocket(config: ChannelConfig): Promise<void> {
   if (!config.appId || !config.appSecret) {
@@ -84,8 +84,8 @@ export async function connectLarkWebSocket(config: ChannelConfig): Promise<void>
     return;
   }
 
-  // 获取 tenant_access_token
   try {
+    // 获取 tenant_access_token
     const tokenRes = await fetch(
       'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
       {
@@ -99,16 +99,72 @@ export async function connectLarkWebSocket(config: ChannelConfig): Promise<void>
     );
     const tokenData = (await tokenRes.json()) as {
       code: number;
+      msg?: string;
       tenant_access_token?: string;
     };
 
     if (tokenData.code !== 0 || !tokenData.tenant_access_token) {
-      console.error('[Lark] 获取 token 失败');
+      console.error('[Lark] 获取 token 失败:', tokenData.msg);
       return;
     }
 
-    console.log('[Lark] WebSocket 连接已建立（占位）');
-    // TODO: 使用飞书 WebSocket SDK 建立长连接
+    const token = tokenData.tenant_access_token;
+
+    // 获取 WebSocket 连接地址
+    const wsRes = await fetch(
+      'https://open.feishu.cn/open-apis/ws/v1/connection',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ app_id: config.appId }),
+      },
+    );
+    const wsData = (await wsRes.json()) as {
+      code: number;
+      msg?: string;
+      data?: { url?: string };
+    };
+
+    if (wsData.code !== 0 || !wsData.data?.url) {
+      console.error('[Lark] 获取 WebSocket 地址失败:', wsData.msg);
+      return;
+    }
+
+    const wsUrl = wsData.data.url;
+    console.log('[Lark] 正在建立 WebSocket 连接:', wsUrl);
+
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('[Lark] WebSocket 连接已建立');
+    };
+
+    ws.onmessage = (event: WebSocketMessageEvent) => {
+      try {
+        const data = JSON.parse(event.data as string) as Record<string, unknown>;
+        handleLarkWebhook(config, data);
+      } catch (err) {
+        console.error('[Lark] WebSocket 消息解析失败:', err);
+      }
+    };
+
+    ws.onerror = (event: Event) => {
+      console.error('[Lark] WebSocket 错误:', event);
+    };
+
+    ws.onclose = (event: CloseEvent) => {
+      console.log('[Lark] WebSocket 连接关闭, code:', event.code, 'reason:', event.reason);
+      // 断线重连：5 秒后重试
+      if (event.code !== 1000) {
+        setTimeout(() => {
+          console.log('[Lark] 尝试重新连接 WebSocket...');
+          connectLarkWebSocket(config);
+        }, 5000);
+      }
+    };
   } catch (err) {
     console.error('[Lark] WebSocket 连接失败:', err);
   }

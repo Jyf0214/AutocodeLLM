@@ -90,8 +90,42 @@ export async function connectDingtalkStream(config: ChannelConfig): Promise<void
     };
 
     if (wsData.endpoint && wsData.ticket) {
-      console.log('[Dingtalk] WebSocket 连接信息已获取（占位）');
-      // TODO: 建立 WebSocket 连接并处理消息
+      console.log('[Dingtalk] 正在建立 WebSocket 连接:', wsData.endpoint);
+
+      const wsUrl = `${wsData.endpoint}?ticket=${encodeURIComponent(wsData.ticket)}`;
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log('[Dingtalk] WebSocket 连接已建立');
+      };
+
+      ws.onmessage = (event: WebSocketMessageEvent) => {
+        try {
+          const data = JSON.parse(event.data as string) as Record<string, unknown>;
+          // 钉钉 Stream Mode 推送的消息格式与 Webhook 一致
+          const headers = data.headers as Record<string, string> | undefined;
+          const body = data.body as Record<string, unknown> | undefined;
+          if (headers && body) {
+            handleDingtalkWebhook(config, body);
+          }
+        } catch (err) {
+          console.error('[Dingtalk] WebSocket 消息解析失败:', err);
+        }
+      };
+
+      ws.onerror = (event: Event) => {
+        console.error('[Dingtalk] WebSocket 错误:', event);
+      };
+
+      ws.onclose = (event: CloseEvent) => {
+        console.log('[Dingtalk] WebSocket 连接关闭, code:', event.code, 'reason:', event.reason);
+        if (event.code !== 1000) {
+          setTimeout(() => {
+            console.log('[Dingtalk] 尝试重新连接 WebSocket...');
+            connectDingtalkStream(config);
+          }, 5000);
+        }
+      };
     }
   } catch (err) {
     console.error('[Dingtalk] Stream 连接失败:', err);

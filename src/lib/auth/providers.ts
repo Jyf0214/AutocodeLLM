@@ -54,12 +54,11 @@ export function verifyBetterAuthToken(token: string): { userId: string } | null 
 }
 
 // ============================================================
-// Clerk 集成点（占位）
+// Clerk Webhook 集成
 // ============================================================
 
 /**
- * Clerk Webhook 处理
- * 当 Clerk 用户创建/更新/删除时同步到本地数据库
+ * Clerk Webhook 载荷
  */
 export interface ClerkWebhookPayload {
   type: 'user.created' | 'user.updated' | 'user.deleted';
@@ -67,20 +66,81 @@ export interface ClerkWebhookPayload {
     id: string;
     email_addresses: Array<{ email_address: string }>;
     username?: string;
+    first_name?: string;
+    last_name?: string;
   };
 }
 
+/**
+ * Clerk Webhook 处理
+ * 当 Clerk 用户创建/更新/删除时同步到本地数据库
+ */
 export async function handleClerkWebhook(payload: ClerkWebhookPayload): Promise<void> {
-  // Clerk 集成占位 — 未来实现用户同步
-  console.log('[Clerk] webhook received:', payload.type, payload.data.id);
+  const { prisma } = await import('@/lib/db/prisma');
+  const { randomBytes, createHash } = await import('node:crypto');
+
+  const { type, data } = payload;
+  const email = data.email_addresses?.[0]?.email_address || '';
+  const username = data.username || email.split('@')[0] || data.id;
+  const displayName = [data.first_name, data.last_name].filter(Boolean).join(' ') || username;
+
+  try {
+    switch (type) {
+      case 'user.created': {
+        // 为新用户生成随机密码（Clerk 用户不通过本地密码登录）
+        const salt = randomBytes(16).toString('hex');
+        const placeholderHash = createHash('sha256')
+          .update(`${data.id}:${salt}`)
+          .digest('hex');
+
+        await prisma.user.create({
+          data: {
+            id: data.id,
+            username,
+            passwordHash: `${salt}:${placeholderHash}`,
+            role: 'user',
+            forceChangePassword: false,
+            isInitialPassword: false,
+          },
+        });
+        console.log('[Clerk] 用户已创建:', username, data.id);
+        break;
+      }
+
+      case 'user.updated': {
+        const existing = await prisma.user.findUnique({ where: { id: data.id } });
+        if (existing) {
+          await prisma.user.update({
+            where: { id: data.id },
+            data: { username },
+          });
+          console.log('[Clerk] 用户已更新:', username, data.id);
+        } else {
+          console.warn('[Clerk] 用户不存在，无法更新:', data.id);
+        }
+        break;
+      }
+
+      case 'user.deleted': {
+        await prisma.user.delete({ where: { id: data.id } }).catch(() => {
+          console.warn('[Clerk] 用户不存在，跳过删除:', data.id);
+        });
+        console.log('[Clerk] 用户已删除:', data.id);
+        break;
+      }
+    }
+  } catch (err) {
+    console.error('[Clerk] Webhook 处理失败:', err);
+    throw err;
+  }
 }
 
 // ============================================================
-// Supabase 集成点（占位）
+// Supabase Auth 集成
 // ============================================================
 
 /**
- * Supabase Auth 集成
+ * Supabase Auth 配置
  * 使用 Supabase JWT 进行认证
  */
 export interface SupabaseAuthConfig {
@@ -89,6 +149,9 @@ export interface SupabaseAuthConfig {
   serviceRoleKey: string;
 }
 
+/**
+ * 获取 Supabase 配置
+ */
 export function getSupabaseConfig(): SupabaseAuthConfig | null {
   const url = process.env.SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY;
@@ -97,4 +160,28 @@ export function getSupabaseConfig(): SupabaseAuthConfig | null {
   if (!url || !anonKey) return null;
 
   return { url, anonKey, serviceRoleKey: serviceRoleKey || '' };
+}
+
+/**
+ * 验证 Supabase JWT Token
+ */
+export async function verifySupabaseToken(token: string): Promise<{ sub: string; email?: string } | null> {
+  const config = getSupabaseConfig();
+  if (!config) return null;
+
+  try {
+    const res = await fetch(`${config.url}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: config.anonKey,
+      },
+    });
+
+    if (!res.ok) return null;
+
+    const user = (await res.json()) as { id: string; email?: string };
+    return { sub: user.id, email: user.email };
+  } catch {
+    return null;
+  }
 }
