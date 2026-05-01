@@ -1,0 +1,209 @@
+import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth';
+import { prisma } from '@/lib/db/prisma';
+
+interface ImportData {
+  workspaces?: Array<{
+    id?: string;
+    name: string;
+    description?: string;
+  }>;
+  providers?: Array<{
+    id?: string;
+    name: string;
+    baseUrl: string;
+    enabled?: boolean;
+    providerType?: string;
+    sdkType?: string;
+  }>;
+  envVars?: Array<{
+    key: string;
+    value?: string;
+    description?: string;
+    enabled?: boolean;
+  }>;
+  mcpServers?: Array<{
+    name: string;
+    url: string;
+    enabled?: boolean;
+  }>;
+  agentTasks?: Array<{
+    name: string;
+    description?: string;
+    mode?: string;
+    maxAgents?: number;
+  }>;
+}
+
+/**
+ * POST /api/data/import
+ * 导入 JSON 数据（支持覆盖和合并）
+ */
+export async function POST(request: Request) {
+  const auth = await requireAuth(request, 'admin');
+  if (auth.error) return auth.error;
+
+  const body = (await request.json()) as {
+    data: ImportData;
+    mode: 'merge' | 'overwrite';
+  };
+
+  if (!body.data) {
+    return NextResponse.json(
+      { success: false, error: { message: '缺少导入数据', code: 'MISSING_DATA' } },
+      { status: 400 },
+    );
+  }
+
+  const mode = body.mode || 'merge';
+  const progress: string[] = [];
+  let imported = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  const { data } = body;
+
+  // 导入工作区
+  if (data.workspaces?.length) {
+    if (mode === 'overwrite') {
+      await prisma.workspace.deleteMany();
+      progress.push('已清除现有工作区');
+    }
+    for (const ws of data.workspaces) {
+      try {
+        if (mode === 'merge' && ws.id) {
+          await prisma.workspace.upsert({
+            where: { id: ws.id },
+            update: { name: ws.name, description: ws.description || '' },
+            create: { name: ws.name, description: ws.description || '' },
+          });
+        } else {
+          await prisma.workspace.create({
+            data: { name: ws.name, description: ws.description || '' },
+          });
+        }
+        imported++;
+        progress.push(`工作区 "${ws.name}" 导入成功`);
+      } catch (err) {
+        failed++;
+        progress.push(`工作区 "${ws.name}" 导入失败: ${err instanceof Error ? err.message : '未知错误'}`);
+      }
+    }
+  }
+
+  // 导入提供商
+  if (data.providers?.length) {
+    if (mode === 'overwrite') {
+      await prisma.provider.deleteMany();
+      progress.push('已清除现有提供商');
+    }
+    for (const p of data.providers) {
+      try {
+        if (mode === 'merge') {
+          const existing = await prisma.provider.findUnique({ where: { name: p.name } });
+          if (existing) {
+            await prisma.provider.update({
+              where: { name: p.name },
+              data: { baseUrl: p.baseUrl, enabled: p.enabled ?? true },
+            });
+            skipped++;
+            continue;
+          }
+        }
+        await prisma.provider.create({
+          data: {
+            name: p.name,
+            baseUrl: p.baseUrl,
+            apiKey: '',
+            enabled: p.enabled ?? true,
+            providerType: p.providerType || 'custom',
+            sdkType: p.sdkType || 'openai',
+          },
+        });
+        imported++;
+        progress.push(`提供商 "${p.name}" 导入成功`);
+      } catch (err) {
+        failed++;
+        progress.push(`提供商 "${p.name}" 导入失败`);
+      }
+    }
+  }
+
+  // 导入环境变量
+  if (data.envVars?.length) {
+    if (mode === 'overwrite') {
+      await prisma.environmentVariable.deleteMany();
+      progress.push('已清除现有环境变量');
+    }
+    for (const ev of data.envVars) {
+      try {
+        if (mode === 'merge') {
+          const existing = await prisma.environmentVariable.findUnique({ where: { key: ev.key } });
+          if (existing) {
+            await prisma.environmentVariable.update({
+              where: { key: ev.key },
+              data: { description: ev.description || '', enabled: ev.enabled ?? true },
+            });
+            skipped++;
+            continue;
+          }
+        }
+        await prisma.environmentVariable.create({
+          data: {
+            key: ev.key,
+            value: ev.value || '',
+            description: ev.description || '',
+            enabled: ev.enabled ?? true,
+          },
+        });
+        imported++;
+        progress.push(`环境变量 "${ev.key}" 导入成功`);
+      } catch (err) {
+        failed++;
+        progress.push(`环境变量 "${ev.key}" 导入失败`);
+      }
+    }
+  }
+
+  // 导入 MCP 服务器
+  if (data.mcpServers?.length) {
+    if (mode === 'overwrite') {
+      await prisma.mcpServer.deleteMany();
+      progress.push('已清除现有 MCP 服务器');
+    }
+    for (const mcp of data.mcpServers) {
+      try {
+        if (mode === 'merge') {
+          const existing = await prisma.mcpServer.findUnique({ where: { name: mcp.name } });
+          if (existing) {
+            await prisma.mcpServer.update({
+              where: { name: mcp.name },
+              data: { url: mcp.url, enabled: mcp.enabled ?? true },
+            });
+            skipped++;
+            continue;
+          }
+        }
+        await prisma.mcpServer.create({
+          data: { name: mcp.name, url: mcp.url, enabled: mcp.enabled ?? true },
+        });
+        imported++;
+        progress.push(`MCP "${mcp.name}" 导入成功`);
+      } catch (err) {
+        failed++;
+        progress.push(`MCP "${mcp.name}" 导入失败`);
+      }
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    data: {
+      imported,
+      skipped,
+      failed,
+      total: imported + skipped + failed,
+      progress,
+    },
+  });
+}
