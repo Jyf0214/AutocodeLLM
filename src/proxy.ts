@@ -1,5 +1,17 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { logger, logRequest } from '@/lib/log';
+
+// 启动种子日志（仅执行一次）
+let seeded = false;
+function seedLogs() {
+  if (seeded) return;
+  seeded = true;
+  logger.info('AutocodeLLM 服务已启动');
+  logger.info(`Node.js ${process.version}，环境: ${process.env.NODE_ENV || 'development'}`);
+}
+
+seedLogs();
 
 /**
  * 公开路径配置
@@ -22,6 +34,14 @@ const API_PREFIX = '/api/';
  */
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
+  const start = Date.now();
+
+  // 跳过静态资源和内部请求的日志记录
+  const shouldLog =
+    !pathname.startsWith('/_next') &&
+    !pathname.startsWith('/favicon') &&
+    !pathname.startsWith('/api/logs') &&
+    !pathname.match(/\.(js|css|png|jpg|svg|ico|woff2?|map)$/);
 
   // API 请求直接放行，由具体 API 路由处理认证
   if (pathname.startsWith(API_PREFIX)) {
@@ -50,6 +70,21 @@ export function proxy(request: NextRequest): NextResponse {
     // 保留原始路径，登录后可重定向回来
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // 记录请求日志
+  if (shouldLog) {
+    try {
+      logRequest({
+        method: request.method,
+        path: pathname,
+        statusCode: 200,
+        duration: Date.now() - start,
+        ip: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || undefined,
+      });
+    } catch {
+      // 日志记录失败不影响主流程
+    }
   }
 
   return NextResponse.next();
