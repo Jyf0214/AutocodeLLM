@@ -1,12 +1,10 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { prisma } from '@/lib/db/prisma';
-import { refreshQwenToken as refreshQwenOAuth } from '@/lib/auth/qwen/oauth';
-import { getValidQwenToken } from './qwen-oauth';
 
 /**
  * AES-256-CBC 加密
  */
-function encryptValue(value: string): string {
+export function encryptValue(value: string): string {
   const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
   const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
   const iv = randomBytes(16);
@@ -19,7 +17,7 @@ function encryptValue(value: string): string {
 /**
  * AES-256-CBC 解密
  */
-function decryptValue(encrypted: string): string {
+export function decryptValue(encrypted: string): string {
   const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
   const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
   const parts = encrypted.split(':');
@@ -51,8 +49,11 @@ export async function getProviderApiKey(providerId: string): Promise<string | nu
     if (!provider.oauthAccessToken) {
       return null;
     }
-    // OAuth provider: auto-refresh token if needed
-    return getValidQwenToken(providerId);
+    // 千问 OAuth 已被官方终止支持
+    if (provider.name?.includes('通义') || provider.name?.toLowerCase().includes('qwen')) {
+      throw new Error('千问 OAuth 功能已被官方终止支持');
+    }
+    return decryptValue(provider.oauthAccessToken);
   }
 
   return decryptValue(provider.apiKey);
@@ -259,6 +260,11 @@ export async function testProviderConnection(providerId: string): Promise<{ conn
       } catch {
         // 元数据解析失败，使用默认 baseUrl
       }
+    }
+
+    // 千问 OAuth 已被官方终止支持
+    if (provider.authType === 'oauth' && (provider.name?.includes('通义') || provider.name?.toLowerCase().includes('qwen'))) {
+      throw new Error('千问 OAuth 功能已被官方终止支持');
     }
 
     const config = buildRequestConfig({

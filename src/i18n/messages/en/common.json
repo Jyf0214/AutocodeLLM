@@ -120,7 +120,8 @@
       "discordUser": "Discord User",
       "bindTime": "Bound At"
     },
-    "logs": "日志"
+    "logs": "Logs",
+    "files": "Files"
   },
   "login": {
     "title": "Welcome",
@@ -151,7 +152,18 @@
     "enterUsernameFirst": "Please enter username first",
     "firstLoginWarning": "First login, please change your initial password",
     "codeHint": "Code will appear in server console, valid for 5 minutes",
-    "demoHint": "Hint: default username admin, password admin123"
+    "demoHint": "Hint: default username admin, password admin123",
+    "orContinueWith": "Or continue with",
+    "clerkLogin": "Sign in with Clerk",
+    "bindTitle": "Bind Existing Account",
+    "bindSubtitle": "Please enter your account information to complete binding",
+    "bindSubmit": "Complete Binding",
+    "bindSuccess": "Binding successful",
+    "bindFailed": "Binding failed",
+    "bindExistingAccount": "Please bind to an existing account",
+    "code12Digit": "Verification code must be 12 digits",
+    "clerkLoginNotImplemented": "Clerk login not implemented yet",
+    "loading": "Loading..."
   },
   "workplace": {
     "title": "Project",
@@ -695,5 +707,53 @@
   },
   "logs": {
     "title": "System Logs"
+  },
+  "files": {
+    "title": "File Manager",
+    "subtitle": "Browse and manage project files",
+    "name": "Name",
+    "size": "Size",
+    "type": "Type",
+    "modifiedAt": "Modified",
+    "actions": "Actions",
+    "root": "Root",
+    "folder": "Folder",
+    "create": "New",
+    "newFile": "New File",
+    "newFolder": "New Folder",
+    "upload": "Upload",
+    "refresh": "Refresh",
+    "edit": "Edit",
+    "download": "Download",
+    "rename": "Rename",
+    "delete": "Delete",
+    "save": "Save",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "confirmDelete": "Confirm Delete",
+    "deleteDesc": "Are you sure you want to delete \"{name}\"? This cannot be undone.",
+    "empty": "This directory is empty",
+    "fetchFailed": "Failed to fetch file list",
+    "networkError": "Network error, please try again",
+    "createSuccess": "Created successfully",
+    "createFailed": "Failed to create",
+    "deleteSuccess": "Deleted successfully",
+    "deleteFailed": "Failed to delete",
+    "renameSuccess": "Renamed successfully",
+    "renameFailed": "Failed to rename",
+    "readFailed": "Failed to read file",
+    "saveSuccess": "Saved successfully",
+    "saveFailed": "Failed to save",
+    "uploadSuccess": "Uploaded successfully",
+    "uploadFailed": "Failed to upload",
+    "nameRequired": "Please enter a name",
+    "createIn": "Create in: {path}",
+    "fileNamePlaceholder": "e.g. index.ts",
+    "folderNamePlaceholder": "e.g. components",
+    "renameDesc": "Rename: {name}",
+    "editPlaceholder": "Edit file content here...",
+    "uploadTo": "Upload to: {path}",
+    "uploadDragText": "Click or drag files to this area to upload",
+    "uploadHint": "Supports single or multiple file upload"
   }
 }
