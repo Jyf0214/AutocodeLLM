@@ -6,13 +6,10 @@
     "workplace": "Project",
     "project": "Project",
     "settings": "Settings",
-    "agents": "Task Agents",
     "models": "Model Management",
     "env": "Environment Variables",
-    "mcp": "MCP Servers",
     "providers": "API Providers",
     "docs": "Documentation",
-    "demo": "Demo",
     "account": "Account",
     "setting": "Settings",
     "skills": "Skills Management",
@@ -153,7 +150,6 @@
     "enterUsernameFirst": "Please enter username first",
     "firstLoginWarning": "First login, please change your initial password",
     "codeHint": "Code will appear in server console, valid for 5 minutes",
-    "demoHint": "Hint: default username admin, password admin123",
     "orContinueWith": "Or continue with",
     "clerkLogin": "Sign in with Clerk",
     "bindTitle": "Bind Existing Account",
@@ -295,23 +291,6 @@
     "stopFailed": "Failed to stop task",
     "cannotStart": "Only ready tasks can be started",
     "cannotStop": "Only running tasks can be stopped"
-  },
-  "demo": {
-    "title": "Feature Demo",
-    "description": "Experience the core features of AutocodeLLM",
-    "start": "Start Demo",
-    "scenarios": {
-      "office": "Office Scenarios",
-      "officeDesc": "Document generation, data processing, email writing and other office automation scenarios",
-      "coding": "Coding Assistance",
-      "codingDesc": "Code generation, bug fixing, refactoring suggestions and other coding assistance scenarios",
-      "analysis": "Data Analysis",
-      "analysisDesc": "Data visualization, statistical analysis, report generation and other data analysis scenarios"
-    },
-    "limitations": {
-      "title": "Demo Limitations",
-      "description": "Demo mode supports up to {maxAgents} agents, with \"Read Only\" and \"Yolo Mode\" execution modes available."
-    }
   },
   "account": {
     "title": "Account Settings",
@@ -698,7 +677,6 @@
     "components": {
       "database": "Database",
       "api": "API Service",
-      "mcp": "MCP Service",
       "providers": "AI Providers"
     },
     "fetchError": "Failed to fetch system status",

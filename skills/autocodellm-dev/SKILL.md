@@ -83,7 +83,7 @@ AutocodeLLM 是基于 Next.js 16 + React 19 + TypeScript + Prisma ORM + Ant Desi
 
 ### 认证与中间件
 
-- **公开路径**（无需认证）：`/`、`/login`、`/demo`、所有 `/api/*` 路由
+- **公开路径**（无需认证）：`/`、`/login`、所有 `/api/*` 路由
 - **受保护路径**：其他所有页面，需 `userId`（通过 Cookie `userId` 或 Header `x-user-id` 验证）
 - 未认证用户访问受保护页面时重定向至 `/login?redirect=<原始路径>`
 - 已认证用户访问 `/login` 时重定向至 `/workplace`

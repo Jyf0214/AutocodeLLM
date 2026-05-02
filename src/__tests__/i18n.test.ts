@@ -8,7 +8,6 @@ describe('国际化翻译文件', () => {
       expect(zhMessages.common.appName).toBe('AutocodeLLM');
       expect(zhMessages.common.login).toBe('登录');
       expect(zhMessages.common.project).toBe('项目');
-      expect(zhMessages.common.agents).toBe('任务代理');
     });
 
     it('登录页面应该有所有必要的翻译', () => {
@@ -16,13 +15,7 @@ describe('国际化翻译文件', () => {
       expect(zhMessages.login.subtitle).toBeDefined();
       expect(zhMessages.login.username).toBeDefined();
       expect(zhMessages.login.password).toBeDefined();
-      expect(zhMessages.login.submit).toBeDefined();
-    });
-
-    it('Demo 页面应该有场景翻译', () => {
-      expect(zhMessages.demo.scenarios.office).toBeDefined();
-      expect(zhMessages.demo.scenarios.coding).toBeDefined();
-      expect(zhMessages.demo.scenarios.analysis).toBeDefined();
+      expect(zhMessages.login.submitPassword).toBeDefined();
     });
   });
 
@@ -31,7 +24,6 @@ describe('国际化翻译文件', () => {
       expect(enMessages.common.appName).toBe('AutocodeLLM');
       expect(enMessages.common.login).toBe('Login');
       expect(enMessages.common.project).toBe('Project');
-      expect(enMessages.common.agents).toBe('Task Agents');
     });
 
     it('登录页面应该有所有必要的翻译', () => {
@@ -39,7 +31,7 @@ describe('国际化翻译文件', () => {
       expect(enMessages.login.subtitle).toBeDefined();
       expect(enMessages.login.username).toBeDefined();
       expect(enMessages.login.password).toBeDefined();
-      expect(enMessages.login.submit).toBeDefined();
+      expect(enMessages.login.submitPassword).toBeDefined();
     });
   });
 

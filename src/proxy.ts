@@ -17,7 +17,7 @@ seedLogs();
  * 公开路径配置
  * 这些路径不需要登录认证即可访问
  */
-const PUBLIC_PATHS = ['/', '/login', '/demo'] as const;
+const PUBLIC_PATHS = ['/', '/login'] as const;
 
 /**
  * API 路径前缀

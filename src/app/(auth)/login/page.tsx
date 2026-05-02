@@ -402,21 +402,7 @@ export default function LoginPage() {
             </Button>
           </>
         )}
-
-        {/* 演示提示 */}
-        <div
-          style={{
-            marginTop: 24,
-            padding: '12px 16px',
-            borderRadius: 8,
-            background: 'var(--color-fill-quaternary)',
-            border: '1px solid var(--color-border)',
-          }}
-        >
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            💡 {t('demoHint')}
-          </Text>
-        </div>
+ 
       </Card>
     </div>
   );
