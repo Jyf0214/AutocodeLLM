@@ -57,11 +57,8 @@
 
 | 路由 | 功能说明 |
 |------|----------|
-| `/setting/mcp` | MCP（Model Context Protocol）服务器配置中心，支持多种协议实现，不仅限于纯 HTTP 协议的 MCP 服务 |
 | `/provider` | AI 模型提供商管理页，包含 API 配置与可用模型列表，支持 AES-256-CBC 加密 API Key、预设提供商、Qwen OAuth 流程 |
-| `/agents` | 子智能体管理，可被主 Agent 通过 Function Call（Tool Call）机制调用；注意此功能与 Agent 调用机制绑定，不作为独立页面存在 |
 | `/env` | 环境变量管理，数据持久化存储于 DATABASE 中。当应用通过 AI LLM 的 Function Call 执行 "Run shell" 命令，或通过 Workplace Terminal 操作时，这些环境变量对全局应用生效 |
-| `/workers` | 工作节点管理，支持 compute/storage/inference 类型，显示状态标签（online/offline/busy/error） |
 | `/sync` | 同步管理，WebDAV 配置 + 文件监控 + 远程拉取 |
 | `/account` | 账户信息，用户资料与密码修改 |
 | `/login` | 用户认证登录页，支持密码登录和短信验证码登录 |
@@ -81,7 +78,7 @@
 - 未认证用户访问受保护页面时重定向至 `/login?redirect=<原始路径>`
 - 已认证用户访问 `/login` 时重定向至 `/workplace`
 
-### API 路由（27 个端点）
+### API 路由（24 个端点）
 
 | 方法 | 路由 | 说明 |
 |------|------|------|
@@ -91,7 +88,6 @@
 | POST | `/api/projects/[id]/set-password` | 设置项目进入密码 |
 | GET, POST | `/api/projects/[id]/logs` | 获取/创建项目日志 |
 | POST | `/api/projects/[id]/chat` | 向项目发送聊天消息 |
-| GET, POST | `/api/workers` | 列出/创建工作节点 |
 | GET, POST | `/api/sync` | 获取同步状态/更新同步配置 |
 | GET, POST, PUT, DELETE | `/api/providers` | AI 提供商完整 CRUD |
 | POST | `/api/providers/preset` | 从预设配置添加提供商 |
@@ -108,9 +104,7 @@
 | POST | `/api/auth/verification-code` | 生成 12 位验证码 |
 | POST | `/api/auth/login` | 密码或验证码登录 |
 | POST | `/api/auth/change-password` | 修改密码 |
-| GET, POST, PUT, DELETE | `/api/agents` | Agent 任务完整 CRUD |
 | GET, PUT | `/api/account` | 获取用户信息/修改密码 |
-| GET, POST, PUT, DELETE | `/api/mcp` | MCP 服务器完整 CRUD |
 | GET | `/api/terminal/ws` | 返回终端 WebSocket URL |
 
 ---
@@ -239,14 +233,11 @@
 | User | users | 用户认证，含密码哈希、强制修改密码标志 |
 | PasswordAudit | password_audits | 密码审计日志（登录尝试、密码变更） |
 | Provider | providers | AI 提供商配置，含加密 API Key、OAuth Token |
-| McpServer | mcp_servers | MCP 服务器配置 |
 | ChatConfig | chat_configs | 聊天全局配置（温度、Token 限制等） |
 | Workspace | workspaces | 项目 |
 | ChatMessage | chat_messages | 聊天对话记录，含 Token 统计 |
 | WebdavConfig | webdav_configs | WebDAV 备份配置 |
 | EnvironmentVariable | environment_variables | 加密环境变量 |
-| Worker | workers | 工作节点（compute/storage/inference） |
-| AgentTask | agent_tasks | 任务代理（read_only/yolo 模式） |
 | WorkspaceLog | workspace_logs | 项目日志（函数调用/聊天消息） |
 
 ---
@@ -314,22 +305,19 @@ AutocodeLLM/
 │   │   │   ├── workplace/      # 项目列表 + [id] 详情
 │   │   │   ├── chat/           # 聊天列表 + [workspaceId] 会话
 │   │   │   ├── provider/       # AI 提供商管理
-│   │   │   ├── setting/mcp/    # MCP 配置
 │   │   │   ├── env/            # 环境变量
-│   │   │   ├── workers/        # 工作节点
-│   │   │   ├── agents/         # 任务代理
 │   │   │   ├── sync/           # 同步管理
 │   │   │   └── account/        # 账户信息
 │   │   ├── change-password/    # 修改密码
 │   │   ├── model/              # 重定向至 /provider
-│   │   ├── api/                # 27 个 API 端点
+│   │   ├── api/                # 24 个 API 端点
 │   │   ├── layout.tsx          # 根布局
 │   │   ├── page.tsx            # 首页
 │   │   └── not-found.tsx       # 404 页面
 │   ├── components/             # 可复用组件（17 个目录）
 │   ├── features/               # 业务功能组件（18 个目录，多来自 LobeChat）
 │   ├── store/                  # Zustand 状态管理（13 个目录）
-│   ├── libs/                   # LobeChat 移植库（mcp/swr/trpc/pdfjs/next）
+│   ├── libs/                   # LobeChat 移植库（swr/trpc/pdfjs/next）
 │   ├── lib/                    # 核心库（api/auth/db/sync/terminal）
 │   ├── hooks/                  # 自定义 React Hooks
 │   ├── i18n/                   # 国际化（en/zh）
