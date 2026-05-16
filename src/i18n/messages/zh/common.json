@@ -14,7 +14,8 @@
     "skills": "Skills 管理",
     "state": "系统状态",
     "cloud": "云服务",
-    "landing": {
+     "landing": {
+      "loading": "加载中...",
       "subtitle": "AI 编码代理平台 — 支持函数调用、任务代理、文件操作、Web 搜索等完整工具链",
       "startUsing": "开始使用",
       "onlineDemo": "在线演示",

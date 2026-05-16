@@ -14,7 +14,8 @@
     "skills": "Skills Management",
     "state": "System Status",
     "cloud": "Cloud Services",
-    "landing": {
+     "landing": {
+      "loading": "Loading...",
       "subtitle": "AI Coding Agent Platform — Full toolchain for function calling, task agents, file operations, and web search",
       "startUsing": "Get Started",
       "onlineDemo": "Live Demo",
