@@ -34,14 +34,18 @@ const SESSIONS = new Map<string, TerminalSession>();
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 分钟超时
 
 /**
- * 获取项目目录路径
- * Docker 环境使用 /home/node/.autocodellm/projects
- * 本地环境使用 /home/user/project
+ * 获取终端的工作目录
+ *
+ * 项目为数据库记录（非文件系统目录），终端默认在应用根目录启动。
+ * 可通过 PROJECT_BASE_PATH 环境变量覆盖根目录基准路径。
  */
-function getProjectCwd(projectId: string): string {
-  const isDocker = process.env.RUNNING_IN_DOCKER === 'true';
-  const basePath = isDocker ? '/home/node/.autocodellm/projects' : process.env.PROJECT_BASE_PATH ?? '/home/user/project';
-  return basePath + '/' + projectId;
+function getProjectCwd(_projectId: string): string {
+  // 优先使用环境变量指定的项目根路径
+  if (process.env.PROJECT_BASE_PATH) {
+    return process.env.PROJECT_BASE_PATH;
+  }
+  // 默认使用应用运行目录
+  return process.cwd();
 }
 
 /**
