@@ -1,11 +1,17 @@
-import { NextResponse } from 'next/server';
+import type { WebSocket } from 'ws';
+import type { NextRequest } from 'next/server';
 
-import { withApiLogging } from '@/lib/log';
-const TERMINAL_WS_URL = process.env.TERMINAL_WS_URL ?? 'ws://localhost:7860/api/terminal/ws';
+import { handleTerminalUpgrade } from '@/lib/terminal/ws-server';
 
-export const GET = withApiLogging('GET terminal/ws', function GET()  {
-  return NextResponse.json({
-    success: true,
-    data: { wsUrl: TERMINAL_WS_URL },
-  });
-});
+export function UPGRADE(
+  client: WebSocket,
+  server: import('ws').WebSocketServer,
+  request: NextRequest,
+) {
+  const { searchParams } = request.nextUrl;
+  const projectId = searchParams.get('projectId');
+  const cols = parseInt(searchParams.get('cols') ?? '80', 10);
+  const rows = parseInt(searchParams.get('rows') ?? '24', 10);
+
+  handleTerminalUpgrade(client, projectId, cols, rows);
+}

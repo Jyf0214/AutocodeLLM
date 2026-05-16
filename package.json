@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "typecheck": "tsc --noEmit",
-    "build": "prisma generate && next telemetry disable && next build",
+    "build": "prisma generate && next telemetry disable && next-ws patch && next build && rm -rf .next/standalone/node_modules/next-ws && cp -r node_modules/next-ws .next/standalone/node_modules/",
     "build:full": "bun run build",
     "start": "node scripts/start.mjs",
     "lint": "eslint .",
@@ -23,7 +23,8 @@
     "db:init": "bun run scripts/db-push.mjs",
     "db:health": "bun run src/lib/db/health-check.ts",
     "db:reset": "prisma db push --force-reset && bun run db:init",
-    "terminal": "bun run scripts/terminal-server.ts"
+    "terminal": "bun run scripts/terminal-server.ts",
+    "postinstall": "next-ws patch"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^16.2.2",
@@ -67,6 +68,7 @@
     "next": "^16.2.6",
     "next-intl": "^4.9.2",
     "next-themes": "^0.4.6",
+    "next-ws": "^2.2.7",
     "openai": "^6.33.0",
     "prisma": "6.19.3",
     "react": "19",
@@ -74,7 +76,7 @@
     "react-markdown": "^10.1.0",
     "svix": "^1.92.2",
     "webdav": "^5.8.0",
-    "ws": "^8.20.0",
+    "ws": "^8.20.1",
     "xterm": "^5.3.0",
     "xterm-addon-fit": "^0.8.0"
   },

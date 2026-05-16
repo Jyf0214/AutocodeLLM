@@ -3,7 +3,6 @@ import type { Server } from 'http';
 
 let wss: WebSocketServer | null = null;
 
-// node-pty 是否可用（原生模块可能缺失）
 let ptyAvailable = false;
 let createSession: ((projectId: string, cols: number, rows: number) => import('./session-manager').TerminalSession) | null = null;
 let findSessionByProject: ((projectId: string) => import('./session-manager').TerminalSession | null) | null = null;
@@ -23,15 +22,9 @@ try {
   console.warn('⚠ 终端会话管理器加载失败，终端功能已禁用:', (error as Error).message);
 }
 
-// 项目 → WebSocket 客户端集合
 const projectClients = new Map<string, Set<WebSocket>>();
-
-// 会话 → pty 事件监听器已绑定标记
 const sessionListenersAttached = new Set<string>();
 
-/**
- * 向项目所有客户端广播消息
- */
 function broadcastToProject(projectId: string, message: string, exclude?: WebSocket): void {
   const clients = projectClients.get(projectId);
   if (!clients) return;
@@ -42,9 +35,6 @@ function broadcastToProject(projectId: string, message: string, exclude?: WebSoc
   }
 }
 
-/**
- * 绑定 pty 输出和退出事件到会话（仅绑定一次）
- */
 function attachSessionListeners(session: import('./session-manager').TerminalSession): void {
   if (sessionListenersAttached.has(session.id)) return;
   sessionListenersAttached.add(session.id);
@@ -62,9 +52,60 @@ function attachSessionListeners(session: import('./session-manager').TerminalSes
   });
 }
 
-/**
- * 初始化 WebSocket 服务器（noServer 模式，由 server.ts 的 HTTP 服务器升级调用）
- */
+function attachClientSession(
+  ws: WebSocket,
+  projectId: string,
+  cols: number,
+  rows: number,
+): void {
+  let clients = projectClients.get(projectId);
+  if (!clients) {
+    clients = new Set();
+    projectClients.set(projectId, clients);
+  }
+  clients.add(ws);
+
+  let session = findSessionByProject!(projectId);
+  if (!session) {
+    session = createSession!(projectId, cols, rows);
+  }
+
+  attachSessionListeners(session);
+  ws.send(JSON.stringify({ type: 'connected', sessionId: session.id }));
+
+  ws.on('message', (raw: Buffer) => {
+    try {
+      const msg = JSON.parse(raw.toString()) as Record<string, unknown>;
+      if (msg.type === 'data' && typeof msg.data === 'string') {
+        const currentSession = findSessionByProject!(projectId);
+        if (currentSession) {
+          currentSession.pty.write(msg.data as string);
+          currentSession.lastActivity = Date.now();
+        }
+      }
+      if (msg.type === 'resize' && typeof msg.cols === 'number' && typeof msg.rows === 'number') {
+        const currentSession = findSessionByProject!(projectId);
+        if (currentSession) {
+          currentSession.pty.resize(msg.cols as number, msg.rows as number);
+          currentSession.lastActivity = Date.now();
+        }
+      }
+    } catch {
+      // ignore
+    }
+  });
+
+  ws.on('close', () => {
+    const c = projectClients.get(projectId);
+    if (c) {
+      c.delete(ws);
+      if (c.size === 0) {
+        projectClients.delete(projectId);
+      }
+    }
+  });
+}
+
 export function initTerminalWebSocket(server: Server): void {
   wss = new WebSocketServer({ noServer: true });
 
@@ -78,7 +119,6 @@ export function initTerminalWebSocket(server: Server): void {
   });
 
   wss.on('connection', (ws, request) => {
-    // 如果 node-pty 不可用，通知客户端并关闭
     if (!ptyAvailable) {
       ws.send(JSON.stringify({ type: 'error', message: '终端功能不可用：node-pty 原生模块未加载' }));
       ws.close();
@@ -96,62 +136,34 @@ export function initTerminalWebSocket(server: Server): void {
       return;
     }
 
-    // 注册客户端到项目
-    let clients = projectClients.get(projectId);
-    if (!clients) {
-      clients = new Set();
-      projectClients.set(projectId, clients);
-    }
-    clients.add(ws);
-
-    // 查找或创建终端会话
-    let session = findSessionByProject!(projectId);
-    if (!session) {
-      session = createSession!(projectId, cols, rows);
-    }
-
-    // 绑定 pty 事件监听器（仅首次）
-    attachSessionListeners(session);
-
-    ws.send(JSON.stringify({ type: 'connected', sessionId: session.id }));
-
-    ws.on('message', (raw: Buffer) => {
-      try {
-        const msg = JSON.parse(raw.toString()) as Record<string, unknown>;
-        if (msg.type === 'data' && typeof msg.data === 'string') {
-          const currentSession = findSessionByProject!(projectId);
-          if (currentSession) {
-            currentSession.pty.write(msg.data as string);
-            currentSession.lastActivity = Date.now();
-          }
-        }
-        if (msg.type === 'resize' && typeof msg.cols === 'number' && typeof msg.rows === 'number') {
-          const currentSession = findSessionByProject!(projectId);
-          if (currentSession) {
-            currentSession.pty.resize(msg.cols as number, msg.rows as number);
-            currentSession.lastActivity = Date.now();
-          }
-        }
-      } catch {
-        // 忽略解析错误
-      }
-    });
-
-    ws.on('close', () => {
-      const c = projectClients.get(projectId);
-      if (c) {
-        c.delete(ws);
-        if (c.size === 0) {
-          projectClients.delete(projectId);
-        }
-      }
-    });
+    attachClientSession(ws, projectId, cols, rows);
   });
 }
 
 /**
- * 关闭 WebSocket 服务器
+ * 供 next-ws UPGRADE 调用的连接处理函数
  */
+export function handleTerminalUpgrade(
+  client: WebSocket,
+  projectId: string | null,
+  cols: number,
+  rows: number,
+): void {
+  if (!ptyAvailable) {
+    client.send(JSON.stringify({ type: 'error', message: '终端功能不可用：node-pty 原生模块未加载' }));
+    client.close();
+    return;
+  }
+
+  if (!projectId) {
+    client.send(JSON.stringify({ type: 'error', message: '缺少 projectId' }));
+    client.close();
+    return;
+  }
+
+  attachClientSession(client, projectId, cols, rows);
+}
+
 export function closeTerminalWebSocket(): void {
   if (wss) {
     wss.close();
@@ -161,9 +173,6 @@ export function closeTerminalWebSocket(): void {
   sessionListenersAttached.clear();
 }
 
-/**
- * 检查 node-pty 是否可用
- */
 export function isPtyAvailable(): boolean {
   return ptyAvailable;
 }
