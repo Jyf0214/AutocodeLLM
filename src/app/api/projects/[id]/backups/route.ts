@@ -23,11 +23,19 @@ export const GET = withApiLogging('GET projects/:id/backups', async function GET
     // WebdavConfig 是全局单例，不属于 Project
     const config = await prisma.webdavConfig.findFirst();
 
+    const backupRecords = await prisma.backup.findMany({
+      where: { projectId: id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const latestBackup = backupRecords[0];
+    const hasFailure = backupRecords.some((b) => b.status === 'failed');
+
     const backupInfo = {
-      lastBackup: null,
+      lastBackup: latestBackup?.createdAt.toISOString() ?? null,
       nextBackup: null,
-      status: 'no_backup' as const,
-      backupCount: 0,
+      status: (latestBackup ? (hasFailure ? 'failed' : 'ok') : 'no_backup') as 'ok' | 'failed' | 'no_backup',
+      backupCount: backupRecords.length,
       remoteUrl: config?.url ?? null,
       remotePath: config?.remotePath ?? null,
       enabled: config?.enabled ?? false,
