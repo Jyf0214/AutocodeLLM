@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { logger } from '@/lib/log';
+import { withApiLogging } from '@/lib/log';
 import {
   successResponse,
   handleError,
@@ -17,13 +17,13 @@ import type { ProjectResponse, CreateProjectRequest } from '@/lib/api/project-ty
 /**
  * GET /api/projects - 获取所有项目列表
  */
-export async function GET(): Promise<NextResponse<ProjectResponse>> {
+export const GET = withApiLogging('GET /api/projects', async function GET(
+  request: Request,
+): Promise<NextResponse<ProjectResponse>> {
   try {
     const projects = await prisma.project.findMany({
       orderBy: { createdAt: 'desc' },
     });
-
-    logger.info(`获取项目列表: ${String(projects.length)} 个`);
 
     const data = projects.map((project) => ({
       id: project.id,
@@ -38,18 +38,17 @@ export async function GET(): Promise<NextResponse<ProjectResponse>> {
   } catch (error) {
     return handleError(error, '获取项目列表');
   }
-}
+});
 
 /**
  * POST /api/projects - 创建项目
  */
-export async function POST(
+export const POST = withApiLogging('POST /api/projects', async function POST(
   request: Request,
 ): Promise<NextResponse<ProjectResponse>> {
   try {
     const body = (await request.json()) as CreateProjectRequest;
 
-    // 验证必填字段
     const validationError = validateRequiredFields({ name: body.name });
     if (validationError) {
       return validationError;
@@ -78,4 +77,4 @@ export async function POST(
   } catch (error) {
     return handleError(error, '创建项目');
   }
-}
+});

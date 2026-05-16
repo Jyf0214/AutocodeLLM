@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { queryLogsV2, getLogStats, clearLogs, type LogLevel, type LogEntry } from '@/lib/log';
+import { queryLogsV2, getLogStats, clearLogs, withApiLogging, type LogLevel, type LogEntry } from '@/lib/log';
 
 /**
  * GET /api/logs
@@ -15,7 +15,7 @@ import { queryLogsV2, getLogStats, clearLogs, type LogLevel, type LogEntry } fro
  * - limit: 返回条数（默认 200）
  * - offset: 偏移量
  */
-export async function GET(request: Request) {
+export const GET = withApiLogging('GET /api/logs', async function GET(request: Request) {
   const auth = await requireAuth(request, 'admin');
   if (auth.error) return auth.error;
 
@@ -44,17 +44,17 @@ export async function GET(request: Request) {
       stats: getLogStats(),
     },
   });
-}
+});
 
 /**
  * DELETE /api/logs
  * 清空所有日志
  */
-export async function DELETE(request: Request) {
+export const DELETE = withApiLogging('DELETE /api/logs', async function DELETE(request: Request) {
   const auth = await requireAuth(request, 'admin');
   if (auth.error) return auth.error;
 
   clearLogs();
 
   return NextResponse.json({ success: true });
-}
+});

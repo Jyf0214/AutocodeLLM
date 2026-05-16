@@ -163,6 +163,37 @@ export interface LogQueryWithSearch extends LogQuery {
   search?: string;
 }
 
+export function withApiLogging<T extends (...args: any[]) => any>(
+  methodName: string,
+  handler: T,
+): T {
+  return (async (...args: any[]) => {
+    const start = Date.now();
+    const request = args[0] as Request;
+    const url = new URL(request.url);
+    const method = request.method;
+
+    try {
+      const response = await handler(...args);
+      logRequest({
+        method,
+        path: url.pathname,
+        statusCode: response instanceof Response ? response.status : 200,
+        duration: Date.now() - start,
+      });
+      return response;
+    } catch (error) {
+      logRequest({
+        method,
+        path: url.pathname,
+        statusCode: 500,
+        duration: Date.now() - start,
+      });
+      throw error;
+    }
+  }) as T;
+}
+
 export function queryLogsV2(query: LogQueryWithSearch = {}): { total: number; entries: LogEntry[] } {
   let filtered = [...logs];
 
