@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, '..');
 
-function findRuntime(): string {
+function findRuntime() {
   try {
     execSync('bun --version', { stdio: 'ignore' });
     return 'bun';
