@@ -11,12 +11,18 @@ export interface LogEntry {
   level: LogLevel;
   source: 'backend' | 'request' | 'function';
   message: string;
-  path?: string;       // 请求路径
-  method?: string;     // HTTP 方法
-  statusCode?: number; // HTTP 状态码
-  duration?: number;   // 请求耗时(ms)
+  path?: string;
+  method?: string;
+  statusCode?: number;
+  duration?: number;
   userId?: string;
   ip?: string;
+  queryParams?: string;
+  requestBody?: string;
+  responseBody?: string;
+  cookies?: string;
+  headers?: string;
+  errorDetails?: string;
 }
 
 const MAX_LOGS = 10000;
@@ -76,6 +82,12 @@ export function logRequest(entry: {
   duration: number;
   userId?: string;
   ip?: string;
+  queryParams?: string;
+  requestBody?: string;
+  responseBody?: string;
+  cookies?: string;
+  headers?: string;
+  errorDetails?: string;
 }) {
   const level: LogLevel =
     entry.statusCode >= 500 ? 'error' :
@@ -83,6 +95,87 @@ export function logRequest(entry: {
     'info';
 
   createEntry(level, 'request', `${entry.method} ${entry.path} → ${entry.statusCode} (${entry.duration}ms)`, entry);
+}
+
+const SENSITIVE_HEADERS = new Set(['authorization', 'cookie', 'set-cookie', 'x-api-key', 'x-auth-token']);
+const SENSITIVE_QUERY = new Set(['token', 'api_key', 'key', 'secret', 'password', 'access_token']);
+
+function maskSensitiveValue(_key: string, value: string): string {
+  if (!value || value.length < 4) return '***';
+  return value.slice(0, 2) + '***' + value.slice(-2);
+}
+
+function filterHeaders(headers: Headers): string {
+  const result: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    const lower = key.toLowerCase();
+    if (SENSITIVE_HEADERS.has(lower)) {
+      result[key] = '***';
+    } else if (lower === 'user-agent' || lower === 'content-type' || lower === 'referer' || lower === 'origin') {
+      result[key] = value;
+    }
+  });
+  return JSON.stringify(result);
+}
+
+function filterCookies(cookieHeader: string | null): string | undefined {
+  if (!cookieHeader) return undefined;
+  const parts = cookieHeader.split(';').map(c => c.trim()).filter(Boolean);
+  const result: Record<string, string> = {};
+  for (const part of parts) {
+    const eqIdx = part.indexOf('=');
+    if (eqIdx === -1) continue;
+    const key = part.slice(0, eqIdx).trim();
+    const value = part.slice(eqIdx + 1).trim();
+    if (SENSITIVE_QUERY.has(key.toLowerCase())) {
+      result[key] = '***';
+    } else {
+      result[key] = value.length > 50 ? value.slice(0, 50) + '...' : value;
+    }
+  }
+  return Object.keys(result).length > 0 ? JSON.stringify(result) : undefined;
+}
+
+function filterQueryParams(url: URL): string | undefined {
+  const params: Record<string, string> = {};
+  url.searchParams.forEach((value, key) => {
+    if (SENSITIVE_QUERY.has(key.toLowerCase())) {
+      params[key] = maskSensitiveValue(key, value);
+    } else {
+      params[key] = value;
+    }
+  });
+  return Object.keys(params).length > 0 ? JSON.stringify(params) : undefined;
+}
+
+const MAX_BODY_LENGTH = 2000;
+
+async function tryReadBody(request: Request): Promise<string | undefined> {
+  if (request.method === 'GET' || request.method === 'DELETE') return undefined;
+  try {
+    const cloned = request.clone();
+    const text = await cloned.text();
+    if (!text) return undefined;
+    return text.length > MAX_BODY_LENGTH ? text.slice(0, MAX_BODY_LENGTH) + '...' : text;
+  } catch {
+    return undefined;
+  }
+}
+
+async function tryReadResponseBody(response: Response): Promise<string | undefined> {
+  if (response.status === 204 || response.status === 304) return undefined;
+  try {
+    const cloned = response.clone();
+    const text = await cloned.text();
+    if (!text) return undefined;
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text') || contentType.includes('json')) {
+      return text.length > MAX_BODY_LENGTH ? text.slice(0, MAX_BODY_LENGTH) + '...' : text;
+    }
+    return `[${contentType || 'binary'} ${text.length}bytes]`;
+  } catch {
+    return undefined;
+  }
 }
 
 // ============================================================
@@ -163,6 +256,8 @@ export interface LogQueryWithSearch extends LogQuery {
   search?: string;
 }
 
+const SKIP_LOG_PATHS = new Set(['/api/logs', '/api/logs/', '/api/system/status', '/api/system/status/']);
+
 export function withApiLogging<T extends (...args: any[]) => any>(
   methodName: string,
   handler: T,
@@ -172,23 +267,47 @@ export function withApiLogging<T extends (...args: any[]) => any>(
     const request = args[0] as Request;
     const url = new URL(request.url);
     const method = request.method;
+    const path = url.pathname;
+
+    const skip = SKIP_LOG_PATHS.has(path);
+    const queryParams = skip ? undefined : filterQueryParams(url);
+    const cookies = skip ? undefined : filterCookies(request.headers.get('cookie'));
+    const headers = skip ? undefined : filterHeaders(request.headers);
+    const requestBody = skip ? undefined : await tryReadBody(request);
+    let errorDetails: string | undefined;
 
     try {
       const response = await handler(...args);
-      logRequest({
-        method,
-        path: url.pathname,
-        statusCode: response instanceof Response ? response.status : 200,
-        duration: Date.now() - start,
-      });
+      const responseBody = skip ? undefined : response instanceof Response ? await tryReadResponseBody(response) : undefined;
+      if (!skip) {
+        logRequest({
+          method,
+          path,
+          statusCode: response instanceof Response ? response.status : 200,
+          duration: Date.now() - start,
+          queryParams,
+          requestBody,
+          responseBody,
+          cookies,
+          headers,
+        });
+      }
       return response;
     } catch (error) {
-      logRequest({
-        method,
-        path: url.pathname,
-        statusCode: 500,
-        duration: Date.now() - start,
-      });
+      errorDetails = skip ? undefined : error instanceof Error ? `${error.name}: ${error.message}\n${error.stack?.slice(0, 500)}` : String(error);
+      if (!skip) {
+        logRequest({
+          method,
+          path,
+          statusCode: 500,
+          duration: Date.now() - start,
+          queryParams,
+          requestBody,
+          cookies,
+          headers,
+          errorDetails,
+        });
+      }
       throw error;
     }
   }) as T;

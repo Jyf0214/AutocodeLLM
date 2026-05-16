@@ -21,6 +21,12 @@ interface LogEntry {
   duration?: number;
   userId?: string;
   ip?: string;
+  queryParams?: string;
+  requestBody?: string;
+  responseBody?: string;
+  cookies?: string;
+  headers?: string;
+  errorDetails?: string;
 }
 
 interface LogData {
@@ -309,6 +315,12 @@ export default function LogsPage() {
                     {entry.duration !== undefined && <DetailRow label="耗时">{entry.duration}ms</DetailRow>}
                     {entry.ip && <DetailRow label="IP地址">{entry.ip}</DetailRow>}
                     {entry.userId && <DetailRow label="用户ID">{entry.userId}</DetailRow>}
+                    {entry.queryParams && <DetailRow label="查询参数"><code style={{fontSize:12,wordBreak:'break-all'}}>{entry.queryParams}</code></DetailRow>}
+                    {entry.cookies && <DetailRow label="Cookie"><code style={{fontSize:12,wordBreak:'break-all'}}>{entry.cookies}</code></DetailRow>}
+                    {entry.headers && <DetailRow label="请求头"><code style={{fontSize:12,wordBreak:'break-all'}}>{entry.headers}</code></DetailRow>}
+                    {entry.requestBody && <DetailRow label="请求体"><pre style={{margin:0,fontSize:12,whiteSpace:'pre-wrap',wordBreak:'break-all',maxHeight:200,overflow:'auto'}}>{entry.requestBody}</pre></DetailRow>}
+                    {entry.responseBody && <DetailRow label="响应体"><pre style={{margin:0,fontSize:12,whiteSpace:'pre-wrap',wordBreak:'break-all',maxHeight:200,overflow:'auto'}}>{entry.responseBody}</pre></DetailRow>}
+                    {entry.errorDetails && <DetailRow label="错误详情"><pre style={{margin:0,fontSize:12,whiteSpace:'pre-wrap',wordBreak:'break-all',color:'#ff4d4f',maxHeight:300,overflow:'auto'}}>{entry.errorDetails}</pre></DetailRow>}
                   </div>
                 )}
               </div>
