@@ -1,9 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PageContainer, PageCard, Button, Flexbox, Input } from '@/lib/ui';
-import { ReloadOutlined, DeleteOutlined, SearchOutlined, PauseCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import { Select, Tag, Empty, message } from 'antd';
+import {
+  ReloadOutlined, DeleteOutlined, SearchOutlined,
+  PauseCircleOutlined, PlayCircleOutlined,
+  DownOutlined, RightOutlined,
+} from '@ant-design/icons';
+import { Select, Tag, Empty, message, Tooltip } from 'antd';
 
 interface LogEntry {
   id: string;
@@ -15,6 +19,8 @@ interface LogEntry {
   method?: string;
   statusCode?: number;
   duration?: number;
+  userId?: string;
+  ip?: string;
 }
 
 interface LogData {
@@ -51,6 +57,24 @@ const STATUS_COLORS: Record<number, string> = {
   503: '#ff4d4f',
 };
 
+function formatFullTime(ts: number) {
+  const d = new Date(ts);
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  });
+}
+
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, fontSize: 12, lineHeight: '24px' }}>
+      <span style={{ color: '#888', minWidth: 80, flexShrink: 0 }}>{label}</span>
+      <span style={{ color: 'var(--text-primary)', wordBreak: 'break-all' }}>{children ?? '-'}</span>
+    </div>
+  );
+}
+
 export default function LogsPage() {
   const [data, setData] = useState<LogData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +82,7 @@ export default function LogsPage() {
   const [source, setSource] = useState<string | undefined>();
   const [searchText, setSearchText] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const listRef = useRef<HTMLDivElement>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -97,11 +121,6 @@ export default function LogsPage() {
     } catch {
       message.error('清空失败');
     }
-  };
-
-  const formatTime = (ts: number) => {
-    const d = new Date(ts);
-    return d.toLocaleTimeString('zh-CN', { hour12: false });
   };
 
   return (
@@ -170,81 +189,133 @@ export default function LogsPage() {
       </Flexbox>
 
       {/* 日志列表 */}
-      <div ref={listRef}>
-        {data?.entries.length === 0 ? (
-          <PageCard>
-            <Empty description="暂无日志" />
-          </PageCard>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {data?.entries.map((entry) => (
-              <div
-                key={entry.id}
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: 6,
-                  border: '1px solid var(--border-primary)',
-                  background: entry.level === 'error'
-                    ? 'rgba(255,77,79,0.06)'
-                    : entry.level === 'warn'
-                    ? 'rgba(250,173,20,0.06)'
-                    : 'var(--bg-primary)',
-                  fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
-                  fontSize: 12,
-                  lineHeight: 1.6,
-                }}
-              >
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ color: '#888', minWidth: 70 }}>
-                    {formatTime(entry.timestamp)}
-                  </span>
-                  <Tag
-                    color={LEVEL_COLORS[entry.level]}
-                    style={{ margin: 0, fontSize: 11, lineHeight: '18px' }}
-                  >
-                    {entry.level.toUpperCase()}
-                  </Tag>
-                  <Tag style={{ margin: 0, fontSize: 11 }}>{entry.source}</Tag>
-                  {entry.method && (
-                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {entry.method}
-                    </span>
-                  )}
-                  {entry.path && (
-                    <span style={{ color: 'var(--text-secondary)' }}>{entry.path}</span>
-                  )}
-                  {entry.statusCode !== undefined && (
-                    <span
-                      style={{
-                        fontWeight: 700,
-                        color: STATUS_COLORS[entry.statusCode] ?? 'var(--text-primary)',
-                      }}
-                    >
-                      {entry.statusCode}
-                    </span>
-                  )}
-                  {entry.duration !== undefined && (
-                    <span style={{ color: '#888' }}>{entry.duration}ms</span>
-                  )}
-                </div>
+      {data?.entries.length === 0 ? (
+        <PageCard>
+          <Empty description="暂无日志" />
+        </PageCard>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {data?.entries.map((entry) => {
+            const isExpanded = expandedId === entry.id;
+            return (
+              <div key={entry.id}>
+                {/* 条目概览行 */}
                 <div
+                  onClick={() => setExpandedId(isExpanded ? null : entry.id)}
                   style={{
-                    marginTop: 2,
-                    color: entry.level === 'error'
-                      ? '#ff4d4f'
+                    padding: '8px 12px',
+                    borderRadius: isExpanded ? '6px 6px 0 0' : 6,
+                    border: '1px solid var(--border-primary)',
+                    background: entry.level === 'error'
+                      ? 'rgba(255,77,79,0.06)'
                       : entry.level === 'warn'
-                      ? '#faad14'
-                      : 'var(--text-secondary)',
-                    wordBreak: 'break-all',
+                      ? 'rgba(250,173,20,0.06)'
+                      : 'var(--bg-primary)',
+                    fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+                    fontSize: 12,
+                    lineHeight: 1.6,
+                    cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isExpanded) e.currentTarget.style.background = 'var(--bg-secondary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isExpanded) {
+                      e.currentTarget.style.background =
+                        entry.level === 'error'
+                          ? 'rgba(255,77,79,0.06)'
+                          : entry.level === 'warn'
+                          ? 'rgba(250,173,20,0.06)'
+                          : 'var(--bg-primary)';
+                    }
                   }}
                 >
-                  {entry.message}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={{ color: '#888', minWidth: 18, fontSize: 10 }}>
+                      {isExpanded ? <DownOutlined /> : <RightOutlined />}
+                    </span>
+                    <Tooltip title={formatFullTime(entry.timestamp)}>
+                      <span style={{ color: '#888', minWidth: 70 }}>
+                        {new Date(entry.timestamp).toLocaleTimeString('zh-CN', { hour12: false })}
+                      </span>
+                    </Tooltip>
+                    <Tag
+                      color={LEVEL_COLORS[entry.level]}
+                      style={{ margin: 0, fontSize: 11, lineHeight: '18px' }}
+                    >
+                      {entry.level.toUpperCase()}
+                    </Tag>
+                    <Tag style={{ margin: 0, fontSize: 11 }}>{entry.source}</Tag>
+                    {entry.method && (
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {entry.method}
+                      </span>
+                    )}
+                    {entry.path && (
+                      <span style={{ color: 'var(--text-secondary)', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {entry.path}
+                      </span>
+                    )}
+                    {entry.statusCode !== undefined && (
+                      <span
+                        style={{
+                          fontWeight: 700,
+                          color: STATUS_COLORS[entry.statusCode] ?? 'var(--text-primary)',
+                        }}
+                      >
+                        {entry.statusCode}
+                      </span>
+                    )}
+                    {entry.duration !== undefined && (
+                      <span style={{ color: '#888' }}>{entry.duration}ms</span>
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      marginTop: 2,
+                      marginLeft: 26,
+                      color: entry.level === 'error'
+                        ? '#ff4d4f'
+                        : entry.level === 'warn'
+                        ? '#faad14'
+                        : 'var(--text-secondary)',
+                      wordBreak: 'break-all',
+                    }}
+                  >
+                    {entry.message}
+                  </div>
                 </div>
+
+                {/* 展开详情 */}
+                {isExpanded && (
+                  <div
+                    style={{
+                      padding: '12px 16px',
+                      border: '1px solid var(--border-primary)',
+                      borderTop: 'none',
+                      borderRadius: '0 0 6px 6px',
+                      background: 'var(--bg-secondary)',
+                      fontSize: 13,
+                    }}
+                  >
+                    <DetailRow label="时间">{formatFullTime(entry.timestamp)}</DetailRow>
+                    <DetailRow label="级别">{entry.level.toUpperCase()}</DetailRow>
+                    <DetailRow label="来源">{entry.source}</DetailRow>
+                    <DetailRow label="消息">{entry.message}</DetailRow>
+                    {entry.method && <DetailRow label="请求方法">{entry.method}</DetailRow>}
+                    {entry.path && <DetailRow label="请求路径">{entry.path}</DetailRow>}
+                    {entry.statusCode !== undefined && <DetailRow label="状态码">{entry.statusCode}</DetailRow>}
+                    {entry.duration !== undefined && <DetailRow label="耗时">{entry.duration}ms</DetailRow>}
+                    {entry.ip && <DetailRow label="IP地址">{entry.ip}</DetailRow>}
+                    {entry.userId && <DetailRow label="用户ID">{entry.userId}</DetailRow>}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </PageContainer>
   );
 }
