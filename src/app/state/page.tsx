@@ -143,11 +143,11 @@ export default function StatePage() {
     >
       <Flexbox gap={16} direction="vertical">
         <Tag color={getStatusColor(component.status)} style={{ alignSelf: 'flex-start' }}>
-          {component.status === 'healthy' ? t('state.status.healthy') : component.status === 'degraded' ? t('state.status.degraded') : t('state.status.unhealthy')}
+          {component.status === 'healthy' ? t('status.healthy') : component.status === 'degraded' ? t('status.degraded') : t('status.unhealthy')}
         </Tag>
         <Text type="secondary">{component.message}</Text>
         {component.latency !== undefined && (
-          <Text type="secondary">{t('state.latency', { latency: component.latency })}</Text>
+          <Text type="secondary">{t('latency', { latency: component.latency })}</Text>
         )}
       </Flexbox>
     </Card>
@@ -164,9 +164,9 @@ export default function StatePage() {
   if (!stateData) {
     return (
       <div>
-        <Empty description={t('state.fetchError')} />
+        <Empty description={t('fetchError')} />
         <Button type="primary" onClick={fetchState} style={{ marginTop: 16 }}>
-          {t('state.retry')}
+          {t('retry')}
         </Button>
       </div>
     );
@@ -178,18 +178,18 @@ export default function StatePage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 <div>
         <Text strong style={{ fontSize: 20, display: 'block' }}>
-          {t('state.title')}
+          {t('title')}
         </Text>
         <Text type="secondary" style={{ display: 'block', marginTop: 4 }}>
-          {t('state.description')}
+          {t('description')}
         </Text>
       </div>
 
       <Card style={{ borderRadius: 12 }}>
         <Flexbox gap={24} horizontal align="center">
           <Statistic
-            title={t('state.overallStatus')}
-            value={overallStatus === 'healthy' ? t('state.status.healthy') : overallStatus === 'degraded' ? t('state.status.degraded') : t('state.status.unhealthy')}
+            title={t('overallStatus')}
+            value={overallStatus === 'healthy' ? t('status.healthy') : overallStatus === 'degraded' ? t('status.degraded') : t('status.unhealthy')}
             styles={{
               content: {
                 color: overallStatus === 'healthy' ? '#52c41a' : overallStatus === 'degraded' ? '#faad14' : '#ff4d4f'
@@ -199,7 +199,7 @@ export default function StatePage() {
           />
           <div style={{ flex: 1 }}>
             <Flexbox gap={8} horizontal align="center" style={{ marginBottom: 8 }}>
-              <Text strong>{t('state.health')}</Text>
+              <Text strong>{t('health')}</Text>
               <Text type="secondary">{getOverallPercentage()}%</Text>
             </Flexbox>
             <Progress
@@ -208,22 +208,22 @@ export default function StatePage() {
               showInfo={false}
             />
           </div>
-          <Button onClick={fetchState}>{t('state.refresh')}</Button>
+          <Button onClick={fetchState}>{t('refresh')}</Button>
         </Flexbox>
       </Card>
 
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={8}>
-          {renderComponentCard(stateData.database, <Icon icon={DatabaseOutlined} />, t('state.components.database'))}
+          {renderComponentCard(stateData.database, <Icon icon={DatabaseOutlined} />, t('components.database'))}
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          {renderComponentCard(stateData.api, <Icon icon={ApiOutlined} />, t('state.components.api'))}
+          {renderComponentCard(stateData.api, <Icon icon={ApiOutlined} />, t('components.api'))}
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          {renderComponentCard(stateData.mcp, <Icon icon={SecurityScanOutlined} />, t('state.components.mcp'))}
+          {renderComponentCard(stateData.mcp, <Icon icon={SecurityScanOutlined} />, t('components.mcp'))}
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          {renderComponentCard(stateData.providers, <Icon icon={AppstoreOutlined} />, t('state.components.providers'))}
+          {renderComponentCard(stateData.providers, <Icon icon={AppstoreOutlined} />, t('components.providers'))}
         </Col>
       </Row>
     </div>
