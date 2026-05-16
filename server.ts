@@ -1,6 +1,12 @@
 import { createServer } from 'http';
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { parse } from 'url';
 import next from 'next';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const nextVersion = JSON.parse(readFileSync(resolve(__dirname, 'node_modules/next/package.json'), 'utf-8')).version;
 
 const port = parseInt(process.env.PORT || '7860', 10);
 const dev = process.env.NODE_ENV !== 'production';
@@ -32,7 +38,12 @@ try {
 
 app.prepare().then(() => {
   server.listen(port, () => {
-    console.log(`> Ready on http://localhost:${port}`);
+    const url = `http://localhost:${port}`;
+    console.log('');
+    console.log(`  ▲ Next.js ${nextVersion}`);
+    console.log(`  ${dev ? '●' : '■'} ${dev ? 'Dev' : 'Ready'}`);
+    console.log(`  - Local: ${url}`);
+    console.log('');
   });
 });
 
