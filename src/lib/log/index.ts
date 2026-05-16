@@ -1,9 +1,11 @@
 /**
  * 系统日志模块
- * 内存环形缓冲区 + 数据库持久化，支持后端日志和请求日志
+ * 内存环形缓冲区 + 数据库持久化，支持后端日志、请求日志和函数调用日志
  * 数据库中的日志每2小时自动清理
+ * 支持 traceId 关联请求与函数调用链
  */
 
+import { AsyncLocalStorage } from 'async_hooks';
 import { prisma } from '@/lib/db/prisma';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -26,7 +28,13 @@ export interface LogEntry {
   cookies?: string;
   headers?: string;
   errorDetails?: string;
+  traceId?: string;
+  functionName?: string;
+  functionArgs?: string;
+  functionResult?: string;
 }
+
+export const logContext = new AsyncLocalStorage<{ traceId: string }>();
 
 const MAX_LOGS = 10000;
 const logs: LogEntry[] = [];
@@ -55,6 +63,10 @@ async function writeEntryToDB(entry: LogEntry): Promise<void> {
         cookies: entry.cookies ?? null,
         headers: entry.headers ?? null,
         errorDetails: entry.errorDetails ?? null,
+        traceId: entry.traceId ?? null,
+        functionName: entry.functionName ?? null,
+        functionArgs: entry.functionArgs ?? null,
+        functionResult: entry.functionResult ?? null,
       },
     });
   } catch {
@@ -91,12 +103,14 @@ function createEntry(
   message: string,
   extra?: Partial<LogEntry>,
 ): LogEntry {
+  const ctx = logContext.getStore();
   const entry: LogEntry = {
     id: `${Date.now()}-${++logCounter}`,
     timestamp: Date.now(),
     level,
     source,
     message,
+    traceId: ctx?.traceId,
     ...extra,
   };
 
@@ -146,6 +160,7 @@ export function logRequest(entry: {
   cookies?: string;
   headers?: string;
   errorDetails?: string;
+  traceId?: string;
 }) {
   const level: LogLevel =
     entry.statusCode >= 500 ? 'error' :
@@ -240,11 +255,91 @@ async function tryReadResponseBody(response: Response): Promise<string | undefin
 // 函数调用日志
 // ============================================================
 
-export function logFunction(name: string, result: { success: boolean; message?: string; duration?: number }) {
-  const level = result.success ? 'info' : 'error';
-  createEntry(level, 'function', `[${name}] ${result.message || (result.success ? '成功' : '失败')}`, {
-    duration: result.duration,
+const MAX_ARGS_LENGTH = 2000;
+
+function safeSerialize(value: unknown): string {
+  try {
+    const seen = new WeakSet();
+    const str = JSON.stringify(value, (_key, val) => {
+      if (typeof val === 'function') return '[Function]';
+      if (typeof val === 'object' && val !== null) {
+        if (seen.has(val)) return '[Circular]';
+        seen.add(val);
+      }
+      if (val instanceof Error) return `${val.name}: ${val.message}`;
+      if (val instanceof Request) return '[Request]';
+      if (val instanceof Response) return '[Response]';
+      if (val instanceof Headers) return '[Headers]';
+      if (val instanceof URL) return val.href;
+      return val;
+    }, 2);
+    return str.length > MAX_ARGS_LENGTH ? str.slice(0, MAX_ARGS_LENGTH) + '...' : str;
+  } catch {
+    return String(value);
+  }
+}
+
+const SENSITIVE_ARGS_KEY = new Set(['password', 'passwordHash', 'token', 'apiKey', 'secret', 'authorization', 'accessToken', 'refreshToken']);
+
+function maskSensitiveFields(obj: unknown, depth = 0): unknown {
+  if (depth > 5) return '[Deep]';
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(v => maskSensitiveFields(v, depth + 1));
+  const masked: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(obj as Record<string, unknown>)) {
+    if (SENSITIVE_ARGS_KEY.has(key)) {
+      masked[key] = '***';
+    } else {
+      masked[key] = maskSensitiveFields(val, depth + 1);
+    }
+  }
+  return masked;
+}
+
+export function logFunctionCall(name: string, args: unknown[], result: unknown, duration: number, error?: Error) {
+  const level = error ? 'error' : 'info';
+  const maskedArgs = args.map(a => maskSensitiveFields(a));
+  const maskedResult = error ? { error: error.message } : maskSensitiveFields(result);
+  createEntry(level, 'function', `[函数] ${name} ${error ? '失败' : '成功'} (${duration}ms)`, {
+    functionName: name,
+    functionArgs: safeSerialize(maskedArgs),
+    functionResult: safeSerialize(maskedResult),
+    duration,
+    errorDetails: error ? `${error.name}: ${error.message}\n${error.stack?.slice(0, 500)}` : undefined,
   });
+}
+
+/**
+ * 高阶函数包装器：自动记录函数入参、返回值、耗时，并关联到当前请求
+ */
+export function withFunctionLogging<T extends (...args: any[]) => any>(
+  name: string,
+  fn: T,
+): T {
+  return ((...args: any[]) => {
+    const start = Date.now();
+    try {
+      const result = fn(...args);
+      if (result instanceof Promise) {
+        return result.then(
+          (val) => {
+            logFunctionCall(name, args, val, Date.now() - start);
+            return val;
+          },
+          (err) => {
+            logFunctionCall(name, args, undefined, Date.now() - start, err);
+            throw err;
+          },
+        );
+      }
+      logFunctionCall(name, args, result, Date.now() - start);
+      return result;
+    } catch (error) {
+      logFunctionCall(name, args, undefined, Date.now() - start, error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
+  }) as T;
 }
 
 // ============================================================
@@ -313,6 +408,7 @@ export function getLog(id: string): LogEntry | undefined {
 
 export interface LogQueryWithSearch extends LogQuery {
   search?: string;
+  traceId?: string;
 }
 
 const SKIP_LOG_PATHS = new Set(['/api/logs', '/api/logs/', '/api/system/status', '/api/system/status/']);
@@ -322,53 +418,58 @@ export function withApiLogging<T extends (...args: any[]) => any>(
   handler: T,
 ): T {
   return (async (...args: any[]) => {
-    const start = Date.now();
-    const request = args[0] as Request;
-    const url = new URL(request.url);
-    const method = request.method;
-    const path = url.pathname;
+    const traceId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    return logContext.run({ traceId }, async () => {
+      const start = Date.now();
+      const request = args[0] as Request;
+      const url = new URL(request.url);
+      const method = request.method;
+      const path = url.pathname;
 
-    const skip = SKIP_LOG_PATHS.has(path);
-    const queryParams = skip ? undefined : filterQueryParams(url);
-    const cookies = skip ? undefined : filterCookies(request.headers.get('cookie'));
-    const headers = skip ? undefined : filterHeaders(request.headers);
-    const requestBody = skip ? undefined : await tryReadBody(request);
-    let errorDetails: string | undefined;
+      const skip = SKIP_LOG_PATHS.has(path);
+      const queryParams = skip ? undefined : filterQueryParams(url);
+      const cookies = skip ? undefined : filterCookies(request.headers.get('cookie'));
+      const headers = skip ? undefined : filterHeaders(request.headers);
+      const requestBody = skip ? undefined : await tryReadBody(request);
+      let errorDetails: string | undefined;
 
-    try {
-      const response = await handler(...args);
-      const responseBody = skip ? undefined : response instanceof Response ? await tryReadResponseBody(response) : undefined;
-      if (!skip) {
-        logRequest({
-          method,
-          path,
-          statusCode: response instanceof Response ? response.status : 200,
-          duration: Date.now() - start,
-          queryParams,
-          requestBody,
-          responseBody,
-          cookies,
-          headers,
-        });
+      try {
+        const response = await handler(...args);
+        const responseBody = skip ? undefined : response instanceof Response ? await tryReadResponseBody(response) : undefined;
+        if (!skip) {
+          logRequest({
+            method,
+            path,
+            statusCode: response instanceof Response ? response.status : 200,
+            duration: Date.now() - start,
+            queryParams,
+            requestBody,
+            responseBody,
+            cookies,
+            headers,
+            traceId,
+          });
+        }
+        return response;
+      } catch (error) {
+        errorDetails = skip ? undefined : error instanceof Error ? `${error.name}: ${error.message}\n${error.stack?.slice(0, 500)}` : String(error);
+        if (!skip) {
+          logRequest({
+            method,
+            path,
+            statusCode: 500,
+            duration: Date.now() - start,
+            queryParams,
+            requestBody,
+            cookies,
+            headers,
+            errorDetails,
+            traceId,
+          });
+        }
+        throw error;
       }
-      return response;
-    } catch (error) {
-      errorDetails = skip ? undefined : error instanceof Error ? `${error.name}: ${error.message}\n${error.stack?.slice(0, 500)}` : String(error);
-      if (!skip) {
-        logRequest({
-          method,
-          path,
-          statusCode: 500,
-          duration: Date.now() - start,
-          queryParams,
-          requestBody,
-          cookies,
-          headers,
-          errorDetails,
-        });
-      }
-      throw error;
-    }
+    });
   }) as T;
 }
 
@@ -390,6 +491,9 @@ export function queryLogsV2(query: LogQueryWithSearch = {}): { total: number; en
   if (query.search) {
     const q = query.search.toLowerCase();
     filtered = filtered.filter((l) => l.message.toLowerCase().includes(q));
+  }
+  if (query.traceId) {
+    filtered = filtered.filter((l) => l.traceId === query.traceId);
   }
 
   filtered.sort((a, b) => b.timestamp - a.timestamp);

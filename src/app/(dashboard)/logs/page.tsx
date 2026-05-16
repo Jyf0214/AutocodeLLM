@@ -26,6 +26,10 @@ interface LogEntry {
   cookies?: string;
   headers?: string;
   errorDetails?: string;
+  traceId?: string;
+  functionName?: string;
+  functionArgs?: string;
+  functionResult?: string;
 }
 
 interface LogData {
@@ -104,13 +108,52 @@ export default function LogsPage() {
     } catch { message.error('清空失败'); }
   };
 
+  const [functionCalls, setFunctionCalls] = useState<LogEntry[]>([]);
+  const [loadingCalls, setLoadingCalls] = useState(false);
+  const [traceIdMap, setTraceIdMap] = useState<Record<string, LogEntry[]>>({});
+
+  useEffect(() => {
+    if (!modalEntry || !modalEntry.traceId) { setFunctionCalls([]); return; }
+    const cached = traceIdMap[modalEntry.traceId];
+    if (cached) { setFunctionCalls(cached); return; }
+    setLoadingCalls(true);
+    fetch(`/api/logs?traceId=${modalEntry.traceId}&source=function`)
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) {
+          const calls = json.data.entries;
+          setFunctionCalls(calls);
+          setTraceIdMap(prev => ({ ...prev, [modalEntry.traceId!]: calls }));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingCalls(false));
+  }, [modalEntry, traceIdMap]);
+
   const collapsibleItems = modalEntry ? [
+    modalEntry.functionName ? { key: 'fn', label: `函数: ${modalEntry.functionName}`, children: <><div style={{marginBottom:4,fontSize:12,color:'#888'}}>参数</div><pre style={{margin:'0 0 8px',fontSize:13,whiteSpace:'pre-wrap',wordBreak:'break-all',maxHeight:200,overflow:'auto'}}>{modalEntry.functionArgs}</pre><div style={{marginBottom:4,fontSize:12,color:'#888'}}>返回值</div><pre style={{margin:0,fontSize:13,whiteSpace:'pre-wrap',wordBreak:'break-all',maxHeight:200,overflow:'auto'}}>{modalEntry.functionResult}</pre></> } : null,
     modalEntry.queryParams ? { key: 'params', label: '查询参数', children: <pre style={{margin:0,fontSize:13,whiteSpace:'pre-wrap',wordBreak:'break-all'}}>{modalEntry.queryParams}</pre> } : null,
     modalEntry.cookies ? { key: 'cookies', label: 'Cookie', children: <pre style={{margin:0,fontSize:13,whiteSpace:'pre-wrap',wordBreak:'break-all'}}>{modalEntry.cookies}</pre> } : null,
     modalEntry.headers ? { key: 'headers', label: '请求头', children: <pre style={{margin:0,fontSize:13,whiteSpace:'pre-wrap',wordBreak:'break-all'}}>{modalEntry.headers}</pre> } : null,
     modalEntry.requestBody ? { key: 'reqBody', label: '请求体', children: <pre style={{margin:0,fontSize:13,whiteSpace:'pre-wrap',wordBreak:'break-all',maxHeight:300,overflow:'auto'}}>{modalEntry.requestBody}</pre> } : null,
     modalEntry.responseBody ? { key: 'resBody', label: '响应体', children: <pre style={{margin:0,fontSize:13,whiteSpace:'pre-wrap',wordBreak:'break-all',maxHeight:300,overflow:'auto'}}>{modalEntry.responseBody}</pre> } : null,
     modalEntry.errorDetails ? { key: 'error', label: '错误详情', children: <pre style={{margin:0,fontSize:13,whiteSpace:'pre-wrap',wordBreak:'break-all',color:'#ff4d4f',maxHeight:300,overflow:'auto'}}>{modalEntry.errorDetails}</pre> } : null,
+    (modalEntry.source === 'request' && functionCalls.length > 0) ? {
+      key: 'fnChain',
+      label: `函数调用链 (${functionCalls.length})`,
+      children: <div style={{display:'flex',flexDirection:'column',gap:8}}>{functionCalls.map(fn => (
+        <div key={fn.id} style={{padding:'8px 10px',borderRadius:6,border:'1px solid var(--border-primary)',fontSize:12,fontFamily:"'JetBrains Mono','SF Mono',monospace",background:'var(--bg-secondary, #fafafa)'}}>
+          <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:4}}>
+            <Tag color={fn.level === 'error' ? '#ff4d4f' : '#52c41a'} style={{margin:0,fontSize:11,lineHeight:'18px'}}>{fn.functionName}</Tag>
+            {fn.duration !== undefined && <span style={{color:'#888'}}>{fn.duration}ms</span>}
+          </div>
+          <div style={{marginBottom:2,color:'#888',fontSize:11}}>参数</div>
+          <pre style={{margin:'0 0 6px',whiteSpace:'pre-wrap',wordBreak:'break-all',maxHeight:120,overflow:'auto',fontSize:12}}>{fn.functionArgs || '-'}</pre>
+          <div style={{marginBottom:2,color:'#888',fontSize:11}}>返回值</div>
+          <pre style={{margin:0,whiteSpace:'pre-wrap',wordBreak:'break-all',maxHeight:120,overflow:'auto',fontSize:12}}>{fn.functionResult || '-'}</pre>
+        </div>
+      ))}</div>
+    } : null,
   ].filter(Boolean) : [];
 
   return (
@@ -172,7 +215,7 @@ export default function LogsPage() {
         open={!!modalEntry}
         onCancel={() => setModalEntry(null)}
         footer={null}
-        width={560}
+        width={680}
         styles={{ body: { padding: '12px 16px' } }}
       >
         {modalEntry && (
@@ -192,6 +235,7 @@ export default function LogsPage() {
               <div style={{ color: modalEntry.level === 'error' ? '#ff4d4f' : modalEntry.level === 'warn' ? '#faad14' : 'var(--text-secondary)', wordBreak: 'break-all', marginBottom: 8 }}>
                 {modalEntry.message}
               </div>
+              {loadingCalls && <div style={{padding:'8px 0',fontSize:12,color:'#888'}}>加载函数调用链...</div>}
               {collapsibleItems.length > 0 && (
                 <Collapse items={collapsibleItems as any} size="small" style={{ fontSize: 13, background: 'transparent' }} />
               )}

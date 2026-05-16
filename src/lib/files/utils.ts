@@ -2,7 +2,7 @@ import { promises as fs, constants as fsConstants } from 'node:fs';
 import path from 'node:path';
 
 /** 文件管理基础目录 */
-const BASE_DIR = path.resolve(process.env.FILES_BASE_PATH || path.join(process.cwd(), 'workspaces'));
+const BASE_DIR = path.resolve(process.env.FILES_BASE_PATH || path.join(process.cwd(), 'projects'));
 
 /** 获取基础目录 */
 export function getBaseDir(): string {

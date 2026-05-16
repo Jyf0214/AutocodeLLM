@@ -32,6 +32,7 @@ export const GET = withApiLogging('GET /api/logs', async function GET(request: R
     statusCode: searchParams.get('statusCode')
       ? parseInt(searchParams.get('statusCode') ?? '')
       : undefined,
+    traceId: searchParams.get('traceId') ?? undefined,
     limit: searchParams.get('limit') ? parseInt(searchParams.get('limit') ?? '') : 200,
     offset: searchParams.get('offset') ? parseInt(searchParams.get('offset') ?? '') : 0,
   });

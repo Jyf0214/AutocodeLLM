@@ -27,8 +27,8 @@ const server = createServer((req, res) => {
 const wss = new WebSocketServer({ noServer: true });
 
 // 会话管理
-const sessions = new Map<string, { pty: import('node-pty').IPty; workspaceId: string; lastActivity: number }>();
-const workspaceClients = new Map<string, Set<WebSocket>>();
+const sessions = new Map<string, { pty: import('node-pty').IPty; projectId: string; lastActivity: number }>();
+const projectClients = new Map<string, Set<WebSocket>>();
 
 server.on('upgrade', (request, socket, head) => {
   const url = new URL(request.url ?? '', 'http://localhost');
@@ -41,51 +41,51 @@ server.on('upgrade', (request, socket, head) => {
 
 wss.on('connection', (ws, req) => {
   const url = new URL(req.url || '', `http://${req.headers.host}`);
-  const workspaceId = url.searchParams.get('workspaceId');
+  const projectId = url.searchParams.get('projectId');
   const cols = parseInt(url.searchParams.get('cols') ?? '80', 10);
   const rows = parseInt(url.searchParams.get('rows') ?? '24', 10);
 
-  if (!workspaceId) {
-    ws.close(1000, '缺少 workspaceId');
+  if (!projectId) {
+    ws.close(1000, '缺少 projectId');
     return;
   }
 
   // 注册客户端
-  let clients = workspaceClients.get(workspaceId);
+  let clients = projectClients.get(projectId);
   if (!clients) {
     clients = new Set();
-    workspaceClients.set(workspaceId, clients);
+    projectClients.set(projectId, clients);
   }
   clients.add(ws);
 
   // 查找或创建 pty 会话
-  let session = sessions.get(workspaceId);
+  let session = sessions.get(projectId);
   if (!session) {
     const isDocker = process.env.RUNNING_IN_DOCKER === 'true';
-    const basePath = isDocker ? '/home/node/.autocodellm/projects' : process.env.PROJECT_BASE_PATH ?? '/home/user/workspace';
+    const basePath = isDocker ? '/home/node/.autocodellm/projects' : process.env.PROJECT_BASE_PATH ?? '/home/user/project';
     const ptyProcess = ptyModule!.spawn('bash', [], {
       name: 'xterm-256color',
       cols,
       rows,
-      cwd: basePath + '/' + workspaceId,
+      cwd: basePath + '/' + projectId,
       env: process.env as Record<string, string>,
     });
 
-    session = { pty: ptyProcess, workspaceId, lastActivity: Date.now() };
-    sessions.set(workspaceId, session);
+    session = { pty: ptyProcess, projectId, lastActivity: Date.now() };
+    sessions.set(projectId, session);
 
     ptyProcess.onData((data) => {
       const msg = JSON.stringify({ type: 'data', data });
-      broadcastToWorkspace(workspaceId, msg);
+      broadcastToProject(projectId, msg);
     });
 
     ptyProcess.onExit(({ exitCode }) => {
       const msg = JSON.stringify({ type: 'exit', exitCode });
-      broadcastToWorkspace(workspaceId, msg);
-      sessions.delete(workspaceId);
+      broadcastToProject(projectId, msg);
+      sessions.delete(projectId);
     });
 
-    console.log(`终端会话创建: workspaceId=${workspaceId}`);
+    console.log(`终端会话创建: projectId=${projectId}`);
   }
 
   ws.send(JSON.stringify({ type: 'connected' }));
@@ -107,14 +107,14 @@ wss.on('connection', (ws, req) => {
   });
 
   ws.on('close', () => {
-    const c = workspaceClients.get(workspaceId);
+    const c = projectClients.get(projectId);
     if (c) {
       c.delete(ws);
       if (c.size === 0) {
-        workspaceClients.delete(workspaceId);
+        projectClients.delete(projectId);
       }
     }
-    console.log(`终端断开: workspaceId=${workspaceId}`);
+    console.log(`终端断开: projectId=${projectId}`);
   });
 
   ws.on('error', (err) => {
@@ -122,8 +122,8 @@ wss.on('connection', (ws, req) => {
   });
 });
 
-function broadcastToWorkspace(workspaceId: string, message: string, exclude?: WebSocket) {
-  const clients = workspaceClients.get(workspaceId);
+function broadcastToProject(projectId: string, message: string, exclude?: WebSocket) {
+  const clients = projectClients.get(projectId);
   if (!clients) return;
   for (const client of clients) {
     if (client !== exclude && client.readyState === WebSocket.OPEN) {

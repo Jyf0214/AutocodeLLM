@@ -53,10 +53,10 @@ AutocodeLLM 是基于 Next.js 16 + React 19 + TypeScript + Prisma ORM + Ant Desi
 | 路由 | 功能说明 | 备注 |
 |------|----------|------|
 | `/` | 首页 | 应用入口，展示功能卡片和登录/登出逻辑 |
-| `/workplace` | 项目概览 | 仅展示所有项目列表，不提供具体操作功能 |
-| `/workplace/[id]` | 特定项目 | 动态路由，`[id]` 为项目唯一标识符，进入后可执行该项目的具体功能（含聊天界面） |
+| `/project` | 项目概览 | 仅展示所有项目列表，不提供具体操作功能 |
+| `/project/[id]` | 特定项目 | 动态路由，`[id]` 为项目唯一标识符，进入后可执行该项目的具体功能（含聊天界面） |
 | `/chat` | 聊天项目列表 | 聊天入口，列出所有项目，支持新建 |
-| `/chat/[workspaceId]` | 项目聊天会话 | 独立聊天页面，使用 Zustand 5 切片 store（agent/chat/input/messages/ui），含 AgentPanel、ChatInput、MessageList 等模块化组件 |
+| `/chat/project/[id]` | 项目聊天会话 | 独立聊天页面，使用 Zustand 5 切片 store（agent/chat/input/messages/ui），含 AgentPanel、ChatInput、MessageList 等模块化组件 |
 | `/change-password` | 修改密码 | 处理强制密码修改（`forceChangePassword` 标志） |
 | `/model` | 模型管理 | 纯重定向页面，自动跳转至 `/provider` |
 
@@ -83,7 +83,7 @@ AutocodeLLM 是基于 Next.js 16 + React 19 + TypeScript + Prisma ORM + Ant Desi
 - **公开路径**（无需认证）：`/`、`/login`、所有 `/api/*` 路由
 - **受保护路径**：其他所有页面，需 `userId`（通过 Cookie `userId` 或 Header `x-user-id` 验证）
 - 未认证用户访问受保护页面时重定向至 `/login?redirect=<原始路径>`
-- 已认证用户访问 `/login` 时重定向至 `/workplace`
+- 已认证用户访问 `/login` 时重定向至 `/project`
 
 ### API 路由（24 个端点）
 
@@ -161,13 +161,13 @@ AutocodeLLM 是基于 Next.js 16 + React 19 + TypeScript + Prisma ORM + Ant Desi
 
 ## 页面设计规范
 
-### Workplace 页设计原则
+### Project 页设计原则
 
-`/workplace` 路由仅作为项目列表展示，所有具体功能操作必须进入单个项目（`/workplace/[id]`）后才能执行。此外，`/workplace` 本身包含聊天路由入口。
+`/project` 路由仅作为项目列表展示，所有具体功能操作必须进入单个项目（`/project/[id]`）后才能执行。此外，`/project` 本身包含聊天路由入口。
 
-- 避免在 `/workplace` 页面放置任何修改项目状态的按钮、表单或交互元素
+- 避免在 `/project` 页面放置任何修改项目状态的按钮、表单或交互元素
 - 保持布局极简：干净的项目卡片列表（或网格），每张卡片显示项目名称、图标和简短状态指示
-- 点击项目卡片应导航至 `/workplace/[id]`，在那里提供完整功能套件
+- 点击项目卡片应导航至 `/project/[id]`，在那里提供完整功能套件
 - 确保列表视图响应式：移动端卡片垂直堆叠，触控目标足够大
 
 ---

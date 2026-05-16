@@ -18,7 +18,7 @@ export function initPersistentDirs() {
 
   const dirs = [
     baseDir,
-    `${baseDir}/workspaces`,
+    `${baseDir}/projects`,
     `${baseDir}/skills`,
     `${baseDir}/config`,
     `${baseDir}/logs`,

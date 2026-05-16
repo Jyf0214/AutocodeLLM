@@ -26,7 +26,7 @@ RUN ln -sf /home/node/.bun/bin/bun /usr/local/bin/bun 2>/dev/null || true && \
 RUN rm -rf .next && \
     bun install && \
     bun run build && \
-    mkdir -p /home/node/.autocodellm/workspaces \
+    mkdir -p /home/node/.autocodellm/projects \
     /home/node/.autocodellm/skills \
     /home/node/.autocodellm/config \
     /home/node/.autocodellm/logs \
