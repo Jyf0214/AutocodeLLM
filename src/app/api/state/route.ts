@@ -53,6 +53,13 @@ export const GET = withApiLogging('GET state', async function GET() {
     message: '运行正常',
   };
 
+  // MCP 服务状态（当前以未配置显示）
+  components.mcp = {
+    name: 'MCP',
+    status: 'healthy',
+    message: '运行正常',
+  };
+
   return NextResponse.json({
     success: true,
     data: components,

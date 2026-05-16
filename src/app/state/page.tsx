@@ -104,7 +104,9 @@ export default function StatePage() {
       stateData.api,
       stateData.mcp,
       stateData.providers,
-    ];
+    ].filter(Boolean) as SystemComponent[];
+
+    if (components.length === 0) return 'unhealthy';
 
     const hasUnhealthy = components.some(c => c.status === 'unhealthy');
     const hasDegraded = components.some(c => c.status === 'degraded');
@@ -122,7 +124,9 @@ export default function StatePage() {
       stateData.api,
       stateData.mcp,
       stateData.providers,
-    ];
+    ].filter(Boolean) as SystemComponent[];
+
+    if (components.length === 0) return 0;
 
     const healthyCount = components.filter(c => c.status === 'healthy').length;
     const degradedCount = components.filter(c => c.status === 'degraded').length;
@@ -220,7 +224,7 @@ export default function StatePage() {
           {renderComponentCard(stateData.api, <Icon icon={ApiOutlined} />, t('components.api'))}
         </Col>
         <Col xs={24} sm={12} lg={8}>
-          {renderComponentCard(stateData.mcp, <Icon icon={SecurityScanOutlined} />, t('components.mcp'))}
+          {stateData.mcp && renderComponentCard(stateData.mcp, <Icon icon={SecurityScanOutlined} />, t('components.mcp'))}
         </Col>
         <Col xs={24} sm={12} lg={8}>
           {renderComponentCard(stateData.providers, <Icon icon={AppstoreOutlined} />, t('components.providers'))}
