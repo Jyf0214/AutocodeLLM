@@ -16,7 +16,7 @@ export async function DELETE(
   const { id } = await params;
 
   const key = await prisma.apiKey.findUnique({ where: { id } });
-  if (!key || key.userId !== auth.session.userId) {
+  if (key?.userId !== auth.session.userId) {
     return NextResponse.json(
       { success: false, error: { message: 'API Key 不存在', code: 'NOT_FOUND' } },
       { status: 404 },
@@ -47,7 +47,7 @@ export async function PATCH(
   };
 
   const key = await prisma.apiKey.findUnique({ where: { id } });
-  if (!key || key.userId !== auth.session.userId) {
+  if (key?.userId !== auth.session.userId) {
     return NextResponse.json(
       { success: false, error: { message: 'API Key 不存在', code: 'NOT_FOUND' } },
       { status: 404 },

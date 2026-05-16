@@ -43,8 +43,18 @@ export default function WebDAVPage() {
   }, []);
 
   useEffect(() => {
-    fetchStatus();
-  }, [fetchStatus]);
+    (async () => {
+      try {
+        const res = await fetch('/api/sync');
+        const data: ApiResponse = await res.json();
+        if (data.success && data.data) {
+          setStatus(data.data);
+        }
+      } catch {
+        // 忽略错误
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (status) {

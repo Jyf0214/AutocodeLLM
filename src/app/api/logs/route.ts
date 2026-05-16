@@ -20,15 +20,18 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
 
+  const levelParam = searchParams.get('level');
+  const sourceParam = searchParams.get('source');
+
   const entries = queryLogs({
-    level: (searchParams.get('level') as LogLevel) || undefined,
-    source: (searchParams.get('source') as LogEntry['source']) || undefined,
-    path: searchParams.get('path') || undefined,
+    level: levelParam as LogLevel,
+    source: sourceParam as LogEntry['source'],
+    path: searchParams.get('path') ?? undefined,
     statusCode: searchParams.get('statusCode')
-      ? parseInt(searchParams.get('statusCode')!)
+      ? parseInt(searchParams.get('statusCode') ?? '')
       : undefined,
-    limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 200,
-    offset: searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0,
+    limit: searchParams.get('limit') ? parseInt(searchParams.get('limit') ?? '') : 200,
+    offset: searchParams.get('offset') ? parseInt(searchParams.get('offset') ?? '') : 0,
   });
 
   return NextResponse.json({

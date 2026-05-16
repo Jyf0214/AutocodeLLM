@@ -37,10 +37,25 @@ export default function ProjectDetailPage() {
   }, [projectId]);
 
   useEffect(() => {
-    if (projectId) {
-      fetchDetail();
-    }
-  }, [projectId, fetchDetail]);
+    if (!projectId) return;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/projects/${projectId}`);
+        const data: ProjectResponse = await res.json();
+        if (data.success && data.data) {
+          setProject(data.data as ProjectDetail);
+        } else {
+          setError(data.error?.message ?? '获取项目详情失败');
+        }
+      } catch {
+        setError('网络错误');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [projectId]);
 
   const copyId = () => {
     if (project?.id) {
@@ -95,18 +110,18 @@ export default function ProjectDetailPage() {
               />
             </Space>
           </Descriptions.Item>
-          <Descriptions.Item label={t('description') || '描述'}>
-            {project.description ?? '-'}
+          <Descriptions.Item label={t('description')}>
+            {project.description}
           </Descriptions.Item>
-          <Descriptions.Item label={t('accessPassword') || '访问密码'}>
+          <Descriptions.Item label={t('accessPassword')}>
             <Tag color={project.accessPassword ? 'green' : 'default'}>
-              {project.accessPassword ? t('enabled') || '已启用' : t('disabled') || '未启用'}
+              {project.accessPassword ? t('enabled') : t('disabled')}
             </Tag>
           </Descriptions.Item>
-          <Descriptions.Item label={t('createdAt') || '创建时间'}>
+          <Descriptions.Item label={t('createdAt')}>
             {formatDate(project.createdAt)}
           </Descriptions.Item>
-          <Descriptions.Item label={t('updatedAt') || '更新时间'}>
+          <Descriptions.Item label={t('updatedAt')}>
             {formatDate(project.updatedAt)}
           </Descriptions.Item>
         </Descriptions>

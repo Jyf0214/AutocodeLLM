@@ -142,7 +142,7 @@ export async function connectLarkWebSocket(config: ChannelConfig): Promise<void>
       console.log('[Lark] WebSocket 连接已建立');
     };
 
-    ws.onmessage = (event: WebSocketMessageEvent) => {
+    ws.onmessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data as string) as Record<string, unknown>;
         handleLarkWebhook(config, data);

@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { PageContainer, Button, Text, Flexbox } from '@/lib/ui';
 import { DownloadOutlined, UploadOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { message, Radio, Progress, Card, Upload, Space } from 'antd';
+import { message, Radio, Progress, Card, Upload } from 'antd';
 import type { RadioChangeEvent } from 'antd';
 
 interface ImportResult {
@@ -67,11 +67,11 @@ export default function DataPage() {
       const json = await res.json();
       if (json.success) {
         setResult(json.data);
-        message.success(`导入完成：成功 ${json.data.imported}，跳过 ${json.data.skipped}，失败 ${json.data.failed}`);
+        message.success(`导入完成：成功 ${String(json.data.imported)}，跳过 ${String(json.data.skipped)}，失败 ${String(json.data.failed)}`);
       } else {
-        message.error(json.error?.message || '导入失败');
+        message.error(json.error?.message ?? '导入失败');
       }
-    } catch (err) {
+    } catch {
       message.error('导入失败：JSON 格式错误');
     } finally {
       setLoading(false);
@@ -81,13 +81,13 @@ export default function DataPage() {
   }, [mode]);
 
   return (
-    <PageContainer title="数据管理" subtitle="导出和导入系统数据">
-      <Flexbox gap={24} direction="vertical">
-        {/* 导出 */}
-        <Card title="导出数据" size="small">
-          <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-            导出所有项目、提供商、环境变量和 MCP 配置为 JSON 文件
-          </Text>
+       <PageContainer title="数据管理" subtitle="导出和导入系统数据">
+         <Flexbox gap={24} direction="vertical">
+           {/* 导出 */}
+           <Card title="导出数据" size="small">
+             <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+               导出所有项目、提供商和环境变量为 JSON 文件
+             </Text>
           <Button
             icon={<DownloadOutlined />}
             onClick={handleExport}

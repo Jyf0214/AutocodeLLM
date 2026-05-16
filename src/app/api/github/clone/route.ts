@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { cloneRepo, installPlugin, getGitHubAppConfig } from '@/lib/github/app';
+import { cloneRepo, getGitHubAppConfig } from '@/lib/github/app';
 
 /**
  * POST /api/github/clone
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
   if (!result.success) {
     return NextResponse.json(
-      { success: false, error: { message: result.error || '克隆失败', code: 'CLONE_FAILED' } },
+      { success: false, error: { message: result.error ?? '克隆失败', code: 'CLONE_FAILED' } },
       { status: 500 },
     );
   }
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
  * GET /api/github/clone
  * 检查 GitHub App 配置状态
  */
-export async function GET() {
+export function GET() {
   const config = getGitHubAppConfig();
   return NextResponse.json({
     success: true,

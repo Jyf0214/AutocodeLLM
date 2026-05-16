@@ -7,7 +7,6 @@ import { message as antMessage } from 'antd';
 import { Button, Text, Flexbox } from '@/lib/ui';
 import { Card, Skeleton } from 'antd';
 import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
-import ChannelChat from '@/components/features/ChannelChat';
 
 interface ChannelDetailData {
   id: string;
@@ -54,8 +53,28 @@ export default function ChannelChatPage() {
   }, [channelId]);
 
   useEffect(() => {
-    fetchChannel();
-  }, [fetchChannel]);
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/channels/${channelId}`);
+        const result = await res.json();
+        if (result.success && result.data) {
+          setChannel(result.data as ChannelDetailData);
+        } else {
+          const errorMsg = result.error?.message ?? '频道不存在';
+          setError(errorMsg);
+          antMessage.error(errorMsg);
+        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : '获取频道信息失败';
+        setError(errorMsg);
+        antMessage.error(errorMsg);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [channelId]);
 
   if (loading) {
     return (
@@ -102,7 +121,6 @@ export default function ChannelChatPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg-layout)' }}>
-      {/* 顶部导航栏 */}
       <div
         style={{
           background: 'var(--color-bg)',
@@ -126,9 +144,10 @@ export default function ChannelChatPage() {
         </div>
       </div>
 
-      {/* 聊天区域 */}
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '28px 24px' }}>
-        <ChannelChat channelId={channelId} channelName={channel.name} />
+        <Card>
+          <Text>频道聊天功能暂未实现</Text>
+        </Card>
       </div>
     </div>
   );

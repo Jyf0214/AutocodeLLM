@@ -26,10 +26,10 @@ export async function POST(request: Request) {
 
     const { code, projectId } = body;
 
-    if (!code?.trim()) {
+    if (!code.trim()) {
       return errorResponse('绑定码不能为空', 'EMPTY_CODE', 400);
     }
-    if (!projectId?.trim()) {
+    if (!projectId.trim()) {
       return errorResponse('项目 ID 不能为空', 'EMPTY_PROJECT', 400);
     }
 

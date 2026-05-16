@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 const BACKUP_LOG_FILE =
-  process.env.BACKUP_LOG_FILE || '/home/node/.autocodellm/backups/backup-logs.json';
+  process.env.BACKUP_LOG_FILE ?? '/home/node/.autocodellm/backups/backup-logs.json';
 
 interface BackupLog {
   timestamp: string;
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
           if (entry.isDirectory()) {
             await walkDir(fullPath);
           } else if (entry.isFile()) {
-            const success = await pushToRemote(client, fullPath, config.remotePath + '/' + projectId);
+            const success = await pushToRemote(client, fullPath, config.remotePath + '/' + String(projectId));
             if (success) pushedCount++;
           }
         }
@@ -162,7 +162,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export function GET() {
   try {
     const logs = readBackupLogs();
     return NextResponse.json({ success: true, data: logs });

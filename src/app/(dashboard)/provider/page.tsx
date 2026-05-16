@@ -309,11 +309,27 @@ export default function ProviderPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
-    fetchProviders();
-  }, [fetchProviders]);
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/providers');
+        const data = await res.json();
+        if (data.success) {
+          setDataSource(data.data ?? []);
+          setPresets(data.presets ?? []);
+        } else {
+          message.error(data.error?.message ?? t('fetchFailed'));
+        }
+      } catch {
+        message.error(t('fetchFailed'));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [t]);
 
   // 添加预置提供商
   const handleAddPreset = useCallback(
@@ -338,7 +354,7 @@ export default function ProviderPage() {
         setSaving(false);
       }
     },
-    [fetchProviders],
+    [fetchProviders, t],
   );
 
   // 打开编辑弹窗
@@ -436,7 +452,7 @@ export default function ProviderPage() {
         setTestingId(null);
       }
     },
-    [],
+    [t],
   );
 
   // 删除提供商
@@ -464,7 +480,7 @@ export default function ProviderPage() {
         },
       });
     },
-    [fetchProviders],
+    [fetchProviders, t],
   );
 
   // Qwen OAuth 登录
@@ -529,9 +545,9 @@ if (!res.ok) {
     } finally {
       setOauthLoading(false);
     }
-  }, [fetchProviders]);
+  }, [fetchProviders, t]);
 
-  const getOAuthStatusText = () => {
+  const getOAuthStatusText = useCallback(() => {
     if (!oauthExpiresAt) return t('notLoggedIn');
     const expires = new Date(oauthExpiresAt);
     const diff = expires.getTime() - Date.now();
@@ -540,7 +556,7 @@ if (!res.ok) {
     if (minutes < 60) return t('remaining', { minutes: String(minutes) });
     const hours = Math.floor(minutes / 60);
     return t('remainingHours', { hours: String(hours), minutes: String(minutes % 60) });
-  };
+  }, [oauthExpiresAt, t]);
 
   const handleQwenOAuthRefresh = useCallback(async () => {
     if (!oauthProviderId) return;
@@ -560,7 +576,7 @@ if (!res.ok) {
     } catch {
       message.error(t('refreshFailed'));
     }
-  }, [oauthProviderId]);
+  }, [oauthProviderId, t]);
 
   // 已配置提供商
   const configuredProviders = useMemo(() => dataSource.filter((p) => p.enabled), [dataSource]);

@@ -44,8 +44,21 @@ export default function GlobalBackupsPage() {
   }, []);
 
   useEffect(() => {
-    fetchBackups();
-  }, [fetchBackups]);
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/cloud/backups');
+        const data: GlobalBackupsResponse = await res.json();
+        if (data.success && data.data) {
+          setBackups(data.data);
+        }
+      } catch {
+        // 忽略错误
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const getStatusTag = (status: string) => {
     switch (status) {

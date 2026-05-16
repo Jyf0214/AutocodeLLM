@@ -4,7 +4,6 @@ import { getMessages } from 'next-intl/server';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { ConfigProvider } from 'antd';
 import { ThemeProvider } from '@/lib/ui';
-import AppLayout from '@/components/layout/AppLayout';
 import ClerkProviderWrapper from '@/components/auth/ClerkProviderWrapper';
 import '../styles/globals.css';
 
@@ -76,7 +75,7 @@ export default async function RootLayout({
                   },
                 }}
               >
-                <AppLayout>{children}</AppLayout>
+                {children}
               </ConfigProvider>
             </AntdRegistry>
           </NextIntlClientProvider>

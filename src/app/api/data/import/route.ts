@@ -3,36 +3,25 @@ import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 
 interface ImportData {
-  projects?: Array<{
+  projects?: {
     id?: string;
     name: string;
     description?: string;
-  }>;
-  providers?: Array<{
+  }[];
+  providers?: {
     id?: string;
     name: string;
     baseUrl: string;
     enabled?: boolean;
     providerType?: string;
     sdkType?: string;
-  }>;
-  envVars?: Array<{
+  }[];
+  envVars?: {
     key: string;
     value?: string;
     description?: string;
     enabled?: boolean;
-  }>;
-  mcpServers?: Array<{
-    name: string;
-    url: string;
-    enabled?: boolean;
-  }>;
-  agentTasks?: Array<{
-    name: string;
-    description?: string;
-    mode?: string;
-    maxAgents?: number;
-  }>;
+  }[];
 }
 
 /**
@@ -44,18 +33,18 @@ export async function POST(request: Request) {
   if (auth.error) return auth.error;
 
   const body = (await request.json()) as {
-    data: ImportData;
-    mode: 'merge' | 'overwrite';
+    data?: ImportData;
+    mode?: 'merge' | 'overwrite';
   };
 
-  if (!body.data) {
+  if (body.data == null) {
     return NextResponse.json(
       { success: false, error: { message: '缺少导入数据', code: 'MISSING_DATA' } },
       { status: 400 },
     );
   }
 
-  const mode = body.mode || 'merge';
+  const mode = body.mode ?? 'merge';
   const progress: string[] = [];
   let imported = 0;
   let skipped = 0;
@@ -74,12 +63,12 @@ export async function POST(request: Request) {
         if (mode === 'merge' && ws.id) {
           await prisma.project.upsert({
             where: { id: ws.id },
-            update: { name: ws.name, description: ws.description || '' },
-            create: { name: ws.name, description: ws.description || '' },
+            update: { name: ws.name, description: ws.description ?? '' },
+            create: { name: ws.name, description: ws.description ?? '' },
           });
         } else {
           await prisma.project.create({
-            data: { name: ws.name, description: ws.description || '' },
+            data: { name: ws.name, description: ws.description ?? '' },
           });
         }
         imported++;
@@ -116,13 +105,13 @@ export async function POST(request: Request) {
             baseUrl: p.baseUrl,
             apiKey: '',
             enabled: p.enabled ?? true,
-            providerType: p.providerType || 'custom',
-            sdkType: p.sdkType || 'openai',
+            providerType: p.providerType ?? 'custom',
+            sdkType: p.sdkType ?? 'openai',
           },
         });
         imported++;
         progress.push(`提供商 "${p.name}" 导入成功`);
-      } catch (err) {
+      } catch {
         failed++;
         progress.push(`提供商 "${p.name}" 导入失败`);
       }
@@ -142,7 +131,7 @@ export async function POST(request: Request) {
           if (existing) {
             await prisma.environmentVariable.update({
               where: { key: ev.key },
-              data: { description: ev.description || '', enabled: ev.enabled ?? true },
+              data: { description: ev.description ?? '', enabled: ev.enabled ?? true },
             });
             skipped++;
             continue;
@@ -151,50 +140,21 @@ export async function POST(request: Request) {
         await prisma.environmentVariable.create({
           data: {
             key: ev.key,
-            value: ev.value || '',
-            description: ev.description || '',
+            value: ev.value ?? '',
+            description: ev.description ?? '',
             enabled: ev.enabled ?? true,
           },
         });
         imported++;
         progress.push(`环境变量 "${ev.key}" 导入成功`);
-      } catch (err) {
+      } catch {
         failed++;
         progress.push(`环境变量 "${ev.key}" 导入失败`);
       }
     }
   }
 
-  // 导入 MCP 服务器
-  if (data.mcpServers?.length) {
-    if (mode === 'overwrite') {
-      await prisma.mcpServer.deleteMany();
-      progress.push('已清除现有 MCP 服务器');
-    }
-    for (const mcp of data.mcpServers) {
-      try {
-        if (mode === 'merge') {
-          const existing = await prisma.mcpServer.findUnique({ where: { name: mcp.name } });
-          if (existing) {
-            await prisma.mcpServer.update({
-              where: { name: mcp.name },
-              data: { url: mcp.url, enabled: mcp.enabled ?? true },
-            });
-            skipped++;
-            continue;
-          }
-        }
-        await prisma.mcpServer.create({
-          data: { name: mcp.name, url: mcp.url, enabled: mcp.enabled ?? true },
-        });
-        imported++;
-        progress.push(`MCP "${mcp.name}" 导入成功`);
-      } catch (err) {
-        failed++;
-        progress.push(`MCP "${mcp.name}" 导入失败`);
-      }
-    }
-  }
+
 
   return NextResponse.json({
     success: true,

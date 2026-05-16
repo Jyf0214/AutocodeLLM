@@ -15,7 +15,6 @@ import {
   validateRequiredFields,
 } from '@/lib/api/response';
 import type {
-  ModelConfigResponse,
   CreateModelConfigRequest,
   UpdateModelConfigRequest,
 } from '@/lib/api/model-types';
@@ -59,7 +58,7 @@ export async function POST(
     // 验证必填字段
     const validationError = validateRequiredFields({ name, provider, apiKey });
     if (validationError) {
-      return validationError as unknown as NextResponse<ModelConfigResponse>;
+      return validationError;
     }
 
     const existingProvider = await prisma.provider.findUnique({

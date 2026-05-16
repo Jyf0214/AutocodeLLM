@@ -36,7 +36,7 @@ export async function GET(
     });
 
     if (!project) {
-      return errorResponse('项目不存在', 'PROJECT_NOT_FOUND', 404) as unknown as NextResponse<ProjectLogListResponse>;
+      return errorResponse('项目不存在', 'PROJECT_NOT_FOUND', 404);
     }
 
     const logs = await prisma.projectLog.findMany({
@@ -87,7 +87,7 @@ export async function POST(
     });
 
     if (!project) {
-      return errorResponse('项目不存在', 'PROJECT_NOT_FOUND', 404) as unknown as NextResponse<ProjectLogResponse>;
+      return errorResponse('项目不存在', 'PROJECT_NOT_FOUND', 404);
     }
 
     const newLog = await prisma.projectLog.create({

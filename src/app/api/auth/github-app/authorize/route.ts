@@ -6,7 +6,7 @@ import { getGitHubAppAuthUrl } from '@/lib/auth/github';
  * GET /api/auth/github-app/authorize
  * 发起 GitHub App 授权
  */
-export async function GET() {
+export function GET() {
   if (!isGitHubAppEnabled()) {
     return NextResponse.json({
       success: false,

@@ -10,22 +10,17 @@ import { message, Card } from 'antd';
 export default function ChangePasswordPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [username, setUsername] = useState('');
+  const [userId] = useState<string | null>(() => sessionStorage.getItem('userId'));
+  const [username] = useState(() => sessionStorage.getItem('username') ?? '');
 
   useEffect(() => {
-    const storedUserId = sessionStorage.getItem('userId');
-    const storedUsername = sessionStorage.getItem('username');
     const forceChange = sessionStorage.getItem('forceChangePassword');
 
-    if (!storedUserId || forceChange !== 'true') {
+    if (!userId || forceChange !== 'true') {
       router.push('/login');
       return;
     }
-
-    setUserId(storedUserId);
-    setUsername(storedUsername ?? '');
-  }, [router]);
+  }, [router, userId]);
 
   const onFinish = async (values: { newPassword: string; confirmPassword: string }) => {
     if (values.newPassword !== values.confirmPassword) {

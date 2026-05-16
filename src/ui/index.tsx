@@ -4,7 +4,8 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
+import NextImage from 'next/image';
 import {
   Button as AntdButton,
   Form as AntdForm,
@@ -95,7 +96,7 @@ const LobeAvatar = React.forwardRef<HTMLSpanElement, AvatarProps>(
         }}
         {...rest}
       >
-        {avatar || children}
+        {avatar ?? children}
       </AntdAvatar>
     );
   },
@@ -386,7 +387,7 @@ export interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, themeMode = 'light', theme }) => {
-  const mode = theme || themeMode;
+  const mode = theme ?? themeMode;
   return (
     <div data-theme={mode} style={{ colorScheme: mode, minHeight: '100%' }}>
       {children}
@@ -418,13 +419,13 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({ onChange, shape = 'squ
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => { document.removeEventListener('mousedown', handleClickOutside); };
   }, []);
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => { setOpen(!open); }}
         style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 20, borderRadius: shape === 'round' ? '50%' : 4, padding: 4, lineHeight: 1 }}
       >
         😊
@@ -505,8 +506,8 @@ export interface SliderWithInputProps { value?: number; onChange?: (value: numbe
 
 export const SliderWithInput: React.FC<SliderWithInputProps> = ({ value, onChange, min = 0, max = 100, step = 0.1 }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
-    <AntdSlider min={min} max={max} step={step} value={value} onChange={(v) => onChange?.(v as number)} style={{ flex: 1 }} />
-    <AntdInputNumber min={min} max={max} step={step} value={value} onChange={(v) => onChange?.(v as number)} style={{ width: 70 }} size="small" />
+    <AntdSlider min={min} max={max} step={step} value={value} onChange={(v) => onChange?.(v)} style={{ flex: 1 }} />
+    <AntdInputNumber min={min} max={max} step={step} value={value} onChange={(v) => onChange?.(v ?? 0)} style={{ width: 70 }} size="small" />
   </div>
 );
 
@@ -514,14 +515,15 @@ export const SliderWithInput: React.FC<SliderWithInputProps> = ({ value, onChang
 // Markdown 渲染
 // ============================================================
 
+const LazyReactMarkdown = React.lazy(() => import('react-markdown'));
+
 export interface MarkdownProps { children?: string; style?: React.CSSProperties; className?: string }
 
 export const Markdown: React.FC<MarkdownProps> = ({ children, style, className }) => {
-  const ReactMarkdown = React.lazy(() => import('react-markdown'));
   return (
     <div className={className} style={{ lineHeight: 1.6, ...style }}>
       <React.Suspense fallback={<div>{children}</div>}>
-        <ReactMarkdown>{children || ''}</ReactMarkdown>
+        <LazyReactMarkdown>{children ?? ''}</LazyReactMarkdown>
       </React.Suspense>
     </div>
   );
@@ -542,7 +544,7 @@ export const FluentEmoji: React.FC<{ emoji?: string; size?: number }> = ({ emoji
 const fileTypeEmojiMap: Record<string, string> = { image: '🖼️', pdf: '📄', code: '💻', text: '📝', video: '🎬', audio: '🎵', archive: '📦', spreadsheet: '📊', presentation: '📽️', document: '📃' };
 
 export const FileTypeIcon: React.FC<{ type?: string; size?: number }> = ({ type, size = 24 }) => (
-  <span style={{ fontSize: size, lineHeight: 1, display: 'inline-block' }}>{(type && fileTypeEmojiMap[type]) || '📄'}</span>
+  <span style={{ fontSize: size, lineHeight: 1, display: 'inline-block' }}>{(type && fileTypeEmojiMap[type]) ?? '📄'}</span>
 );
 
 export const MaterialFileTypeIcon: React.FC<{ type?: string; size?: number }> = ({ type, size = 24 }) => <FileTypeIcon type={type} size={size} />;
@@ -553,20 +555,46 @@ export const MaterialFileTypeIcon: React.FC<{ type?: string; size?: number }> = 
 
 export interface ImageProps { src?: string; alt?: string; width?: number | string; height?: number | string; style?: React.CSSProperties; onClick?: () => void; preview?: boolean }
 
-export const Image: React.FC<ImageProps> = ({ src, alt, width, height, style, onClick }) => (
-  <img src={src} alt={alt} width={width} height={height} onClick={onClick} style={{ maxWidth: '100%', objectFit: 'contain', cursor: onClick ? 'pointer' : undefined, ...style }} />
-);
+export const Image: React.FC<ImageProps> = ({ src, alt, width, height, style, onClick, preview: _preview }) => {
+  const isExternal = src?.startsWith('http');
+  const numericWidth = typeof width === 'number' ? width : parseInt(String(width), 10);
+  const numericHeight = typeof height === 'number' ? height : parseInt(String(height), 10);
+
+  if (isExternal || !numericWidth || !numericHeight) {
+    return (
+      <span
+        role="img"
+        aria-label={alt}
+        onClick={onClick}
+        style={{
+          display: 'inline-block',
+          maxWidth: '100%',
+          width: numericWidth || 'auto',
+          height: numericHeight || 'auto',
+          backgroundImage: src ? `url(${src})` : 'none',
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+          objectFit: 'contain',
+          cursor: onClick ? 'pointer' : undefined,
+          ...style,
+        }}
+      />
+    );
+  }
+  return <NextImage src={src} alt={alt} width={numericWidth} height={numericHeight} onClick={onClick} style={{ maxWidth: '100%', objectFit: 'contain', cursor: onClick ? 'pointer' : undefined, ...style }} />;
+};
 
 // ============================================================
 // 折叠面板
 // ============================================================
 
 export const Accordion: React.FC<{ items?: any[]; children?: React.ReactNode; activeKey?: string | string[]; onChange?: (key: string | string[]) => void }> = ({ children, activeKey, onChange }) => (
-  <AntdCollapse activeKey={activeKey} onChange={onChange as any}>{children}</AntdCollapse>
+  <AntdCollapse activeKey={activeKey} onChange={onChange}>{children}</AntdCollapse>
 );
 
 export const AccordionItem: React.FC<{ children?: React.ReactNode; title?: string; key?: string }> = ({ children, title, key: itemKey }) => (
-  <AntdCollapse.Panel header={title} key={itemKey || title || 'item'}>{children}</AntdCollapse.Panel>
+  <AntdCollapse.Panel header={title} key={itemKey ?? title ?? 'item'}>{children}</AntdCollapse.Panel>
 );
 
 // ============================================================
@@ -593,7 +621,7 @@ export const InputPassword: React.FC<InputPasswordProps> = ({ value, onChange, p
 // ============================================================
 
 export interface useModalContextReturn { close?: () => void }
-const ModalContext = createContext<useModalContextReturn>({ close: () => {} });
+const ModalContext = createContext<useModalContextReturn>({ close: () => { /* no-op */ } });
 export const useModalContext = (): useModalContextReturn => useContext(ModalContext);
 
 // ============================================================
@@ -664,7 +692,7 @@ export interface ColorSwatchesProps { colors?: { color: string; title?: string }
 export const ColorSwatches: React.FC<ColorSwatchesProps> = ({ colors = [], value, onChange, size = 24 }) => (
   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
     {colors.map((item, i) => (
-      <div key={i} onClick={() => onChange?.(item.color)} title={item.title || item.color} style={{ width: size, height: size, borderRadius: '50%', background: item.color, cursor: 'pointer', border: value === item.color ? '2px solid var(--ant-color-primary)' : '2px solid transparent', transition: 'border-color 0.2s' }} />
+      <div key={i} onClick={() => onChange?.(item.color)} title={item.title ?? item.color} style={{ width: size, height: size, borderRadius: '50%', background: item.color, cursor: 'pointer', border: value === item.color ? '2px solid var(--ant-color-primary)' : '2px solid transparent', transition: 'border-color 0.2s' }} />
     ))}
   </div>
 );
@@ -675,7 +703,7 @@ export const ColorSwatches: React.FC<ColorSwatchesProps> = ({ colors = [], value
 
 export interface CodeEditorProps { value?: string; onChange?: (value: string) => void; language?: string; readOnly?: boolean; style?: React.CSSProperties; height?: number | string }
 
-export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, language, readOnly, style, height = 200 }) => (
+export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, language: _language, readOnly, style, height = 200 }) => (
   <AntdTextArea value={value} onChange={(e) => onChange?.(e.target.value)} readOnly={readOnly} style={{ fontFamily: 'monospace', fontSize: 13, lineHeight: 1.5, height, resize: 'vertical', ...style }} />
 );
 
@@ -688,7 +716,7 @@ export interface CopyButtonProps { content?: string; onClick?: () => void; style
 export const CopyButton: React.FC<CopyButtonProps> = ({ content, onClick, style }) => {
   const [copied, setCopied] = useState(false);
   const handleCopy = useCallback(() => {
-    if (content) navigator.clipboard.writeText(content).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+    if (content) navigator.clipboard.writeText(content).then(() => { setCopied(true); setTimeout(() => { setCopied(false); }, 2000); });
     onClick?.();
   }, [content, onClick]);
   return <AntdButton size="small" type="text" onClick={handleCopy} style={style}>{copied ? '✓' : '📋'}</AntdButton>;
@@ -716,7 +744,7 @@ export function createModal(options: { content?: React.ReactNode; title?: React.
   const destroy = () => { root.unmount(); container.remove(); };
   const update = (newProps: Record<string, any>) => { currentProps = { ...currentProps, ...newProps }; render(currentProps); };
   const render = (props: typeof options) => {
-    root.render(<AntdModal open title={props.title} width={props.width} footer={props.footer} onOk={props.onOk} onCancel={() => { props.onCancel?.(); destroy(); }} destroyOnClose>{props.content}</AntdModal>);
+    root.render(<AntdModal open title={props.title} width={props.width} footer={props.footer} onOk={props.onOk} onCancel={() => { props.onCancel?.(); destroy(); }} destroyOnHidden>{props.content}</AntdModal>);
   };
   render(currentProps);
   return { destroy, update };
@@ -744,7 +772,14 @@ export const usePopoverContext = () => useContext(PopoverContext);
 // TextArea 组件
 // ============================================================
 
-export interface TextAreaProps extends React.ComponentProps<typeof AntdTextArea> {}
+export interface TextAreaProps {
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  rows?: number;
+  style?: React.CSSProperties;
+  [key: string]: unknown;
+}
 
 export const TextArea: React.FC<TextAreaProps> = (props) => <AntdTextArea {...props} />;
 
@@ -798,7 +833,7 @@ export const copyToClipboard = async (text: string): Promise<boolean> => { try {
 // ============================================================
 // 布局组件（替代 @lobehub/ui 的 SideNav/Header/Menu/ThemeSwitch/Layout/LayoutMain）
 // ============================================================
-import { Layout as AntdLayout, Menu as AntdMenu, Typography } from 'antd';
+import { Layout as AntdLayout, Menu as AntdMenu } from 'antd';
 
 const { Sider, Header: AntdHeader, Content } = AntdLayout;
 
@@ -836,12 +871,12 @@ export interface MenuProps {
   style?: React.CSSProperties;
 }
 
-export const Menu: React.FC<MenuProps> = ({ items, selectedKeys, onClick, variant, style }) => (
+export const Menu: React.FC<MenuProps> = ({ items, selectedKeys, onClick, variant: _variant, style }) => (
   <AntdMenu
     mode="inline"
     items={items}
     selectedKeys={selectedKeys}
-    onClick={onClick as any}
+    onClick={onClick}
     style={{ borderInlineEnd: 'none', ...style }}
   />
 );
@@ -916,7 +951,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   maxWidth = 1200,
 }) => (
   <div style={{ maxWidth, margin: '0 auto', padding: '32px 16px' }}>
-    {(title || extra) && (
+    {(title ?? extra) && (
       <div
         style={{
           display: 'flex',

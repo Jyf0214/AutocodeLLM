@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   if (auth.error) return auth.error;
 
   const { searchParams } = new URL(request.url);
-  const scope = searchParams.get('scope') || 'all'; // all, projects, providers, settings
+  const scope = searchParams.get('scope') ?? 'all'; // all, projects, providers, settings
 
   const data: Record<string, unknown> = {
     exportedAt: new Date().toISOString(),
@@ -34,10 +34,6 @@ export async function GET(request: Request) {
     data.envVars = await prisma.environmentVariable.findMany({
       select: { id: true, key: true, description: true, enabled: true },
     });
-    data.mcpServers = await prisma.mcpServer.findMany({
-      select: { id: true, name: true, url: true, enabled: true },
-    });
-    data.agentTasks = await prisma.agentTask.findMany();
   }
 
   return NextResponse.json({ success: true, data });

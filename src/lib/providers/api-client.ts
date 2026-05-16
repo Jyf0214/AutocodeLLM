@@ -525,8 +525,7 @@ async function fetchWithRetry(
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-      if (provider != null && provider.oauthRefreshToken != null && provider.authType === 'oauth') {
+      if (provider?.oauthRefreshToken != null && provider.authType === 'oauth') {
         try {
           // 尝试刷新 token
           const refreshed = await refreshOAuthToken({
@@ -556,6 +555,19 @@ async function fetchWithRetry(
   }
 
   return response;
+}
+
+/**
+ * 刷新 Qwen OAuth token
+ * 注意：千问 OAuth 已被官方终止支持，此函数仅保留用于兼容性
+ */
+async function refreshQwenOAuth(refreshToken: string): Promise<{
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+}> {
+  // 千问 OAuth 已被官方终止支持
+  throw new Error('千问 OAuth 功能已被官方终止支持');
 }
 
 /**

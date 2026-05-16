@@ -35,7 +35,10 @@ export async function POST(req: NextRequest) {
 
     // 也可以从 cookie 中获取
     if (!sessionToken) {
-      sessionToken = req.cookies.get('__session')?.value;
+      const sessionCookie = req.cookies.get('__session');
+      if (sessionCookie) {
+        sessionToken = sessionCookie.value;
+      }
     }
 
     if (!sessionToken) {
@@ -66,7 +69,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!session || session.status !== 'active') {
+    if (session?.status !== 'active') {
       return NextResponse.json(
         { 
           success: false, 
@@ -89,19 +92,9 @@ export async function POST(req: NextRequest) {
     }
 
     const clerkUser = await client.users.getUser(userId);
-    
-    if (!clerkUser) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: { message: 'User not found', code: 'USER_NOT_FOUND' } 
-        },
-        { status: 404 }
-      );
-    }
 
-    const email = clerkUser.emailAddresses?.[0]?.emailAddress || '';
-    const username = clerkUser.username || email.split('@')[0] || clerkUser.id;
+    const email = clerkUser.emailAddresses[0]?.emailAddress ?? '';
+    const username = clerkUser.username ?? email.split('@')[0] ?? clerkUser.id;
 
     // 查找或创建本地用户
     let user = await prisma.user.findUnique({

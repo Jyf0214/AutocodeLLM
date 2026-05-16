@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Card, Button, Space, Tag, Spin, Modal, List, Progress } from 'antd';
+import { Card, Button, Space, Tag, Spin, Modal, List } from 'antd';
 import {
   CloudServerOutlined,
   CloudUploadOutlined,
@@ -48,25 +48,24 @@ export default function CloudPage() {
   const [loading, setLoading] = useState(true);
   const [backupModalOpen, setBackupModalOpen] = useState(false);
   const [backingUpId, setBackingUpId] = useState<string | null>(null);
-  const [backupLogs, setBackupLogs] = useState<Array<{timestamp: string; projectId: string; projectName: string; status: string; message: string}>>([]);
+  const [backupLogs, setBackupLogs] = useState<{timestamp: string; projectId: string; projectName: string; status: string; message: string}[]>([]);
 
-  const fetchOverview = useCallback(async () => {
-    try {
-      const res = await fetch('/api/cloud/overview');
-      const data: ApiResponse = await res.json();
-      if (data.success && data.data) {
-        setOverview(data.data);
-      }
-    } catch {
-      // 忽略错误
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
-    fetchOverview();
-  }, [fetchOverview]);
+    (async () => {
+      try {
+        const res = await fetch('/api/cloud/overview');
+        const data: ApiResponse = await res.json();
+        if (data.success && data.data) {
+          setOverview(data.data);
+        }
+      } catch {
+        // 忽略错误
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const handleBackupNow = async (projectId: string, projectName: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -219,7 +218,7 @@ export default function CloudPage() {
       >
         <List
           dataSource={backupLogs.filter(
-            (log) => overview?.projectBackups?.some((ws) => ws.projectId === log.projectId)
+            (log) => overview?.projectBackups.some((ws) => ws.projectId === log.projectId) === true
           )}
           renderItem={(item) => (
             <List.Item>

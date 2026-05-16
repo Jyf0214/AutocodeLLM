@@ -17,7 +17,6 @@ import {
 import { encryptValue, decryptValue } from '@/lib/providers/api-client';
 import { maskValue } from '@/lib/api/response';
 import type {
-  EnvVariableResponse,
   CreateEnvVariableRequest,
   UpdateEnvVariableRequest,
 } from '@/lib/api/env-types';
@@ -60,7 +59,7 @@ export async function POST(
     // 验证必填字段
     const validationError = validateRequiredFields({ key, value });
     if (validationError) {
-      return validationError as unknown as NextResponse<EnvVariableResponse>;
+      return validationError;
     }
 
     const existingEnvVar = await prisma.environmentVariable.findUnique({

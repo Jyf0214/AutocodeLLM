@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       name: body.name,
       keyHash,
       prefix,
-      permissions: JSON.stringify(body.permissions || ['read']),
+      permissions: JSON.stringify(body.permissions ?? ['read']),
       expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
     },
   });

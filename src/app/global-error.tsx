@@ -22,7 +22,7 @@ export default function GlobalError({
       `错误: ${error.message}`,
       error.digest ? `Digest: ${error.digest}` : '',
       '',
-      error.stack || '',
+      error.stack ?? '',
     ].filter(Boolean).join('\n');
 
     navigator.clipboard.writeText(text).then(

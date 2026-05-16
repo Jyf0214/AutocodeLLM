@@ -72,7 +72,7 @@ export default function LoginPage() {
     fetch('/api/auth/config')
       .then(res => res.json())
       .then(setAuthConfig)
-      .catch(err => console.error('Failed to fetch auth config:', err));
+      .catch((err: unknown) => console.error('Failed to fetch auth config:', err));
   }, []);
 
   // 清理倒计时

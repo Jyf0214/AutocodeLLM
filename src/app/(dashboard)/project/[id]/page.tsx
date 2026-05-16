@@ -36,7 +36,7 @@ export default function ProjectDetailPage() {
     setError(null);
     try {
       const response = await fetch(`/api/projects/${projectId}`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
       const result = await response.json() as {
         success: boolean;
         data?: ProjectListItem;
@@ -55,8 +55,29 @@ export default function ProjectDetailPage() {
   }, [projectId, t]);
 
   useEffect(() => {
-    fetchProject();
-  }, [fetchProject]);
+    (async () => {
+      setFetching(true);
+      setError(null);
+      try {
+        const response = await fetch(`/api/projects/${projectId}`);
+        if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
+        const result = await response.json() as {
+          success: boolean;
+          data?: ProjectListItem;
+          error?: { message: string };
+        };
+        if (result.success && result.data) {
+          setProject(result.data);
+        } else {
+          setError(result.error?.message ?? t('fetchFailed'));
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t('fetchFailed'));
+      } finally {
+        setFetching(false);
+      }
+    })();
+  }, [projectId, t]);
 
   const handleEdit = useCallback(async () => {
     try {
@@ -74,7 +95,7 @@ export default function ProjectDetailPage() {
         editForm.resetFields();
         fetchProject();
       } else {
-        message.error(data.error?.message || t('updateFailed'));
+        message.error(data.error?.message ?? t('updateFailed'));
       }
     } catch {
       // 表单验证失败
@@ -123,7 +144,7 @@ export default function ProjectDetailPage() {
 
   const created = new Date(project.createdAt);
   const updated = new Date(project.updatedAt);
-  const fmt = (d: Date) => `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+  const fmt = (d: Date) => `${String(d.getFullYear())}/${String(d.getMonth() + 1)}/${String(d.getDate())}`;
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px' }}>
@@ -220,8 +241,8 @@ export default function ProjectDetailPage() {
               cursor: 'pointer',
               transition: 'background 0.1s ease',
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'var(--bg-secondary)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+            onMouseEnter={(e) => { (e.currentTarget).style.background = 'var(--bg-secondary)'; }}
+            onMouseLeave={(e) => { (e.currentTarget).style.background = 'transparent'; }}
           >
             <div
               style={{

@@ -14,9 +14,9 @@ export async function POST(request: Request) {
     );
   }
 
-  const signature = request.headers.get('x-hub-signature-256') || '';
-  const event = request.headers.get('x-github-event') || '';
-  const deliveryId = request.headers.get('x-github-delivery') || '';
+  const signature = request.headers.get('x-hub-signature-256') ?? '';
+  const event = request.headers.get('x-github-event') ?? '';
+  const deliveryId = request.headers.get('x-github-delivery') ?? '';
 
   const payload = await request.text();
 
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
         break;
 
       case 'push':
-        console.log('[GitHub Webhook] 推送事件:', (data.repository as Record<string, string>)?.full_name);
+        console.log('[GitHub Webhook] 推送事件:', (data.repository as Record<string, string> | undefined)?.full_name);
         break;
 
       case 'pull_request':

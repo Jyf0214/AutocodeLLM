@@ -8,7 +8,6 @@ import {
   LoadingOutlined,
   DatabaseOutlined,
   ApiOutlined,
-  CloudServerOutlined,
   SecurityScanOutlined,
   AppstoreOutlined,
 } from '@ant-design/icons';
@@ -26,7 +25,6 @@ interface SystemComponent {
 interface StateInfo {
   database: SystemComponent;
   api: SystemComponent;
-  workers: SystemComponent;
   mcp: SystemComponent;
   providers: SystemComponent;
 }
@@ -54,8 +52,23 @@ export default function StatePage() {
   }, [t]);
 
   useEffect(() => {
-    fetchState();
-  }, [fetchState]);
+    (async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/state');
+        const result = (await response.json()) as { success: boolean; data?: StateInfo; error?: { message: string } };
+        if (result.success && result.data) {
+          setStateData(result.data);
+        } else {
+          message.error(result.error?.message ?? t('fetchFailed'));
+        }
+      } catch {
+        message.error(t('fetchFailed'));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [t]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -85,18 +98,17 @@ export default function StatePage() {
 
   const getOverallStatus = (): 'healthy' | 'degraded' | 'unhealthy' => {
     if (!stateData) return 'unhealthy';
-    
+
     const components = [
       stateData.database,
       stateData.api,
-      stateData.workers,
       stateData.mcp,
       stateData.providers,
     ];
-    
+
     const hasUnhealthy = components.some(c => c.status === 'unhealthy');
     const hasDegraded = components.some(c => c.status === 'degraded');
-    
+
     if (hasUnhealthy) return 'unhealthy';
     if (hasDegraded) return 'degraded';
     return 'healthy';
@@ -104,18 +116,17 @@ export default function StatePage() {
 
   const getOverallPercentage = (): number => {
     if (!stateData) return 0;
-    
+
     const components = [
       stateData.database,
       stateData.api,
-      stateData.workers,
       stateData.mcp,
       stateData.providers,
     ];
-    
+
     const healthyCount = components.filter(c => c.status === 'healthy').length;
     const degradedCount = components.filter(c => c.status === 'degraded').length;
-    
+
     return Math.round((healthyCount + degradedCount * 0.5) / components.length * 100);
   };
 
@@ -207,9 +218,6 @@ export default function StatePage() {
         </Col>
         <Col xs={24} sm={12} lg={8}>
           {renderComponentCard(stateData.api, <Icon icon={ApiOutlined} />, t('state.components.api'))}
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
-          {renderComponentCard(stateData.workers, <Icon icon={CloudServerOutlined} />, t('state.components.workers'))}
         </Col>
         <Col xs={24} sm={12} lg={8}>
           {renderComponentCard(stateData.mcp, <Icon icon={SecurityScanOutlined} />, t('state.components.mcp'))}

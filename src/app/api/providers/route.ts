@@ -15,6 +15,7 @@ import {
   maskValue,
 } from '@/lib/api/response';
 import { PRESET_PROVIDERS } from '@/lib/providers';
+import { encryptValue } from '@/lib/providers/api-client';
 import type {
   ProviderResponse,
   CreateProviderRequest,

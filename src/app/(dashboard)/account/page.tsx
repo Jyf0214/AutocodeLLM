@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Form, InputPassword, Text, Alert } from '@/lib/ui';
 import { LockOutlined, SafetyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
@@ -22,43 +22,34 @@ export default function AccountPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId] = useState<string | null>(() => sessionStorage.getItem('userId'));
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [passwordForm] = Form.useForm();
 
-  const fetchUserInfo = useCallback(async (id: string) => {
-    try {
-      const response = await fetch('/api/account', {
-        headers: { 'x-user-id': id },
-      });
-
-       
-      const result: { success: boolean; data?: UserInfo; error?: { message: string } } = await response.json();
-
-      if (result.success) {
-        setUserInfo(result.data ?? null);
-      } else {
-        message.error(result.error?.message ?? '获取用户信息失败');
-        router.push('/login');
-      }
-    } catch {
-      message.error('网络错误，请重试');
-    } finally {
-      setFetching(false);
-    }
-  }, [router]);
-
   useEffect(() => {
-    const storedUserId = sessionStorage.getItem('userId');
-
-    if (!storedUserId) {
+    if (!userId) {
       router.push('/login');
       return;
     }
-
-    setUserId(storedUserId);
-    fetchUserInfo(storedUserId);
-  }, [fetchUserInfo, router]);
+    (async () => {
+      try {
+        const response = await fetch('/api/account', {
+          headers: { 'x-user-id': userId },
+        });
+        const result: { success: boolean; data?: UserInfo; error?: { message: string } } = await response.json();
+        if (result.success) {
+          setUserInfo(result.data ?? null);
+        } else {
+          message.error(result.error?.message ?? '获取用户信息失败');
+          router.push('/login');
+        }
+      } catch {
+        message.error('网络错误，请重试');
+      } finally {
+        setFetching(false);
+      }
+    })();
+  }, [router, userId]);
 
   const handleUpdatePassword = async (values: {
     oldPassword: string;

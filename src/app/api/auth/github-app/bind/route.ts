@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     if (!verifyResult.success) {
       return NextResponse.json({
         success: false,
-        error: { message: verifyResult.message || '验证码验证失败', code: 'INVALID_CODE' },
+        error: { message: verifyResult.message ?? '验证码验证失败', code: 'INVALID_CODE' },
       });
     }
 

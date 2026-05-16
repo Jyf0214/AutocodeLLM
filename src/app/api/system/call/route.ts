@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       }
 
       case 'createProject': {
-        const { name, description } = (body.params || {}) as {
+        const { name, description } = (body.params ?? {}) as {
           name?: string;
           description?: string;
         };
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
           );
         }
         const project = await prisma.project.create({
-          data: { name, description: description || '' },
+          data: { name, description: description ?? '' },
         });
         return NextResponse.json({ success: true, data: project });
       }

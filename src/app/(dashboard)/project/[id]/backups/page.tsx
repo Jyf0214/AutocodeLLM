@@ -47,8 +47,22 @@ export default function ProjectBackupsPage() {
   }, [projectId]);
 
   useEffect(() => {
-    fetchBackup();
-  }, [fetchBackup]);
+    if (!projectId) return;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/projects/${projectId}/backups`);
+        const data: BackupResponse = await res.json();
+        if (data.success && data.data) {
+          setBackup(data.data);
+        }
+      } catch {
+        // 忽略错误
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [projectId]);
 
   const getStatusTag = (status: string) => {
     switch (status) {

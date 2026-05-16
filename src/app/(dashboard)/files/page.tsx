@@ -10,9 +10,9 @@ import {
   DeleteOutlined,
   EditOutlined,
   DownloadOutlined,
-  ReloadOutlined,
   HomeOutlined,
   FolderOpenOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import {
@@ -30,7 +30,6 @@ import {
   Upload,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import type { UploadFile } from 'antd/es/upload/interface';
 
 /** 文件信息 */
 interface FileInfo {
@@ -55,14 +54,14 @@ function formatSize(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   const size = bytes / Math.pow(1024, i);
-  return `${size.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+  return `${size.toFixed(i === 0 ? 0 : 1)} ${units[i] ?? ''}`;
 }
 
 /** 格式化时间 */
 function formatTime(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${String(d.getFullYear())}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 /** 获取文件扩展名图标颜色 */
@@ -86,7 +85,7 @@ function getExtColor(ext: string): string {
     '.sh': '#4eaa25',
     '.prisma': '#2d3748',
   };
-  return colors[ext] || '#8c8c8c';
+  return colors[ext] ?? '#8c8c8c';
 }
 
 /** 文件图标组件 */
@@ -145,8 +144,24 @@ export default function FilesPage() {
   }, [currentPath, t]);
 
   useEffect(() => {
-    fetchFiles('/');
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/files?path=${encodeURIComponent('/')}`);
+        const result: ApiResponse<{ files: FileInfo[]; currentPath: string }> = await res.json();
+        if (result.success && result.data) {
+          setFiles(result.data.files);
+          setCurrentPath(result.data.currentPath);
+        } else {
+          message.error(result.error?.message ?? t('fetchFailed'));
+        }
+      } catch {
+        message.error(t('networkError'));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [t]);
 
   /** 面包屑路径 */
   const breadcrumbPaths = currentPath

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Text } from '@/lib/ui';
+import { Text } from '@/lib/ui';
 import {
   ArrowRightOutlined,
   ApiOutlined,
@@ -8,7 +8,6 @@ import {
   CloudServerOutlined,
   CodeOutlined,
   SafetyOutlined,
-  ThunderboltOutlined,
   GithubOutlined,
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
@@ -47,7 +46,7 @@ export default function HomePage() {
           setAuthStatus(data.data);
         }
       })
-      .catch(() => {})
+      .catch(() => { /* ignore */ })
       .finally(() => setLoadingAuth(false));
   }, []);
 
@@ -274,12 +273,12 @@ export default function HomePage() {
                   height: '100%',
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--text-primary)';
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)';
+                  (e.currentTarget).style.borderColor = 'var(--text-primary)';
+                  (e.currentTarget).style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)';
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-primary)';
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
+                  (e.currentTarget).style.borderColor = 'var(--border-primary)';
+                  (e.currentTarget).style.boxShadow = 'none';
                 }}
               >
                 <div

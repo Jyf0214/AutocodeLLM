@@ -12,7 +12,6 @@ import {
   DeleteOutlined,
   ArrowRightOutlined,
   ClockCircleOutlined,
-  ReloadOutlined,
   SearchOutlined,
   MoreOutlined,
 } from '@ant-design/icons';
@@ -30,7 +29,7 @@ function ProjectCard({ project, onClick, onEdit, onDelete }: ProjectCardProps) {
   const t = useTranslations('project');
   const [hovered, setHovered] = useState(false);
   const date = new Date(project.createdAt);
-  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const dateStr = `${String(date.getFullYear())}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
   const menuItems = [
     { key: 'edit', icon: <EditOutlined />, label: t('edit') },
@@ -192,7 +191,7 @@ export default function ProjectPage() {
     try {
       const res = await fetch('/api/projects');
       const data = await res.json();
-      if (data.success) setProjects(data.data || []);
+      if (data.success) setProjects(data.data ?? []);
     } catch {
       message.error(t('fetchFailed'));
     } finally {
@@ -201,8 +200,18 @@ export default function ProjectPage() {
   }, [t]);
 
   useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+    (async () => {
+      try {
+        const res = await fetch('/api/projects');
+        const data = await res.json();
+        if (data.success) setProjects(data.data ?? []);
+      } catch {
+        message.error(t('fetchFailed'));
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [t]);
 
   const filtered = useMemo(() => {
     if (!search) return projects;
@@ -225,7 +234,7 @@ export default function ProjectPage() {
         form.resetFields();
         fetchProjects();
       } else {
-        message.error(data.error?.message || t('createFailed'));
+        message.error(data.error?.message ?? t('createFailed'));
       }
     } catch {
       // form validation error
@@ -241,7 +250,7 @@ export default function ProjectPage() {
           message.success(t('deleteSuccess'));
           fetchProjects();
         } else {
-          message.error(data.error?.message || t('deleteFailed'));
+          message.error(data.error?.message ?? t('deleteFailed'));
         }
       } catch {
         message.error(t('deleteFailed'));
@@ -354,7 +363,7 @@ export default function ProjectPage() {
         onOk={async () => {
           try {
             const values = await form.validateFields();
-            const res = await fetch(`/api/projects/${editModal.project?.id}`, {
+            const res = await fetch(`/api/projects/${editModal.project?.id ?? ''}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(values),
@@ -366,7 +375,7 @@ export default function ProjectPage() {
               form.resetFields();
               fetchProjects();
             } else {
-              message.error(data.error?.message || t('updateFailed'));
+              message.error(data.error?.message ?? t('updateFailed'));
             }
           } catch {
             // validation error

@@ -99,7 +99,7 @@ export async function connectDingtalkStream(config: ChannelConfig): Promise<void
         console.log('[Dingtalk] WebSocket 连接已建立');
       };
 
-      ws.onmessage = (event: WebSocketMessageEvent) => {
+      ws.onmessage = (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data as string) as Record<string, unknown>;
           // 钉钉 Stream Mode 推送的消息格式与 Webhook 一致

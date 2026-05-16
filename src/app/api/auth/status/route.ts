@@ -14,7 +14,13 @@ export async function GET() {
     // 获取当前会话
     const session = await getSession();
     
-    let user = null;
+    let user: {
+      id: string;
+      username: string;
+      role: string;
+      githubId: string | null;
+      clerkId: string | null;
+    } | null = null;
     if (session?.userId) {
       const dbUser = await prisma.user.findUnique({
         where: { id: session.userId },
@@ -26,15 +32,9 @@ export async function GET() {
           clerkId: true,
         },
       });
-      
+
       if (dbUser) {
-        user = {
-          id: dbUser.id,
-          username: dbUser.username,
-          role: dbUser.role || 'user',
-          githubId: dbUser.githubId,
-          clerkId: dbUser.clerkId,
-        };
+        user = dbUser;
       }
     }
 
@@ -45,7 +45,7 @@ export async function GET() {
         user,
       },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: { message: '获取认证状态失败' } },
       { status: 500 },

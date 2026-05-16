@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     // 如果需要绑定已有账户
     if (result.needsBinding) {
       return NextResponse.redirect(
-        new URL(`/login?binding=github&githubId=${result.githubId}`, request.url),
+        new URL(`/login?binding=github&githubId=${result.githubId ?? ''}`, request.url),
       );
     }
 

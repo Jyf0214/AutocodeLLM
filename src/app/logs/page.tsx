@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { PageContainer, PageCard, Button, Text, Flexbox } from '@/lib/ui';
-import { ReloadOutlined, ClearOutlined } from '@ant-design/icons';
+import { PageContainer, PageCard, Button, Flexbox } from '@/lib/ui';
+import { ReloadOutlined } from '@ant-design/icons';
 import { Select, Tag, Empty } from 'antd';
 
 interface LogEntry {
@@ -76,10 +76,27 @@ export default function LogsPage() {
   }, [level, source]);
 
   useEffect(() => {
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 5000);
+    const doFetch = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (level) params.set('level', level);
+        if (source) params.set('source', source);
+        params.set('limit', '200');
+
+        const res = await fetch(`/api/logs?${params}`);
+        const json = await res.json();
+        if (json.success) setData(json.data);
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false);
+      }
+    };
+    doFetch();
+    const interval = setInterval(doFetch, 5000);
     return () => clearInterval(interval);
-  }, [fetchLogs]);
+  }, [level, source]);
 
   const formatTime = (ts: number) => {
     const d = new Date(ts);
@@ -87,7 +104,7 @@ export default function LogsPage() {
   };
 
   return (
-    <PageContainer title="系统日志" subtitle={`共 ${data?.total || 0} 条记录`}>
+    <PageContainer title="系统日志" subtitle={`共 ${String(data?.total ?? 0)} 条记录`}>
       {/* 统计卡片 */}
       {data?.stats && (
         <Flexbox gap={12} style={{ marginBottom: 16 }}>
@@ -180,7 +197,7 @@ export default function LogsPage() {
                   <span
                     style={{
                       fontWeight: 700,
-                      color: STATUS_COLORS[entry.statusCode] || 'var(--text-primary)',
+                      color: STATUS_COLORS[entry.statusCode] ?? 'var(--text-primary)',
                     }}
                   >
                     {entry.statusCode}

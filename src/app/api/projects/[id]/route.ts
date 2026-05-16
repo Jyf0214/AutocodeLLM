@@ -12,14 +12,13 @@ import {
   errorResponse,
   handleError,
 } from '@/lib/api/response';
-import type { ProjectResponse } from '@/lib/api/project-types';
 
 /**
  * 解析项目 ID 参数
  */
 async function getProjectId(params: unknown): Promise<string> {
   const paramsObj = await params as { id: string };
-  return paramsObj.id as string;
+  return paramsObj.id;
 }
 
 /**

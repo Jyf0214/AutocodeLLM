@@ -18,6 +18,12 @@ export default tseslint.config(
       'src/components/**',
       'src/i18n/**',
       'src/types/**',
+      // ========== 不在 tsconfig.json 项目范围内的文件 ==========
+      'prisma.config.ts',
+      'server.ts',
+      'vitest.config.ts',
+      'src/proxy.ts',
+      'src/ui/primitives.tsx',
       // ========== 移植代码豁免（LobeChat 已验证代码，不审查） ==========
       // Store 层
       'src/store/global/**',

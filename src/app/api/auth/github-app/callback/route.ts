@@ -4,7 +4,6 @@ import {
   getGitHubUser,
   loginWithGitHubApp,
 } from '@/lib/auth/github';
-import { createBindVerification, bindGitHubToUser } from '@/lib/auth/github-app-bind';
 
 /**
  * GET /api/auth/github-app/callback
@@ -53,7 +52,7 @@ export async function GET(request: Request) {
     // 已绑定，直接登录
     const response = NextResponse.redirect(new URL('/project', request.url));
 
-    response.cookies.set('userId', result.userId!, {
+    response.cookies.set('userId', result.userId ?? '', {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

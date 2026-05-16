@@ -5,7 +5,7 @@ import { getGitHubAuthUrl } from '@/lib/auth/github';
  * GET /api/auth/github
  * 获取 GitHub OAuth 授权 URL（未配置时返回不可用状态）
  */
-export async function GET() {
+export function GET() {
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
 

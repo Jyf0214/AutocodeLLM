@@ -9,7 +9,7 @@ import { isClerkEnabled } from '@/lib/auth/clerk-config';
  * GET /api/auth/config
  * 获取认证配置
  */
-export async function GET() {
+export function GET() {
   const clerkEnabled = isClerkEnabled();
 
   return NextResponse.json({

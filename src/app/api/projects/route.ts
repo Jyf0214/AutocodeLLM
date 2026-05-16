@@ -11,7 +11,6 @@ import {
   successResponse,
   handleError,
   validateRequiredFields,
-  type ApiResponse,
 } from '@/lib/api/response';
 import type { ProjectResponse, CreateProjectRequest } from '@/lib/api/project-types';
 
@@ -24,7 +23,7 @@ export async function GET(): Promise<NextResponse<ProjectResponse>> {
       orderBy: { createdAt: 'desc' },
     });
 
-    logger.info(`获取项目列表: ${projects.length} 个`);
+    logger.info(`获取项目列表: ${String(projects.length)} 个`);
 
     const data = projects.map((project) => ({
       id: project.id,
@@ -53,7 +52,7 @@ export async function POST(
     // 验证必填字段
     const validationError = validateRequiredFields({ name: body.name });
     if (validationError) {
-      return validationError as NextResponse<ApiResponse<never>> as NextResponse<ProjectResponse>;
+      return validationError;
     }
 
     const { name, description } = body;

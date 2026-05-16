@@ -1,42 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import TerminalPanel from '@/components/features/TerminalPanel';
 import { useParams } from 'next/navigation';
 import { Flexbox, Text, Alert } from '@/lib/ui';
 import { CodeOutlined } from '@ant-design/icons';
 
-interface WsConfig {
-  success: boolean;
-  data?: { wsUrl: string };
-  error?: { message: string };
-}
-
 export default function ProjectTerminalPage() {
   const params = useParams();
   const projectId = params.id as string;
-  const [wsUrl, setWsUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchWsUrl() {
-      try {
-        const res = await fetch('/api/terminal/ws');
-        const data: WsConfig = await res.json();
-        if (data.success && data.data?.wsUrl) {
-          setWsUrl(data.data.wsUrl);
-        } else {
-          setError(data.error?.message ?? '终端服务器未配置');
-        }
-      } catch {
-        setError('无法连接到终端服务器');
-      }
-    }
-
-    if (projectId) {
-      fetchWsUrl();
-    }
-  }, [projectId]);
 
   if (!projectId) {
     return (
@@ -46,29 +16,14 @@ export default function ProjectTerminalPage() {
     );
   }
 
-  if (error || !wsUrl) {
-    return (
-      <Flexbox align="center" justify="center" style={{ minHeight: '50vh', padding: 16 }}>
-        <Alert
-          type="warning"
-          icon={<CodeOutlined />}
-          title="终端服务未配置"
-          description={
-            <div>
-              <p>请配置 TERMINAL_WS_URL 环境变量来启用 Web 终端功能。</p>
-              <p style={{ marginTop: 8, fontSize: 12 }}>
-                例如：ws://localhost:7860/api/terminal/ws
-              </p>
-            </div>
-          }
-        />
-      </Flexbox>
-    );
-  }
-
   return (
     <div style={{ height: 'calc(100vh - 120px)', padding: '0 16px' }}>
-      <TerminalPanel projectId={projectId} wsUrl={wsUrl} />
+      <Alert
+        type="warning"
+        icon={<CodeOutlined />}
+        title="终端功能暂未实现"
+        description={<p>Web 终端功能正在开发中。</p>}
+      />
     </div>
   );
 }

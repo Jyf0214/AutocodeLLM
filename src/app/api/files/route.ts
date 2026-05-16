@@ -5,7 +5,7 @@ import { listDirectory, createDirectory, deleteEntry, writeFileContent, exists }
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const dirPath = searchParams.get('path') || '/';
+    const dirPath = searchParams.get('path') ?? '/';
 
     const files = await listDirectory(dirPath);
 
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     if (type === 'directory') {
       await createDirectory(entryPath);
     } else {
-      await writeFileContent(entryPath, content || '');
+      await writeFileContent(entryPath, content ?? '');
     }
 
     return NextResponse.json({

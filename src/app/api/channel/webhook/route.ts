@@ -9,7 +9,7 @@ import { handleDingtalkWebhook } from '@/lib/channel/dingtalk';
  * 通过 x-platform 头区分平台
  */
 export async function POST(request: Request) {
-  const platform = request.headers.get('x-platform') || 'lark';
+  const platform = request.headers.get('x-platform') ?? 'lark';
 
   try {
     const body = (await request.json()) as Record<string, unknown>;
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
  * GET /api/channel/webhook
  * 飞书 URL 验证（首次配置时飞书会发送 challenge）
  */
-export async function GET(request: Request) {
+export function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const challenge = searchParams.get('challenge');
 

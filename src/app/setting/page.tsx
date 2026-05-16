@@ -64,8 +64,23 @@ export default function SettingPage() {
   }, [t]);
 
   useEffect(() => {
-    fetchEnvVars();
-  }, [fetchEnvVars]);
+    (async () => {
+      try {
+        const response = await fetch('/api/env');
+        const result: { success: boolean; data?: EnvVariable[]; error?: { message: string } } =
+          await response.json();
+        if (result.success) {
+          setEnvVars(result.data ?? []);
+        } else {
+          message.error(result.error?.message ?? t('fetchFailed'));
+        }
+      } catch {
+        message.error(t('fetchFailed'));
+      } finally {
+        setFetching(false);
+      }
+    })();
+  }, [t]);
 
   const handleOpenModal = (envVar?: EnvVariable) => {
     if (envVar) {

@@ -44,7 +44,10 @@ export function verifyBetterAuthToken(token: string): { userId: string } | null 
 
     if (signature !== expectedSig) return null;
 
-    const data = JSON.parse(payload) as { userId: string; exp: number };
+    const payloadData = payload as string | undefined;
+    if (!payloadData) return null;
+
+    const data = JSON.parse(payloadData) as { userId: string; exp: number };
     if (data.exp < Math.floor(Date.now() / 1000)) return null;
 
     return { userId: data.userId };

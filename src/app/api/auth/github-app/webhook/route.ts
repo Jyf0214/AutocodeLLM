@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   const event = request.headers.get('x-github-event');
   const payload = JSON.parse(body);
 
-  console.log(`GitHub Webhook 事件: ${event}`, payload);
+  console.log(`GitHub Webhook 事件: ${event ?? 'unknown'}`, payload);
 
   try {
     switch (event) {
@@ -40,13 +40,13 @@ export async function POST(request: Request) {
         await handleInstallationRepositories(payload);
         break;
       case 'push':
-        await handlePush(payload);
+        handlePush(payload);
         break;
       case 'pull_request':
-        await handlePullRequest(payload);
+        handlePullRequest(payload);
         break;
       default:
-        console.log(`未处理的事件: ${event}`);
+        console.log(`未处理的事件: ${event ?? 'unknown'}`);
     }
 
     return NextResponse.json({ success: true });
@@ -83,46 +83,35 @@ function verifyWebhookSignature(
 /**
  * 处理安装事件
  */
-async function handleInstallation(payload: any) {
-  const action = payload.action;
-  const installation = payload.installation;
-
-  console.log(`GitHub App 安装 ${action}:`, {
-    id: installation.id,
-    account: installation.account.login,
-  });
-
-  // 这里可以添加数据库记录安装信息的逻辑
+async function handleInstallation(_payload: unknown) {
+  // 安装事件处理
 }
 
 /**
  * 处理仓库安装事件
  */
-async function handleInstallationRepositories(payload: any) {
-  const action = payload.action;
-  const repositories = payload.repositories;
-
-  console.log(`仓库 ${action}:`, repositories.map((r: any) => r.full_name));
+async function handleInstallationRepositories(_payload: unknown) {
+  // 仓库安装事件处理
 }
 
 /**
  * 处理 push 事件
  */
-async function handlePush(payload: any) {
-  const repo = payload.repository.full_name;
-  const ref = payload.ref;
-  const commits = payload.commits?.length || 0;
+function handlePush(payload: Record<string, unknown>) {
+  const repo = (payload.repository as Record<string, string> | undefined)?.full_name ?? '';
+  const ref = payload.ref as string;
+  const commits = (payload.commits as unknown[] | undefined)?.length ?? 0;
 
-  console.log(`Push 到 ${repo}:${ref}, ${commits} 个提交`);
+  console.log(`Push 到 ${repo}:${ref}, ${String(commits)} 个提交`);
 }
 
 /**
  * 处理 pull request 事件
  */
-async function handlePullRequest(payload: any) {
-  const action = payload.action;
-  const pr = payload.pull_request;
-  const repo = payload.repository.full_name;
+function handlePullRequest(payload: Record<string, unknown>) {
+  const action = payload.action as string;
+  const pr = payload.pull_request as Record<string, unknown> | undefined;
+  const repo = (payload.repository as Record<string, string> | undefined)?.full_name ?? '';
 
-  console.log(`PR ${action}: ${repo}#${pr.number} - ${pr.title}`);
+  console.log(`PR ${action}: ${repo}#${String(pr?.number)} - ${String(pr?.title)}`);
 }
