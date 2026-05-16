@@ -1,19 +1,37 @@
 /**
  * 启动 Next.js 服务器（使用构建产物）
  */
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, '..');
 
+function findRuntime(): string {
+  try {
+    execSync('bun --version', { stdio: 'ignore' });
+    return 'bun';
+  } catch {
+    try {
+      execSync('npx tsx --version', { stdio: 'ignore' });
+      return 'npx';
+    } catch {
+      return 'node';
+    }
+  }
+}
+
 export function startNextServer() {
+  const runtime = findRuntime();
   const env = { ...process.env, NODE_ENV: 'production' };
 
-  console.log(' 🚀 使用构建产物启动 Next.js 服务器...');
+  const cmd = runtime === 'bun' ? 'bun' : 'npx';
+  const args = runtime === 'bun' ? ['run', 'server.ts'] : ['tsx', 'server.ts'];
 
-  const child = spawn('bun', ['run', 'server.ts'], {
+  console.log(` 🚀 使用 ${runtime} 启动 Next.js...`);
+
+  const child = spawn(cmd, args, {
     cwd: rootDir,
     stdio: 'inherit',
     env,
@@ -33,12 +51,10 @@ export function startNextServer() {
 
   // 优雅退出
   process.on('SIGTERM', () => {
-    console.log('\n收到 SIGTERM 信号，正在关闭 Next.js...');
     child.kill('SIGTERM');
   });
 
   process.on('SIGINT', () => {
-    console.log('\n收到 SIGINT 信号，正在关闭 Next.js...');
     child.kill('SIGINT');
   });
 }

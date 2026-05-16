@@ -1,61 +1,38 @@
-import { createServer } from 'http';
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { parse } from 'url';
-import next from 'next';
+// 应用入口：保留 Next.js 默认启动横幅，同时注入终端 WebSocket
+// 通过在 http/https.createServer 上拦截，在 Next.js 创建 HTTP 服务器时挂载 WS upgrade
+import http from 'node:http';
+import https from 'node:https';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const nextVersion = JSON.parse(readFileSync(resolve(__dirname, 'node_modules/next/package.json'), 'utf-8')).version;
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const __require = (id: string) => import(/* @vite-ignore */ id).then(m => m.default || m);
 
-const port = parseInt(process.env.PORT || '7860', 10);
-const dev = process.env.NODE_ENV !== 'production';
-
-const app = next({ dev });
-const handle = app.getRequestHandler();
-
-const server = createServer((req, res) => {
-  const parsedUrl = parse(req.url!, true);
-  handle(req, res, parsedUrl);
-});
-
-// 集成终端 WebSocket 服务（node-pty 不可用时优雅降级）
-let initTerminalWebSocket: ((server: import('http').Server) => void) | null = null;
 let closeTerminalWebSocket: (() => void) | null = null;
-let isPtyAvailable: (() => boolean) | null = null;
 
-try {
-  const wsServer = await import('@/lib/terminal/ws-server');
-  initTerminalWebSocket = wsServer.initTerminalWebSocket;
-  closeTerminalWebSocket = wsServer.closeTerminalWebSocket;
-  isPtyAvailable = wsServer.isPtyAvailable;
-  initTerminalWebSocket!(server);
-  console.log('✅ 终端 WebSocket 服务已启动');
-} catch (error) {
-  console.warn('⚠ 终端 WebSocket 服务不可用:', (error as Error).message);
-  console.warn('  终端功能已禁用，其他功能不受影响');
+function injectTerminalWS(target: { createServer: Function }) {
+  const orig = target.createServer;
+  target.createServer = function patchedCreateServer(this: any, ...args: any[]) {
+    const server = orig.apply(this, args);
+    import('./src/lib/terminal/ws-server.ts').then((ws) => {
+      closeTerminalWebSocket = ws.closeTerminalWebSocket ?? null;
+      ws.initTerminalWebSocket(server);
+    }).catch((e: any) => {
+      console.warn('  ⚠ Terminal WebSocket unavailable:', e.message);
+    });
+    return server;
+  } as typeof target.createServer;
 }
 
-app.prepare().then(() => {
-  server.listen(port, () => {
-    const url = `http://localhost:${port}`;
-    console.log('');
-    console.log(`  ▲ Next.js ${nextVersion}`);
-    console.log(`  ${dev ? '●' : '■'} ${dev ? 'Dev' : 'Ready'}`);
-    console.log(`  - Local: ${url}`);
-    console.log('');
-  });
-});
+injectTerminalWS(http);
+injectTerminalWS(https);
 
-// 优雅退出
-process.on('SIGTERM', () => {
-  closeTerminalWebSocket?.();
-  server.close();
-  process.exit(0);
-});
+process.on('SIGTERM', () => { closeTerminalWebSocket?.(); process.exit(0); });
+process.on('SIGINT', () => { closeTerminalWebSocket?.(); process.exit(0); });
 
-process.on('SIGINT', () => {
-  closeTerminalWebSocket?.();
-  server.close();
-  process.exit(0);
+// 委托给 Next.js 独立服务器（触发默认 banner + 全部路由）
+const serverPath = path.join(__dirname, '.next/standalone/server.js');
+import(/* webpackIgnore: true */ serverPath).catch((err: unknown) => {
+  console.error(err);
+  process.exit(1);
 });
