@@ -1,7 +1,10 @@
 /**
  * 系统日志模块
- * 内存环形缓冲区，支持后端日志和请求日志
+ * 内存环形缓冲区 + 数据库持久化，支持后端日志和请求日志
+ * 数据库中的日志每2小时自动清理
  */
+
+import { prisma } from '@/lib/db/prisma';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -29,6 +32,59 @@ const MAX_LOGS = 10000;
 const logs: LogEntry[] = [];
 let logCounter = 0;
 
+const LOG_TTL_MS = 2 * 60 * 60 * 1000;
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+let cleanupTimer: ReturnType<typeof setInterval> | null = null;
+
+async function writeEntryToDB(entry: LogEntry): Promise<void> {
+  try {
+    await prisma.systemLog.create({
+      data: {
+        level: entry.level,
+        message: entry.message,
+        source: entry.source,
+        path: entry.path ?? null,
+        method: entry.method ?? null,
+        statusCode: entry.statusCode ?? null,
+        duration: entry.duration ?? null,
+        userId: entry.userId ?? null,
+        ip: entry.ip ?? null,
+        queryParams: entry.queryParams ?? null,
+        requestBody: entry.requestBody ?? null,
+        responseBody: entry.responseBody ?? null,
+        cookies: entry.cookies ?? null,
+        headers: entry.headers ?? null,
+        errorDetails: entry.errorDetails ?? null,
+      },
+    });
+  } catch {
+    // DB 写入失败不影响内存日志
+  }
+}
+
+export async function cleanupOldLogs(): Promise<number> {
+  const cutoff = new Date(Date.now() - LOG_TTL_MS);
+  try {
+    const result = await prisma.systemLog.deleteMany({
+      where: { createdAt: { lt: cutoff } },
+    });
+    return result.count;
+  } catch {
+    return 0;
+  }
+}
+
+function startCleanupTimer() {
+  if (typeof window !== 'undefined') return;
+  if (cleanupTimer) return;
+  cleanupTimer = setInterval(() => {
+    cleanupOldLogs().catch(() => {});
+  }, CLEANUP_INTERVAL_MS);
+  cleanupOldLogs().catch(() => {});
+}
+
+startCleanupTimer();
+
 function createEntry(
   level: LogLevel,
   source: LogEntry['source'],
@@ -48,6 +104,8 @@ function createEntry(
   if (logs.length > MAX_LOGS) {
     logs.splice(0, logs.length - MAX_LOGS);
   }
+
+  writeEntryToDB(entry);
 
   return entry;
 }
@@ -246,6 +304,7 @@ export function getLogStats() {
 
 export function clearLogs() {
   logs.length = 0;
+  prisma.systemLog.deleteMany({}).catch(() => {});
 }
 
 export function getLog(id: string): LogEntry | undefined {
