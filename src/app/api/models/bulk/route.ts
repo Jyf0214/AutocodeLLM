@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
@@ -15,9 +16,9 @@ import type { BulkAddResponse } from '@/lib/api/model-types';
 /**
  * POST /api/models/bulk - 批量添加模型配置
  */
-export async function POST(
+export const POST = withApiLogging('POST models/bulk', async function POST(
   request: Request,
-): Promise<NextResponse<BulkAddResponse>> {
+): Promise<NextResponse<BulkAddResponse>>  {
   try {
     const body = (await request.json()) as {
       models?: { name: string; provider: string; apiKey: string; baseUrl?: string }[];
@@ -74,4 +75,4 @@ export async function POST(
   } catch (error) {
     return handleError(error, '批量添加模型');
   }
-}
+});

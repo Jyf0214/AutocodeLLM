@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { createHash } from 'node:crypto';
 import { prisma } from '@/lib/db/prisma';
 
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST auth/change-password', async function POST(request: Request) {
   try {
     const body = (await request.json()) as { userId: string; newPassword: string };
     const { userId, newPassword } = body;
@@ -73,4 +74,4 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+});

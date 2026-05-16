@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import fs from 'fs/promises';
 import path from 'path';
 
-export async function GET(request: NextRequest) {
+export const GET = withApiLogging('GET docs/content', async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const filePath = searchParams.get('path');
@@ -45,4 +46,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import { testConnection, createWebdavClient, pullFromRemote, pushToRemote } from '@/lib/sync/webdav';
 import { startWatching, stopWatching, isWatchActive } from '@/lib/sync/watcher';
 
-export async function GET() {
+export const GET = withApiLogging('GET sync', async function GET() {
   try {
     const config = await prisma.webdavConfig.findFirst();
     return NextResponse.json({
@@ -21,9 +22,9 @@ export async function GET() {
       { status: 500 },
     );
   }
-}
+});
 
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST sync', async function POST(request: Request) {
   try {
     const body = (await request.json()) as Record<string, unknown>;
     const action = body.action as string;
@@ -157,9 +158,9 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+});
 
-export async function DELETE() {
+export const DELETE = withApiLogging('DELETE sync', async function DELETE() {
   try {
     await stopWatching();
     const existing = await prisma.webdavConfig.findFirst();
@@ -173,4 +174,4 @@ export async function DELETE() {
       { status: 500 },
     );
   }
-}
+});

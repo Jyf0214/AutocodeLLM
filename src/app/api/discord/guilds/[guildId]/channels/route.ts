@@ -3,13 +3,14 @@
  * GET /api/discord/guilds/[guildId]/channels
  */
 import { getDiscordGuildChannels } from '@/lib/discord/bot';
+import { withApiLogging } from '@/lib/log';
 import { successResponse, errorResponse, handleError } from '@/lib/api/response';
 
 interface RouteParams {
   params: Promise<{ guildId: string }>;
 }
 
-export async function GET(_request: Request, { params }: RouteParams) {
+export const GET = withApiLogging('GET discord/guilds/:guildId/channels', async function GET(_request: Request, { params }: RouteParams) {
   try {
     const { guildId } = await params;
 
@@ -23,4 +24,4 @@ export async function GET(_request: Request, { params }: RouteParams) {
   } catch (error) {
     return handleError(error, '获取 Discord 频道列表');
   }
-}
+});

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { randomBytes } from 'node:crypto';
 import { verificationCodes } from '../login/route';
 import { bindingCodes } from '../bind/route';
@@ -16,7 +17,7 @@ function generateCode(): string {
   return code;
 }
 
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST auth/verification-code', async function POST(request: Request) {
   try {
     const body = (await request.json()) as { 
       username: string; 
@@ -72,10 +73,10 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+});
 
 // 验证验证码
-export function GET(request: Request) {
+export const GET = withApiLogging('GET auth/verification-code', function GET(request: Request)  {
   try {
     const { searchParams } = new URL(request.url);
     const username = searchParams.get('username');
@@ -125,4 +126,4 @@ export function GET(request: Request) {
       { status: 500 },
     );
   }
-}
+});

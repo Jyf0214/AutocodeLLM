@@ -5,6 +5,7 @@
  * DELETE /api/discord/bind — 解绑 Discord 用户
  */
 import prisma from '@/lib/db/prisma';
+import { withApiLogging } from '@/lib/log';
 import {
   successResponse,
   errorResponse,
@@ -19,7 +20,7 @@ interface BindRequest {
 }
 
 /** POST: 通过绑定码确认绑定 */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST discord/bind', async function POST(request: Request) {
   try {
     const body = await parseJsonBody<BindRequest>(request);
     if (isErrorResponse(body)) return body;
@@ -89,10 +90,10 @@ export async function POST(request: Request) {
   } catch (error) {
     return handleError(error, 'Discord 绑定');
   }
-}
+});
 
 /** GET: 获取项目的绑定列表 */
-export async function GET(request: Request) {
+export const GET = withApiLogging('GET discord/bind', async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
@@ -116,10 +117,10 @@ export async function GET(request: Request) {
   } catch (error) {
     return handleError(error, '获取绑定列表');
   }
-}
+});
 
 /** DELETE: 解绑 Discord 用户 */
-export async function DELETE(request: Request) {
+export const DELETE = withApiLogging('DELETE discord/bind', async function DELETE(request: Request) {
   try {
     const body = await parseJsonBody<{ discordUserId: string }>(request);
     if (isErrorResponse(body)) return body;
@@ -144,4 +145,4 @@ export async function DELETE(request: Request) {
   } catch (error) {
     return handleError(error, '解绑 Discord 用户');
   }
-}
+});

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { renameEntry, exists } from '@/lib/files/utils';
 
 /** PUT /api/files/rename — 重命名/移动文件或目录 */
-export async function PUT(request: Request) {
+export const PUT = withApiLogging('PUT files/rename', async function PUT(request: Request) {
   try {
     const body = (await request.json()) as { oldPath: string; newPath: string };
     const { oldPath, newPath } = body;
@@ -52,4 +53,4 @@ export async function PUT(request: Request) {
       { status },
     );
   }
-}
+});

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { glob } from 'fast-glob';
 import fs from 'fs/promises';
 import path from 'path';
@@ -29,7 +30,7 @@ function extractTitleFromMarkdown(content: string): string {
   return '';
 }
 
-export async function GET() {
+export const GET = withApiLogging('GET docs', async function GET() {
   try {
     const docsDir = path.join(process.cwd(), 'docs');
     
@@ -69,4 +70,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});

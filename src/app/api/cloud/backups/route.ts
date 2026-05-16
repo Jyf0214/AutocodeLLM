@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 
 interface ProjectBackup {
@@ -10,7 +11,7 @@ interface ProjectBackup {
   backupCount: number;
 }
 
-export async function GET() {
+export const GET = withApiLogging('GET cloud/backups', async function GET() {
   try {
     const projects = await prisma.project.findMany({
       select: {
@@ -48,4 +49,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});

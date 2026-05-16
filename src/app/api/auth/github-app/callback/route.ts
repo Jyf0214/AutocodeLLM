@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import {
   getGitHubAppAccessToken,
   getGitHubUser,
@@ -10,7 +11,7 @@ import {
  * GitHub App OAuth 回调处理
  * 重要：必须绑定已有账户，不自动创建新账户
  */
-export async function GET(request: Request) {
+export const GET = withApiLogging('GET auth/github-app/callback', async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
@@ -67,4 +68,4 @@ export async function GET(request: Request) {
       new URL(`/login?error=${encodeURIComponent(message)}`, request.url),
     );
   }
-}
+});

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 
 /**
  * GET /api/system/status
  * 系统健康检查（无需认证）
  */
-export async function GET() {
+export const GET = withApiLogging('GET system/status', async function GET() {
   let dbStatus = 'healthy';
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -23,4 +24,4 @@ export async function GET() {
       database: dbStatus,
     },
   });
-}
+});

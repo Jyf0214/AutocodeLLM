@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
@@ -16,9 +17,9 @@ import type { AddPresetProviderResponse } from '@/lib/api/provider-types';
 /**
  * POST /api/providers/preset - 从预置配置添加提供商
  */
-export async function POST(
+export const POST = withApiLogging('POST providers/preset', async function POST(
   request: Request,
-): Promise<NextResponse<AddPresetProviderResponse>> {
+): Promise<NextResponse<AddPresetProviderResponse>>  {
   try {
     const body = (await request.json()) as { presetId?: string };
     const { presetId } = body;
@@ -88,4 +89,4 @@ export async function POST(
   } catch (error) {
     return handleError(error, '添加预置提供商');
   }
-}
+});

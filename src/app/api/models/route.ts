@@ -7,6 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
@@ -22,7 +23,7 @@ import type {
 /**
  * GET /api/models - 获取所有模型配置列表
  */
-export async function GET(): Promise<NextResponse> {
+export const GET = withApiLogging('GET models', async function GET(): Promise<NextResponse>  {
   try {
     const providers = await prisma.provider.findMany({
       orderBy: { createdAt: 'desc' },
@@ -43,14 +44,14 @@ export async function GET(): Promise<NextResponse> {
   } catch (error) {
     return handleError(error, '获取模型列表');
   }
-}
+});
 
 /**
  * POST /api/models - 创建新的模型配置
  */
-export async function POST(
+export const POST = withApiLogging('POST models', async function POST(
   request: Request,
-): Promise<NextResponse> {
+): Promise<NextResponse>  {
   try {
     const body = (await request.json()) as CreateModelConfigRequest;
     const { name, provider, apiKey, baseUrl, enabled } = body;
@@ -94,14 +95,14 @@ export async function POST(
   } catch (error) {
     return handleError(error, '创建模型配置');
   }
-}
+});
 
 /**
  * PUT /api/models - 更新模型配置
  */
-export async function PUT(
+export const PUT = withApiLogging('PUT models', async function PUT(
   request: Request,
-): Promise<NextResponse> {
+): Promise<NextResponse>  {
   try {
     const body = (await request.json()) as UpdateModelConfigRequest & {
       id?: string;
@@ -153,14 +154,14 @@ export async function PUT(
   } catch (error) {
     return handleError(error, '更新模型配置');
   }
-}
+});
 
 /**
  * DELETE /api/models - 删除模型配置
  */
-export async function DELETE(
+export const DELETE = withApiLogging('DELETE models', async function DELETE(
   request: Request,
-): Promise<NextResponse> {
+): Promise<NextResponse>  {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -183,4 +184,4 @@ export async function DELETE(
   } catch (error) {
     return handleError(error, '删除模型配置');
   }
-}
+});

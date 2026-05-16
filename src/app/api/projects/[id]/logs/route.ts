@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { withApiLogging } from '@/lib/log';
 import {
   successResponse,
   errorResponse,
@@ -20,7 +21,7 @@ import type {
 /**
  * GET /api/projects/[id]/logs - 获取项目日志
  */
-export async function GET(
+export const GET = withApiLogging('GET projects/:id/logs', async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ProjectLogListResponse>> {
@@ -63,12 +64,12 @@ export async function GET(
   } catch (error) {
     return handleError(error, '获取日志');
   }
-}
+});
 
 /**
  * POST /api/projects/[id]/logs - 记录项目日志
  */
-export async function POST(
+export const POST = withApiLogging('POST projects/:id/logs', async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse<ProjectLogResponse>> {
@@ -77,7 +78,6 @@ export async function POST(
     const body = (await request.json()) as CreateProjectLogRequest;
     const { type, functionName, summary, status } = body;
 
-    // 验证必填字段
     if (!type) {
       return errorResponse('缺少日志类型参数', 'MISSING_TYPE', 400);
     }
@@ -115,4 +115,4 @@ export async function POST(
   } catch (error) {
     return handleError(error, '记录日志');
   }
-}
+});

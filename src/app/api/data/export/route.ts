@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 
@@ -6,7 +7,7 @@ import { prisma } from '@/lib/db/prisma';
  * GET /api/data/export
  * 导出所有数据为 JSON
  */
-export async function GET(request: Request) {
+export const GET = withApiLogging('GET data/export', async function GET(request: Request) {
   const auth = await requireAuth(request, 'admin');
   if (auth.error) return auth.error;
 
@@ -37,4 +38,4 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({ success: true, data });
-}
+});

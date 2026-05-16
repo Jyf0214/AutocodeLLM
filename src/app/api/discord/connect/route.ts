@@ -3,13 +3,14 @@
  * POST /api/discord/connect
  */
 import { connectDiscordBot } from '@/lib/discord/bot';
+import { withApiLogging } from '@/lib/log';
 import { successResponse, errorResponse, handleError, parseJsonBody, isErrorResponse } from '@/lib/api/response';
 
 interface ConnectRequest {
   token: string;
 }
 
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST discord/connect', async function POST(request: Request) {
   try {
     const body = await parseJsonBody<ConnectRequest>(request);
     if (isErrorResponse(body)) return body;
@@ -28,4 +29,4 @@ export async function POST(request: Request) {
   } catch (error) {
     return handleError(error, '连接 Discord Bot');
   }
-}
+});

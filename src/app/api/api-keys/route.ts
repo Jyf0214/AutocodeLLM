@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth, generateApiKey } from '@/lib/auth';
 
@@ -6,7 +7,7 @@ import { requireAuth, generateApiKey } from '@/lib/auth';
  * GET /api/api-keys
  * 列出当前用户的所有 API Key
  */
-export async function GET(request: Request) {
+export const GET = withApiLogging('GET api-keys', async function GET(request: Request) {
   const auth = await requireAuth(request, 'api_key');
   if (auth.error) return auth.error;
 
@@ -32,13 +33,13 @@ export async function GET(request: Request) {
       permissions: JSON.parse(k.permissions || '[]'),
     })),
   });
-}
+});
 
 /**
  * POST /api/api-keys
  * 创建新的 API Key
  */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST api-keys', async function POST(request: Request) {
   const auth = await requireAuth(request, 'api_key');
   if (auth.error) return auth.error;
 
@@ -81,4 +82,4 @@ export async function POST(request: Request) {
       createdAt: apiKey.createdAt,
     },
   });
-}
+});

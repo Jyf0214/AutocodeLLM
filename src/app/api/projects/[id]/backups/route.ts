@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 
-export async function GET(
+export const GET = withApiLogging('GET projects/:id/backups', async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -40,4 +41,4 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});

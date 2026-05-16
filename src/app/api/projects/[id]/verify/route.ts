@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
@@ -15,10 +16,10 @@ import type { VerifyPasswordRequest, VerifyPasswordResponse } from '@/lib/api/pr
 /**
  * POST /api/projects/[id]/verify - 验证项目进入密码
  */
-export async function POST(
+export const POST = withApiLogging('POST projects/:id/verify', async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse<VerifyPasswordResponse>> {
+): Promise<NextResponse<VerifyPasswordResponse>>  {
   try {
     const { id } = await params;
     const body = (await request.json()) as VerifyPasswordRequest;
@@ -50,4 +51,4 @@ export async function POST(
   } catch (error) {
     return handleError(error, '验证密码');
   }
-}
+});

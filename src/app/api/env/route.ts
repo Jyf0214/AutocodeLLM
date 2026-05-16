@@ -7,6 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
@@ -24,7 +25,7 @@ import type {
 /**
  * GET /api/env - 获取所有环境变量列表
  */
-export async function GET(): Promise<NextResponse> {
+export const GET = withApiLogging('GET env', async function GET(): Promise<NextResponse>  {
   try {
     const envVars = await prisma.environmentVariable.findMany({
       orderBy: { createdAt: 'desc' },
@@ -44,14 +45,14 @@ export async function GET(): Promise<NextResponse> {
   } catch (error) {
     return handleError(error, '获取环境变量列表');
   }
-}
+});
 
 /**
  * POST /api/env - 创建新的环境变量
  */
-export async function POST(
+export const POST = withApiLogging('POST env', async function POST(
   request: Request,
-): Promise<NextResponse> {
+): Promise<NextResponse>  {
   try {
     const body = (await request.json()) as CreateEnvVariableRequest;
     const { key, value, description, enabled } = body;
@@ -94,14 +95,14 @@ export async function POST(
   } catch (error) {
     return handleError(error, '创建环境变量');
   }
-}
+});
 
 /**
  * PUT /api/env - 更新环境变量
  */
-export async function PUT(
+export const PUT = withApiLogging('PUT env', async function PUT(
   request: Request,
-): Promise<NextResponse> {
+): Promise<NextResponse>  {
   try {
     const body = (await request.json()) as UpdateEnvVariableRequest;
     const { id, key, value, description, enabled } = body;
@@ -149,14 +150,14 @@ export async function PUT(
   } catch (error) {
     return handleError(error, '更新环境变量');
   }
-}
+});
 
 /**
  * DELETE /api/env - 删除环境变量
  */
-export async function DELETE(
+export const DELETE = withApiLogging('DELETE env', async function DELETE(
   request: Request,
-): Promise<NextResponse> {
+): Promise<NextResponse>  {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -179,4 +180,4 @@ export async function DELETE(
   } catch (error) {
     return handleError(error, '删除环境变量');
   }
-}
+});

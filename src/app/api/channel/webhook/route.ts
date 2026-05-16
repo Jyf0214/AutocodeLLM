@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { channelManager } from '@/lib/channel';
 import { handleLarkWebhook } from '@/lib/channel/lark';
 import { handleDingtalkWebhook } from '@/lib/channel/dingtalk';
@@ -8,7 +9,7 @@ import { handleDingtalkWebhook } from '@/lib/channel/dingtalk';
  * 统一频道 Webhook 入口
  * 通过 x-platform 头区分平台
  */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST channel/webhook', async function POST(request: Request) {
   const platform = request.headers.get('x-platform') ?? 'lark';
 
   try {
@@ -39,13 +40,13 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+});
 
 /**
  * GET /api/channel/webhook
  * 飞书 URL 验证（首次配置时飞书会发送 challenge）
  */
-export function GET(request: Request) {
+export const GET = withApiLogging('GET channel/webhook', function GET(request: Request)  {
   const { searchParams } = new URL(request.url);
   const challenge = searchParams.get('challenge');
 
@@ -54,4 +55,4 @@ export function GET(request: Request) {
   }
 
   return NextResponse.json({ success: true, channels: channelManager.getAll() });
-}
+});

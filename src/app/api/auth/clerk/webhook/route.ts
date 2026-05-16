@@ -3,6 +3,7 @@
  * 处理 Clerk 用户事件并同步到本地数据库
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { Webhook } from 'svix';
 import { handleClerkWebhook } from '@/lib/auth/providers';
 import { isClerkEnabled } from '@/lib/auth/clerk-config';
@@ -12,7 +13,7 @@ import type { ClerkWebhookPayload } from '@/lib/auth/providers';
  * POST /api/auth/clerk/webhook
  * 处理 Clerk webhook 事件
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiLogging('POST auth/clerk/webhook', async function POST(req: NextRequest) {
   // 检查 Clerk 是否启用
   if (!isClerkEnabled()) {
     return NextResponse.json(
@@ -86,4 +87,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { resolveSafePath, ensureBaseDir, getMimeType } from '@/lib/files/utils';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 /** GET /api/files/download?path=/foo.txt — 下载文件 */
-export async function GET(request: Request) {
+export const GET = withApiLogging('GET files/download', async function GET(request: Request) {
   try {
     await ensureBaseDir();
 
@@ -47,4 +48,4 @@ export async function GET(request: Request) {
       { status },
     );
   }
-}
+});

@@ -3,6 +3,7 @@
  * 验证 Clerk session token 并设置本地认证 cookie
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { clerkClient } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/db/prisma';
 import { isClerkEnabled } from '@/lib/auth/clerk-config';
@@ -12,7 +13,7 @@ import { createHash, randomBytes } from 'node:crypto';
  * POST /api/auth/clerk/login
  * 验证 Clerk session 并登录用户
  */
-export async function POST(req: NextRequest) {
+export const POST = withApiLogging('POST auth/clerk/login', async function POST(req: NextRequest) {
   // 检查 Clerk 是否启用
   if (!isClerkEnabled()) {
     return NextResponse.json(
@@ -153,4 +154,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

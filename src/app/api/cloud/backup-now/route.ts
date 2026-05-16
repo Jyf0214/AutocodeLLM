@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import fs from 'fs';
 import path from 'path';
@@ -41,7 +42,7 @@ function appendBackupLog(log: BackupLog) {
   fs.writeFileSync(BACKUP_LOG_FILE, JSON.stringify(logs.slice(0, 100), null, 2));
 }
 
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST cloud/backup-now', async function POST(request: Request) {
   try {
     const body = await request.json();
     const { projectId } = body;
@@ -160,9 +161,9 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+});
 
-export function GET() {
+export const GET = withApiLogging('GET cloud/backup-now', function GET()  {
   try {
     const logs = readBackupLogs();
     return NextResponse.json({ success: true, data: logs });
@@ -173,4 +174,4 @@ export function GET() {
       { status: 500 },
     );
   }
-}
+});

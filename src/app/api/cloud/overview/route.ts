@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import { isWatchActive } from '@/lib/sync/watcher';
 
@@ -21,7 +22,7 @@ interface CloudOverview {
   projectBackups: ProjectBackupStatus[];
 }
 
-export async function GET() {
+export const GET = withApiLogging('GET cloud/overview', async function GET() {
   try {
     const config = await prisma.webdavConfig.findFirst();
     const syncStatus: SyncStatus = {
@@ -67,4 +68,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});

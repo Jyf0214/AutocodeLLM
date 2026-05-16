@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 
 interface SystemComponent {
@@ -9,7 +10,7 @@ interface SystemComponent {
   details?: Record<string, unknown>;
 }
 
-export async function GET() {
+export const GET = withApiLogging('GET state', async function GET() {
   const components: Record<string, SystemComponent> = {};
   
   try {
@@ -56,4 +57,4 @@ export async function GET() {
     success: true,
     data: components,
   });
-}
+});

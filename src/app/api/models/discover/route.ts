@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import {
   successResponse,
   errorResponse,
@@ -14,9 +15,9 @@ import type { DiscoverResponse } from '@/lib/api/model-types';
 /**
  * POST /api/models/discover - 通过 OpenAI 兼容的/v1/models端点发现可用模型
  */
-export async function POST(
+export const POST = withApiLogging('POST models/discover', async function POST(
   request: NextRequest,
-): Promise<NextResponse<DiscoverResponse>> {
+): Promise<NextResponse<DiscoverResponse>>  {
   try {
     const body = (await request.json()) as {
       baseUrl: string;
@@ -114,4 +115,4 @@ export async function POST(
 
     return handleError(error, '探测模型');
   }
-}
+});

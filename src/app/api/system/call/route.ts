@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 
@@ -12,7 +13,7 @@ import { prisma } from '@/lib/db/prisma';
  *   "params": { ... }
  * }
  */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST system/call', async function POST(request: Request) {
   const auth = await requireAuth(request);
   if (auth.error) return auth.error;
 
@@ -95,4 +96,4 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+});

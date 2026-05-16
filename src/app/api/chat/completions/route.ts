@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { withApiLogging } from '@/lib/log';
 interface ChatMessage {
   role: string;
   content: string;
@@ -14,7 +15,7 @@ interface ChatRequest {
 /**
  * POST /api/chat/completions - 发送聊天消息到 AI 模型
  */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST chat/completions', async function POST(request: Request) {
   try {
     const body = (await request.json()) as ChatRequest;
     const { messages, model, provider } = body;
@@ -145,4 +146,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});

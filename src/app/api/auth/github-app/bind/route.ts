@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { verifyBindCode, bindGitHubToUser } from '@/lib/auth/github-app-bind';
 import { loginWithGitHubApp } from '@/lib/auth/github';
 
@@ -6,7 +7,7 @@ import { loginWithGitHubApp } from '@/lib/auth/github';
  * POST /api/auth/github-app/bind
  * 验证绑定验证码并完成绑定
  */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST auth/github-app/bind', async function POST(request: Request) {
   try {
     const body = await request.json();
     const { code, githubUserId, githubUsername, userId } = body;
@@ -77,13 +78,13 @@ export async function POST(request: Request) {
       error: { message, code: 'BIND_ERROR' },
     });
   }
-}
+});
 
 /**
  * GET /api/auth/github-app/bind
  * 获取绑定状态（检查是否需要绑定）
  */
-export async function GET(request: Request) {
+export const GET = withApiLogging('GET auth/github-app/bind', async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const githubUserId = searchParams.get('github_user_id');
 
@@ -118,4 +119,4 @@ export async function GET(request: Request) {
       error: { message, code: 'CHECK_BIND_STATUS_ERROR' },
     });
   }
-}
+});

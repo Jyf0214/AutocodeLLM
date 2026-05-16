@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { getGitHubAppConfig } from '@/lib/auth/github-app-config';
 import crypto from 'node:crypto';
 
@@ -6,7 +7,7 @@ import crypto from 'node:crypto';
  * POST /api/auth/github-app/webhook
  * 处理 GitHub App Webhook 事件
  */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST auth/github-app/webhook', async function POST(request: Request) {
   const config = getGitHubAppConfig();
   if (!config) {
     return NextResponse.json(
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * 验证 webhook 签名

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { resolveSafePath, ensureBaseDir, exists } from '@/lib/files/utils';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
 /** POST /api/files/upload — 上传文件 */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST files/upload', async function POST(request: Request) {
   try {
     await ensureBaseDir();
 
@@ -57,4 +58,4 @@ export async function POST(request: Request) {
       { status },
     );
   }
-}
+});

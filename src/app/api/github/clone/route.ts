@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { requireAuth } from '@/lib/auth';
 import { cloneRepo, getGitHubAppConfig } from '@/lib/github/app';
 
@@ -6,7 +7,7 @@ import { cloneRepo, getGitHubAppConfig } from '@/lib/github/app';
  * POST /api/github/clone
  * 克隆 GitHub 仓库到项目
  */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST github/clone', async function POST(request: Request) {
   const auth = await requireAuth(request, 'write');
   if (auth.error) return auth.error;
 
@@ -49,13 +50,13 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ success: true, data: { targetDir } });
-}
+});
 
 /**
  * GET /api/github/clone
  * 检查 GitHub App 配置状态
  */
-export function GET() {
+export const GET = withApiLogging('GET github/clone', function GET()  {
   const config = getGitHubAppConfig();
   return NextResponse.json({
     success: true,
@@ -64,4 +65,4 @@ export function GET() {
       appId: config?.appId ? `${config.appId.slice(0, 4)}...` : null,
     },
   });
-}
+});

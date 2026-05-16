@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
@@ -39,10 +40,10 @@ function estimateTokens(text: string): number {
 /**
  * POST /api/projects/[id]/chat - 发送聊天消息
  */
-export async function POST(
+export const POST = withApiLogging('POST projects/:id/chat', async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse> {
+): Promise<NextResponse>  {
   try {
     const { id } = await params;
     const body = (await request.json()) as ChatRequest;
@@ -138,4 +139,4 @@ export async function POST(
   } catch (error) {
     return handleError(error, '聊天处理');
   }
-}
+});

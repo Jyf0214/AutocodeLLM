@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth';
 
@@ -6,7 +7,7 @@ import { requireAuth } from '@/lib/auth';
  * DELETE /api/api-keys/[id]
  * 删除 API Key
  */
-export async function DELETE(
+export const DELETE = withApiLogging('DELETE api-keys/:id', async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -26,13 +27,13 @@ export async function DELETE(
   await prisma.apiKey.delete({ where: { id } });
 
   return NextResponse.json({ success: true });
-}
+});
 
 /**
  * PATCH /api/api-keys/[id]
  * 更新 API Key（启用/禁用、权限）
  */
-export async function PATCH(
+export const PATCH = withApiLogging('PATCH api-keys/:id', async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -73,4 +74,4 @@ export async function PATCH(
       enabled: updated.enabled,
     },
   });
-}
+});

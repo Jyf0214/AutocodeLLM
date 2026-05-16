@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { listDirectory, createDirectory, deleteEntry, writeFileContent, exists } from '@/lib/files/utils';
 
 /** GET /api/files?path=/ — 列出目录内容 */
-export async function GET(request: Request) {
+export const GET = withApiLogging('GET files', async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const dirPath = searchParams.get('path') ?? '/';
@@ -21,10 +22,10 @@ export async function GET(request: Request) {
       { status },
     );
   }
-}
+});
 
 /** POST /api/files — 创建文件或目录 */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST files', async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       path: string;
@@ -66,10 +67,10 @@ export async function POST(request: Request) {
       { status },
     );
   }
-}
+});
 
 /** DELETE /api/files — 删除文件或目录 */
-export async function DELETE(request: Request) {
+export const DELETE = withApiLogging('DELETE files', async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const entryPath = searchParams.get('path');
@@ -103,4 +104,4 @@ export async function DELETE(request: Request) {
       { status },
     );
   }
-}
+});

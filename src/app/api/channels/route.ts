@@ -4,6 +4,7 @@
  * POST /api/channels
  */
 import { NextRequest } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import prisma from '@/lib/db/prisma';
 import {
   successResponse,
@@ -16,7 +17,7 @@ import {
 import type { CreateChannelRequest } from '@/lib/api/channel-types';
 
 /** 获取频道列表 */
-export async function GET(request: NextRequest) {
+export const GET = withApiLogging('GET channels', async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
     const projectId = searchParams.get('projectId');
@@ -34,10 +35,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     return handleError(error, '获取频道列表');
   }
-}
+});
 
 /** 创建频道 */
-export async function POST(request: NextRequest) {
+export const POST = withApiLogging('POST channels', async function POST(request: NextRequest) {
   try {
     const body = await parseJsonBody<CreateChannelRequest>(request);
     if (isErrorResponse(body)) return body;
@@ -80,4 +81,4 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return handleError(error, '创建频道');
   }
-}
+});

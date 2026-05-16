@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { createHash } from 'node:crypto';
 import { prisma } from '@/lib/db/prisma';
 
 // 内存存储验证码（与 verification-code route 共享）
 const verificationCodes = new Map<string, { code: string; expiresAt: number }>();
 
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST auth/login', async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       username: string;
@@ -149,7 +150,7 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+});
 
 // 导出验证码存储供 verification-code route 使用
 export { verificationCodes };

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { verifyGitHubWebhook } from '@/lib/github/app';
 
 /**
  * POST /api/github/webhook
  * GitHub App Webhook 入口
  */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST github/webhook', async function POST(request: Request) {
   const secret = process.env.GITHUB_APP_WEBHOOK_SECRET;
   if (!secret) {
     return NextResponse.json(
@@ -58,4 +59,4 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+});

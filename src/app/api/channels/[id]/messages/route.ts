@@ -3,6 +3,7 @@
  * GET / POST /api/channels/[id]/messages
  */
 import { NextRequest } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import prisma from '@/lib/db/prisma';
 import { successResponse, paginatedResponse, errorResponse, handleError, parseJsonBody, isErrorResponse } from '@/lib/api/response';
 import { sendMessageToChannel } from '@/lib/discord/bot';
@@ -13,7 +14,7 @@ interface RouteParams {
 }
 
 /** 获取频道消息历史（分页） */
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export const GET = withApiLogging('GET channels/:id/messages', async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const { searchParams } = request.nextUrl;
@@ -40,10 +41,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     return handleError(error, '获取消息历史');
   }
-}
+});
 
 /** 发送消息到 Discord 频道 */
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export const POST = withApiLogging('POST channels/:id/messages', async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const body = await parseJsonBody<SendMessageRequest>(request);
@@ -88,4 +89,4 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     return handleError(error, '发送频道消息');
   }
-}
+});

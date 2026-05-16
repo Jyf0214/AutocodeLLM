@@ -7,6 +7,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { withApiLogging } from '@/lib/log';
 import {
   successResponse,
   errorResponse,
@@ -24,7 +25,7 @@ async function getProjectId(params: unknown): Promise<string> {
 /**
  * GET /api/projects/[id] - 获取单个项目详情
  */
-export async function GET(
+export const GET = withApiLogging('GET projects/:id', async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
@@ -50,12 +51,12 @@ export async function GET(
   } catch (error) {
     return handleError(error, '获取项目详情');
   }
-}
+});
 
 /**
  * PUT /api/projects/[id] - 更新项目
  */
-export async function PUT(
+export const PUT = withApiLogging('PUT projects/:id', async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
@@ -64,7 +65,6 @@ export async function PUT(
     const body = (await request.json()) as { name?: string; description?: string };
     const { name, description } = body;
 
-    // 验证项目存在
     const existing = await prisma.project.findUnique({
       where: { id },
     });
@@ -73,12 +73,10 @@ export async function PUT(
       return errorResponse('项目不存在', 'NOT_FOUND', 404);
     }
 
-    // 验证名称不为空
     if (name?.trim().length === 0) {
       return errorResponse('名称不能为空', 'INVALID_NAME', 400);
     }
 
-    // 更新项目
     const updatedProject = await prisma.project.update({
       where: { id },
       data: {
@@ -98,12 +96,12 @@ export async function PUT(
   } catch (error) {
     return handleError(error, '更新项目');
   }
-}
+});
 
 /**
  * DELETE /api/projects/[id] - 删除项目
  */
-export async function DELETE(
+export const DELETE = withApiLogging('DELETE projects/:id', async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
@@ -118,7 +116,6 @@ export async function DELETE(
       return errorResponse('项目不存在', 'NOT_FOUND', 404);
     }
 
-    // Prisma 设置了 onDelete: Cascade，会自动删除关联的消息和日志
     await prisma.project.delete({
       where: { id },
     });
@@ -127,4 +124,4 @@ export async function DELETE(
   } catch (error) {
     return handleError(error, '删除项目');
   }
-}
+});

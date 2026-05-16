@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
 
@@ -28,7 +29,7 @@ interface ImportData {
  * POST /api/data/import
  * 导入 JSON 数据（支持覆盖和合并）
  */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST data/import', async function POST(request: Request) {
   const auth = await requireAuth(request, 'admin');
   if (auth.error) return auth.error;
 
@@ -166,4 +167,4 @@ export async function POST(request: Request) {
       progress,
     },
   });
-}
+});

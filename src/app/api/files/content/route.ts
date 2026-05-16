@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { readFileContent, writeFileContent } from '@/lib/files/utils';
 
 /** GET /api/files/content?path=/foo.txt — 读取文件内容 */
-export async function GET(request: Request) {
+export const GET = withApiLogging('GET files/content', async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const filePath = searchParams.get('path');
@@ -31,10 +32,10 @@ export async function GET(request: Request) {
       { status },
     );
   }
-}
+});
 
 /** PUT /api/files/content — 写入文件内容 */
-export async function PUT(request: Request) {
+export const PUT = withApiLogging('PUT files/content', async function PUT(request: Request) {
   try {
     const body = (await request.json()) as { path: string; content: string };
     const { path: filePath, content } = body;
@@ -60,4 +61,4 @@ export async function PUT(request: Request) {
       { status },
     );
   }
-}
+});

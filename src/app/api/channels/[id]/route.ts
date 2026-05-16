@@ -3,6 +3,7 @@
  * GET / PUT / DELETE /api/channels/[id]
  */
 import { NextRequest } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import prisma from '@/lib/db/prisma';
 import { successResponse, errorResponse, handleError, parseJsonBody, isErrorResponse } from '@/lib/api/response';
 import type { UpdateChannelRequest } from '@/lib/api/channel-types';
@@ -12,7 +13,7 @@ interface RouteParams {
 }
 
 /** 获取频道详情 */
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export const GET = withApiLogging('GET channels/:id', async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const channel = await prisma.channel.findUnique({
@@ -31,10 +32,10 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     return handleError(error, '获取频道详情');
   }
-}
+});
 
 /** 更新频道 */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export const PUT = withApiLogging('PUT channels/:id', async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const body = await parseJsonBody<UpdateChannelRequest>(request);
@@ -53,10 +54,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     return handleError(error, '更新频道');
   }
-}
+});
 
 /** 删除频道 */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+export const DELETE = withApiLogging('DELETE channels/:id', async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     await prisma.channel.delete({ where: { id } });
@@ -64,4 +65,4 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     return handleError(error, '删除频道');
   }
-}
+});

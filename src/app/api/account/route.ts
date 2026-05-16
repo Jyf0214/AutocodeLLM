@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { createHash } from 'node:crypto';
 import { prisma } from '@/lib/db/prisma';
 
@@ -6,7 +7,7 @@ import { prisma } from '@/lib/db/prisma';
  * GET /api/account
  * 返回当前用户信息（包含 forceChangePassword 和 isInitialPassword 标志）
  */
-export async function GET(request: Request) {
+export const GET = withApiLogging('GET account', async function GET(request: Request) {
   try {
     const userId = request.headers.get('x-user-id');
 
@@ -46,13 +47,13 @@ export async function GET(request: Request) {
       { status: 500 },
     );
   }
-}
+});
 
 /**
  * PUT /api/account
  * 更新密码和标志（标志只能设为 false）
  */
-export async function PUT(request: Request) {
+export const PUT = withApiLogging('PUT account', async function PUT(request: Request) {
   try {
     const userId = request.headers.get('x-user-id');
 
@@ -166,4 +167,4 @@ export async function PUT(request: Request) {
       { status: 500 },
     );
   }
-}
+});

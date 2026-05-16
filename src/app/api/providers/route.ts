@@ -7,6 +7,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
@@ -27,7 +28,7 @@ import type {
 /**
  * GET /api/providers - 获取所有提供商列表（预置 + 自定义）
  */
-export async function GET(): Promise<NextResponse> {
+export const GET = withApiLogging('GET providers', async function GET(): Promise<NextResponse>  {
   try {
     const providers = await prisma.provider.findMany({
       orderBy: { createdAt: 'desc' },
@@ -103,14 +104,14 @@ export async function GET(): Promise<NextResponse> {
   } catch (error) {
     return handleError(error, '获取提供商列表');
   }
-}
+});
 
 /**
  * POST /api/providers - 创建提供商
  */
-export async function POST(
+export const POST = withApiLogging('POST providers', async function POST(
   request: Request,
-): Promise<NextResponse> {
+): Promise<NextResponse>  {
   try {
     const body = (await request.json()) as CreateProviderRequest;
     const {
@@ -203,14 +204,14 @@ export async function POST(
   } catch (error) {
     return handleError(error, '创建提供商');
   }
-}
+});
 
 /**
  * PUT /api/providers - 更新提供商
  */
-export async function PUT(
+export const PUT = withApiLogging('PUT providers', async function PUT(
   request: Request,
-): Promise<NextResponse> {
+): Promise<NextResponse>  {
   try {
     const body = (await request.json()) as UpdateProviderRequest;
     const {
@@ -296,14 +297,14 @@ export async function PUT(
   } catch (error) {
     return handleError(error, '更新提供商');
   }
-}
+});
 
 /**
  * DELETE /api/providers - 删除提供商
  */
-export async function DELETE(
+export const DELETE = withApiLogging('DELETE providers', async function DELETE(
   request: Request,
-): Promise<NextResponse> {
+): Promise<NextResponse>  {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -328,7 +329,7 @@ export async function DELETE(
   } catch (error) {
     return handleError(error, '删除提供商');
   }
-}
+});
 
 /**
  * POST /api/providers/test - 测试 API Key 连通性

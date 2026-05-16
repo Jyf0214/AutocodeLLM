@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { createHash } from 'node:crypto';
 import { prisma } from '@/lib/db/prisma';
 
@@ -18,7 +19,7 @@ const bindingCodes = new Map<string, { code: string; expiresAt: number; targetTy
  *   targetId: string;
  * }
  */
-export async function POST(request: Request) {
+export const POST = withApiLogging('POST auth/bind', async function POST(request: Request) {
   try {
     const body = await request.json();
     const { username, password, code, targetType, targetId } = body;
@@ -172,7 +173,7 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
+});
 
 // 导出供其他路由使用
 export { bindingCodes };

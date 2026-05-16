@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { getAuthConfig } from '@/lib/auth/config';
 import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/db/prisma';
@@ -7,7 +8,7 @@ import { prisma } from '@/lib/db/prisma';
  * GET /api/auth/status
  * 获取认证状态，包括可用的认证方式和当前登录用户
  */
-export async function GET() {
+export const GET = withApiLogging('GET auth/status', async function GET() {
   try {
     const config = getAuthConfig();
     
@@ -51,4 +52,4 @@ export async function GET() {
       { status: 500 },
     );
   }
-}
+});

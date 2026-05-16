@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { getGitHubAccessToken, getGitHubUser, loginWithGitHub } from '@/lib/auth/github';
 
 /**
  * GET /api/auth/github/callback
  * GitHub OAuth 回调处理
  */
-export async function GET(request: Request) {
+export const GET = withApiLogging('GET auth/github/callback', async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
@@ -51,4 +52,4 @@ export async function GET(request: Request) {
       new URL(`/login?error=${encodeURIComponent(message)}`, request.url),
     );
   }
-}
+});

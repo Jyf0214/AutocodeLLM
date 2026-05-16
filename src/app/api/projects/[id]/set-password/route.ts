@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
@@ -15,10 +16,10 @@ import type { SetPasswordResponse, SetPasswordRequest } from '@/lib/api/project-
 /**
  * POST /api/projects/[id]/set-password - 设置项目进入密码
  */
-export async function POST(
+export const POST = withApiLogging('POST projects/:id/set-password', async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
-): Promise<NextResponse<SetPasswordResponse>> {
+): Promise<NextResponse<SetPasswordResponse>>  {
   try {
     const { id } = await params;
     const body = (await request.json()) as SetPasswordRequest;
@@ -42,4 +43,4 @@ export async function POST(
   } catch (error) {
     return handleError(error, '设置密码');
   }
-}
+});

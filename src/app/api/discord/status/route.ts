@@ -3,9 +3,10 @@
  * GET /api/discord/status
  */
 import { getDiscordBotStatus, getDiscordGuilds } from '@/lib/discord/bot';
+import { withApiLogging } from '@/lib/log';
 import { successResponse, handleError } from '@/lib/api/response';
 
-export async function GET() {
+export const GET = withApiLogging('GET discord/status', async function GET() {
   try {
     const status = getDiscordBotStatus();
     const guilds = status.connected ? await getDiscordGuilds() : [];
@@ -17,4 +18,4 @@ export async function GET() {
   } catch (error) {
     return handleError(error, '获取 Bot 状态');
   }
-}
+});
