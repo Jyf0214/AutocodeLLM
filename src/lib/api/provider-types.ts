@@ -115,57 +115,6 @@ export interface PresetProviderData {
   isAdded?: boolean;
   dbId?: string;
 }
-
-/**
- * Qwen OAuth 相关类型
- */
-export interface QwenOAuthStartResponse {
-  success: boolean;
-  data?: {
-    deviceCode: string;
-    userCode: string;
-    verificationUri: string;
-    verificationUriComplete: string;
-    authorizationUrl: string;
-    expiresIn: number;
-    interval: number;
-    codeVerifier: string;
-  };
-  error?: {
-    message: string;
-    code: string;
-  };
-}
-
-export interface QwenOAuthPollResponse {
-  success: boolean;
-  data?: {
-    accessToken: string;
-    refreshToken: string;
-    resourceUrl: string;
-    expiresIn: number;
-    providerId: string;
-  };
-  error?: {
-    message: string;
-    code: string;
-  };
-}
-
-export interface QwenOAuthRefreshResponse {
-  success: boolean;
-  data?: {
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-    expiresAt: string;
-  };
-  error?: {
-    message: string;
-    code: string;
-  };
-}
-
 /**
  * 添加预置提供商响应
  */

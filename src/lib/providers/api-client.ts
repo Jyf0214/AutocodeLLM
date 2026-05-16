@@ -49,10 +49,6 @@ export async function getProviderApiKey(providerId: string): Promise<string | nu
     if (!provider.oauthAccessToken) {
       return null;
     }
-    // 千问 OAuth 已被官方终止支持
-    if (provider.name?.includes('通义') || provider.name?.toLowerCase().includes('qwen')) {
-      throw new Error('千问 OAuth 功能已被官方终止支持');
-    }
     return decryptValue(provider.oauthAccessToken);
   }
 
@@ -96,14 +92,6 @@ export async function callProviderAPI(params: {
       }
     } catch {
       // 元数据解析失败，使用默认 baseUrl
-    }
-  }
-
-  // 对于 Qwen OAuth，如果 baseUrl 不是正确的 API 端点，强制使用正确的 URL
-  if (provider.authType === 'oauth' && provider.name?.includes('通义')) {
-    // 检查是否为错误的端点（如 chat.qwen.ai 或 dashscope）
-    if (!effectiveBaseUrl.includes('portal.qwen.ai')) {
-      effectiveBaseUrl = 'https://portal.qwen.ai/v1';
     }
   }
 
@@ -170,14 +158,6 @@ export async function fetchProviderModels(providerId: string): Promise<{ id: str
       }
     } catch {
       // 元数据解析失败，使用默认 baseUrl
-    }
-  }
-
-  // 对于 Qwen OAuth，如果 baseUrl 不是正确的 API 端点，强制使用正确的 URL
-  if (provider.authType === 'oauth' && provider.name?.includes('通义')) {
-    // 检查是否为错误的端点（如 chat.qwen.ai 或 dashscope）
-    if (!effectiveBaseUrl.includes('portal.qwen.ai')) {
-      effectiveBaseUrl = 'https://portal.qwen.ai/v1';
     }
   }
 
@@ -260,11 +240,6 @@ export async function testProviderConnection(providerId: string): Promise<{ conn
       } catch {
         // 元数据解析失败，使用默认 baseUrl
       }
-    }
-
-    // 千问 OAuth 已被官方终止支持
-    if (provider.authType === 'oauth' && (provider.name?.includes('通义') || provider.name?.toLowerCase().includes('qwen'))) {
-      throw new Error('千问 OAuth 功能已被官方终止支持');
     }
 
     const config = buildRequestConfig({
@@ -558,62 +533,13 @@ async function fetchWithRetry(
 }
 
 /**
- * 刷新 Qwen OAuth token
- * 注意：千问 OAuth 已被官方终止支持，此函数仅保留用于兼容性
- */
-async function refreshQwenOAuth(refreshToken: string): Promise<{
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-}> {
-  // 千问 OAuth 已被官方终止支持
-  throw new Error('千问 OAuth 功能已被官方终止支持');
-}
-
-/**
  * 刷新 OAuth token
  */
-async function refreshOAuthToken(provider: {
+async function refreshOAuthToken(_provider: {
   id: string;
   oauthRefreshToken: string | null;
   oauthClientId: string | null;
   authType: string | null;
 }): Promise<string | null> {
-  if (!provider.oauthRefreshToken) {
-    return null;
-  }
-
-  try {
-    const refreshToken = decryptValue(provider.oauthRefreshToken);
-
-    let newAccessToken: string;
-    let newRefreshToken: string;
-    let expiresIn: number;
-
-    if (provider.authType === 'oauth') {
-      // Qwen OAuth: use the proper refresh function
-      const refreshed = await refreshQwenOAuth(refreshToken);
-      newAccessToken = refreshed.accessToken;
-      newRefreshToken = refreshed.refreshToken;
-      expiresIn = refreshed.expiresIn;
-    } else {
-      // 不支持其他 OAuth 提供商
-      return null;
-    }
-
-    const expiresAt = new Date(Date.now() + expiresIn * 1000);
-
-    await prisma.provider.update({
-      where: { id: provider.id },
-      data: {
-        oauthAccessToken: encryptValue(newAccessToken),
-        oauthRefreshToken: encryptValue(newRefreshToken),
-        oauthExpiresAt: expiresAt,
-      },
-    });
-
-    return newAccessToken;
-  } catch {
-    return null;
-  }
+  return null;
 }

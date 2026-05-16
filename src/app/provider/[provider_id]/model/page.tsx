@@ -17,12 +17,9 @@ import {
   DeleteOutlined,
   EditOutlined,
   CheckCircleOutlined,
-  SyncOutlined,
-  LockOutlined,
   ThunderboltOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
-  LinkOutlined,
 } from '@ant-design/icons';
 import { ModelIcon } from '@/lib/icons';
 import { useParams } from 'next/navigation';
@@ -276,12 +273,6 @@ export default function ProviderModelPage() {
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [form] = Form.useForm();
 
-  const [oauthLoading, setOauthLoading] = useState(false);
-  const [oauthPolling, setOauthPolling] = useState(false);
-  const [oauthAuthorizationUrl, setOauthAuthorizationUrl] = useState<string | null>(null);
-  const [oauthProviderId, setOauthProviderId] = useState<string | null>(null);
-  const [oauthExpiresAt, setOauthExpiresAt] = useState<string | null>(null);
-
   const fetchProviders = useCallback(async () => {
     setLoading(true);
     try {
@@ -465,96 +456,6 @@ export default function ProviderModelPage() {
     [fetchProviders, t],
   );
 
-  const handleQwenOAuthStart = useCallback(async () => {
-    setOauthLoading(true);
-    setOauthAuthorizationUrl(null);
-    try {
-      const res = await fetch('/api/providers/qwen-oauth/start', {
-        method: 'POST',
-      });
-      if (!res.ok) {
-        message.error(t('qwenOAuthFailed'));
-        return;
-      }
-      const data = await res.json();
-      if (data.success && data.data) {
-        const { authorizationUrl, deviceCode, codeVerifier, interval } = data.data;
-
-        if (authorizationUrl) {
-          setOauthAuthorizationUrl(authorizationUrl);
-          window.open(authorizationUrl, '_blank');
-        }
-
-        setOauthPolling(true);
-
-        const poll = async (currentInterval = interval) => {
-          try {
-            const pollRes = await fetch('/api/providers/qwen-oauth/poll', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ deviceCode, codeVerifier }),
-            });
-            const pollData = await pollRes.json();
-            if (pollData.success && pollData.data) {
-              setOauthPolling(false);
-              setOauthAuthorizationUrl(null);
-              setOauthProviderId(pollData.data.providerId);
-              setOauthExpiresAt(new Date(Date.now() + pollData.data.expiresIn * 1000).toISOString());
-              message.success(t('qwenOAuthSuccess'));
-              fetchProviders();
-            } else if (pollData.error?.code === 'AUTHORIZATION_PENDING') {
-              setTimeout(() => poll(currentInterval), currentInterval * 1000);
-            } else if (pollData.error?.code === 'SLOW_DOWN') {
-              const newInterval = Number(currentInterval) + 2;
-              setTimeout(() => poll(newInterval), newInterval * 1000);
-            } else {
-              setOauthPolling(false);
-              message.error(pollData.error?.message ?? t('getTokenFailed'));
-            }
-          } catch {
-            setTimeout(() => poll(currentInterval), currentInterval * 1000);
-          }
-        };
-        setTimeout(() => poll(interval), interval * 1000);
-      }
-    } catch {
-      message.error(t('qwenOAuthFailed'));
-    } finally {
-      setOauthLoading(false);
-    }
-  }, [fetchProviders, t]);
-
-  const getOAuthStatusText = useCallback(() => {
-    if (!oauthExpiresAt) return t('notLoggedIn');
-    const expires = new Date(oauthExpiresAt);
-    const diff = expires.getTime() - Date.now();
-    if (diff <= 0) return t('expired');
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 60) return t('remaining', { minutes: String(minutes) });
-    const hours = Math.floor(minutes / 60);
-    return t('remainingHours', { hours: String(hours), minutes: String(minutes % 60) });
-  }, [oauthExpiresAt, t]);
-
-  const handleQwenOAuthRefresh = useCallback(async () => {
-    if (!oauthProviderId) return;
-    try {
-      const res = await fetch('/api/providers/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ providerId: oauthProviderId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setOauthExpiresAt(data.data?.expiresAt);
-        message.success(t('refreshSuccess'));
-      } else {
-        message.error(data.error?.message ?? t('refreshFailed'));
-      }
-    } catch {
-      message.error(t('refreshFailed'));
-    }
-  }, [oauthProviderId, t]);
-
   const configuredProviders = useMemo(() => dataSource.filter((p) => p.enabled), [dataSource]);
 
   if (loading) {
@@ -615,100 +516,6 @@ export default function ProviderModelPage() {
       </div>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px' }}>
-        <div
-          style={{
-            background: 'var(--color-bg)',
-            borderRadius: 12,
-            border: '1px solid var(--color-border)',
-            padding: 20,
-            marginBottom: 24,
-          }}
-        >
-          <Flexbox gap={16} horizontal align="center">
-            <Icon icon={LockOutlined} size={20} color="var(--text-primary)" />
-            <div style={{ flex: 1 }}>
-              <Text strong>{t('qwenOAuth')}</Text>
-              <Text type="secondary" style={{ display: 'block', fontSize: 12, marginTop: 4 }}>
-                {t('qwenOAuthDesc')}
-              </Text>
-            </div>
-            {oauthExpiresAt ? (
-              <Flexbox gap={8} horizontal>
-                <Tag color="green">{getOAuthStatusText()}</Tag>
-                <Button size="small" icon={<SyncOutlined />} onClick={handleQwenOAuthRefresh}>
-                  {t('refreshToken')}
-                </Button>
-              </Flexbox>
-            ) : (
-              <Button
-                type="primary"
-                icon={<LinkOutlined />}
-                loading={oauthLoading || oauthPolling}
-                onClick={handleQwenOAuthStart}
-                disabled={oauthPolling}
-              >
-                {oauthPolling ? t('oauthWaiting') : t('oauthLogin')}
-              </Button>
-            )}
-          </Flexbox>
-
-          {oauthPolling && oauthAuthorizationUrl && (
-            <div
-              style={{
-                marginTop: 16,
-                padding: '12px 14px',
-                background: 'var(--color-fill-quaternary)',
-                borderRadius: 10,
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              <Flexbox gap={8} horizontal align="center" style={{ marginBottom: 8 }}>
-                <Icon icon={LinkOutlined} size={14} color="var(--text-primary)" />
-                <Text strong style={{ fontSize: 13 }}>
-                  {t('authLinkTip')}
-                </Text>
-              </Flexbox>
-              <Flexbox gap={8} horizontal>
-                <div
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    background: 'var(--color-bg)',
-                    borderRadius: 8,
-                    border: '1px solid var(--color-border)',
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                    wordBreak: 'break-all',
-                    color: 'var(--text-primary)',
-                    maxHeight: 48,
-                    overflow: 'hidden',
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {oauthAuthorizationUrl}
-                </div>
-                <Button
-                  size="small"
-                  onClick={() => {
-                    navigator.clipboard.writeText(oauthAuthorizationUrl);
-                    message.success(t('linkCopied'));
-                  }}
-                >
-                  {t('copyLink')}
-                </Button>
-                <Button
-                  size="small"
-                  type="primary"
-                  icon={<LinkOutlined />}
-                  onClick={() => window.open(oauthAuthorizationUrl, '_blank')}
-                >
-                  {t('openLink')}
-                </Button>
-              </Flexbox>
-            </div>
-          )}
-        </div>
-
         <Text strong style={{ fontSize: 16, display: 'block', marginBottom: 16 }}>
           {t('configuredProviders', { count: String(dataSource.length) })}
         </Text>
