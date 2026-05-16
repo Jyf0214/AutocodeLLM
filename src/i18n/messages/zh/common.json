@@ -44,7 +44,7 @@
       "multiModelSupport": "多模型支持",
       "multiModelSupportDesc": "兼容 OpenAI、Anthropic、Google 等主流 AI 模型",
       "cloudService": "云服务",
-      "cloudServiceDesc": "WebDAV 备份、环境变量管理、工作节点监控",
+      "cloudServiceDesc": "WebDAV 备份、环境变量管理",
       "enterProject": "进入项目",
       "logoutSuccess": "已退出登录",
       "logoutFailed": "退出失败，请重试",
