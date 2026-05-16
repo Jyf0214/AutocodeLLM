@@ -210,6 +210,8 @@
     "settingsDesc": "Project settings and preferences",
     "channel": "Discord Channel",
     "channelDesc": "Connect Discord channels for chat integration",
+    "terminal": "Web Terminal",
+    "terminalDesc": "Connect and execute commands via browser",
     "projectNotExist": "Project does not exist",
     "back": "Back",
     "backToList": "Back to list",

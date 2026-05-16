@@ -210,6 +210,8 @@
     "settingsDesc": "项目配置和偏好设置",
     "channel": "Discord 频道",
     "channelDesc": "接入 Discord 频道实现聊天集成",
+    "terminal": "Web 终端",
+    "terminalDesc": "通过网页连接并执行命令",
     "projectNotExist": "项目不存在",
     "back": "返回",
     "backToList": "返回列表",

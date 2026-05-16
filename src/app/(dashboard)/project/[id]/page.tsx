@@ -8,6 +8,7 @@ import { Button, Text, Flexbox } from '@/lib/ui';
 import { Skeleton } from 'antd';
 import {
   FolderOutlined,
+  CodeOutlined,
   MessageOutlined,
   SettingOutlined,
   EditOutlined,
@@ -116,6 +117,7 @@ export default function ProjectDetailPage() {
 
   const menuItems = [
     { icon: <MessageOutlined />, title: t('aiChat'), desc: t('aiChatDesc'), path: `/chat/${projectId}` },
+    { icon: <CodeOutlined />, title: t('terminal'), desc: t('terminalDesc'), path: `/project/${projectId}/terminal` },
     { icon: <SettingOutlined />, title: t('settings'), desc: t('settingsDesc'), path: `/project/${projectId}/detail` },
     { icon: <ApiOutlined />, title: t('channel'), desc: t('channelDesc'), path: `/project/${projectId}/channel` },
   ];
