@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
-import { queryLogs, getLogStats, type LogLevel, type LogEntry } from '@/lib/log';
+import { queryLogsV2, getLogStats, clearLogs, type LogLevel, type LogEntry } from '@/lib/log';
 
 /**
  * GET /api/logs
@@ -9,6 +9,7 @@ import { queryLogs, getLogStats, type LogLevel, type LogEntry } from '@/lib/log'
  * 查询参数：
  * - level: debug | info | warn | error
  * - source: backend | request | function
+ * - search: 消息文本模糊搜索
  * - path: 路径过滤（模糊匹配）
  * - statusCode: HTTP 状态码
  * - limit: 返回条数（默认 200）
@@ -23,9 +24,10 @@ export async function GET(request: Request) {
   const levelParam = searchParams.get('level');
   const sourceParam = searchParams.get('source');
 
-  const entries = queryLogs({
+  const entries = queryLogsV2({
     level: levelParam as LogLevel,
     source: sourceParam as LogEntry['source'],
+    search: searchParams.get('search') ?? undefined,
     path: searchParams.get('path') ?? undefined,
     statusCode: searchParams.get('statusCode')
       ? parseInt(searchParams.get('statusCode') ?? '')
@@ -42,4 +44,17 @@ export async function GET(request: Request) {
       stats: getLogStats(),
     },
   });
+}
+
+/**
+ * DELETE /api/logs
+ * 清空所有日志
+ */
+export async function DELETE(request: Request) {
+  const auth = await requireAuth(request, 'admin');
+  if (auth.error) return auth.error;
+
+  clearLogs();
+
+  return NextResponse.json({ success: true });
 }

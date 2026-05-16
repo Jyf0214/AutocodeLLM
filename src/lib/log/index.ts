@@ -150,3 +150,47 @@ export function getLogStats() {
     warnings: logs.filter((l) => l.level === 'warn').length,
   };
 }
+
+export function clearLogs() {
+  logs.length = 0;
+}
+
+export function getLog(id: string): LogEntry | undefined {
+  return logs.find((l) => l.id === id);
+}
+
+export interface LogQueryWithSearch extends LogQuery {
+  search?: string;
+}
+
+export function queryLogsV2(query: LogQueryWithSearch = {}): { total: number; entries: LogEntry[] } {
+  let filtered = [...logs];
+
+  if (query.level) {
+    filtered = filtered.filter((l) => l.level === query.level);
+  }
+  if (query.source) {
+    filtered = filtered.filter((l) => l.source === query.source);
+  }
+  if (query.path) {
+    filtered = filtered.filter((l) => l.path?.includes(query.path!));
+  }
+  if (query.statusCode !== undefined) {
+    filtered = filtered.filter((l) => l.statusCode === query.statusCode);
+  }
+  if (query.search) {
+    const q = query.search.toLowerCase();
+    filtered = filtered.filter((l) => l.message.toLowerCase().includes(q));
+  }
+
+  filtered.sort((a, b) => b.timestamp - a.timestamp);
+
+  const total = filtered.length;
+  const offset = query.offset || 0;
+  const limit = query.limit || 200;
+
+  return {
+    total,
+    entries: filtered.slice(offset, offset + limit),
+  };
+}
