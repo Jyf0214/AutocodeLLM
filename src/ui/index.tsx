@@ -582,7 +582,7 @@ export const Image: React.FC<ImageProps> = ({ src, alt, width, height, style, on
       />
     );
   }
-  return <NextImage src={src} alt={alt} width={numericWidth} height={numericHeight} onClick={onClick} style={{ maxWidth: '100%', objectFit: 'contain', cursor: onClick ? 'pointer' : undefined, ...style }} />;
+  return <NextImage src={src || ''} alt={alt || ''} width={numericWidth} height={numericHeight} onClick={onClick} style={{ maxWidth: '100%', objectFit: 'contain', cursor: onClick ? 'pointer' : undefined, ...style }} />;
 };
 
 // ============================================================
