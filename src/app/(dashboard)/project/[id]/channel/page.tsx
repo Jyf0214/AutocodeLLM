@@ -29,7 +29,7 @@ export default function ChannelPage() {
               icon={<ArrowLeftOutlined />}
               onClick={() => router.push(`/project/${projectId}`)}
             >
-              {t('workplace.back')}
+              {t('project.back')}
             </Button>
             <Text strong style={{ fontSize: 16 }}>
               {t('channel.title')}

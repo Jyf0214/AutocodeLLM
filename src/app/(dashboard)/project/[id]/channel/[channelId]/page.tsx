@@ -107,10 +107,10 @@ export default function ChannelChatPage() {
                 icon={<ArrowLeftOutlined />}
                 onClick={() => router.push(`/project/${projectId}/channel`)}
               >
-                {t('workplace.back')}
+                {t('project.back')}
               </Button>
               <Button type="primary" icon={<ReloadOutlined />} onClick={fetchChannel}>
-                {t('workplace.retry')}
+                {t('project.retry')}
               </Button>
             </Flexbox>
           </Flexbox>
@@ -135,7 +135,7 @@ export default function ChannelChatPage() {
               icon={<ArrowLeftOutlined />}
               onClick={() => router.push(`/project/${projectId}/channel`)}
             >
-              {t('workplace.back')}
+              {t('project.back')}
             </Button>
             <Text strong style={{ fontSize: 16 }}>
               {channel.name}

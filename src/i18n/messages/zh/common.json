@@ -3,7 +3,7 @@
     "appName": "AutocodeLLM",
     "login": "登录",
     "logout": "退出",
-    "workplace": "项目",
+    "project": "项目",
     "project": "项目",
     "settings": "设置",
     "models": "模型管理",
@@ -158,7 +158,7 @@
     "clerkLoginNotImplemented": "Clerk 登录尚未实现",
     "loading": "加载中..."
   },
-  "workplace": {
+  "project": {
     "title": "项目",
     "titleShort": "项目",
     "new": "新建",

@@ -3,7 +3,7 @@
     "appName": "AutocodeLLM",
     "login": "Login",
     "logout": "Logout",
-    "workplace": "Project",
+    "project": "Project",
     "project": "Project",
     "settings": "Settings",
     "models": "Model Management",
@@ -158,7 +158,7 @@
     "clerkLoginNotImplemented": "Clerk login not implemented yet",
     "loading": "Loading..."
   },
-  "workplace": {
+  "project": {
     "title": "Project",
     "titleShort": "Project",
     "new": "New",
