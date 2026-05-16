@@ -1,9 +1,7 @@
 /**
  * 系统日志模块
- * 使用 Prisma 持久化存储，支持后端日志和请求日志
+ * 内存环形缓冲区，支持后端日志和请求日志
  */
-
-import { prisma } from '@/lib/db/prisma';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -13,65 +11,39 @@ export interface LogEntry {
   level: LogLevel;
   source: 'backend' | 'request' | 'function';
   message: string;
-  path?: string;
-  method?: string;
-  statusCode?: number;
-  duration?: number;
+  path?: string;       // 请求路径
+  method?: string;     // HTTP 方法
+  statusCode?: number; // HTTP 状态码
+  duration?: number;   // 请求耗时(ms)
   userId?: string;
   ip?: string;
 }
 
-async function createEntry(
+const MAX_LOGS = 10000;
+const logs: LogEntry[] = [];
+let logCounter = 0;
+
+function createEntry(
   level: LogLevel,
   source: LogEntry['source'],
   message: string,
   extra?: Partial<LogEntry>,
-): Promise<LogEntry> {
-  try {
-    const record = await prisma.systemLog.create({
-      data: {
-        level,
-        message,
-        source,
-        path: extra?.path ?? null,
-        method: extra?.method ?? null,
-        statusCode: extra?.statusCode ?? null,
-        duration: extra?.duration ?? null,
-        userId: extra?.userId ?? null,
-        ip: extra?.ip ?? null,
-        metadata: extra ? JSON.stringify(Object.fromEntries(
-          Object.entries(extra).filter(([k]) =>
-            !['path', 'method', 'statusCode', 'duration', 'userId', 'ip'].includes(k)
-          )
-        )) : null,
-      },
-    });
+): LogEntry {
+  const entry: LogEntry = {
+    id: `${Date.now()}-${++logCounter}`,
+    timestamp: Date.now(),
+    level,
+    source,
+    message,
+    ...extra,
+  };
 
-    return {
-      id: record.id,
-      timestamp: record.createdAt.getTime(),
-      level: record.level as LogLevel,
-      source: record.source as LogEntry['source'],
-      message: record.message,
-      path: record.path ?? undefined,
-      method: record.method ?? undefined,
-      statusCode: record.statusCode ?? undefined,
-      duration: record.duration ?? undefined,
-      userId: record.userId ?? undefined,
-      ip: record.ip ?? undefined,
-    };
-  } catch {
-    // 数据库不可用时降级到控制台
-    console[level](`[${source.toUpperCase()}] ${message}`, extra);
-    return {
-      id: `fallback-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      timestamp: Date.now(),
-      level,
-      source,
-      message,
-      ...extra,
-    };
+  logs.push(entry);
+  if (logs.length > MAX_LOGS) {
+    logs.splice(0, logs.length - MAX_LOGS);
   }
+
+  return entry;
 }
 
 // ============================================================
@@ -79,17 +51,17 @@ async function createEntry(
 // ============================================================
 
 export const logger = {
-  async debug(msg: string, extra?: Partial<LogEntry>) {
-    return createEntry('debug', 'backend', msg, extra);
+  debug(msg: string, extra?: Partial<LogEntry>) {
+    createEntry('debug', 'backend', msg, extra);
   },
-  async info(msg: string, extra?: Partial<LogEntry>) {
-    return createEntry('info', 'backend', msg, extra);
+  info(msg: string, extra?: Partial<LogEntry>) {
+    createEntry('info', 'backend', msg, extra);
   },
-  async warn(msg: string, extra?: Partial<LogEntry>) {
-    return createEntry('warn', 'backend', msg, extra);
+  warn(msg: string, extra?: Partial<LogEntry>) {
+    createEntry('warn', 'backend', msg, extra);
   },
-  async error(msg: string, extra?: Partial<LogEntry>) {
-    return createEntry('error', 'backend', msg, extra);
+  error(msg: string, extra?: Partial<LogEntry>) {
+    createEntry('error', 'backend', msg, extra);
   },
 };
 
@@ -97,7 +69,7 @@ export const logger = {
 // 请求日志（用于中间件）
 // ============================================================
 
-export async function logRequest(entry: {
+export function logRequest(entry: {
   method: string;
   path: string;
   statusCode: number;
@@ -110,16 +82,16 @@ export async function logRequest(entry: {
     entry.statusCode >= 400 ? 'warn' :
     'info';
 
-  return createEntry(level, 'request', `${entry.method} ${entry.path} → ${entry.statusCode} (${entry.duration}ms)`, entry);
+  createEntry(level, 'request', `${entry.method} ${entry.path} → ${entry.statusCode} (${entry.duration}ms)`, entry);
 }
 
 // ============================================================
 // 函数调用日志
 // ============================================================
 
-export async function logFunction(name: string, result: { success: boolean; message?: string; duration?: number }) {
+export function logFunction(name: string, result: { success: boolean; message?: string; duration?: number }) {
   const level = result.success ? 'info' : 'error';
-  return createEntry(level, 'function', `[${name}] ${result.message || (result.success ? '成功' : '失败')}`, {
+  createEntry(level, 'function', `[${name}] ${result.message || (result.success ? '成功' : '失败')}`, {
     duration: result.duration,
   });
 }
@@ -137,70 +109,44 @@ export interface LogQuery {
   offset?: number;
 }
 
-export async function queryLogs(query: LogQuery = {}): Promise<{ total: number; entries: LogEntry[] }> {
-  const where: Record<string, unknown> = {};
+export function queryLogs(query: LogQuery = {}): { total: number; entries: LogEntry[] } {
+  let filtered = [...logs];
 
   if (query.level) {
-    where.level = query.level;
+    filtered = filtered.filter((l) => l.level === query.level);
   }
   if (query.source) {
-    where.source = query.source;
+    filtered = filtered.filter((l) => l.source === query.source);
   }
   if (query.path) {
-    where.path = { contains: query.path };
+    filtered = filtered.filter((l) => l.path?.includes(query.path!));
   }
   if (query.statusCode !== undefined) {
-    where.statusCode = query.statusCode;
+    filtered = filtered.filter((l) => l.statusCode === query.statusCode);
   }
 
-  const limit = query.limit || 200;
+  filtered.sort((a, b) => b.timestamp - a.timestamp);
+
+  const total = filtered.length;
   const offset = query.offset || 0;
-
-  const [total, records] = await Promise.all([
-    prisma.systemLog.count({ where }),
-    prisma.systemLog.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip: offset,
-      take: limit,
-    }),
-  ]);
-
-  const entries: LogEntry[] = records.map((r) => ({
-    id: r.id,
-    timestamp: r.createdAt.getTime(),
-    level: r.level as LogLevel,
-    source: r.source as LogEntry['source'],
-    message: r.message,
-    path: r.path ?? undefined,
-    method: r.method ?? undefined,
-    statusCode: r.statusCode ?? undefined,
-    duration: r.duration ?? undefined,
-    userId: r.userId ?? undefined,
-    ip: r.ip ?? undefined,
-  }));
-
-  return { total, entries };
-}
-
-export async function getLogStats() {
-  const now = new Date();
-  const fiveMinAgo = new Date(now.getTime() - 5 * 60 * 1000);
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-
-  const [total, last5min, last1hour, errors, warnings] = await Promise.all([
-    prisma.systemLog.count(),
-    prisma.systemLog.count({ where: { createdAt: { gte: fiveMinAgo } } }),
-    prisma.systemLog.count({ where: { createdAt: { gte: oneHourAgo } } }),
-    prisma.systemLog.count({ where: { level: 'error' } }),
-    prisma.systemLog.count({ where: { level: 'warn' } }),
-  ]);
+  const limit = query.limit || 200;
 
   return {
     total,
-    last5min,
-    last1hour,
-    errors,
-    warnings,
+    entries: filtered.slice(offset, offset + limit),
+  };
+}
+
+export function getLogStats() {
+  const now = Date.now();
+  const last5min = logs.filter((l) => l.timestamp > now - 5 * 60 * 1000);
+  const last1hour = logs.filter((l) => l.timestamp > now - 60 * 60 * 1000);
+
+  return {
+    total: logs.length,
+    last5min: last5min.length,
+    last1hour: last1hour.length,
+    errors: logs.filter((l) => l.level === 'error').length,
+    warnings: logs.filter((l) => l.level === 'warn').length,
   };
 }

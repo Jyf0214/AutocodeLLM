@@ -300,28 +300,3 @@ enum ChannelType {
   VOICE
   ANNOUNCEMENT
 }
-
-// ============================================================
-// 系统日志
-// ============================================================
-
-model SystemLog {
-  id        String   @id @default(uuid())
-  level     String   // debug, info, warn, error
-  message   String   @db.Text
-  source    String   // backend, request, function
-  path      String?
-  method    String?
-  statusCode Int?
-  duration  Int?
-  userId    String?
-  ip        String?
-  metadata  String?  @db.Text // JSON
-  createdAt DateTime @default(now())
-
-  @@index([level])
-  @@index([source])
-  @@index([createdAt])
-  @@index([statusCode])
-  @@map("system_logs")
-}

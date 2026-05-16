@@ -23,26 +23,23 @@ export async function GET(request: Request) {
   const levelParam = searchParams.get('level');
   const sourceParam = searchParams.get('source');
 
-  const [entries, stats] = await Promise.all([
-    queryLogs({
-      level: levelParam as LogLevel,
-      source: sourceParam as LogEntry['source'],
-      path: searchParams.get('path') ?? undefined,
-      statusCode: searchParams.get('statusCode')
-        ? parseInt(searchParams.get('statusCode') ?? '')
-        : undefined,
-      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit') ?? '') : 200,
-      offset: searchParams.get('offset') ? parseInt(searchParams.get('offset') ?? '') : 0,
-    }),
-    getLogStats(),
-  ]);
+  const entries = queryLogs({
+    level: levelParam as LogLevel,
+    source: sourceParam as LogEntry['source'],
+    path: searchParams.get('path') ?? undefined,
+    statusCode: searchParams.get('statusCode')
+      ? parseInt(searchParams.get('statusCode') ?? '')
+      : undefined,
+    limit: searchParams.get('limit') ? parseInt(searchParams.get('limit') ?? '') : 200,
+    offset: searchParams.get('offset') ? parseInt(searchParams.get('offset') ?? '') : 0,
+  });
 
   return NextResponse.json({
     success: true,
     data: {
       entries: entries.entries,
       total: entries.total,
-      stats,
+      stats: getLogStats(),
     },
   });
 }

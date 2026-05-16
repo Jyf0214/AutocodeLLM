@@ -23,7 +23,7 @@ export async function GET(): Promise<NextResponse<ProjectResponse>> {
       orderBy: { createdAt: 'desc' },
     });
 
-    void logger.info(`获取项目列表: ${String(projects.length)} 个`);
+    logger.info(`获取项目列表: ${String(projects.length)} 个`);
 
     const data = projects.map((project) => ({
       id: project.id,
