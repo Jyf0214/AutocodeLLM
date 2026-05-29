@@ -18,6 +18,7 @@ export async function runDbPush() {
       execSync('bunx prisma db push --accept-data-loss --skip-generate', {
         stdio: 'inherit',
         timeout: 60_000,
+        env: { ...process.env, NO_UPDATE_NOTIFIER: 'true' },
       });
       console.log('  ✅ 数据库结构已同步');
       return;
@@ -37,7 +38,11 @@ export async function runDbPush() {
 export function generatePrismaClient() {
   try {
     console.log('  生成 Prisma Client...');
-    execSync('bunx prisma generate', { stdio: 'inherit', timeout: 60_000 });
+    execSync('bunx prisma generate --no-hints', {
+      stdio: 'inherit',
+      timeout: 60_000,
+      env: { ...process.env, NO_UPDATE_NOTIFIER: 'true' },
+    });
     console.log('  ✅ Prisma Client 生成完成');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

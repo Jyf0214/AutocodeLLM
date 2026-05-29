@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "typecheck": "tsc --noEmit",
-    "build": "prisma generate && next telemetry disable && next build",
+    "build": "NO_UPDATE_NOTIFIER=true prisma generate --no-hints && next telemetry disable && next build",
     "build:full": "bun run build",
     "start": "node scripts/start.mjs",
     "lint": "eslint .",
