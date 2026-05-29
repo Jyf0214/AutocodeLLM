@@ -39,13 +39,17 @@ function attachSessionListeners(session: import('./session-manager').TerminalSes
   if (sessionListenersAttached.has(session.id)) return;
   sessionListenersAttached.add(session.id);
 
+  console.log('[ws-server] 附加会话监听器:', { sessionId: session.id, projectId: session.projectId });
+
   session.pty.onData((data) => {
+    console.log('[ws-server] pty 数据输出:', JSON.stringify(data.slice(0, 80)));
     const msg = JSON.stringify({ type: 'data', data });
     broadcastToProject(session.projectId, msg);
   });
 
-  session.pty.onExit(({ exitCode }) => {
-    const msg = JSON.stringify({ type: 'exit', exitCode });
+  session.pty.onExit(({ exitCode, signal }) => {
+    console.log('[ws-server] pty 进程退出:', { sessionId: session.id, projectId: session.projectId, exitCode, signal });
+    const msg = JSON.stringify({ type: 'exit', exitCode, signal });
     broadcastToProject(session.projectId, msg);
     sessionListenersAttached.delete(session.id);
     destroySession!(session.id);
@@ -58,6 +62,8 @@ function attachClientSession(
   cols: number,
   rows: number,
 ): void {
+  console.log('[ws-server] 附加客户端会话:', { projectId, cols, rows });
+
   let clients = projectClients.get(projectId);
   if (!clients) {
     clients = new Set();
@@ -67,7 +73,10 @@ function attachClientSession(
 
   let session = findSessionByProject!(projectId);
   if (!session) {
+    console.log('[ws-server] 未找到现将会话，创建新会话');
     session = createSession!(projectId, cols, rows);
+  } else {
+    console.log('[ws-server] 复用现有会话:', { sessionId: session.id });
   }
 
   attachSessionListeners(session);
@@ -76,6 +85,7 @@ function attachClientSession(
   ws.on('message', (raw: Buffer) => {
     try {
       const msg = JSON.parse(raw.toString()) as Record<string, unknown>;
+      console.log('[ws-server] 收到客户端消息:', msg);
       if (msg.type === 'data' && typeof msg.data === 'string') {
         const currentSession = findSessionByProject!(projectId);
         if (currentSession) {
@@ -91,15 +101,17 @@ function attachClientSession(
         }
       }
     } catch {
-      // ignore
+      console.log('[ws-server] 消息解析失败:', raw.toString().slice(0, 200));
     }
   });
 
   ws.on('close', () => {
+    console.log('[ws-server] 客户端断开:', { projectId });
     const c = projectClients.get(projectId);
     if (c) {
       c.delete(ws);
       if (c.size === 0) {
+        console.log('[ws-server] 项目无客户端，清理项目连接:', { projectId });
         projectClients.delete(projectId);
       }
     }
@@ -107,11 +119,13 @@ function attachClientSession(
 }
 
 export function initTerminalWebSocket(server: Server): void {
+  console.log('[ws-server] 初始化终端 WebSocket 服务...', { ptyAvailable });
   wss = new WebSocketServer({ noServer: true });
 
   server.on('upgrade', (request, socket, head) => {
     const url = new URL(request.url ?? '', 'http://localhost');
     if (url.pathname.startsWith('/api/terminal/ws')) {
+      console.log('[ws-server] 收到升级请求:', { pathname: url.pathname, search: url.search });
       wss?.handleUpgrade(request, socket, head, (ws) => {
         wss?.emit('connection', ws, request);
       });
@@ -119,23 +133,27 @@ export function initTerminalWebSocket(server: Server): void {
   });
 
   wss.on('connection', (ws, request) => {
+    const url = new URL(request.url ?? '', 'http://localhost');
+    const projectId = url.searchParams.get('projectId');
+    const cols = parseInt(url.searchParams.get('cols') ?? '80', 10);
+    const rows = parseInt(url.searchParams.get('rows') ?? '24', 10);
+    console.log('[ws-server] WebSocket 连接:', { url: request.url, projectId, cols, rows });
+
     if (!ptyAvailable) {
+      console.log('[ws-server] pty 不可用，拒绝连接');
       ws.send(JSON.stringify({ type: 'error', message: '终端功能不可用：node-pty 原生模块未加载' }));
       ws.close();
       return;
     }
 
-    const url = new URL(request.url ?? '', 'http://localhost');
-    const projectId = url.searchParams.get('projectId');
-    const cols = parseInt(url.searchParams.get('cols') ?? '80', 10);
-    const rows = parseInt(url.searchParams.get('rows') ?? '24', 10);
-
     if (!projectId) {
+      console.log('[ws-server] 缺少 projectId，拒绝连接');
       ws.send(JSON.stringify({ type: 'error', message: '缺少 projectId' }));
       ws.close();
       return;
     }
 
+    console.log('[ws-server] 初始化客户端会话...');
     attachClientSession(ws, projectId, cols, rows);
   });
 }

@@ -24,12 +24,14 @@ export default function ProjectTerminalPage() {
   const connectTerminal = useCallback(() => {
     if (!projectId) return;
 
+    console.log('[terminal-page] 开始连接:', { projectId });
     setError(null);
     setConnecting(true);
     setIsConnected(false);
 
     // 关闭已有连接
     if (wsRef.current) {
+      console.log('[terminal-page] 关闭已有 WebSocket 连接');
       wsRef.current.close();
       wsRef.current = null;
     }
@@ -37,41 +39,48 @@ export default function ProjectTerminalPage() {
     // 使用当前页面的 origin 构建 WebSocket URL
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${encodeURIComponent(projectId)}`;
+    console.log('[terminal-page] WebSocket URL:', wsUrl);
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
+      console.log('[terminal-page] WebSocket 已打开');
       setConnecting(false);
     };
 
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data as string) as Record<string, unknown>;
+        console.log('[terminal-page] 收到消息:', msg);
         if (msg.type === 'connected') {
           setIsConnected(true);
           setConnecting(false);
         } else if (msg.type === 'error') {
+          console.log('[terminal-page] 错误消息:', msg.message);
           setError(msg.message as string);
           setConnecting(false);
         } else if (msg.type === 'data') {
           terminalInstanceRef.current?.write(msg.data as string);
         } else if (msg.type === 'exit') {
           const exitCode = msg.exitCode as number;
+          console.log('[terminal-page] 终端退出:', { exitCode });
           terminalInstanceRef.current?.write(`\r\n终端已退出 (退出码: ${String(exitCode)})\r\n`);
           setIsConnected(false);
         }
       } catch {
-        // 忽略解析错误
+        console.log('[terminal-page] 消息解析失败:', event.data);
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (evt) => {
+      console.log('[terminal-page] WebSocket 已关闭:', { code: evt.code, reason: evt.reason });
       setIsConnected(false);
       setConnecting(false);
     };
 
-    ws.onerror = () => {
+    ws.onerror = (evt) => {
+      console.log('[terminal-page] WebSocket 错误:', evt);
       setError('WebSocket 连接失败');
       setConnecting(false);
     };

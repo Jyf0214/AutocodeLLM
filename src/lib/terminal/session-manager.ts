@@ -65,12 +65,36 @@ export function createSession(projectId: string, cols: number, rows: number): Te
   const id = 'term-' + String(Date.now()) + '-' + String(Math.random()).slice(2, 8);
   const cwd = getProjectCwd(projectId);
 
-  const ptyProcess = pty.spawn('bash', [], {
-    name: 'xterm-256color',
-    cols,
-    rows,
-    cwd,
-    env: process.env as Record<string, string>,
+  console.log('[terminal] 创建终端会话:', { id, projectId, cwd, cols, rows });
+
+  const shell = process.env.SHELL || 'bash';
+  console.log('[terminal] 启动 shell:', { shell, cwd });
+
+  let ptyProcess;
+  try {
+    ptyProcess = pty.spawn(shell, [], {
+      name: 'xterm-256color',
+      cols,
+      rows,
+      cwd,
+      env: process.env as Record<string, string>,
+    });
+  } catch (err) {
+    console.error('[terminal] spawn 失败:', err);
+    throw err;
+  }
+
+  console.log('[terminal] 终端进程已启动, PID:', ptyProcess.pid);
+
+  ptyProcess.onExit(({ exitCode, signal }) => {
+    console.log('[terminal] 进程退出:', { id, projectId, exitCode, signal });
+  });
+
+  ptyProcess.onData((data) => {
+    // 只记录非空数据和特殊控制序列
+    if (data.length > 0) {
+      console.log('[terminal] 收到数据:', JSON.stringify(data.slice(0, 100)));
+    }
   });
 
   const session: TerminalSession = {
