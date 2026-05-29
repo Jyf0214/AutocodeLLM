@@ -790,7 +790,6 @@ export const TextArea: React.FC<TextAreaProps> = (props) => <AntdTextArea {...pr
 export const BrainOffIcon = () => <span>🧠✕</span>;
 export const GlobeOffIcon = () => <span>🌐✕</span>;
 export const SkillsIcon = () => <span>⚡</span>;
-export const McpIcon = () => <span>🔌</span>;
 
 // ============================================================
 // 主题常量

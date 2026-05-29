@@ -8,7 +8,6 @@ import {
   LoadingOutlined,
   DatabaseOutlined,
   ApiOutlined,
-  SecurityScanOutlined,
   AppstoreOutlined,
 } from '@ant-design/icons';
 import { Text, Flexbox, Icon } from '@/lib/ui';
@@ -25,7 +24,6 @@ interface SystemComponent {
 interface StateInfo {
   database: SystemComponent;
   api: SystemComponent;
-  mcp: SystemComponent;
   providers: SystemComponent;
 }
 
@@ -102,7 +100,6 @@ export default function StatePage() {
     const components = [
       stateData.database,
       stateData.api,
-      stateData.mcp,
       stateData.providers,
     ].filter(Boolean) as SystemComponent[];
 
@@ -122,7 +119,6 @@ export default function StatePage() {
     const components = [
       stateData.database,
       stateData.api,
-      stateData.mcp,
       stateData.providers,
     ].filter(Boolean) as SystemComponent[];
 
@@ -222,9 +218,6 @@ export default function StatePage() {
         </Col>
         <Col xs={24} sm={12} lg={8}>
           {renderComponentCard(stateData.api, <Icon icon={ApiOutlined} />, t('components.api'))}
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
-          {stateData.mcp && renderComponentCard(stateData.mcp, <Icon icon={SecurityScanOutlined} />, t('components.mcp'))}
         </Col>
         <Col xs={24} sm={12} lg={8}>
           {renderComponentCard(stateData.providers, <Icon icon={AppstoreOutlined} />, t('components.providers'))}

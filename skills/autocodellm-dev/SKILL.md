@@ -150,7 +150,7 @@ AutocodeLLM 是基于 Next.js 16 + React 19 + TypeScript + Prisma ORM + Ant Desi
 以下目录为 LobeChat 移植代码，已在 ESLint、Vitest、TypeScript 配置中豁免检查：
 
 - **Store 层**：`src/store/global/`、`src/store/aiInfra/`、`src/store/home/`、`src/store/userMemory/`、`src/store/mention/`、`src/store/middleware/`、`src/store/agent/`、`src/store/agentGroup/`、`src/store/chat/`、`src/store/file/`、`src/store/session/`、`src/store/user/`
-- **Libs 层**：`src/libs/swr/`、`src/libs/trpc/`、`src/libs/mcp/`、`src/libs/pdfjs/`、`src/libs/next/`
+- **Libs 层**：`src/libs/swr/`、`src/libs/trpc/`、`src/libs/pdfjs/`、`src/libs/next/`
 - **Features 层**：`src/features/` 下大部分目录
 - **Components 层**：`src/components/` 下大部分目录
 - **其他**：`src/hooks/`、`src/services/`、`src/helpers/`、`src/const/`、`src/prompts/`、`src/utils/`、`src/lib/`、`src/providers/`

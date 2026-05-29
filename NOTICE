@@ -34,7 +34,6 @@ LobeChat 使用 **LobeHub Community License**（基于 Apache License 2.0）。
 | `src/store/user/` | lobe-chat/src/store/user/ | 用户设置状态 |
 | `src/libs/swr/` | lobe-chat/src/libs/swr/ | 数据获取层 |
 | `src/libs/trpc/` | lobe-chat/src/libs/trpc/ | RPC 客户端 |
-| `src/libs/mcp/` | lobe-chat/src/libs/mcp/ | MCP 协议支持 |
 | `src/libs/pdfjs/` | lobe-chat/src/libs/pdfjs/ | PDF 查看器 |
 | `src/libs/next/` | lobe-chat/src/libs/next/ | Next.js 工具 |
 | `src/features/` | lobe-chat/src/features/ | 功能组件 |

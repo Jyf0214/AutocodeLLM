@@ -41,7 +41,6 @@ export default tseslint.config(
       // Libs 层
       'src/libs/swr/**',
       'src/libs/trpc/**',
-      'src/libs/mcp/**',
       'src/libs/pdfjs/**',
       'src/libs/next/**',
       // Features 层
