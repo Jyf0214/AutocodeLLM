@@ -136,11 +136,11 @@ export default function CloudPage() {
         <Space style={{ width: '100%', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
           <Flexbox horizontal justify="space-between" wrap gap={8}>
             <Text type="secondary">{t('serverUrl')}</Text>
-            <Text style={{ wordBreak: 'break-all' }}>{overview?.sync?.url ?? t('notConfigured')}</Text>
+            <Text style={{ wordBreak: 'break-all' }}>{overview?.sync?.url || t('notConfigured')}</Text>
           </Flexbox>
           <Flexbox horizontal justify="space-between" wrap gap={8}>
             <Text type="secondary">{t('remotePath')}</Text>
-            <Text style={{ wordBreak: 'break-all' }}>{overview?.sync?.remotePath ?? t('notConfigured')}</Text>
+            <Text style={{ wordBreak: 'break-all' }}>{overview?.sync?.remotePath || t('notConfigured')}</Text>
           </Flexbox>
         </Space>
       </Card>

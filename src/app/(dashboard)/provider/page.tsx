@@ -417,8 +417,13 @@ export default function ProviderPage() {
       setTestingId(provider.id);
       try {
         // OAuth 提供商使用 access token，而不是 API Key
+        if (provider.apiKey === 'oauth' && !provider.oauthAccessToken) {
+          message.error(t('getTokenFailed'));
+          setTestingId(null);
+          return;
+        }
         const testApiKey = provider.apiKey === 'oauth'
-          ? (provider.oauthAccessToken ?? '')
+          ? provider.oauthAccessToken
           : provider.apiKey;
 
         const res = await fetch('/api/providers/test', {

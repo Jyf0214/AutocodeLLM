@@ -401,8 +401,13 @@ export default function ProviderModelPage() {
     async (provider: Provider) => {
       setTestingId(provider.id);
       try {
+        if (provider.apiKey === 'oauth' && !provider.oauthAccessToken) {
+          message.error(t('getTokenFailed'));
+          setTestingId(null);
+          return;
+        }
         const testApiKey = provider.apiKey === 'oauth'
-          ? (provider.oauthAccessToken ?? '')
+          ? provider.oauthAccessToken
           : provider.apiKey;
 
         const res = await fetch('/api/providers/test', {
