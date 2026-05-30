@@ -70,17 +70,31 @@ export function createSession(projectId: string, cols: number, rows: number): Te
   const shell = process.env.SHELL || 'bash';
   console.log('[terminal] 启动 shell:', { shell, cwd });
 
+  // 过滤环境变量：仅传递安全、必需的变量，避免环境变量导致 bash 异常退出
+  const safeEnv: Record<string, string> = {
+    TERM: 'xterm-256color',
+    HOME: process.env.HOME || '/root',
+    USER: process.env.USER || 'root',
+    SHELL: shell,
+    PATH: process.env.PATH || '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+    LANG: process.env.LANG || 'C.UTF-8',
+    LC_ALL: process.env.LC_ALL || 'C.UTF-8',
+    LOGNAME: process.env.LOGNAME || 'root',
+    // 传递工作目录特定变量
+    NODE_ENV: process.env.NODE_ENV || 'production',
+  };
+
   let ptyProcess;
   try {
-    ptyProcess = pty.spawn(shell, [], {
+    ptyProcess = pty.spawn(shell, ['-i'], {
       name: 'xterm-256color',
       cols,
       rows,
       cwd,
-      env: process.env as Record<string, string>,
+      env: safeEnv,
     });
   } catch (err) {
-    console.error('[terminal] spawn 失败:', err);
+    console.error('[terminal] spawn 失败:', { shell, cwd, error: err });
     throw err;
   }
 

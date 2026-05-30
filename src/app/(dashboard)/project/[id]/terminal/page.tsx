@@ -4,8 +4,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Flexbox, Text } from '@/lib/ui';
 import { ArrowLeftOutlined, ExpandOutlined, CompressOutlined, ReloadOutlined } from '@ant-design/icons';
-import { Terminal } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
+import type { Terminal as XTermType } from 'xterm';
+import type { FitAddon as FitAddonType } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 
 export default function ProjectTerminalPage() {
@@ -13,8 +13,8 @@ export default function ProjectTerminalPage() {
   const router = useRouter();
   const projectId = params.id as string;
   const terminalRef = useRef<HTMLDivElement>(null);
-  const terminalInstanceRef = useRef<Terminal | null>(null);
-  const fitAddonRef = useRef<FitAddon | null>(null);
+  const terminalInstanceRef = useRef<XTermType | null>(null);
+  const fitAddonRef = useRef<FitAddonType | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -89,66 +89,89 @@ export default function ProjectTerminalPage() {
   useEffect(() => {
     if (!projectId || !terminalRef.current) return;
 
-    const terminal = new Terminal({
-      cursorBlink: true,
-      fontSize: 14,
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-      theme: {
-        background: '#1e1e1e',
-        foreground: '#d4d4d4',
-        cursor: '#d4d4d4',
-        selectionBackground: '#264f78',
-        black: '#1e1e1e',
-        red: '#f44747',
-        green: '#6a9955',
-        yellow: '#d7ba7d',
-        blue: '#569cd6',
-        magenta: '#c586c0',
-        cyan: '#4dc9b0',
-        white: '#d4d4d4',
-        brightBlack: '#808080',
-        brightRed: '#f44747',
-        brightGreen: '#6a9955',
-        brightYellow: '#d7ba7d',
-        brightBlue: '#569cd6',
-        brightMagenta: '#c586c0',
-        brightCyan: '#4dc9b0',
-        brightWhite: '#ffffff',
-      },
-    });
+    let disposed = false;
 
-    const fitAddon = new FitAddon();
-    terminal.loadAddon(fitAddon);
+    (async () => {
+      const [{ Terminal }, { FitAddon }] = await Promise.all([
+        import('xterm'),
+        import('xterm-addon-fit'),
+      ]);
 
-    terminalInstanceRef.current = terminal;
-    fitAddonRef.current = fitAddon;
+      if (disposed || !terminalRef.current) return;
 
-    terminal.open(terminalRef.current);
-    fitAddon.fit();
+      const terminal = new Terminal({
+        cursorBlink: true,
+        fontSize: 14,
+        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+        theme: {
+          background: '#1e1e1e',
+          foreground: '#d4d4d4',
+          cursor: '#d4d4d4',
+          selectionBackground: '#264f78',
+          black: '#1e1e1e',
+          red: '#f44747',
+          green: '#6a9955',
+          yellow: '#d7ba7d',
+          blue: '#569cd6',
+          magenta: '#c586c0',
+          cyan: '#4dc9b0',
+          white: '#d4d4d4',
+          brightBlack: '#808080',
+          brightRed: '#f44747',
+          brightGreen: '#6a9955',
+          brightYellow: '#d7ba7d',
+          brightBlue: '#569cd6',
+          brightMagenta: '#c586c0',
+          brightCyan: '#4dc9b0',
+          brightWhite: '#ffffff',
+        },
+      });
 
-    // 连接 WebSocket
-    connectTerminal();
+      const fitAddon = new FitAddon();
+      terminal.loadAddon(fitAddon);
 
-    // 终端输入发送到 WebSocket
-    terminal.onData((data) => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({ type: 'data', data }));
-      }
-    });
+      terminalInstanceRef.current = terminal;
+      fitAddonRef.current = fitAddon;
 
-    // 窗口大小变化时重新 fit
-    const handleResize = () => {
+      terminal.open(terminalRef.current);
       fitAddon.fit();
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        const { cols, rows } = terminal;
-        wsRef.current.send(JSON.stringify({ type: 'resize', cols, rows }));
-      }
-    };
-    window.addEventListener('resize', handleResize);
+
+      // 连接 WebSocket
+      connectTerminal();
+
+      // 终端输入发送到 WebSocket
+      terminal.onData((data) => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'data', data }));
+        }
+      });
+
+      // 窗口大小变化时重新 fit
+      const handleResize = () => {
+        fitAddon.fit();
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          const { cols, rows } = terminal;
+          wsRef.current.send(JSON.stringify({ type: 'resize', cols, rows }));
+        }
+      };
+      window.addEventListener('resize', handleResize);
+
+      // 存储 cleanup 函数
+      (terminal as any)._cleanup = () => {
+        window.removeEventListener('resize', handleResize);
+        terminal.dispose();
+      };
+    })();
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      terminal.dispose();
+      disposed = true;
+      const term = terminalInstanceRef.current;
+      if (term && typeof (term as any)._cleanup === 'function') {
+        (term as any)._cleanup();
+      } else {
+        term?.dispose();
+      }
+      terminalInstanceRef.current = null;
       wsRef.current?.close();
     };
   }, [projectId, connectTerminal]);
