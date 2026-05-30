@@ -10,7 +10,7 @@ import {
   IconArrowRight,
   IconFolder,
   IconCloud,
-  IconCode,
+  IconTerminal,
   IconBrandGithub,
 } from '@tabler/icons-react';
 
@@ -64,7 +64,7 @@ export default function HomePage() {
 
   const features = [
     { icon: IconFolder, title: t('projectManagement'), desc: t('projectManagementDesc'), link: '/project' },
-    { icon: IconCode, title: t('featureAI.title'), desc: t('featureAI.desc'), link: '/project' },
+    { icon: IconTerminal, title: t('featureAI.title'), desc: t('featureAI.desc'), link: '/project' },
     { icon: IconCloud, title: t('cloudService'), desc: t('cloudServiceDesc'), link: '/cloud' },
   ];
 

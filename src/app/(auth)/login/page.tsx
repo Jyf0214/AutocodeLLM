@@ -187,8 +187,7 @@ export default function LoginPage() {
               width: 48,
               height: 48,
               borderRadius: 12,
-              background:
-                'linear-gradient(135deg, var(--lobe-color-primary), var(--lobe-color-violet))',
+              background: '#000000',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -197,10 +196,10 @@ export default function LoginPage() {
           >
             <UserOutlined style={{ fontSize: 24, color: '#fff' }} />
           </div>
-          <span style={{ fontWeight: 'bold', fontSize: 26, color: '#333333' }}>
+          <span style={{ fontWeight: 'bold', fontSize: 26, color: 'var(--text-primary)' }}>
             {t('title')}
           </span>
-          <span style={{ fontSize: 14, marginTop: 8, color: '#666666' }}>
+          <span style={{ fontSize: 14, marginTop: 8, color: 'var(--text-secondary)' }}>
             {t('subtitle')}
           </span>
         </div>
@@ -313,7 +312,7 @@ export default function LoginPage() {
         {/* 验证码提示 */}
         {loginMode === 'verificationCode' && (
           <div style={{ textAlign: 'center', marginTop: 16 }}>
-            <span style={{ fontSize: 12, color: '#666666' }}>
+            <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
               {t('codeHint')}
             </span>
           </div>

@@ -12,8 +12,8 @@ import '../styles/globals.css';
 
 export const metadata: Metadata = {
   title: 'AutocodeLLM — AI 编码代理平台',
-  description: '基于 LobeHub UI 的 AI 编码代理平台，支持函数调用、任务代理、文件操作、Web 搜索等完整工具链',
-  keywords: ['AI', '编码', '代理', 'LobeHub', 'LLM', '自动化工具'],
+  description: 'AutocodeLLM 编码代理平台，支持函数调用、任务代理、文件操作、Web 搜索等完整工具链',
+  keywords: ['编码', '代理', '自动化工具'],
   authors: [{ name: 'Jyf0214' }],
   creator: 'Jyf0214',
   publisher: 'AutocodeLLM',
