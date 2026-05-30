@@ -7,6 +7,8 @@ echo ""
 
 # 构建需要 DATABASE_URL，未设置时使用默认值
 export DATABASE_URL="${DATABASE_URL:-mysql://user:password@localhost:3306/autocodellm}"
+# 强制生产模式：避免 Turbopack + NODE_ENV=development 导致静态生成异常
+export NODE_ENV=production
 
 # ============================================================
 # 1️⃣ 构建检查 — 失败即阻拦
