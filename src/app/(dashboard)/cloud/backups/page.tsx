@@ -1,5 +1,8 @@
 'use client';
 
+// 该页面依赖 API 数据，禁止静态生成
+export const dynamic = 'force-dynamic';
+
 import { useCallback, useEffect, useState } from 'react';
 import { Card, Table, Tag, Button, Spin, Space } from 'antd';
 import { useTranslations } from 'next-intl';
