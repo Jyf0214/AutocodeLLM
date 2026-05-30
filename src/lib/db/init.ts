@@ -7,7 +7,8 @@
  * - 未设置时生成随机密码并打印到 stdout
  */
 
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
+import { hashSync } from 'bcryptjs';
 import { prisma } from './prisma';
 
 /**
@@ -58,9 +59,7 @@ async function initializeAdminUser(): Promise<void> {
 
   const adminPassword = getInitialAdminPassword();
 
-  const passwordHash = createHash('sha256')
-    .update(adminPassword)
-    .digest('hex');
+  const passwordHash = hashSync(adminPassword, 10);
 
   await prisma.user.create({
     data: {

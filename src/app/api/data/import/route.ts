@@ -164,42 +164,6 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
     }
   }
 
-  // 导入环境变量
-  if (data.envVars?.length) {
-    if (mode === 'overwrite') {
-      await db.environmentVariable.deleteMany();
-      progress.push('已清除现有环境变量');
-    }
-    for (const ev of data.envVars) {
-      try {
-        if (mode === 'merge') {
-          const existing = await db.environmentVariable.findUnique({ where: { key: ev.key } });
-          if (existing) {
-            await db.environmentVariable.update({
-              where: { key: ev.key },
-              data: { description: ev.description ?? '', enabled: ev.enabled ?? true },
-            });
-            skipped++;
-            continue;
-          }
-        }
-        await db.environmentVariable.create({
-          data: {
-            key: ev.key,
-            value: ev.value ?? '',
-            description: ev.description ?? '',
-            enabled: ev.enabled ?? true,
-          },
-        });
-        imported++;
-        progress.push(`环境变量 "${ev.key}" 导入成功`);
-      } catch (err) {
-        failed++;
-        progress.push(`环境变量 "${ev.key}" 导入失败: ${err instanceof Error ? err.message : '未知错误'}`);
-      }
-    }
-  }
-
 
 
   return NextResponse.json({

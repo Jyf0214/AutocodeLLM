@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { compareSync } from 'bcryptjs';
+import { compareSync, hashSync } from 'bcryptjs';
+import { createHash } from 'node:crypto';
 import { verificationCodes } from '@/lib/auth/verification-store';
 
 // 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
@@ -51,7 +52,7 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
     }
 
     // --- 登录频率限制（基于 IP） ---
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const ip = request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? 'unknown';
     const now = Date.now();
     const record = loginAttempts.get(ip);
 
@@ -127,32 +128,44 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
 
       // 使用 bcrypt 验证密码（替代原来的 SHA-256 无盐哈希）
       if (!compareSync(password, user.passwordHash)) {
-        // 记录失败次数
-        const currentRecord = loginAttempts.get(ip);
-        if (currentRecord) {
-          currentRecord.count += 1;
-        } else {
-          loginAttempts.set(ip, { count: 1, lastAttempt: now });
-        }
-
-        // 记录审计日志（仅记录 userId/action/success/message，不记录哈希值）
-        try {
-          await db.passwordAudit.create({
-            data: {
-              userId: user.id,
-              action: 'LOGIN_FAILED',
-              success: false,
-              message: '密码错误',
-            },
+        // 向后兼容：检查是否为旧版 SHA-256 无盐哈希
+        const sha256Hash = createHash('sha256').update(password).digest('hex');
+        if (sha256Hash === user.passwordHash) {
+          // 旧版哈希匹配，升级为 bcrypt 哈希
+          const newHash = hashSync(password, 10);
+          await db.user.update({
+            where: { id: user.id },
+            data: { passwordHash: newHash },
           });
-        } catch (err) {
-          console.error('[Audit] password audit failed:', err);
-        }
+          // 继续登录流程（不报错）
+        } else {
+          // 记录失败次数
+          const currentRecord = loginAttempts.get(ip);
+          if (currentRecord) {
+            currentRecord.count += 1;
+          } else {
+            loginAttempts.set(ip, { count: 1, lastAttempt: now });
+          }
 
-        return NextResponse.json(
-          { success: false, error: { message: '密码错误', code: 'INVALID_CREDENTIALS' } },
-          { status: 401 },
-        );
+          // 记录审计日志（仅记录 userId/action/success/message，不记录哈希值）
+          try {
+            await db.passwordAudit.create({
+              data: {
+                userId: user.id,
+                action: 'LOGIN_FAILED',
+                success: false,
+                message: '密码错误',
+              },
+            });
+          } catch (err) {
+            console.error('[Audit] password audit failed:', err);
+          }
+
+          return NextResponse.json(
+            { success: false, error: { message: '密码错误', code: 'INVALID_CREDENTIALS' } },
+            { status: 401 },
+          );
+        }
       }
 
       // 记录登录成功（仅记录 userId/action/success/message，不记录哈希值）

@@ -19,7 +19,6 @@ interface AuthStatus {
     local: boolean;
     github: boolean;
     githubApp: boolean;
-    clerk: boolean;
   };
   user: {
     id: string;
@@ -32,7 +31,7 @@ export default function HomePage() {
   const t = useTranslations('common.landing');
   const [isLoading, setIsLoading] = useState(false);
   const [authStatus, setAuthStatus] = useState<AuthStatus>({
-    availableMethods: { local: true, github: false, githubApp: false, clerk: false },
+    availableMethods: { local: true, github: false, githubApp: false },
     user: null,
   });
   const [loadingAuth, setLoadingAuth] = useState(true);
@@ -142,28 +141,17 @@ export default function HomePage() {
               </Button>
             </Link>
 
-            {(authStatus.availableMethods.github || authStatus.availableMethods.clerk) && (
+            {authStatus.availableMethods.github && (
               <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                {authStatus.availableMethods.github && (
-                  <a href="/api/auth/github" style={{ textDecoration: 'none' }}>
-                    <Button
-                      variant="outline"
-                      leftSection={<IconBrandGithub size={16} />}
-                      color="gray"
-                    >
-                      GitHub
-                    </Button>
-                  </a>
-                )}
-                {authStatus.availableMethods.clerk && (
+                <a href="/api/auth/github" style={{ textDecoration: 'none' }}>
                   <Button
                     variant="outline"
+                    leftSection={<IconBrandGithub size={16} />}
                     color="gray"
-                    onClick={() => notifications.show({ title: 'Clerk 登录尚未实现', message: '', color: 'yellow' })}
                   >
-                    Clerk
+                    GitHub
                   </Button>
-                )}
+                </a>
               </div>
             )}
           </div>

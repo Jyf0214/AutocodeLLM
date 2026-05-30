@@ -7,7 +7,6 @@ export interface AuthMethods {
   local: boolean;
   github: boolean;
   githubApp: boolean;
-  clerk: boolean;
 }
 
 export interface AuthConfig {
@@ -21,9 +20,6 @@ export interface AuthConfig {
     clientId: string;
     redirectUri: string;
   };
-  clerk?: {
-    publishableKey: string;
-  };
 }
 
 /**
@@ -34,10 +30,8 @@ export function getAuthConfig(): AuthConfig {
   const methods: AuthMethods = {
     local: true, // 本地登录始终可用
     github: !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
-    githubApp: process.env.GITHUB_APP_ENABLED === 'true' && 
+    githubApp: process.env.GITHUB_APP_ENABLED === 'true' &&
                !!(process.env.GITHUB_APP_ID && process.env.GITHUB_APP_PRIVATE_KEY),
-    clerk: process.env.CLERK_ENABLED === 'true' && 
-           !!(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY),
   };
 
   const config: AuthConfig = {
@@ -60,13 +54,6 @@ export function getAuthConfig(): AuthConfig {
       clientId: process.env.GITHUB_APP_CLIENT_ID!,
       // 修复: GitHub App 启用时, redirectUri 应为必需配置
       redirectUri: process.env.GITHUB_APP_REDIRECT_URI || (() => { throw new Error('GitHub App 已启用但 GITHUB_APP_REDIRECT_URI 未配置'); })(),
-    };
-  }
-
-  // Clerk 配置
-  if (methods.clerk) {
-    config.clerk = {
-      publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!,
     };
   }
 

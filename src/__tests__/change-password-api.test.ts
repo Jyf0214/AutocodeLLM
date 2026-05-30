@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createHash } from 'node:crypto';
+import { hashSync } from 'bcryptjs';
 
 // Mock Prisma
 const mockFindUnique = vi.fn();
@@ -122,7 +122,7 @@ describe('修改密码 API (/api/auth/change-password)', () => {
     expect(mockUpdate).toHaveBeenCalledWith({
       where: { id: userId },
       data: {
-        passwordHash: createHash('sha256').update('anotherSecurePassword!').digest('hex'),
+        passwordHash: expect.stringMatching(/^\$2[abxy]\$10\$/),
         forceChangePassword: false,
         isInitialPassword: false,
       },

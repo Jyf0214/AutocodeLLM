@@ -6,19 +6,9 @@ import { Notifications } from '@mantine/notifications';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { ConfigProvider } from 'antd';
 import { ThemeProvider } from '@/lib/ui';
-import ClerkProviderWrapper from '@/components/auth/ClerkProviderWrapper';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '../styles/globals.css';
-
-/**
- * 检查是否启用 Clerk（服务端）
- */
-function isClerkEnabled(): boolean {
-  return process.env.CLERK_ENABLED === 'true' && 
-         !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
-         !!process.env.CLERK_SECRET_KEY;
-}
 
 export const metadata: Metadata = {
   title: 'AutocodeLLM — AI 编码代理平台',
@@ -44,7 +34,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const messages = await getMessages();
-  const clerkEnabled = isClerkEnabled();
 
   const content = (
     <html lang="zh" suppressHydrationWarning>
@@ -92,10 +81,6 @@ export default async function RootLayout({
       </body>
     </html>
   );
-
-  if (clerkEnabled) {
-    return <ClerkProviderWrapper>{content}</ClerkProviderWrapper>;
-  }
 
   return content;
 }

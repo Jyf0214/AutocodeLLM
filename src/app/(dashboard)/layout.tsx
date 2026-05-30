@@ -9,7 +9,6 @@ import {
   HomeOutlined,
   FolderOutlined,
   SettingOutlined,
-  EnvironmentOutlined,
   UserOutlined,
   CloudServerOutlined,
   MenuOutlined,
@@ -23,7 +22,6 @@ import { Drawer, Menu } from 'antd';
 const MENU_ITEMS = [
   { key: '/', icon: <HomeOutlined />, labelKey: 'common.appName' },
   { key: '/project', icon: <FolderOutlined />, labelKey: 'common.project' },
-  { key: '/env', icon: <EnvironmentOutlined />, labelKey: 'common.env' },
   { key: '/setting', icon: <SettingOutlined />, labelKey: 'common.setting' },
   { key: '/logs', icon: <FileOutlined />, labelKey: 'common.logs' },
   { key: '/cloud', icon: <CloudServerOutlined />, labelKey: 'common.cloud' },

@@ -17,7 +17,7 @@ export const GET = withApiLogging('GET data/export', async function GET(request:
   if (auth.error) return auth.error;
 
   const { searchParams } = new URL(request.url);
-  const scope = searchParams.get('scope') ?? 'all'; // all, projects, providers, settings
+  const scope = searchParams.get('scope') ?? 'all'; // all, projects
 
   const data: Record<string, unknown> = {
     exportedAt: new Date().toISOString(),
@@ -28,20 +28,6 @@ export const GET = withApiLogging('GET data/export', async function GET(request:
     const db = await getPrisma();
     data.projects = await db.project.findMany({
       select: { id: true, name: true, description: true, createdAt: true, updatedAt: true },
-    });
-  }
-
-  if (scope === 'all' || scope === 'providers') {
-    const db = await getPrisma();
-    data.providers = await db.provider.findMany({
-      select: { id: true, name: true, baseUrl: true, enabled: true, providerType: true, sdkType: true },
-    });
-  }
-
-  if (scope === 'all' || scope === 'settings') {
-    const db = await getPrisma();
-    data.envVars = await db.environmentVariable.findMany({
-      select: { id: true, key: true, description: true, enabled: true },
     });
   }
 

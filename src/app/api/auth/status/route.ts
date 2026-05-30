@@ -25,7 +25,6 @@ export const GET = withApiLogging('GET auth/status', async function GET() {
       username: string;
       role: string;
       githubId: string | null;
-      clerkId: string | null;
     } | null = null;
     if (session?.userId) {
     const db = await getPrisma();
@@ -36,7 +35,6 @@ export const GET = withApiLogging('GET auth/status', async function GET() {
           username: true,
           role: true,
           githubId: true,
-          clerkId: true,
         },
       });
 

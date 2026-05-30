@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { compareSync, hashSync } from 'bcryptjs';
+import { createHash } from 'node:crypto';
 import { requireAuth } from '@/lib/auth';
 
 // 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
@@ -101,10 +102,22 @@ export const PUT = withApiLogging('PUT account', async function PUT(request: Req
       }
 
       if (!compareSync(body.oldPassword, user.passwordHash)) {
-        return NextResponse.json(
-          { success: false, error: { message: '旧密码不正确', code: 'INCORRECT_OLD_PASSWORD' } },
-          { status: 400 },
-        );
+        // 向后兼容：检查是否为旧版 SHA-256 无盐哈希
+        const sha256Hash = createHash('sha256').update(body.oldPassword).digest('hex');
+        if (sha256Hash === user.passwordHash) {
+          // 旧版哈希匹配，升级为 bcrypt 哈希
+          const newHash = hashSync(body.oldPassword, 10);
+          await db.user.update({
+            where: { id: userId },
+            data: { passwordHash: newHash },
+          });
+          // 继续密码修改流程（不报错）
+        } else {
+          return NextResponse.json(
+            { success: false, error: { message: '旧密码不正确', code: 'INCORRECT_OLD_PASSWORD' } },
+            { status: 400 },
+          );
+        }
       }
 
       if (body.newPassword.length < 8) {

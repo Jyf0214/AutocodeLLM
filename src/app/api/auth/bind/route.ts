@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { compareSync } from 'bcryptjs';
+import { compareSync, hashSync } from 'bcryptjs';
+import { createHash } from 'node:crypto';
 import { bindingCodes } from '@/lib/auth/verification-store';
 
 // 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
@@ -17,7 +18,7 @@ async function getPrisma() {
  *   username: string;
  *   password: string;
  *   code: string; // 12位验证码
- *   targetType: 'github' | 'clerk';
+ *   targetType: 'github';
  *   targetId: string;
  * }
  */
@@ -35,7 +36,7 @@ export const POST = withApiLogging('POST auth/bind', async function POST(request
     }
 
     // 验证目标类型
-    if (!['github', 'clerk'].includes(targetType)) {
+    if (!['github'].includes(targetType)) {
       return NextResponse.json(
         { success: false, error: { message: '无效的绑定类型', code: 'INVALID_TARGET_TYPE' } },
         { status: 400 },
@@ -98,43 +99,41 @@ export const POST = withApiLogging('POST auth/bind', async function POST(request
 
     // 使用 bcrypt 验证密码（替代原来的 SHA-256 无盐哈希）
     if (!compareSync(password, user.passwordHash)) {
-      return NextResponse.json(
-        { success: false, error: { message: '密码错误', code: 'INVALID_CREDENTIALS' } },
-        { status: 401 },
-      );
+      // 向后兼容：检查是否为旧版 SHA-256 无盐哈希
+      const sha256Hash = createHash('sha256').update(password).digest('hex');
+      if (sha256Hash === user.passwordHash) {
+        // 旧版哈希匹配，升级为 bcrypt 哈希
+        const newHash = hashSync(password, 10);
+        await db.user.update({
+          where: { id: user.id },
+          data: { passwordHash: newHash },
+        });
+        // 继续绑定流程（不报错）
+      } else {
+        return NextResponse.json(
+          { success: false, error: { message: '密码错误', code: 'INVALID_CREDENTIALS' } },
+          { status: 401 },
+        );
+      }
     }
 
     // 执行绑定
     const updateData: Record<string, unknown> = {};
-    
+
     if (targetType === 'github') {
       // 检查该 GitHub ID 是否已被其他用户绑定
       const existingGithubUser = await db.user.findFirst({
         where: { githubId: targetId },
       });
-      
+
       if (existingGithubUser && existingGithubUser.id !== user.id) {
         return NextResponse.json(
           { success: false, error: { message: '该 GitHub 账号已被其他用户绑定', code: 'GITHUB_ALREADY_BOUND' } },
           { status: 409 },
         );
       }
-      
+
       updateData.githubId = targetId;
-    } else if (targetType === 'clerk') {
-      // 检查该 Clerk ID 是否已被其他用户绑定
-      const existingClerkUser = await db.user.findFirst({
-        where: { clerkId: targetId },
-      });
-      
-      if (existingClerkUser && existingClerkUser.id !== user.id) {
-        return NextResponse.json(
-          { success: false, error: { message: '该 Clerk 账号已被其他用户绑定', code: 'CLERK_ALREADY_BOUND' } },
-          { status: 409 },
-        );
-      }
-      
-      updateData.clerkId = targetId;
     }
 
     // 更新用户
@@ -154,7 +153,6 @@ export const POST = withApiLogging('POST auth/bind', async function POST(request
         username: updatedUser.username,
         role: updatedUser.role || 'user',
         githubId: updatedUser.githubId,
-        clerkId: updatedUser.clerkId,
       },
     });
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createHash } from 'node:crypto';
+import { hashSync } from 'bcryptjs';
 
 // Mock Prisma
 const mockUser = vi.fn();
@@ -16,8 +16,7 @@ describe('登录 API (/api/auth/login)', () => {
     vi.clearAllMocks();
   });
 
-  const hashPassword = (password: string) =>
-    createHash('sha256').update(password).digest('hex');
+  const hashPassword = (password: string) => hashSync(password, 10);
 
   it('应该拒绝空用户名和密码', async () => {
     const { POST } = await import('@/app/api/auth/login/route');
