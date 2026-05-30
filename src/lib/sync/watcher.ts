@@ -1,8 +1,13 @@
 import { watch, type FSWatcher } from 'chokidar';
 import { createClient } from 'webdav';
-import { prisma } from '@/lib/db/prisma';
 import { decryptValue } from '@/lib/providers/api-client';
 import { pushToRemote } from './webdav';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 let watcher: FSWatcher | null = null;
 let isWatching = false;
@@ -11,7 +16,8 @@ let isWatching = false;
  * 启动文件监听
  */
 export async function startWatching(): Promise<boolean> {
-  const config = await prisma.webdavConfig.findFirst({
+  const db = await getPrisma();
+  const config = await db.webdavConfig.findFirst({
     where: { enabled: true },
   });
 

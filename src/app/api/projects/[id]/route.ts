@@ -6,13 +6,19 @@
  */
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { withApiLogging } from '@/lib/log';
 import {
+
   successResponse,
   errorResponse,
   handleError,
 } from '@/lib/api/response';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * 解析项目 ID 参数
@@ -32,7 +38,8 @@ export const GET = withApiLogging('GET projects/:id', async function GET(
   try {
     const id = await getProjectId(params);
 
-    const project = await prisma.project.findUnique({
+    const db = await getPrisma();
+    const project = await db.project.findUnique({
       where: { id },
     });
 
@@ -65,7 +72,8 @@ export const PUT = withApiLogging('PUT projects/:id', async function PUT(
     const body = (await request.json()) as { name?: string; description?: string };
     const { name, description } = body;
 
-    const existing = await prisma.project.findUnique({
+    const db = await getPrisma();
+    const existing = await db.project.findUnique({
       where: { id },
     });
 
@@ -77,7 +85,7 @@ export const PUT = withApiLogging('PUT projects/:id', async function PUT(
       return errorResponse('名称不能为空', 'INVALID_NAME', 400);
     }
 
-    const updatedProject = await prisma.project.update({
+    const updatedProject = await db.project.update({
       where: { id },
       data: {
         ...(name !== undefined && { name }),
@@ -108,7 +116,8 @@ export const DELETE = withApiLogging('DELETE projects/:id', async function DELET
   try {
     const id = await getProjectId(params);
 
-    const existing = await prisma.project.findUnique({
+    const db = await getPrisma();
+    const existing = await db.project.findUnique({
       where: { id },
     });
 
@@ -116,7 +125,7 @@ export const DELETE = withApiLogging('DELETE projects/:id', async function DELET
       return errorResponse('项目不存在', 'NOT_FOUND', 404);
     }
 
-    await prisma.project.delete({
+    await db.project.delete({
       where: { id },
     });
 

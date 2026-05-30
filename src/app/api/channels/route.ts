@@ -5,7 +5,6 @@
  */
 import { NextRequest } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import prisma from '@/lib/db/prisma';
 import {
   successResponse,
   errorResponse,
@@ -16,13 +15,21 @@ import {
 } from '@/lib/api/response';
 import type { CreateChannelRequest } from '@/lib/api/channel-types';
 
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { default: prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
+
+
 /** 获取频道列表 */
 export const GET = withApiLogging('GET channels', async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
     const projectId = searchParams.get('projectId');
 
-    const channels = await prisma.channel.findMany({
+    const db = await getPrisma();
+    const channels = await db.channel.findMany({
       where: projectId ? { projectId } : undefined,
       include: {
         project: { select: { id: true, name: true } },
@@ -51,8 +58,10 @@ export const POST = withApiLogging('POST channels', async function POST(request:
     });
     if (validation) return validation;
 
+    const db = await getPrisma();
+
     // 检查项目是否存在
-    const project = await prisma.project.findUnique({
+    const project = await db.project.findUnique({
       where: { id: body.projectId },
     });
     if (!project) {
@@ -60,14 +69,14 @@ export const POST = withApiLogging('POST channels', async function POST(request:
     }
 
     // 检查 Discord 频道是否已绑定
-    const existing = await prisma.channel.findUnique({
+    const existing = await db.channel.findUnique({
       where: { discordChannelId: body.discordChannelId },
     });
     if (existing) {
       return errorResponse('该 Discord 频道已被绑定', 'ALREADY_BOUND', 409);
     }
 
-    const channel = await prisma.channel.create({
+    const channel = await db.channel.create({
       data: {
         projectId: body.projectId,
         name: body.name,

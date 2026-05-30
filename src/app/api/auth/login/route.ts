@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { compareSync } from 'bcryptjs';
-import { prisma } from '@/lib/db/prisma';
 import { verificationCodes } from '@/lib/auth/verification-store';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 // 登录频率限制：Map<IP, { count: number; lastAttempt: number }>
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
@@ -10,18 +15,26 @@ const MAX_ATTEMPTS = 10;          // 最大失败次数
 const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 分钟窗口（毫秒）
 const CODE_CLEANUP_INTERVAL = 5 * 60 * 1000; // 验证码清理间隔（毫秒）
 
-// 定期清理过期验证码，防止内存泄漏
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, stored] of verificationCodes) {
-    if (now > stored.expiresAt) {
-      verificationCodes.delete(key);
+// 惰性启动定时器清理过期验证码（避免模块加载时创建定时器）
+let cleanupTimerInitialized = false;
+function lazyInitCleanupTimer() {
+  if (cleanupTimerInitialized) return;
+  cleanupTimerInitialized = true;
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, stored] of verificationCodes) {
+      if (now > stored.expiresAt) {
+        verificationCodes.delete(key);
+      }
     }
-  }
-}, CODE_CLEANUP_INTERVAL);
+  }, CODE_CLEANUP_INTERVAL);
+}
 
 export const POST = withApiLogging('POST auth/login', async function POST(request: Request) {
   try {
+    // 惰性启动清理定时器（避免模块加载时创建）
+    lazyInitCleanupTimer();
+
     const body = (await request.json()) as {
       username: string;
       password?: string;
@@ -91,7 +104,8 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
       verificationCodes.delete(username);
     }
 
-    const user = await prisma.user.findUnique({
+    const db = await getPrisma();
+    const user = await db.user.findUnique({
       where: { username },
     });
 
@@ -123,7 +137,7 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
 
         // 记录审计日志（仅记录 userId/action/success/message，不记录哈希值）
         try {
-          await prisma.passwordAudit.create({
+          await db.passwordAudit.create({
             data: {
               userId: user.id,
               action: 'LOGIN_FAILED',
@@ -143,7 +157,7 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
 
       // 记录登录成功（仅记录 userId/action/success/message，不记录哈希值）
       try {
-        await prisma.passwordAudit.create({
+        await db.passwordAudit.create({
           data: {
             userId: user.id,
             action: 'LOGIN_SUCCESS',

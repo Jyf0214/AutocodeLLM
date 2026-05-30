@@ -3,7 +3,12 @@
  * 处理 messageCreate 事件，将消息持久化到数据库
  */
 import type { Message } from 'discord.js';
-import prisma from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { default: prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /** 处理 Discord 新消息事件 */
 export async function handleDiscordMessage(message: Message): Promise<void> {
@@ -11,7 +16,8 @@ export async function handleDiscordMessage(message: Message): Promise<void> {
   if (message.author.bot) return;
 
   // 检查该频道是否已绑定
-  const channel = await prisma.channel.findUnique({
+  const db = await getPrisma();
+  const channel = await db.channel.findUnique({
     where: { discordChannelId: message.channelId },
   });
 
@@ -24,7 +30,7 @@ export async function handleDiscordMessage(message: Message): Promise<void> {
       : null;
 
     // 写入消息记录
-    await prisma.channelMessage.upsert({
+    await db.channelMessage.upsert({
       where: { discordMsgId: message.id },
       create: {
         channelId: channel.id,
@@ -43,7 +49,7 @@ export async function handleDiscordMessage(message: Message): Promise<void> {
     });
 
     // 更新频道最后同步时间
-    await prisma.channel.update({
+    await db.channel.update({
       where: { id: channel.id },
       data: { lastSyncedAt: new Date() },
     });

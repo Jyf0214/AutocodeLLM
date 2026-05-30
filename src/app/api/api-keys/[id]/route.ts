@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * DELETE /api/api-keys/[id]
@@ -16,7 +21,8 @@ export const DELETE = withApiLogging('DELETE api-keys/:id', async function DELET
 
   const { id } = await params;
 
-  const key = await prisma.apiKey.findUnique({ where: { id } });
+    const db = await getPrisma();
+  const key = await db.apiKey.findUnique({ where: { id } });
   if (key?.userId !== auth.session.userId) {
     return NextResponse.json(
       { success: false, error: { message: 'API Key 不存在', code: 'NOT_FOUND' } },
@@ -24,7 +30,7 @@ export const DELETE = withApiLogging('DELETE api-keys/:id', async function DELET
     );
   }
 
-  await prisma.apiKey.delete({ where: { id } });
+  await db.apiKey.delete({ where: { id } });
 
   return NextResponse.json({ success: true });
 });
@@ -47,7 +53,8 @@ export const PATCH = withApiLogging('PATCH api-keys/:id', async function PATCH(
     name?: string;
   };
 
-  const key = await prisma.apiKey.findUnique({ where: { id } });
+    const db = await getPrisma();
+  const key = await db.apiKey.findUnique({ where: { id } });
   if (key?.userId !== auth.session.userId) {
     return NextResponse.json(
       { success: false, error: { message: 'API Key 不存在', code: 'NOT_FOUND' } },
@@ -55,7 +62,7 @@ export const PATCH = withApiLogging('PATCH api-keys/:id', async function PATCH(
     );
   }
 
-  const updated = await prisma.apiKey.update({
+  const updated = await db.apiKey.update({
     where: { id },
     data: {
       ...(body.enabled !== undefined && { enabled: body.enabled }),

@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { requireAuth } from '@/lib/auth';
-import { prisma } from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 interface ImportData {
   projects?: {
@@ -53,22 +58,24 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
 
   const { data } = body;
 
+  const db = await getPrisma();
+
   // 导入项目
   if (data.projects?.length) {
     if (mode === 'overwrite') {
-      await prisma.project.deleteMany();
+      await db.project.deleteMany();
       progress.push('已清除现有项目');
     }
     for (const ws of data.projects) {
       try {
         if (mode === 'merge' && ws.id) {
-          await prisma.project.upsert({
+          await db.project.upsert({
             where: { id: ws.id },
             update: { name: ws.name, description: ws.description ?? '' },
             create: { name: ws.name, description: ws.description ?? '' },
           });
         } else {
-          await prisma.project.create({
+          await db.project.create({
             data: { name: ws.name, description: ws.description ?? '' },
           });
         }
@@ -85,7 +92,7 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
   if (data.providers?.length) {
     if (mode === 'overwrite') {
       // 使用事务包装 deleteMany + 批量创建，确保原子性
-      await prisma.$transaction(async (tx) => {
+      await db.$transaction(async (tx) => {
         await tx.provider.deleteMany();
         progress.push('已清除现有提供商');
 
@@ -120,9 +127,9 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
       // merge 模式：逐条处理
       for (const p of data.providers) {
         try {
-          const existing = await prisma.provider.findUnique({ where: { name: p.name } });
+          const existing = await db.provider.findUnique({ where: { name: p.name } });
           if (existing) {
-            await prisma.provider.update({
+            await db.provider.update({
               where: { name: p.name },
               data: { baseUrl: p.baseUrl, enabled: p.enabled ?? true },
             });
@@ -137,7 +144,7 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
             continue;
           }
 
-          await prisma.provider.create({
+          await db.provider.create({
             data: {
               name: p.name,
               baseUrl: p.baseUrl,
@@ -160,15 +167,15 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
   // 导入环境变量
   if (data.envVars?.length) {
     if (mode === 'overwrite') {
-      await prisma.environmentVariable.deleteMany();
+      await db.environmentVariable.deleteMany();
       progress.push('已清除现有环境变量');
     }
     for (const ev of data.envVars) {
       try {
         if (mode === 'merge') {
-          const existing = await prisma.environmentVariable.findUnique({ where: { key: ev.key } });
+          const existing = await db.environmentVariable.findUnique({ where: { key: ev.key } });
           if (existing) {
-            await prisma.environmentVariable.update({
+            await db.environmentVariable.update({
               where: { key: ev.key },
               data: { description: ev.description ?? '', enabled: ev.enabled ?? true },
             });
@@ -176,7 +183,7 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
             continue;
           }
         }
-        await prisma.environmentVariable.create({
+        await db.environmentVariable.create({
           data: {
             key: ev.key,
             value: ev.value ?? '',

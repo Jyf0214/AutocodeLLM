@@ -8,7 +8,6 @@
 
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
   errorResponse,
@@ -18,16 +17,24 @@ import {
 import { encryptValue, decryptValue } from '@/lib/providers/api-client';
 import { maskValue } from '@/lib/api/response';
 import type {
+
   CreateEnvVariableRequest,
   UpdateEnvVariableRequest,
 } from '@/lib/api/env-types';
 
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 /**
  * GET /api/env - 获取所有环境变量列表
  */
 export const GET = withApiLogging('GET env', async function GET(): Promise<NextResponse>  {
   try {
-    const envVars = await prisma.environmentVariable.findMany({
+    const db = await getPrisma();
+    const envVars = await db.environmentVariable.findMany({
       orderBy: { createdAt: 'desc' },
     });
 
@@ -63,7 +70,8 @@ export const POST = withApiLogging('POST env', async function POST(
       return validationError;
     }
 
-    const existingEnvVar = await prisma.environmentVariable.findUnique({
+    const db = await getPrisma();
+    const existingEnvVar = await db.environmentVariable.findUnique({
       where: { key },
     });
 
@@ -71,7 +79,7 @@ export const POST = withApiLogging('POST env', async function POST(
       return errorResponse('环境变量名已存在', 'DUPLICATE_KEY', 409);
     }
 
-    const newEnvVar = await prisma.environmentVariable.create({
+    const newEnvVar = await db.environmentVariable.create({
       data: {
         key,
         value: encryptValue(value),
@@ -111,7 +119,8 @@ export const PUT = withApiLogging('PUT env', async function PUT(
       return errorResponse('缺少 ID 字段', 'MISSING_ID', 400);
     }
 
-    const existingEnvVar = await prisma.environmentVariable.findUnique({
+    const db = await getPrisma();
+    const existingEnvVar = await db.environmentVariable.findUnique({
       where: { id },
     });
 
@@ -120,7 +129,7 @@ export const PUT = withApiLogging('PUT env', async function PUT(
     }
 
     if (key && key !== existingEnvVar.key) {
-      const duplicateCheck = await prisma.environmentVariable.findUnique({
+      const duplicateCheck = await db.environmentVariable.findUnique({
         where: { key },
       });
       if (duplicateCheck && duplicateCheck.id !== id) {
@@ -128,7 +137,7 @@ export const PUT = withApiLogging('PUT env', async function PUT(
       }
     }
 
-    const updatedEnvVar = await prisma.environmentVariable.update({
+    const updatedEnvVar = await db.environmentVariable.update({
       where: { id },
       data: {
         ...(key !== undefined && { key }),
@@ -166,7 +175,8 @@ export const DELETE = withApiLogging('DELETE env', async function DELETE(
       return errorResponse('缺少 ID 参数', 'MISSING_ID', 400);
     }
 
-    const existingEnvVar = await prisma.environmentVariable.findUnique({
+    const db = await getPrisma();
+    const existingEnvVar = await db.environmentVariable.findUnique({
       where: { id },
     });
 
@@ -174,7 +184,7 @@ export const DELETE = withApiLogging('DELETE env', async function DELETE(
       return errorResponse('环境变量不存在', 'NOT_FOUND', 404);
     }
 
-    await prisma.environmentVariable.delete({ where: { id } });
+    await db.environmentVariable.delete({ where: { id } });
 
     return successResponse({ id });
   } catch (error) {

@@ -5,7 +5,6 @@
  */
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { withApiLogging } from '@/lib/log';
 import {
   successResponse,
@@ -13,10 +12,17 @@ import {
   handleError,
 } from '@/lib/api/response';
 import type {
+
   ProjectLogListResponse,
   ProjectLogResponse,
   CreateProjectLogRequest,
 } from '@/lib/api/project-log-types';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * GET /api/projects/[id]/logs - 获取项目日志
@@ -32,7 +38,8 @@ export const GET = withApiLogging('GET projects/:id/logs', async function GET(
     const pageSize = parseInt(searchParams.get('pageSize') ?? '50', 10);
     const type = searchParams.get('type') ?? undefined;
 
-    const project = await prisma.project.findUnique({
+    const db = await getPrisma();
+    const project = await db.project.findUnique({
       where: { id },
     });
 
@@ -40,7 +47,7 @@ export const GET = withApiLogging('GET projects/:id/logs', async function GET(
       return errorResponse('项目不存在', 'PROJECT_NOT_FOUND', 404);
     }
 
-    const logs = await prisma.projectLog.findMany({
+    const logs = await db.projectLog.findMany({
       where: {
         projectId: id,
         ...(type ? { type } : {}),
@@ -82,7 +89,8 @@ export const POST = withApiLogging('POST projects/:id/logs', async function POST
       return errorResponse('缺少日志类型参数', 'MISSING_TYPE', 400);
     }
 
-    const project = await prisma.project.findUnique({
+    const db = await getPrisma();
+    const project = await db.project.findUnique({
       where: { id },
     });
 
@@ -90,7 +98,7 @@ export const POST = withApiLogging('POST projects/:id/logs', async function POST
       return errorResponse('项目不存在', 'PROJECT_NOT_FOUND', 404);
     }
 
-    const newLog = await prisma.projectLog.create({
+    const newLog = await db.projectLog.create({
       data: {
         projectId: id,
         type,

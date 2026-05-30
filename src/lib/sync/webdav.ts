@@ -1,12 +1,18 @@
 import { createClient, type WebDAVClient } from 'webdav';
-import { prisma } from '@/lib/db/prisma';
 import { decryptValue } from '@/lib/providers/api-client';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * 创建 WebDAV 客户端（自动解密密码）
  */
 export async function createWebdavClient(): Promise<WebDAVClient | null> {
-  const config = await prisma.webdavConfig.findFirst({
+  const db = await getPrisma();
+  const config = await db.webdavConfig.findFirst({
     where: { enabled: true },
   });
   if (!config) return null;
@@ -152,14 +158,15 @@ export async function saveWebdavConfig(data: {
   remotePath: string;
   enabled: boolean;
 }): Promise<void> {
-  const existing = await prisma.webdavConfig.findFirst();
+  const db = await getPrisma();
+  const existing = await db.webdavConfig.findFirst();
   if (existing) {
-    await prisma.webdavConfig.update({
+    await db.webdavConfig.update({
       where: { id: existing.id },
       data,
     });
   } else {
-    await prisma.webdavConfig.create({ data });
+    await db.webdavConfig.create({ data });
   }
 }
 
@@ -175,7 +182,8 @@ export async function getSyncStatus(): Promise<{
 }> {
   // 使用动态导入避免与 watcher.ts 的循环依赖
   const { isWatchActive } = await import('./watcher');
-  const config = await prisma.webdavConfig.findFirst();
+  const db = await getPrisma();
+  const config = await db.webdavConfig.findFirst();
   return {
     enabled: config?.enabled ?? false,
     watching: isWatchActive(),

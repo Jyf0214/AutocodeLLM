@@ -5,7 +5,6 @@
  */
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { withApiLogging } from '@/lib/log';
 import {
   successResponse,
@@ -14,6 +13,12 @@ import {
 } from '@/lib/api/response';
 import type { ProjectResponse, CreateProjectRequest } from '@/lib/api/project-types';
 
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
+
 /**
  * GET /api/projects - 获取所有项目列表
  */
@@ -21,7 +26,8 @@ export const GET = withApiLogging('GET /api/projects', async function GET(
   request: Request,
 ): Promise<NextResponse<ProjectResponse>> {
   try {
-    const projects = await prisma.project.findMany({
+    const db = await getPrisma();
+    const projects = await db.project.findMany({
       orderBy: { createdAt: 'desc' },
     });
 
@@ -56,7 +62,8 @@ export const POST = withApiLogging('POST /api/projects', async function POST(
 
     const { name, description } = body;
 
-    const newProject = await prisma.project.create({
+    const db = await getPrisma();
+    const newProject = await db.project.create({
       data: {
         name,
         description: description ?? '',

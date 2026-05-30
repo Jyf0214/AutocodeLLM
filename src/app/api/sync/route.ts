@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth';
 import { encryptValue, decryptValue } from '@/lib/providers/api-client';
 import { testConnection, createWebdavClient, pullFromRemote, pushToRemote } from '@/lib/sync/webdav';
 import { startWatching, stopWatching, isWatchActive } from '@/lib/sync/watcher';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 export const GET = withApiLogging('GET sync', async function GET(request: Request) {
   try {
@@ -12,7 +17,8 @@ export const GET = withApiLogging('GET sync', async function GET(request: Reques
     const auth = await requireAuth(request);
     if (auth.error) return auth.error;
 
-    const config = await prisma.webdavConfig.findFirst();
+    const db = await getPrisma();
+    const config = await db.webdavConfig.findFirst();
     return NextResponse.json({
       success: true,
       data: {
@@ -60,14 +66,15 @@ export const POST = withApiLogging('POST sync', async function POST(request: Req
         enabled: isEnabled,
       };
 
-      const existing = await prisma.webdavConfig.findFirst();
+      const db = await getPrisma();
+      const existing = await db.webdavConfig.findFirst();
       if (existing) {
-        await prisma.webdavConfig.update({
+        await db.webdavConfig.update({
           where: { id: existing.id },
           data,
         });
       } else {
-        await prisma.webdavConfig.create({ data });
+        await db.webdavConfig.create({ data });
       }
 
       // 如果启用了同步，自动启动文件监听
@@ -91,7 +98,7 @@ export const POST = withApiLogging('POST sync', async function POST(request: Req
       // 如果测试时未提供密码，尝试从数据库读取并解密
       let effectivePassword = password;
       if (!effectivePassword) {
-        const existingConfig = await prisma.webdavConfig.findFirst();
+        const existingConfig = await db.webdavConfig.findFirst();
         if (existingConfig?.password) {
           effectivePassword = decryptValue(existingConfig.password);
         }
@@ -112,7 +119,7 @@ export const POST = withApiLogging('POST sync', async function POST(request: Req
           { status: 400 },
         );
       }
-      const config = await prisma.webdavConfig.findFirst();
+      const config = await db.webdavConfig.findFirst();
       const localDir = process.env.SYNC_LOCAL_DIR ?? './sync';
       const count = await pullFromRemote(client, localDir, config?.remotePath ?? '/');
       return NextResponse.json({ success: true, message: '已拉取 ' + String(count) + ' 个文件' });
@@ -126,7 +133,7 @@ export const POST = withApiLogging('POST sync', async function POST(request: Req
           { status: 400 },
         );
       }
-      const config = await prisma.webdavConfig.findFirst();
+      const config = await db.webdavConfig.findFirst();
       if (!config) {
         return NextResponse.json(
           { success: false, error: { message: 'WebDAV 未配置', code: 'NOT_CONFIGURED' } },
@@ -195,9 +202,10 @@ export const DELETE = withApiLogging('DELETE sync', async function DELETE(reques
     if (auth.error) return auth.error;
 
     await stopWatching();
-    const existing = await prisma.webdavConfig.findFirst();
+    const db = await getPrisma();
+    const existing = await db.webdavConfig.findFirst();
     if (existing) {
-      await prisma.webdavConfig.delete({ where: { id: existing.id } });
+      await db.webdavConfig.delete({ where: { id: existing.id } });
     }
     return NextResponse.json({ success: true, message: '配置已删除' });
   } catch (err) {

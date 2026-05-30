@@ -5,7 +5,6 @@
 
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
   errorResponse,
@@ -13,6 +12,12 @@ import {
 } from '@/lib/api/response';
 import { PRESET_PROVIDERS } from '@/lib/providers';
 import type { AddPresetProviderResponse } from '@/lib/api/provider-types';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * POST /api/providers/preset - 从预置配置添加提供商
@@ -34,7 +39,8 @@ export const POST = withApiLogging('POST providers/preset', async function POST(
       return errorResponse('预置提供商不存在', 'PRESET_NOT_FOUND', 404);
     }
 
-    const existing = await prisma.provider.findFirst({
+    const db = await getPrisma();
+    const existing = await db.provider.findFirst({
       where: {
         OR: [
           { name: preset.name },
@@ -47,7 +53,7 @@ export const POST = withApiLogging('POST providers/preset', async function POST(
       return errorResponse('该提供商已添加', 'ALREADY_EXISTS', 409);
     }
 
-    const newProvider = await prisma.provider.create({
+    const newProvider = await db.provider.create({
       data: {
         name: preset.name,
         baseUrl: preset.baseUrl ?? '',

@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { hashSync } from 'bcryptjs';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 export const POST = withApiLogging('POST auth/change-password', async function POST(request: Request) {
   try {
@@ -28,7 +33,8 @@ export const POST = withApiLogging('POST auth/change-password', async function P
       );
     }
 
-    const user = await prisma.user.findUnique({
+    const db = await getPrisma();
+    const user = await db.user.findUnique({
       where: { id: userId },
     });
 
@@ -43,7 +49,7 @@ export const POST = withApiLogging('POST auth/change-password', async function P
     const newPasswordHash = hashSync(newPassword, 10);
 
     // 修改密码后强制清除初始密码标志，不允许恢复为 true
-    await prisma.user.update({
+    await db.user.update({
       where: { id: userId },
       data: {
         passwordHash: newPasswordHash,
@@ -54,7 +60,7 @@ export const POST = withApiLogging('POST auth/change-password', async function P
 
     // 记录密码修改审计日志（仅记录 userId/action/success/message，不记录哈希值）
     try {
-      await prisma.passwordAudit.create({
+      await db.passwordAudit.create({
         data: {
           userId,
           action: 'PASSWORD_CHANGED',

@@ -4,7 +4,12 @@
  */
 import type { ChatInputCommandInteraction } from 'discord.js';
 import { randomBytes } from 'crypto';
-import prisma from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { default: prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /** 生成 6 位随机绑定码 */
 function generateBindingCode(): string {
@@ -25,8 +30,10 @@ export async function handleConnectCommand(
   const discordUserName = interaction.user.username;
 
   try {
+    const db = await getPrisma();
+
     // 检查是否已有绑定
-    const existing = await prisma.discordBinding.findUnique({
+    const existing = await db.discordBinding.findUnique({
       where: { discordUserId },
       include: { project: { select: { name: true } } },
     });
@@ -46,19 +53,19 @@ export async function handleConnectCommand(
 
     if (existing) {
       // 更新已有记录的绑定码
-      await prisma.discordBinding.update({
+      await db.discordBinding.update({
         where: { id: existing.id },
         data: { code, codeExpiresAt },
       });
     } else {
       // 创建待绑定记录，查找默认项目
-      let defaultProject = await prisma.project.findFirst({ orderBy: { createdAt: 'asc' } });
+      let defaultProject = await db.project.findFirst({ orderBy: { createdAt: 'asc' } });
       if (!defaultProject) {
-        defaultProject = await prisma.project.create({
+        defaultProject = await db.project.create({
           data: { name: 'Discord 默认项目', description: 'Discord 绑定自动创建' },
         });
       }
-      await prisma.discordBinding.create({
+      await db.discordBinding.create({
         data: {
           discordUserId,
           discordUserName,

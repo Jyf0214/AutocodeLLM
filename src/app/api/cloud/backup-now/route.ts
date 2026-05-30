@@ -1,13 +1,20 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
 import { decryptValue } from '@/lib/providers/api-client';
 import fs from 'fs';
 import path from 'path';
 
-// 修复: 使用环境变量或当前工作目录替换硬编码的 /home/node/ 路径
-const BACKUP_LOG_FILE =
-  process.env.BACKUP_LOG_FILE || `${process.env.HOME || process.cwd()}/.autocodellm/backups/backup-logs.json`;
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
+
+
+// 惰性读取备份日志文件路径（避免模块加载时读取 process.env）
+function getBackupLogFile(): string {
+  return process.env.BACKUP_LOG_FILE || `${process.env.HOME || process.cwd()}/.autocodellm/backups/backup-logs.json`;
+}
 
 interface BackupLog {
   timestamp: string;
@@ -18,19 +25,21 @@ interface BackupLog {
 }
 
 function ensureBackupLogFile() {
-  const dir = path.dirname(BACKUP_LOG_FILE);
+  const backupLogFile = getBackupLogFile();
+  const dir = path.dirname(backupLogFile);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  if (!fs.existsSync(BACKUP_LOG_FILE)) {
-    fs.writeFileSync(BACKUP_LOG_FILE, JSON.stringify([], null, 2));
+  if (!fs.existsSync(backupLogFile)) {
+    fs.writeFileSync(backupLogFile, JSON.stringify([], null, 2));
   }
 }
 
 function readBackupLogs(): BackupLog[] {
   try {
     ensureBackupLogFile();
-    const data = fs.readFileSync(BACKUP_LOG_FILE, 'utf-8');
+    const backupLogFile = getBackupLogFile();
+    const data = fs.readFileSync(backupLogFile, 'utf-8');
     return JSON.parse(data);
   } catch (err) {
     console.error('[Backup] 读取备份日志失败:', err);
@@ -42,7 +51,8 @@ function appendBackupLog(log: BackupLog) {
   ensureBackupLogFile();
   const logs = readBackupLogs();
   logs.unshift(log);
-  fs.writeFileSync(BACKUP_LOG_FILE, JSON.stringify(logs.slice(0, 100), null, 2));
+  const backupLogFile = getBackupLogFile();
+  fs.writeFileSync(backupLogFile, JSON.stringify(logs.slice(0, 100), null, 2));
 }
 
 export const POST = withApiLogging('POST cloud/backup-now', async function POST(request: Request) {
@@ -57,7 +67,8 @@ export const POST = withApiLogging('POST cloud/backup-now', async function POST(
       );
     }
 
-    const project = await prisma.project.findUnique({
+    const db = await getPrisma();
+    const project = await db.project.findUnique({
       where: { id: projectId },
     });
 
@@ -77,7 +88,7 @@ export const POST = withApiLogging('POST cloud/backup-now', async function POST(
     });
 
     // WebdavConfig 是全局单例，不属于 Project
-    const config = await prisma.webdavConfig.findFirst({ where: { enabled: true } });
+    const config = await db.webdavConfig.findFirst({ where: { enabled: true } });
 
     if (!config) {
       appendBackupLog({
@@ -151,7 +162,7 @@ export const POST = withApiLogging('POST cloud/backup-now', async function POST(
     }
 
     // 记录备份到数据库
-    await prisma.backup.create({
+    await db.backup.create({
       data: {
         projectId: project.id,
         name: 'WebDAV 备份 - ' + new Date().toISOString(),

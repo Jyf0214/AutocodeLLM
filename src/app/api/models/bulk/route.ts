@@ -5,13 +5,18 @@
 
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
   errorResponse,
   handleError,
 } from '@/lib/api/response';
 import type { BulkAddResponse } from '@/lib/api/model-types';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * POST /api/models/bulk - 批量添加模型配置
@@ -42,7 +47,8 @@ export const POST = withApiLogging('POST models/bulk', async function POST(
       }
 
       try {
-        const existing = await prisma.provider.findUnique({
+    const db = await getPrisma();
+        const existing = await db.provider.findUnique({
           where: { name },
         });
 
@@ -51,7 +57,7 @@ export const POST = withApiLogging('POST models/bulk', async function POST(
           continue;
         }
 
-        await prisma.provider.create({
+        await db.provider.create({
           data: {
             name,
             baseUrl: baseUrl ?? '',

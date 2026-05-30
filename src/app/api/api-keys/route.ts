@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuth, generateApiKey } from '@/lib/auth';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * GET /api/api-keys
@@ -11,7 +16,8 @@ export const GET = withApiLogging('GET api-keys', async function GET(request: Re
   const auth = await requireAuth(request, 'api_key');
   if (auth.error) return auth.error;
 
-  const keys = await prisma.apiKey.findMany({
+    const db = await getPrisma();
+  const keys = await db.apiKey.findMany({
     where: { userId: auth.session.userId },
     select: {
       id: true,
@@ -58,7 +64,8 @@ export const POST = withApiLogging('POST api-keys', async function POST(request:
 
   const { key, keyHash, prefix } = generateApiKey();
 
-  const apiKey = await prisma.apiKey.create({
+    const db = await getPrisma();
+  const apiKey = await db.apiKey.create({
     data: {
       userId: auth.session.userId,
       name: body.name,

@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 interface ProjectBackup {
   projectId: string;
@@ -13,7 +18,8 @@ interface ProjectBackup {
 
 export const GET = withApiLogging('GET cloud/backups', async function GET() {
   try {
-    const projects = await prisma.project.findMany({
+    const db = await getPrisma();
+    const projects = await db.project.findMany({
       select: {
         id: true,
         name: true,
@@ -23,7 +29,7 @@ export const GET = withApiLogging('GET cloud/backups', async function GET() {
 
     const backups: ProjectBackup[] = await Promise.all(
       projects.map(async (ws) => {
-        const backupRecords = await prisma.backup.findMany({
+        const backupRecords = await db.backup.findMany({
           where: { projectId: ws.id },
           orderBy: { createdAt: 'desc' },
         });

@@ -6,7 +6,12 @@
  */
 import { createHash, randomBytes } from 'node:crypto';
 import { cookies } from 'next/headers';
-import { prisma } from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 // ============================================================
 // 角色定义
@@ -49,7 +54,8 @@ export async function getSession(): Promise<Session | null> {
   const userId = cookieStore.get('userId')?.value;
   if (!userId) return null;
 
-  const user = await prisma.user.findUnique({
+  const db = await getPrisma();
+  const user = await db.user.findUnique({
     where: { id: userId },
     select: { id: true, username: true, role: true },
   });
@@ -77,7 +83,8 @@ export interface ApiKeyAuthResult {
 export async function validateApiKey(key: string): Promise<ApiKeyAuthResult> {
   const keyHash = createHash('sha256').update(key).digest('hex');
 
-  const apiKey = await prisma.apiKey.findUnique({
+  const db = await getPrisma();
+  const apiKey = await db.apiKey.findUnique({
     where: { keyHash },
     select: {
       id: true,
@@ -95,7 +102,7 @@ export async function validateApiKey(key: string): Promise<ApiKeyAuthResult> {
   }
 
   // 更新最后使用时间
-  await prisma.apiKey.update({
+  await db.apiKey.update({
     where: { id: apiKey.id },
     data: { lastUsedAt: new Date() },
   }).catch((error) => {

@@ -8,7 +8,6 @@
 
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
   errorResponse,
@@ -16,16 +15,24 @@ import {
   validateRequiredFields,
 } from '@/lib/api/response';
 import type {
+
   CreateModelConfigRequest,
   UpdateModelConfigRequest,
 } from '@/lib/api/model-types';
 
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 /**
  * GET /api/models - 获取所有模型配置列表
  */
 export const GET = withApiLogging('GET models', async function GET(): Promise<NextResponse>  {
   try {
-    const providers = await prisma.provider.findMany({
+    const db = await getPrisma();
+    const providers = await db.provider.findMany({
       orderBy: { createdAt: 'desc' },
     });
 
@@ -62,7 +69,8 @@ export const POST = withApiLogging('POST models', async function POST(
       return validationError;
     }
 
-    const existingProvider = await prisma.provider.findUnique({
+    const db = await getPrisma();
+    const existingProvider = await db.provider.findUnique({
       where: { name },
     });
 
@@ -70,7 +78,7 @@ export const POST = withApiLogging('POST models', async function POST(
       return errorResponse('模型名称已存在', 'DUPLICATE_NAME', 409);
     }
 
-    const newProvider = await prisma.provider.create({
+    const newProvider = await db.provider.create({
       data: {
         name,
         baseUrl: baseUrl ?? '',
@@ -113,7 +121,8 @@ export const PUT = withApiLogging('PUT models', async function PUT(
       return errorResponse('缺少 ID 字段', 'MISSING_ID', 400);
     }
 
-    const existingProvider = await prisma.provider.findUnique({
+    const db = await getPrisma();
+    const existingProvider = await db.provider.findUnique({
       where: { id },
     });
 
@@ -122,7 +131,7 @@ export const PUT = withApiLogging('PUT models', async function PUT(
     }
 
     if (name && name !== existingProvider.name) {
-      const duplicateCheck = await prisma.provider.findUnique({
+      const duplicateCheck = await db.provider.findUnique({
         where: { name },
       });
       if (duplicateCheck && duplicateCheck.id !== id) {
@@ -130,7 +139,7 @@ export const PUT = withApiLogging('PUT models', async function PUT(
       }
     }
 
-    const updatedProvider = await prisma.provider.update({
+    const updatedProvider = await db.provider.update({
       where: { id },
       data: {
         ...(name !== undefined && { name }),
@@ -170,7 +179,8 @@ export const DELETE = withApiLogging('DELETE models', async function DELETE(
       return errorResponse('缺少 ID 参数', 'MISSING_ID', 400);
     }
 
-    const existingProvider = await prisma.provider.findUnique({
+    const db = await getPrisma();
+    const existingProvider = await db.provider.findUnique({
       where: { id },
     });
 
@@ -178,7 +188,7 @@ export const DELETE = withApiLogging('DELETE models', async function DELETE(
       return errorResponse('模型配置不存在', 'NOT_FOUND', 404);
     }
 
-    await prisma.provider.delete({ where: { id } });
+    await db.provider.delete({ where: { id } });
 
     return successResponse({ id });
   } catch (error) {

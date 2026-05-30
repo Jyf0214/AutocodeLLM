@@ -5,13 +5,18 @@
 
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
   errorResponse,
   handleError,
 } from '@/lib/api/response';
 import { callProviderAPI } from '@/lib/providers/api-client';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * 聊天消息接口
@@ -90,7 +95,8 @@ export const POST = withApiLogging('POST projects/:id/chat', async function POST
     }
 
     // 使用事务确保用户消息、助手消息和日志的一致性写入
-    const { userMsg, assistantMsg } = await prisma.$transaction(async (tx) => {
+    const db = await getPrisma();
+    const { userMsg, assistantMsg } = await db.$transaction(async (tx) => {
       // 保存用户消息
       const userMsg = await tx.chatMessage.create({
         data: {

@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
 import { isWatchActive } from '@/lib/sync/watcher';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 interface SyncStatus {
   enabled: boolean;
@@ -24,7 +29,8 @@ interface CloudOverview {
 
 export const GET = withApiLogging('GET cloud/overview', async function GET() {
   try {
-    const config = await prisma.webdavConfig.findFirst();
+    const db = await getPrisma();
+    const config = await db.webdavConfig.findFirst();
     const syncStatus: SyncStatus = {
       enabled: config?.enabled ?? false,
       watching: isWatchActive(),
@@ -32,7 +38,7 @@ export const GET = withApiLogging('GET cloud/overview', async function GET() {
       remotePath: config?.remotePath ?? '',
     };
 
-    const projects = await prisma.project.findMany({
+    const projects = await db.project.findMany({
       select: {
         id: true,
         name: true,
@@ -42,7 +48,7 @@ export const GET = withApiLogging('GET cloud/overview', async function GET() {
 
     const projectBackups: ProjectBackupStatus[] = await Promise.all(
       projects.map(async (ws) => {
-        const latestBackup = await prisma.backup.findFirst({
+        const latestBackup = await db.backup.findFirst({
           where: { projectId: ws.id },
           orderBy: { createdAt: 'desc' },
         });

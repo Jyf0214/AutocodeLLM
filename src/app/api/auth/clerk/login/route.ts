@@ -5,9 +5,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { clerkClient } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/db/prisma';
 import { isClerkEnabled } from '@/lib/auth/clerk-config';
 import { createHash, randomBytes } from 'node:crypto';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * POST /api/auth/clerk/login
@@ -99,7 +104,8 @@ export const POST = withApiLogging('POST auth/clerk/login', async function POST(
     const username = clerkUser.username ?? email.split('@')[0] ?? clerkUser.id;
 
     // 查找或创建本地用户
-    let user = await prisma.user.findUnique({
+    const db = await getPrisma();
+    let user = await db.user.findUnique({
       where: { id: clerkUser.id },
     });
 
@@ -110,7 +116,7 @@ export const POST = withApiLogging('POST auth/clerk/login', async function POST(
         .update(`${clerkUser.id}:${salt}`)
         .digest('hex');
 
-      user = await prisma.user.create({
+      user = await db.user.create({
         data: {
           id: clerkUser.id,
           username,

@@ -2,7 +2,12 @@ import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { getAuthConfig } from '@/lib/auth/config';
 import { getSession } from '@/lib/auth';
-import { prisma } from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * GET /api/auth/status
@@ -23,7 +28,8 @@ export const GET = withApiLogging('GET auth/status', async function GET() {
       clerkId: string | null;
     } | null = null;
     if (session?.userId) {
-      const dbUser = await prisma.user.findUnique({
+    const db = await getPrisma();
+      const dbUser = await db.user.findUnique({
         where: { id: session.userId },
         select: {
           id: true,

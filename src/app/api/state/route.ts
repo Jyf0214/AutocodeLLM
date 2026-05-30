@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 interface SystemComponent {
   name: string;
@@ -15,7 +20,8 @@ export const GET = withApiLogging('GET state', async function GET() {
   
   try {
     const start = Date.now();
-    await prisma.$queryRaw`SELECT 1`;
+    const db = await getPrisma();
+    await db.$queryRaw`SELECT 1`;
     components.database = {
       name: '数据库',
       status: 'healthy',
@@ -31,7 +37,8 @@ export const GET = withApiLogging('GET state', async function GET() {
   }
 
     try {
-     const providers = await prisma.provider.findMany({ take: 100 });
+     const db = await getPrisma();
+     const providers = await db.provider.findMany({ take: 100 });
     const enabled = providers.filter(p => p.enabled).length;
     components.providers = {
       name: 'AI 提供商',

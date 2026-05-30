@@ -3,7 +3,12 @@
  * 处理 GitHub 账号与现有账户的绑定
  */
 import { randomInt } from 'node:crypto';
-import { prisma } from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 export interface BindVerificationCode {
   code: string;
@@ -33,6 +38,9 @@ export async function createBindVerification(
   githubUserId: number,
   githubUsername: string
 ): Promise<string> {
+  // 惰性启动清理定时器（避免模块加载时创建）
+  lazyInitCleanupTimer();
+
   const code = generateCode();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10分钟有效期
 
@@ -94,8 +102,9 @@ export async function bindGitHubToUser(
   githubUsername: string
 ): Promise<boolean> {
   try {
+    const db = await getPrisma();
     // 检查该 GitHub 账号是否已被其他用户绑定
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await db.user.findFirst({
       where: { username: `github_${githubUserId}` },
     });
 
@@ -104,7 +113,7 @@ export async function bindGitHubToUser(
     }
 
     // 更新用户的 username 为 github_ 格式（如果还没有）
-    await prisma.user.update({
+    await db.user.update({
       where: { id: userId },
       data: {
         username: `github_${githubUserId}`,
@@ -129,5 +138,13 @@ export function cleanupExpiredCodes() {
   }
 }
 
-// 每分钟清理一次过期验证码
-setInterval(cleanupExpiredCodes, 60 * 1000);
+// 使用惰性初始化模式启动清理定时器，避免模块加载时创建定时器（构建阶段不会执行无效操作）
+let cleanupTimerInitialized = false;
+function lazyInitCleanupTimer() {
+  if (cleanupTimerInitialized) return;
+  cleanupTimerInitialized = true;
+  setInterval(cleanupExpiredCodes, 60 * 1000);
+}
+
+// 在首次创建验证码时惰性启动定时器
+// （createBindVerification 函数开头已调用 lazyInitCleanupTimer）

@@ -6,7 +6,12 @@
  */
 
 import { AsyncLocalStorage } from 'async_hooks';
-import { prisma } from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -46,7 +51,8 @@ let cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
 async function writeEntryToDB(entry: LogEntry): Promise<void> {
   try {
-    await prisma.systemLog.create({
+    const db = await getPrisma();
+    await db.systemLog.create({
       data: {
         level: entry.level,
         message: entry.message,
@@ -77,7 +83,8 @@ async function writeEntryToDB(entry: LogEntry): Promise<void> {
 export async function cleanupOldLogs(): Promise<number> {
   const cutoff = new Date(Date.now() - LOG_TTL_MS);
   try {
-    const result = await prisma.systemLog.deleteMany({
+    const db = await getPrisma();
+    const result = await db.systemLog.deleteMany({
       where: { createdAt: { lt: cutoff } },
     });
     return result.count;
@@ -407,9 +414,14 @@ export function getLogStats() {
   };
 }
 
-export function clearLogs() {
+export async function clearLogs() {
   logs.length = 0;
-  prisma.systemLog.deleteMany({}).catch(() => {});
+  try {
+    const db = await getPrisma();
+    await db.systemLog.deleteMany({});
+  } catch {
+    // 清空失败不影响内存日志
+  }
 }
 
 export function getLog(id: string): LogEntry | undefined {

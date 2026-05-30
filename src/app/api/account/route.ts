@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { compareSync, hashSync } from 'bcryptjs';
-import { prisma } from '@/lib/db/prisma';
 import { requireAuth } from '@/lib/auth';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * GET /api/account
@@ -16,7 +21,8 @@ export const GET = withApiLogging('GET account', async function GET(request: Req
 
     const userId = auth.session.userId;
 
-    const user = await prisma.user.findUnique({
+    const db = await getPrisma();
+    const user = await db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -67,7 +73,8 @@ export const PUT = withApiLogging('PUT account', async function PUT(request: Req
       isInitialPassword?: boolean;
     };
 
-    const user = await prisma.user.findUnique({
+    const db = await getPrisma();
+    const user = await db.user.findUnique({
       where: { id: userId },
     });
 
@@ -139,7 +146,7 @@ export const PUT = withApiLogging('PUT account', async function PUT(request: Req
       );
     }
 
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await db.user.update({
       where: { id: userId },
       data: updateData,
       select: {

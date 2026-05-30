@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { requireAuth } from '@/lib/auth';
-import { prisma } from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * POST /api/system/call
@@ -32,7 +37,8 @@ export const POST = withApiLogging('POST system/call', async function POST(reque
   try {
     switch (body.action) {
       case 'listProjects': {
-        const projects = await prisma.project.findMany({
+    const db = await getPrisma();
+        const projects = await db.project.findMany({
           select: { id: true, name: true, description: true, createdAt: true },
           orderBy: { createdAt: 'desc' },
         });
@@ -50,14 +56,14 @@ export const POST = withApiLogging('POST system/call', async function POST(reque
             { status: 400 },
           );
         }
-        const project = await prisma.project.create({
+        const project = await db.project.create({
           data: { name, description: description ?? '' },
         });
         return NextResponse.json({ success: true, data: project });
       }
 
       case 'listProviders': {
-        const providers = await prisma.provider.findMany({
+        const providers = await db.provider.findMany({
           select: { id: true, name: true, enabled: true, providerType: true },
           orderBy: { createdAt: 'desc' },
         });
@@ -66,9 +72,9 @@ export const POST = withApiLogging('POST system/call', async function POST(reque
 
       case 'getStatus': {
         const [userCount, projectCount, providerCount] = await Promise.all([
-          prisma.user.count(),
-          prisma.project.count(),
-          prisma.provider.count(),
+          db.user.count(),
+          db.project.count(),
+          db.provider.count(),
         ]);
         return NextResponse.json({
           success: true,

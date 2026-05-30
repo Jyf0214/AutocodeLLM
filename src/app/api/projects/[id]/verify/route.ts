@@ -6,13 +6,18 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { compareSync } from 'bcryptjs';
-import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
   errorResponse,
   handleError,
 } from '@/lib/api/response';
 import type { VerifyPasswordRequest, VerifyPasswordResponse } from '@/lib/api/project-log-types';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * POST /api/projects/[id]/verify - 验证项目进入密码
@@ -31,7 +36,8 @@ export const POST = withApiLogging('POST projects/:id/verify', async function PO
       return errorResponse('缺少密码参数', 'MISSING_PASSWORD', 400);
     }
 
-    const project = await prisma.project.findUnique({
+    const db = await getPrisma();
+    const project = await db.project.findUnique({
       where: { id },
       select: { accessPassword: true },
     });

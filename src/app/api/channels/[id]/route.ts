@@ -4,9 +4,15 @@
  */
 import { NextRequest } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import prisma from '@/lib/db/prisma';
 import { successResponse, errorResponse, handleError, parseJsonBody, isErrorResponse } from '@/lib/api/response';
 import type { UpdateChannelRequest } from '@/lib/api/channel-types';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { default: prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
+
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -16,7 +22,8 @@ interface RouteParams {
 export const GET = withApiLogging('GET channels/:id', async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
-    const channel = await prisma.channel.findUnique({
+    const db = await getPrisma();
+    const channel = await db.channel.findUnique({
       where: { id },
       include: {
         project: { select: { id: true, name: true } },
@@ -41,7 +48,8 @@ export const PUT = withApiLogging('PUT channels/:id', async function PUT(request
     const body = await parseJsonBody<UpdateChannelRequest>(request);
     if (isErrorResponse(body)) return body;
 
-    const channel = await prisma.channel.update({
+    const db = await getPrisma();
+    const channel = await db.channel.update({
       where: { id },
       data: {
         ...(body.name !== undefined && { name: body.name }),
@@ -60,7 +68,8 @@ export const PUT = withApiLogging('PUT channels/:id', async function PUT(request
 export const DELETE = withApiLogging('DELETE channels/:id', async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
-    await prisma.channel.delete({ where: { id } });
+    const db = await getPrisma();
+    await db.channel.delete({ where: { id } });
     return successResponse({ deleted: true });
   } catch (error) {
     return handleError(error, '删除频道');

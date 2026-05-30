@@ -4,10 +4,16 @@
  */
 import { NextRequest } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import prisma from '@/lib/db/prisma';
 import { successResponse, paginatedResponse, errorResponse, handleError, parseJsonBody, isErrorResponse } from '@/lib/api/response';
 import { sendMessageToChannel } from '@/lib/discord/bot';
 import type { SendMessageRequest } from '@/lib/api/channel-types';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { default: prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
+
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -22,19 +28,20 @@ export const GET = withApiLogging('GET channels/:id/messages', async function GE
     const limit = Math.min(100, Math.max(1, Number(searchParams.get('limit') ?? '50')));
 
     // 检查频道是否存在
-    const channel = await prisma.channel.findUnique({ where: { id } });
+    const db = await getPrisma();
+    const channel = await db.channel.findUnique({ where: { id } });
     if (!channel) {
       return errorResponse('频道不存在', 'NOT_FOUND', 404);
     }
 
     const [messages, total] = await Promise.all([
-      prisma.channelMessage.findMany({
+      db.channelMessage.findMany({
         where: { channelId: id },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
-      prisma.channelMessage.count({ where: { channelId: id } }),
+      db.channelMessage.count({ where: { channelId: id } }),
     ]);
 
     return paginatedResponse(messages, total, page, limit);
@@ -55,7 +62,8 @@ export const POST = withApiLogging('POST channels/:id/messages', async function 
     }
 
     // 查找频道
-    const channel = await prisma.channel.findUnique({ where: { id } });
+    const db = await getPrisma();
+    const channel = await db.channel.findUnique({ where: { id } });
     if (!channel) {
       return errorResponse('频道不存在', 'NOT_FOUND', 404);
     }
@@ -72,7 +80,7 @@ export const POST = withApiLogging('POST channels/:id/messages', async function 
 
     // 持久化发出的消息
     const botStatus = await import('@/lib/discord/bot').then((m) => m.getDiscordBotStatus());
-    const message = await prisma.channelMessage.create({
+    const message = await db.channelMessage.create({
       data: {
         channelId: id,
         discordMsgId: result.messageId ?? '',

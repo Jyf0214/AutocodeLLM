@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { requireAuth } from '@/lib/auth';
-import { prisma } from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * GET /api/data/export
@@ -20,19 +25,22 @@ export const GET = withApiLogging('GET data/export', async function GET(request:
   };
 
   if (scope === 'all' || scope === 'projects') {
-    data.projects = await prisma.project.findMany({
+    const db = await getPrisma();
+    data.projects = await db.project.findMany({
       select: { id: true, name: true, description: true, createdAt: true, updatedAt: true },
     });
   }
 
   if (scope === 'all' || scope === 'providers') {
-    data.providers = await prisma.provider.findMany({
+    const db = await getPrisma();
+    data.providers = await db.provider.findMany({
       select: { id: true, name: true, baseUrl: true, enabled: true, providerType: true, sdkType: true },
     });
   }
 
   if (scope === 'all' || scope === 'settings') {
-    data.envVars = await prisma.environmentVariable.findMany({
+    const db = await getPrisma();
+    data.envVars = await db.environmentVariable.findMany({
       select: { id: true, key: true, description: true, enabled: true },
     });
   }

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { prisma } from '@/lib/db/prisma';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 export const GET = withApiLogging('GET projects/:id/backups', async function GET(
   request: NextRequest,
@@ -9,7 +14,8 @@ export const GET = withApiLogging('GET projects/:id/backups', async function GET
   try {
     const { id } = await params;
 
-    const project = await prisma.project.findUnique({
+    const db = await getPrisma();
+    const project = await db.project.findUnique({
       where: { id },
     });
 
@@ -21,9 +27,9 @@ export const GET = withApiLogging('GET projects/:id/backups', async function GET
     }
 
     // WebdavConfig 是全局单例，不属于 Project
-    const config = await prisma.webdavConfig.findFirst();
+    const config = await db.webdavConfig.findFirst();
 
-    const backupRecords = await prisma.backup.findMany({
+    const backupRecords = await db.backup.findMany({
       where: { projectId: id },
       orderBy: { createdAt: 'desc' },
     });

@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { compareSync } from 'bcryptjs';
-import { prisma } from '@/lib/db/prisma';
 import { bindingCodes } from '@/lib/auth/verification-store';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * POST /api/auth/bind
@@ -79,7 +84,8 @@ export const POST = withApiLogging('POST auth/bind', async function POST(request
     }
 
     // 查找用户并验证密码
-    const user = await prisma.user.findUnique({
+    const db = await getPrisma();
+    const user = await db.user.findUnique({
       where: { username },
     });
 
@@ -103,7 +109,7 @@ export const POST = withApiLogging('POST auth/bind', async function POST(request
     
     if (targetType === 'github') {
       // 检查该 GitHub ID 是否已被其他用户绑定
-      const existingGithubUser = await prisma.user.findFirst({
+      const existingGithubUser = await db.user.findFirst({
         where: { githubId: targetId },
       });
       
@@ -117,7 +123,7 @@ export const POST = withApiLogging('POST auth/bind', async function POST(request
       updateData.githubId = targetId;
     } else if (targetType === 'clerk') {
       // 检查该 Clerk ID 是否已被其他用户绑定
-      const existingClerkUser = await prisma.user.findFirst({
+      const existingClerkUser = await db.user.findFirst({
         where: { clerkId: targetId },
       });
       
@@ -132,7 +138,7 @@ export const POST = withApiLogging('POST auth/bind', async function POST(request
     }
 
     // 更新用户
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await db.user.update({
       where: { id: user.id },
       data: updateData,
     });

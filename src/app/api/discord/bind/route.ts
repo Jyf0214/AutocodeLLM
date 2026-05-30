@@ -4,15 +4,22 @@
  * GET  /api/discord/bind — 获取当前项目的绑定列表
  * DELETE /api/discord/bind — 解绑 Discord 用户
  */
-import prisma from '@/lib/db/prisma';
 import { withApiLogging } from '@/lib/log';
 import {
+
   successResponse,
   errorResponse,
   handleError,
   parseJsonBody,
   isErrorResponse,
 } from '@/lib/api/response';
+
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { default: prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
+
 
 interface BindRequest {
   code: string;
@@ -35,7 +42,8 @@ export const POST = withApiLogging('POST discord/bind', async function POST(requ
     }
 
     // 验证项目存在
-    const project = await prisma.project.findUnique({
+    const db = await getPrisma();
+    const project = await db.project.findUnique({
       where: { id: projectId },
     });
     if (!project) {
@@ -43,7 +51,7 @@ export const POST = withApiLogging('POST discord/bind', async function POST(requ
     }
 
     // 查找绑定码对应的记录
-    const binding = await prisma.discordBinding.findUnique({
+    const binding = await db.discordBinding.findUnique({
       where: { code: code.trim().toUpperCase() },
     });
 
@@ -54,12 +62,12 @@ export const POST = withApiLogging('POST discord/bind', async function POST(requ
     // 检查绑定码是否过期
     if (binding.codeExpiresAt && binding.codeExpiresAt < new Date()) {
       // 清理过期记录
-      await prisma.discordBinding.delete({ where: { id: binding.id } });
+      await db.discordBinding.delete({ where: { id: binding.id } });
       return errorResponse('绑定码已过期，请在 Discord 重新输入 /connect', 'CODE_EXPIRED', 410);
     }
 
     // 检查该 Discord 用户是否已绑定其他项目
-    const existingBinding = await prisma.discordBinding.findUnique({
+    const existingBinding = await db.discordBinding.findUnique({
       where: { discordUserId: binding.discordUserId },
     });
 
@@ -72,7 +80,7 @@ export const POST = withApiLogging('POST discord/bind', async function POST(requ
     }
 
     // 完成绑定：更新 projectId 并清除绑定码
-    await prisma.discordBinding.update({
+    await db.discordBinding.update({
       where: { id: binding.id },
       data: {
         projectId,
@@ -102,7 +110,8 @@ export const GET = withApiLogging('GET discord/bind', async function GET(request
       return errorResponse('projectId 参数必填', 'MISSING_PROJECT_ID', 400);
     }
 
-    const bindings = await prisma.discordBinding.findMany({
+    const db = await getPrisma();
+    const bindings = await db.discordBinding.findMany({
       where: { projectId, code: null }, // 仅返回已完成绑定的
       select: {
         id: true,
@@ -129,7 +138,8 @@ export const DELETE = withApiLogging('DELETE discord/bind', async function DELET
       return errorResponse('discordUserId 不能为空', 'EMPTY_DISCORD_USER_ID', 400);
     }
 
-    const binding = await prisma.discordBinding.findUnique({
+    const db = await getPrisma();
+    const binding = await db.discordBinding.findUnique({
       where: { discordUserId: body.discordUserId },
     });
 
@@ -137,7 +147,7 @@ export const DELETE = withApiLogging('DELETE discord/bind', async function DELET
       return errorResponse('绑定记录不存在', 'BINDING_NOT_FOUND', 404);
     }
 
-    await prisma.discordBinding.delete({
+    await db.discordBinding.delete({
       where: { id: binding.id },
     });
 
