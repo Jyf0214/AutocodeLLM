@@ -1,58 +1,40 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 echo "🔍 开始 Pre-push 检查..."
 echo ""
 
 # ============================================================
-# 1️⃣ TypeScript 类型检查（警告模式，不阻塞推送）
-#    项目配置 next.config.ts ignoreBuildErrors: true，
-#    类型完整性由 CI build 兜底。
+# 1️⃣ 构建检查 — 前置条件
 # ============================================================
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  1️⃣  类型检查 (TypeScript) — 仅提示"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-if ! TSC_OUTPUT=$(npx tsc --noEmit --skipLibCheck 2>&1); then
-  ERROR_COUNT=$(echo "$TSC_OUTPUT" | grep -c "error TS" || echo "?")
-  echo ""
-  echo "⚠️  发现 $ERROR_COUNT 个类型错误（仅提示，不阻塞推送）"
-  echo "   运行 npx tsc --noEmit 查看详情"
-else
-  echo "✅ 类型检查通过"
-fi
-echo ""
-
-# ============================================================
-# 2️⃣ 构建检查（需要 DATABASE_URL 等环境变量）
-#    next build 自身包含类型和语法检查（受 ignoreBuildErrors 控制）
-# ============================================================
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  2️⃣  构建检查 (next build)"
+echo "  1️⃣  构建检查"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 if [ -z "${DATABASE_URL:-}" ]; then
   echo "⚠️  DATABASE_URL 未设置，跳过构建检查。"
-  echo "   确保 CI/CD 中已配置环境变量。"
-else
-  # prisma generate
-  echo "  → 生成 Prisma Client..."
-  if ! npx prisma generate --no-hints 2>&1; then
-    echo ""
-    echo "❌ Prisma 生成失败，推送中止！"
-    exit 1
-  fi
-  echo "  ✅ Prisma 生成通过"
+  echo "   确保 CI/CD 中已配置 DATABASE_URL。"
+  echo ""
 
-  # next build（--no-lint 避免重复 lint）
-  echo "  → 构建 Next.js 项目..."
-  if ! npx next build --no-lint 2>&1; then
-    echo ""
-    echo "❌ 构建失败，推送中止！"
-    exit 1
-  fi
-  echo "  ✅ 构建通过"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  ✅ Pre-push 检查通过（跳过了构建）"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  exit 0
 fi
 
+# --- Prisma Client 生成 ---
+echo "  → 生成 Prisma Client..."
+NO_UPDATE_NOTIFIER=true npx prisma generate --no-hints 2>&1
+echo "  ✅ Prisma 生成通过"
 echo ""
+
+# --- Next.js 构建 ---
+echo "  → 构建 Next.js 项目..."
+NO_UPDATE_NOTIFIER=true npx next build 2>&1
+echo "  ✅ 构建通过"
+echo ""
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  ✅ Pre-push 检查全部通过"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

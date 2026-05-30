@@ -1,104 +1,75 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 echo "🔍 开始 Pre-commit 检查..."
-
-# ============================================================
-# 1️⃣ TypeScript 类型检查（警告模式，不阻塞提交）
-#    项目已配置 next.config.ts ignoreBuildErrors: true，
-#    类型完整性由 pre-push build + CI 保障。
-# ============================================================
 echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  1️⃣  类型检查 (TypeScript) — 仅提示"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-if ! TSC_OUTPUT=$(npx tsc --noEmit --skipLibCheck 2>&1); then
-  ERROR_COUNT=$(echo "$TSC_OUTPUT" | grep -c "error TS" || echo "?")
-  echo ""
-  echo "⚠️  发现 $ERROR_COUNT 个类型错误（仅提示，不阻塞提交）"
-  echo "   运行 npx tsc --noEmit 查看详情"
-else
-  echo "✅ 类型检查通过"
-fi
 
 # ============================================================
-# 2️⃣ ESLint（仅检查 staged .ts/.tsx 文件，阻塞）
+# 1️⃣ ESLint — 仅检查 staged .ts/.tsx 文件
 # ============================================================
-echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  2️⃣  ESLint 代码规范检查"
+echo "  1️⃣  ESLint 代码规范检查"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-STAGED_TS_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx)$' | head -20 || true)
-ESLINT_FAILED=0
-if [ -n "$STAGED_TS_FILES" ]; then
-  ESLINT_OUTPUT=$(echo "$STAGED_TS_FILES" | xargs npx eslint --max-warnings=0 2>&1) || ESLINT_FAILED=1
-  if [ "$ESLINT_FAILED" -eq 1 ]; then
-    # 如果 ESLint 失败的都是忽略文件警告（非真正错误），视为通过
-    ERROR_LINES=$(echo "$ESLINT_OUTPUT" | grep -c "^.*error " || true)
-    if [ "$ERROR_LINES" -eq 0 ]; then
-      ESLINT_FAILED=0
+STAGED_TS=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx)$' || true)
+ESLINT_OK=0
+if [ -n "$STAGED_TS" ]; then
+  # eslint 返回非零即有真正错误（忽略文件警告不计入）
+  ESLINT_OUT=$(echo "$STAGED_TS" | xargs npx eslint --max-warnings=0 2>&1) && ESLINT_OK=1 || true
+  if [ "$ESLINT_OK" -eq 0 ]; then
+    REAL_ERROR=$(echo "$ESLINT_OUT" | grep -c "error " || true)
+    if [ "$REAL_ERROR" -gt 0 ]; then
+      echo ""
+      echo "$ESLINT_OUT"
+      echo ""
+      echo "❌ ESLint 检查未通过，请修复后重试。"
+      exit 1
     fi
-  fi
-  if [ "$ESLINT_FAILED" -eq 1 ]; then
-    echo ""
-    echo "$ESLINT_OUTPUT"
-    echo ""
-    echo "❌ ESLint 检查失败，请修复后重试。"
-    exit 1
   fi
 fi
 echo "✅ ESLint 检查通过"
-
-# ============================================================
-# 3️⃣ 安全检查（阻塞）
-# ============================================================
 echo ""
+
+# ============================================================
+# 2️⃣ 安全检查
+# ============================================================
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  3️⃣  安全检查"
+echo "  2️⃣  安全检查"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# 检查是否提交了 .env 文件
-ENV_FILES=$(find . -maxdepth 1 -name ".env*" -type f 2>/dev/null || true)
-if [ -n "$ENV_FILES" ]; then
-  echo ""
-  echo "❌ 检测到 .env 文件，禁止提交环境配置文件！"
-  echo "   请将以下文件移除后再提交："
-  echo "$ENV_FILES"
+# .env 文件检测（只检查 staged 文件，.env.example 为模板允许提交）
+STAGED_ENV=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^\.env$|^\.env\.' | grep -v '\.env\.example' || true)
+if [ -n "$STAGED_ENV" ]; then
+  echo "❌ 禁止提交环境配置文件："
+  echo "$STAGED_ENV"
   exit 1
 fi
 
-# 扫描 staged 文件中的敏感字符串
-SENSITIVE_FOUND=0
+# 密钥模式扫描
 SENSITIVE_PATTERNS=(
   "AKIA[0-9A-Z]{16}"       # AWS Access Key
   "sk-[a-zA-Z0-9]{20,}"    # OpenAI API Key
   "ghp_[a-zA-Z0-9]{36}"    # GitHub Token
 )
-
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx|js|jsx|json|yml|yaml)$' || true)
+SENSITIVE_FOUND=0
 if [ -n "$STAGED_FILES" ]; then
   for pattern in "${SENSITIVE_PATTERNS[@]}"; do
     MATCHES=$(echo "$STAGED_FILES" | xargs grep -l -E "$pattern" 2>/dev/null || true)
     if [ -n "$MATCHES" ]; then
-      echo ""
-      echo "❌ 检测到敏感信息 (模式: $pattern)："
+      echo "❌ 检测到敏感信息（模式: $pattern）："
       echo "$MATCHES"
       SENSITIVE_FOUND=1
     fi
   done
 fi
-
 if [ "$SENSITIVE_FOUND" -eq 1 ]; then
-  echo ""
-  echo "❌ 安全检查失败，请移除敏感信息后重试。"
   exit 1
 fi
 echo "✅ 安全检查通过"
-
 echo ""
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  ✅ Pre-commit 检查全部通过"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# lint-staged（可选，不影响 hook 结果）
-npx lint-staged 2>/dev/null || true
