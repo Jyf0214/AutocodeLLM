@@ -23,8 +23,9 @@ export const GET = withApiLogging('GET sync', async function GET(request: Reques
       success: true,
       data: {
         enabled: config?.enabled ?? false,
+        url: config?.url ?? '',
+        remotePath: config?.remotePath ?? '',
         watching: isWatchActive(),
-        // 不返回 url 和 remotePath（URL 可能包含敏感信息）
       },
     });
   } catch (err) {
