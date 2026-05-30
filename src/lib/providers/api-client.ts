@@ -9,6 +9,7 @@ import { prisma } from '@/lib/db/prisma';
 /**
  * 获取 AES-256-CBC 加密密钥
  * 使用 scryptSync 从 KEY_VAULTS_SECRET 派生 32 字节密钥
+ * 注意：只在函数被实际调用时检查 env，避免模块加载时（如构建阶段）阻断
  */
 export function getEncryptionKey(): Buffer {
   const keyStr = process.env.KEY_VAULTS_SECRET;
@@ -16,14 +17,6 @@ export function getEncryptionKey(): Buffer {
     throw new Error('KEY_VAULTS_SECRET 环境变量未设置，无法执行加解密操作');
   }
   return scryptSync(keyStr, 'autocodellm-key-salt', 32);
-}
-
-// 模块加载时检查 KEY_VAULTS_SECRET 是否已设置
-try {
-  getEncryptionKey();
-} catch (e) {
-  console.error('[FATAL]', (e as Error).message);
-  process.exit(1);
 }
 
 /**
