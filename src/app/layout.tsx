@@ -1,13 +1,9 @@
 import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import { MantineProvider } from '@mantine/core';
-import { Notifications } from '@mantine/notifications';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { ConfigProvider } from 'antd';
 import { ThemeProvider } from '@/lib/ui';
-import '@mantine/core/styles.css';
-import '@mantine/notifications/styles.css';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
@@ -39,44 +35,28 @@ export default async function RootLayout({
     <html lang="zh" suppressHydrationWarning>
       <body>
         <ThemeProvider themeMode="light">
-          <MantineProvider
-            theme={{
-              primaryColor: 'dark',
-              defaultRadius: 'md',
-              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif",
-              fontSizes: { md: '14px' },
-              components: {
-                Button: { defaultProps: { radius: 'md' } },
-                Input: { defaultProps: { radius: 'md' } },
-                Card: { defaultProps: { radius: 'md' } },
-                Modal: { defaultProps: { radius: 'md' } },
-              },
-            }}
-          >
-            <AntdRegistry>
-              <ConfigProvider
-                theme={{
-                  token: {
-                    colorPrimary: '#000000',
-                    borderRadius: 6,
-                    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif",
-                    fontSize: 14,
-                  },
-                  components: {
-                    Button: { borderRadius: 6, controlHeight: 36 },
-                    Input: { borderRadius: 6, controlHeight: 36 },
-                    Card: { borderRadius: 12 },
-                    Modal: { borderRadius: 12 },
-                  },
-                }}
-              >
-                <NextIntlClientProvider messages={messages}>
-                  <Notifications position="top-right" zIndex={10000} />
-                  {children}
-                </NextIntlClientProvider>
-              </ConfigProvider>
-            </AntdRegistry>
-          </MantineProvider>
+          <AntdRegistry>
+            <ConfigProvider
+              theme={{
+                token: {
+                  colorPrimary: '#000000',
+                  borderRadius: 6,
+                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif",
+                  fontSize: 14,
+                },
+                components: {
+                  Button: { borderRadius: 6, controlHeight: 36 },
+                  Input: { borderRadius: 6, controlHeight: 36 },
+                  Card: { borderRadius: 12 },
+                  Modal: { borderRadius: 12 },
+                },
+              }}
+            >
+              <NextIntlClientProvider messages={messages}>
+                {children}
+              </NextIntlClientProvider>
+            </ConfigProvider>
+          </AntdRegistry>
         </ThemeProvider>
       </body>
     </html>

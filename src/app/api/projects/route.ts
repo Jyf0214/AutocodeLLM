@@ -23,7 +23,7 @@ async function getPrisma() {
  * GET /api/projects - 获取所有项目列表
  */
 export const GET = withApiLogging('GET /api/projects', async function GET(
-  request: Request,
+  _request: Request,
 ): Promise<NextResponse<ProjectResponse>> {
   try {
     const db = await getPrisma();

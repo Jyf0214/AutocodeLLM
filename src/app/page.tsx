@@ -4,15 +4,14 @@ import { Text } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Skeleton } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
+import { Button, Skeleton, message } from 'antd';
 import {
-  IconArrowRight,
-  IconFolder,
-  IconCloud,
-  IconTerminal,
-  IconBrandGithub,
-} from '@tabler/icons-react';
+  ArrowRightOutlined,
+  FolderOutlined,
+  CloudOutlined,
+  CodeOutlined,
+  GithubOutlined,
+} from '@ant-design/icons';
 
 interface AuthStatus {
   availableMethods: {
@@ -54,18 +53,18 @@ export default function HomePage() {
     setIsLoading(true);
     try {
       document.cookie = 'userId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      notifications.show({ title: t('logoutSuccess'), message: '', color: 'green' });
+      message.success(t('logoutSuccess'));
       setTimeout(() => window.location.reload(), 500);
     } catch {
-      notifications.show({ title: t('logoutFailed'), message: '', color: 'red' });
+      message.error(t('logoutFailed'));
       setIsLoading(false);
     }
   }, [t]);
 
   const features = [
-    { icon: IconFolder, title: t('projectManagement'), desc: t('projectManagementDesc'), link: '/project' },
-    { icon: IconTerminal, title: t('featureAI.title'), desc: t('featureAI.desc'), link: '/project' },
-    { icon: IconCloud, title: t('cloudService'), desc: t('cloudServiceDesc'), link: '/cloud' },
+    { icon: FolderOutlined, title: t('projectManagement'), desc: t('projectManagementDesc'), link: '/project' },
+    { icon: CodeOutlined, title: t('featureAI.title'), desc: t('featureAI.desc'), link: '/project' },
+    { icon: CloudOutlined, title: t('cloudService'), desc: t('cloudServiceDesc'), link: '/cloud' },
   ];
 
   return (
@@ -106,25 +105,23 @@ export default function HomePage() {
 
         {loadingAuth ? (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <Skeleton height={48} width={200} radius="md" />
+            <Skeleton active title={{ width: 200, height: 48 }} paragraph={false} />
           </div>
         ) : isLoggedIn ? (
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/project">
               <Button
-                leftSection={<IconFolder size={18} />}
-                size="lg"
-                color="dark"
+                icon={<FolderOutlined />}
+                size="large"
+                type="primary"
               >
                 {t('enterProject')}
               </Button>
             </Link>
             <Button
-              variant="outline"
-              size="lg"
+              size="large"
               onClick={handleLogout}
               loading={isLoading}
-              color="gray"
             >
               {t('logout')}
             </Button>
@@ -133,9 +130,10 @@ export default function HomePage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
             <Link href="/login">
               <Button
-                rightSection={<IconArrowRight size={20} />}
-                size="xl"
-                color="dark"
+                icon={<ArrowRightOutlined />}
+                iconPlacement="end"
+                size="large"
+                type="primary"
               >
                 {t('startNow')}
               </Button>
@@ -145,9 +143,7 @@ export default function HomePage() {
               <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                 <a href="/api/auth/github" style={{ textDecoration: 'none' }}>
                   <Button
-                    variant="outline"
-                    leftSection={<IconBrandGithub size={16} />}
-                    color="gray"
+                    icon={<GithubOutlined />}
                   >
                     GitHub
                   </Button>
@@ -196,7 +192,7 @@ export default function HomePage() {
                 <div
                   style={{
                     padding: '24px 20px',
-                    borderRadius: 'var(--mantine-radius-md)',
+                    borderRadius: 8,
                     border: '1px solid var(--border-primary)',
                     background: 'var(--bg-primary)',
                     transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
@@ -215,7 +211,7 @@ export default function HomePage() {
                     style={{
                       width: 40,
                       height: 40,
-                      borderRadius: 'var(--mantine-radius-md)',
+                      borderRadius: 8,
                       background: 'var(--bg-secondary)',
                       display: 'flex',
                       alignItems: 'center',
@@ -225,7 +221,7 @@ export default function HomePage() {
                       fontSize: 20,
                     }}
                   >
-                    <IconComponent size={20} />
+                    <IconComponent />
                   </div>
                   <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 6 }}>
                     {f.title}
@@ -273,10 +269,10 @@ export default function HomePage() {
           </p>
           <Link href="/login">
             <Button
-              rightSection={<IconArrowRight size={18} />}
-              size="lg"
-              variant="white"
-              color="dark"
+              icon={<ArrowRightOutlined />}
+              iconPlacement="end"
+              size="large"
+              style={{ background: '#ffffff', color: '#000000', borderColor: '#ffffff' }}
             >
               {t('cta.loginBtn')}
             </Button>

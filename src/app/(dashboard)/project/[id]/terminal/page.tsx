@@ -43,7 +43,7 @@ export default function ProjectTerminalPage() {
 
     // 使用当前页面的 origin 构建 WebSocket URL
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${encodeURIComponent(projectId)}&cols=${cols}&rows=${rows}`;
+    const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${encodeURIComponent(projectId)}&cols=${String(cols)}&rows=${String(rows)}`;
     console.log('[terminal-page] WebSocket URL:', wsUrl, { cols, rows });
 
     const ws = new WebSocket(wsUrl);
@@ -102,6 +102,7 @@ export default function ProjectTerminalPage() {
         import('xterm-addon-fit'),
       ]);
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- disposed 由 cleanup 函数异步置为 true，TypeScript 无法追踪
       if (disposed || !terminalRef.current) return;
 
       const terminal = new Terminal({

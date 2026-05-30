@@ -40,7 +40,7 @@ export const GET = withApiLogging('GET projects/:id/backups', async function GET
     const backupInfo = {
       lastBackup: latestBackup?.createdAt.toISOString() ?? null,
       nextBackup: null,
-      status: (latestBackup ? (hasFailure ? 'failed' : 'ok') : 'no_backup') as 'ok' | 'failed' | 'no_backup',
+      status: (latestBackup ? (hasFailure ? 'failed' : 'ok') : 'no_backup'),
       backupCount: backupRecords.length,
       remoteUrl: config?.url ?? null,
       remotePath: config?.remotePath ?? null,
