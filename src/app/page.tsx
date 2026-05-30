@@ -1,19 +1,20 @@
 'use client';
 
 import { Text } from '@/lib/ui';
-import {
-  ArrowRightOutlined,
-  ApiOutlined,
-  FolderOutlined,
-  CloudServerOutlined,
-  CodeOutlined,
-  SafetyOutlined,
-  GithubOutlined,
-} from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { message } from 'antd';
+import { Button, Skeleton } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import {
+  IconArrowRight,
+  IconFolder,
+  IconApi,
+  IconCloud,
+  IconCode,
+  IconShield,
+  IconBrandGithub,
+} from '@tabler/icons-react';
 
 interface AuthStatus {
   availableMethods: {
@@ -55,22 +56,21 @@ export default function HomePage() {
   const handleLogout = useCallback(() => {
     setIsLoading(true);
     try {
-      // 清除 cookie
       document.cookie = 'userId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      message.success(t('logoutSuccess'));
+      notifications.show({ title: t('logoutSuccess'), message: '', color: 'green' });
       setTimeout(() => window.location.reload(), 500);
     } catch {
-      message.error(t('logoutFailed'));
+      notifications.show({ title: t('logoutFailed'), message: '', color: 'red' });
       setIsLoading(false);
     }
   }, [t]);
 
   const features = [
-    { icon: <FolderOutlined />, title: t('projectManagement'), desc: t('projectManagementDesc'), link: '/project' },
-    { icon: <CodeOutlined />, title: t('featureAI.title'), desc: t('featureAI.desc'), link: '/project' },
-    { icon: <ApiOutlined />, title: t('multiModelSupport'), desc: t('multiModelSupportDesc'), link: '/provider' },
-    { icon: <CloudServerOutlined />, title: t('cloudService'), desc: t('cloudServiceDesc'), link: '/cloud' },
-    { icon: <SafetyOutlined />, title: t('featureModels.title'), desc: t('featureModels.desc'), link: '/provider' },
+    { icon: IconFolder, title: t('projectManagement'), desc: t('projectManagementDesc'), link: '/project' },
+    { icon: IconCode, title: t('featureAI.title'), desc: t('featureAI.desc'), link: '/project' },
+    { icon: IconApi, title: t('multiModelSupport'), desc: t('multiModelSupportDesc'), link: '/provider' },
+    { icon: IconCloud, title: t('cloudService'), desc: t('cloudServiceDesc'), link: '/cloud' },
+    { icon: IconShield, title: t('featureModels.title'), desc: t('featureModels.desc'), link: '/provider' },
   ];
 
   return (
@@ -110,119 +110,63 @@ export default function HomePage() {
         </p>
 
         {loadingAuth ? (
-          <div style={{ margin: '20px 0' }}>{t('loading') || '加载中...'}</div>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Skeleton height={48} width={200} radius="md" />
+          </div>
         ) : isLoggedIn ? (
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/project">
-              <button
-                style={{
-                  height: 48,
-                  padding: '0 28px',
-                  fontSize: 15,
-                  fontWeight: 600,
-                  color: '#fff',
-                  background: 'var(--text-primary)',
-                  border: 'none',
-                  borderRadius: 10,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
+              <Button
+                leftSection={<IconFolder size={18} />}
+                size="lg"
+                color="dark"
               >
-                <FolderOutlined />
                 {t('enterProject')}
-              </button>
+              </Button>
             </Link>
-            <button
+            <Button
+              variant="outline"
+              size="lg"
               onClick={handleLogout}
-              disabled={isLoading}
-              style={{
-                height: 48,
-                padding: '0 28px',
-                fontSize: 15,
-                fontWeight: 500,
-                color: 'var(--text-secondary)',
-                background: 'transparent',
-                border: '1px solid var(--border-primary)',
-                borderRadius: 10,
-                cursor: 'pointer',
-              }}
+              loading={isLoading}
+              color="gray"
             >
               {t('logout')}
-            </button>
+            </Button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
             <Link href="/login">
-              <button
-                style={{
-                  height: 52,
-                  padding: '0 36px',
-                  fontSize: 16,
-                  fontWeight: 600,
-                  color: '#fff',
-                  background: 'var(--text-primary)',
-                  border: 'none',
-                  borderRadius: 12,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  transition: 'opacity 0.2s',
-                }}
+              <Button
+                rightSection={<IconArrowRight size={20} />}
+                size="xl"
+                color="dark"
               >
                 {t('startNow')}
-                <ArrowRightOutlined style={{ fontSize: 18 }} />
-              </button>
+              </Button>
             </Link>
 
-            {/* 第三方登录方式 */}
             {(authStatus.availableMethods.github || authStatus.availableMethods.clerk) && (
               <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                 {authStatus.availableMethods.github && (
                   <a href="/api/auth/github" style={{ textDecoration: 'none' }}>
-                    <button
-                      style={{
-                        height: 44,
-                        padding: '0 20px',
-                        fontSize: 14,
-                        fontWeight: 500,
-                        color: 'var(--text-secondary)',
-                        background: 'transparent',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: 10,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                      }}
+                    <Button
+                      variant="outline"
+                      leftSection={<IconBrandGithub size={16} />}
+                      color="gray"
                     >
-                      <GithubOutlined />
                       GitHub
-                    </button>
+                    </Button>
                   </a>
                 )}
                 {authStatus.availableMethods.clerk && (
-                  <button
-                    onClick={() => message.info(t('clerkLoginNotImplemented') || 'Clerk 登录尚未实现')}
-                    style={{
-                      height: 44,
-                      padding: '0 20px',
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: 'var(--text-secondary)',
-                      background: 'transparent',
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: 10,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
+                  <Button
+                    variant="outline"
+                    color="gray"
+                    onClick={() => notifications.show({ title: 'Clerk 登录尚未实现', message: '', color: 'yellow' })}
                   >
                     Clerk
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
@@ -257,55 +201,58 @@ export default function HomePage() {
             gap: 16,
           }}
         >
-          {features.map((f, i) => (
-            <Link
-              key={i}
-              href={f.link}
-              style={{ textDecoration: 'none' }}
-            >
-              <div
-                style={{
-                  padding: '24px 20px',
-                  borderRadius: 10,
-                  border: '1px solid var(--border-primary)',
-                  background: 'var(--bg-primary)',
-                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-                  height: '100%',
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget).style.borderColor = 'var(--text-primary)';
-                  (e.currentTarget).style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget).style.borderColor = 'var(--border-primary)';
-                  (e.currentTarget).style.boxShadow = 'none';
-                }}
+          {features.map((f) => {
+            const IconComponent = f.icon;
+            return (
+              <Link
+                key={f.title}
+                href={f.link}
+                style={{ textDecoration: 'none' }}
               >
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 8,
-                    background: 'var(--bg-secondary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: 16,
-                    color: 'var(--text-primary)',
-                    fontSize: 20,
+                    padding: '24px 20px',
+                    borderRadius: 'var(--mantine-radius-md)',
+                    border: '1px solid var(--border-primary)',
+                    background: 'var(--bg-primary)',
+                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                    height: '100%',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget).style.borderColor = 'var(--text-primary)';
+                    (e.currentTarget).style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget).style.borderColor = 'var(--border-primary)';
+                    (e.currentTarget).style.boxShadow = 'none';
                   }}
                 >
-                  {f.icon}
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 'var(--mantine-radius-md)',
+                      background: 'var(--bg-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 16,
+                      color: 'var(--text-primary)',
+                      fontSize: 20,
+                    }}
+                  >
+                    <IconComponent size={20} />
+                  </div>
+                  <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 6 }}>
+                    {f.title}
+                  </Text>
+                  <Text type="secondary" style={{ fontSize: 13, lineHeight: 1.6 }}>
+                    {f.desc}
+                  </Text>
                 </div>
-                <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 6 }}>
-                  {f.title}
-                </Text>
-                <Text type="secondary" style={{ fontSize: 13, lineHeight: 1.6 }}>
-                  {f.desc}
-                </Text>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -341,25 +288,14 @@ export default function HomePage() {
             {t('cta.desc')}
           </p>
           <Link href="/login">
-            <button
-              style={{
-                height: 48,
-                padding: '0 32px',
-                fontSize: 15,
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                background: 'var(--bg-primary)',
-                border: 'none',
-                borderRadius: 10,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-              }}
+            <Button
+              rightSection={<IconArrowRight size={18} />}
+              size="lg"
+              variant="white"
+              color="dark"
             >
               {t('cta.loginBtn')}
-              <ArrowRightOutlined />
-            </button>
+            </Button>
           </Link>
         </section>
       )}
