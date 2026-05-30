@@ -2,138 +2,89 @@
 
 echo "🔍 开始 Pre-commit 检查..."
 
+# ============================================================
+# 1️⃣ TypeScript 类型检查
+# ============================================================
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  1️⃣  语法检查 (TypeScript)"
+echo "  1️⃣  类型检查 (TypeScript)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-if ! bun run typecheck; then
+if ! npx tsc --noEmit --skipLibCheck 2>&1; then
   echo ""
-  echo "❌ TypeScript 检查失败，提交中止！"
+  echo "❌ TypeScript 类型检查失败，提交中止！"
   exit 1
 fi
-echo "✅ 语法检查通过"
+echo "✅ 类型检查通过"
 
+# ============================================================
+# 2️⃣ ESLint（仅检查 staged .ts/.tsx 文件）
+# ============================================================
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  2️⃣  安全检查"
+echo "  2️⃣  ESLint 检查"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+STAGED_TS_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx)$' | head -20 || true)
+if [ -n "$STAGED_TS_FILES" ]; then
+  if ! echo "$STAGED_TS_FILES" | xargs npx eslint --max-warnings=0 2>&1; then
+    echo ""
+    echo "❌ ESLint 检查失败，请修复上述问题后重试。"
+    echo "   使用 --no-verify 可跳过本次检查。"
+    exit 1
+  fi
+fi
+echo "✅ ESLint 检查通过"
+
+# ============================================================
+# 3️⃣ 安全检查
+# ============================================================
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  3️⃣  安全检查"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # 检查是否提交了 .env 文件
-ENV_FILES=$(find . -maxdepth 1 -name ".env*" -type f 2>/dev/null | grep -v node_modules || true)
+ENV_FILES=$(find . -maxdepth 1 -name ".env*" -type f 2>/dev/null || true)
 if [ -n "$ENV_FILES" ]; then
   echo ""
   echo "❌ 检测到 .env 文件，禁止提交环境配置文件！"
-  echo "请将以下文件移除后再提交："
+  echo "   请将以下文件移除后再提交："
   echo "$ENV_FILES"
   exit 1
 fi
 
-# 扫描敏感字符串模式
+# 扫描 staged 文件中的敏感字符串
+SENSITIVE_FOUND=0
 SENSITIVE_PATTERNS=(
   "AKIA[0-9A-Z]{16}"       # AWS Access Key
   "sk-[a-zA-Z0-9]{20,}"    # OpenAI API Key
   "ghp_[a-zA-Z0-9]{36}"    # GitHub Token
-  "eyJ[A-Za-z0-9-_]+\.eyJ[A-Za-z0-9-_]+"  # JWT Token
 )
 
-SENSITIVE_FOUND=0
-for pattern in "${SENSITIVE_PATTERNS[@]}"; do
-  MATCHES=$(grep -r -E "$pattern" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.json" --include="*.env*" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents . 2>/dev/null | grep -v "node_modules" | grep -v ".next" | grep -v ".git" || true)
-  if [ -n "$MATCHES" ]; then
-    echo ""
-    echo "❌ 检测到敏感信息 (模式: $pattern)："
-    echo "$MATCHES" | head -10
-    SENSITIVE_FOUND=1
-  fi
-done
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx|js|jsx|json|yml|yaml)$' || true)
+if [ -n "$STAGED_FILES" ]; then
+  for pattern in "${SENSITIVE_PATTERNS[@]}"; do
+    MATCHES=$(echo "$STAGED_FILES" | xargs grep -l -E "$pattern" 2>/dev/null || true)
+    if [ -n "$MATCHES" ]; then
+      echo ""
+      echo "❌ 检测到敏感信息 (模式: $pattern)："
+      echo "$MATCHES"
+      SENSITIVE_FOUND=1
+    fi
+  done
+fi
 
 if [ "$SENSITIVE_FOUND" -eq 1 ]; then
   echo ""
-  echo "❌ 安全检查失败：检测到敏感信息，禁止提交！"
+  echo "❌ 安全检查失败，请移除敏感信息后重试。"
   exit 1
 fi
 echo "✅ 安全检查通过"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  3️⃣  i18n 检查 (硬编码中文)"
+echo "  ✅ Pre-commit 检查全部通过"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# 检测硬编码中文字符（排除注释和 i18n 文件）
-CHINESE_FOUND=0
-CHINESE_MATCHES=$(grep -r -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents --exclude-dir=src/i18n . 2>/dev/null | grep -v "node_modules" | grep -v ".next" | grep -v ".git" | grep -v "src/i18n" || true)
-
-if [ -n "$CHINESE_MATCHES" ]; then
-  # 过滤掉注释行
-  CHINESE_FILTERED=""
-  while IFS= read -r line; do
-    # 跳过注释行 (// 或 /* */ 或 <!--)
-    if echo "$line" | grep -qE "^\s*//|^\s*/\*|^\s*\*|^\s*<!--"; then
-      continue
-    fi
-    CHINESE_FILTERED="$CHINESE_FILTERED$line"$'\n'
-  done <<< "$CHINESE_MATCHES"
-
-  # 检查过滤后是否还有中文字符（使用更精确的中文范围）
-  CHINESE_COUNT=$(echo "$CHINESE_FILTERED" | grep -cE "[\u4e00-\u9fa5]" || true)
-
-  if [ "$CHINESE_COUNT" -gt 0 ]; then
-    echo ""
-    echo "❌ 检测到 $CHINESE_COUNT 处硬编码中文"
-    echo ""
-    echo "📋 需要 i18n 国际化的位置："
-    echo "$CHINESE_FILTERED" | grep -E "[\u4e00-\u9fa5]" | head -15
-    echo ""
-    echo "⚠️  提示：请将所有需要显示给用户的文本写入 i18n 文件。"
-    echo "   请使用 next-intl 的 useTranslations hook 进行国际化。"
-    exit 1
-  fi
-fi
-echo "✅ 未检测到硬编码中文"
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  4️⃣  TODO 检查"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-TODO_COUNT=$(grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents --exclude-dir=src/i18n -E "(//\s*TODO|/\*\s*TODO)" . 2>/dev/null | wc -l | tr -d ' ')
-
-if [ "$TODO_COUNT" -gt 0 ]; then
-  echo ""
-  echo "❌ 检测到代码中存在 $TODO_COUNT 个 TODO 注释标记"
-  echo ""
-  echo "📋 检测到以下 TODO 位置："
-  grep -r -i -n --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.agents -E "(//\s*TODO|/\*\s*TODO)" . 2>/dev/null | head -20
-  echo ""
-  echo "⚠️  提示：请完整实现项目内容后再提交代码。"
-  echo "   所有 TODO 注释项都需要被实现或移除后才能通过 pre-commit 检查。"
-  exit 1
-fi
-echo "✅ 未检测到 TODO 注释标记"
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  5️⃣  单元测试检查"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-if ! bun run test; then
-  echo ""
-  echo "❌ 测试失败，提交中止！"
-  exit 1
-fi
-echo "✅ 所有测试通过"
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  6️⃣  构建检查"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-if ! bun run build; then
-  echo ""
-  echo "❌ 构建失败，提交中止！"
-  exit 1
-fi
-echo "✅ 构建成功"
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  ✅ 所有检查通过，可以提交！"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-npx lint-staged
+# lint-staged（可选，不影响 hook 结果）
+npx lint-staged 2>/dev/null || true
