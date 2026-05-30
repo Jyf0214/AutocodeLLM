@@ -53,7 +53,8 @@ export const POST = withApiLogging('POST github/webhook', async function POST(re
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error('[GitHub/Webhook] Webhook 处理失败:', err);
     return NextResponse.json(
       { success: false, error: { message: 'Webhook 处理失败' } },
       { status: 500 },

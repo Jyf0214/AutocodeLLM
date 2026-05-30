@@ -84,12 +84,42 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
   // 导入提供商
   if (data.providers?.length) {
     if (mode === 'overwrite') {
-      await prisma.provider.deleteMany();
-      progress.push('已清除现有提供商');
-    }
-    for (const p of data.providers) {
-      try {
-        if (mode === 'merge') {
+      // 使用事务包装 deleteMany + 批量创建，确保原子性
+      await prisma.$transaction(async (tx) => {
+        await tx.provider.deleteMany();
+        progress.push('已清除现有提供商');
+
+        for (const p of data.providers ?? []) {
+          // 如果没有提供 apiKey，跳过创建而不是创建空 apiKey 的记录
+          if (!p.apiKey) {
+            skipped++;
+            progress.push(`提供商 "${p.name}" 跳过：缺少 apiKey`);
+            continue;
+          }
+
+          try {
+            await tx.provider.create({
+              data: {
+                name: p.name,
+                baseUrl: p.baseUrl,
+                apiKey: p.apiKey,
+                enabled: p.enabled ?? true,
+                providerType: p.providerType ?? 'custom',
+                sdkType: p.sdkType ?? 'openai',
+              },
+            });
+            imported++;
+            progress.push(`提供商 "${p.name}" 导入成功`);
+          } catch (err) {
+            failed++;
+            progress.push(`提供商 "${p.name}" 导入失败: ${err instanceof Error ? err.message : '未知错误'}`);
+          }
+        }
+      });
+    } else {
+      // merge 模式：逐条处理
+      for (const p of data.providers) {
+        try {
           const existing = await prisma.provider.findUnique({ where: { name: p.name } });
           if (existing) {
             await prisma.provider.update({
@@ -99,22 +129,30 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
             skipped++;
             continue;
           }
+
+          // 新增提供商时，如果没有 apiKey 则跳过创建
+          if (!p.apiKey) {
+            skipped++;
+            progress.push(`提供商 "${p.name}" 跳过：缺少 apiKey`);
+            continue;
+          }
+
+          await prisma.provider.create({
+            data: {
+              name: p.name,
+              baseUrl: p.baseUrl,
+              apiKey: p.apiKey,
+              enabled: p.enabled ?? true,
+              providerType: p.providerType ?? 'custom',
+              sdkType: p.sdkType ?? 'openai',
+            },
+          });
+          imported++;
+          progress.push(`提供商 "${p.name}" 导入成功`);
+        } catch (err) {
+          failed++;
+          progress.push(`提供商 "${p.name}" 导入失败: ${err instanceof Error ? err.message : '未知错误'}`);
         }
-        await prisma.provider.create({
-          data: {
-            name: p.name,
-            baseUrl: p.baseUrl,
-            apiKey: '',
-            enabled: p.enabled ?? true,
-            providerType: p.providerType ?? 'custom',
-            sdkType: p.sdkType ?? 'openai',
-          },
-        });
-        imported++;
-        progress.push(`提供商 "${p.name}" 导入成功`);
-      } catch {
-        failed++;
-        progress.push(`提供商 "${p.name}" 导入失败`);
       }
     }
   }
@@ -148,9 +186,9 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
         });
         imported++;
         progress.push(`环境变量 "${ev.key}" 导入成功`);
-      } catch {
+      } catch (err) {
         failed++;
-        progress.push(`环境变量 "${ev.key}" 导入失败`);
+        progress.push(`环境变量 "${ev.key}" 导入失败: ${err instanceof Error ? err.message : '未知错误'}`);
       }
     }
   }

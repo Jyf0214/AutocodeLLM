@@ -29,7 +29,8 @@ export const GET = withApiLogging('GET docs/content', async function GET(request
     // 检查文件是否存在
     try {
       await fs.access(fullPath);
-    } catch {
+    } catch (err) {
+      console.debug('[Docs/Content] 文件不存在:', fullPath, err);
       return NextResponse.json(
         { error: '文件不存在' },
         { status: 404 }

@@ -34,7 +34,8 @@ export const POST = withApiLogging('POST channel/webhook', async function POST(r
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error('[Channel/Webhook] Webhook 处理失败:', err);
     return NextResponse.json(
       { success: false, error: { message: 'Webhook 处理失败' } },
       { status: 500 },

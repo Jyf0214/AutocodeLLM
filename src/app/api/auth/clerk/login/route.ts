@@ -60,11 +60,12 @@ export const POST = withApiLogging('POST auth/clerk/login', async function POST(
       // 使用 Clerk SDK 验证 session
       const sessions = await client.sessions.getSession(sessionToken);
       session = sessions;
-    } catch {
+    } catch (err) {
+      console.error('[Clerk/Login] Session 验证失败:', err);
       return NextResponse.json(
-        { 
-          success: false, 
-          error: { message: 'Invalid session token', code: 'INVALID_SESSION' } 
+        {
+          success: false,
+          error: { message: 'Invalid session token', code: 'INVALID_SESSION' }
         },
         { status: 401 }
       );

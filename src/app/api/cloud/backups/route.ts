@@ -43,7 +43,8 @@ export const GET = withApiLogging('GET cloud/backups', async function GET() {
     );
 
     return NextResponse.json({ success: true, data: backups });
-  } catch {
+  } catch (err) {
+    console.error('[Cloud/Backups] 获取备份列表失败:', err);
     return NextResponse.json(
       { success: false, error: { message: '获取备份列表失败', code: 'GET_BACKUPS_FAILED' } },
       { status: 500 }

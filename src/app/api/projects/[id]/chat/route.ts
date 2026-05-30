@@ -90,7 +90,7 @@ export const POST = withApiLogging('POST projects/:id/chat', async function POST
     }
 
     // 使用事务确保用户消息、助手消息和日志的一致性写入
-    const [{ userMsg, assistantMsg }] = await prisma.$transaction(async (tx) => {
+    const { userMsg, assistantMsg } = await prisma.$transaction(async (tx) => {
       // 保存用户消息
       const userMsg = await tx.chatMessage.create({
         data: {

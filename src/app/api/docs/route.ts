@@ -37,7 +37,9 @@ export const GET = withApiLogging('GET docs', async function GET() {
     // 检查目录是否存在
     try {
       await fs.access(docsDir);
-    } catch {
+    } catch (err) {
+      // docs 目录不存在是正常情况，返回空列表
+      console.debug('[Docs] docs 目录不存在:', err);
       return NextResponse.json({ docs: [] });
     }
 

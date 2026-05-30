@@ -10,7 +10,8 @@ export const GET = withApiLogging('GET system/status', async function GET() {
   let dbStatus = 'healthy';
   try {
     await prisma.$queryRaw`SELECT 1`;
-  } catch {
+  } catch (err) {
+    console.error('[System] 数据库健康检查失败:', err);
     dbStatus = 'unhealthy';
   }
 

@@ -101,7 +101,8 @@ export const POST = withApiLogging('POST auth/verification-code', async function
       success: true,
       data: { message: '验证码已生成，请查看服务器控制台' },
     });
-  } catch {
+  } catch (err) {
+    console.error('[Auth/VerificationCode] 验证码生成失败:', err);
     return NextResponse.json(
       { success: false, error: { message: '验证码生成失败', code: 'CODE_GENERATION_ERROR' } },
       { status: 500 },
@@ -154,7 +155,8 @@ export const GET = withApiLogging('GET auth/verification-code', function GET(req
       success: true,
       data: { message: '验证码验证通过' },
     });
-  } catch {
+  } catch (err) {
+    console.error('[Auth/VerificationCode] 验证码验证失败:', err);
     return NextResponse.json(
       { success: false, error: { message: '验证码验证失败', code: 'VERIFICATION_ERROR' } },
       { status: 500 },

@@ -52,7 +52,8 @@ export const POST = withApiLogging('POST chat/completions', async function POST(
     let apiKey: string;
     try {
       apiKey = decryptValue(providerConfig.apiKey);
-    } catch {
+    } catch (err) {
+      console.error('[Chat/Completions] API Key 解密失败:', err);
       return NextResponse.json(
         {
           success: false,

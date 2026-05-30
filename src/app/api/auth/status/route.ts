@@ -46,7 +46,8 @@ export const GET = withApiLogging('GET auth/status', async function GET() {
         user,
       },
     });
-  } catch {
+  } catch (err) {
+    console.error('[Auth/Status] 获取认证状态失败:', err);
     return NextResponse.json(
       { success: false, error: { message: '获取认证状态失败' } },
       { status: 500 },

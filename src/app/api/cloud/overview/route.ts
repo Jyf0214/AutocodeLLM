@@ -62,7 +62,8 @@ export const GET = withApiLogging('GET cloud/overview', async function GET() {
     };
 
     return NextResponse.json({ success: true, data: overview });
-  } catch {
+  } catch (err) {
+    console.error('[Cloud/Overview] 获取云服务概览失败:', err);
     return NextResponse.json(
       { success: false, error: { message: '获取云服务概览失败', code: 'GET_OVERVIEW_FAILED' } },
       { status: 500 }
