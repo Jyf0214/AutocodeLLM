@@ -10,31 +10,33 @@
  */
 import { createHash } from 'node:crypto';
 
-// 强制检查 BETTER_AUTH_SECRET 环境变量
-const BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET;
-if (!BETTER_AUTH_SECRET) {
-  throw new Error('BETTER_AUTH_SECRET 环境变量未设置，Better Auth 无法启动');
-}
-
 /**
- * Better Auth 配置
+ * 获取 Better Auth 配置（惰性初始化，运行时检查 env 是否已设置）
+ * 模块加载时不做检查，避免构建阶段（如 next build 收集页面数据时）因 env 未设置而崩溃
  */
-export const betterAuthConfig = {
-  secret: BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
-};
+function getBetterAuthConfig(): { secret: string; baseURL: string } {
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (!secret) {
+    throw new Error('BETTER_AUTH_SECRET 环境变量未设置，Better Auth 无法启动');
+  }
+  return {
+    secret,
+    baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  };
+}
 
 /**
  * 生成 Better Auth 兼容的 session token
  */
 export function generateBetterAuthToken(userId: string): string {
+  const cfg = getBetterAuthConfig();
   const payload = JSON.stringify({
     userId,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
   });
   const signature = createHash('sha256')
-    .update(`${payload}.${betterAuthConfig.secret}`)
+    .update(`${payload}.${cfg.secret}`)
     .digest('hex');
   return Buffer.from(`${payload}.${signature}`).toString('base64url');
 }
@@ -44,10 +46,11 @@ export function generateBetterAuthToken(userId: string): string {
  */
 export function verifyBetterAuthToken(token: string): { userId: string } | null {
   try {
+    const cfg = getBetterAuthConfig();
     const decoded = Buffer.from(token, 'base64url').toString('utf-8');
     const [payload, signature] = decoded.split('.');
     const expectedSig = createHash('sha256')
-      .update(`${payload}.${betterAuthConfig.secret}`)
+      .update(`${payload}.${cfg.secret}`)
       .digest('hex');
 
     if (signature !== expectedSig) return null;
