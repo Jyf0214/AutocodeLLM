@@ -1,12 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, Button, Space, Form, Input, Switch, message as antdMessage, Tag } from 'antd';
+import { Card, Button, Space, Form, Input, Switch, message as antdMessage, Tag, Descriptions, Skeleton, Badge, Divider } from 'antd';
 import { useTranslations } from 'next-intl';
 import {
   CloudServerOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  SettingOutlined,
+  AimOutlined,
+  PlayCircleOutlined,
+  SaveOutlined,
 } from '@ant-design/icons';
 import { Flexbox, Text } from '@/lib/ui';
 
@@ -27,6 +31,7 @@ export default function WebDAVPage() {
   const t = useTranslations('cloud');
   const [status, setStatus] = useState<SyncStatus | null>(null);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [configMode, setConfigMode] = useState(false);
   const [form] = Form.useForm();
 
@@ -52,6 +57,8 @@ export default function WebDAVPage() {
         }
       } catch {
         // 忽略错误
+      } finally {
+        setInitialLoading(false);
       }
     })();
   }, []);
@@ -113,70 +120,188 @@ export default function WebDAVPage() {
     }
   }, [form, t]);
 
+  const iconStyle = { fontSize: 18, color: '#1677ff' };
+
   return (
-    <Flexbox gap={16} style={{ flexDirection: 'column', height: '100%', maxHeight: 'calc(100dvh - 64px)', overflowY: 'auto', padding: '0 16px 24px' }}>
-      <Text style={{ fontSize: 20, fontWeight: 700 }}>{t('webdavConfig')}</Text>
-      <Text type="secondary">{t('description')}</Text>
+    <Flexbox gap={20} style={{ flexDirection: 'column', height: '100%', maxHeight: 'calc(100dvh - 64px)', overflowY: 'auto', padding: '0 16px 24px' }}>
+      {/* 页面标题 */}
+      <div style={{ padding: '4px 0' }}>
+        <Flexbox horizontal gap={12} align="center">
+          <CloudServerOutlined style={{ fontSize: 24, color: '#1677ff' }} />
+          <div>
+            <Text style={{ fontSize: 20, fontWeight: 700, display: 'block', lineHeight: 1.4 }}>{t('webdavConfig')}</Text>
+            <Text type="secondary" style={{ fontSize: 13 }}>{t('description')}</Text>
+          </div>
+        </Flexbox>
+      </div>
 
+      {/* 连接状态卡片 */}
       <Card
-        title={t('connectionStatus')}
-        extra={
-          status?.enabled ? (
-            <Tag icon={<CheckCircleOutlined />} color="success">{t('enabled')}</Tag>
-          ) : (
-            <Tag icon={<CloseCircleOutlined />} color="default">{t('disabled')}</Tag>
-          )
-        }
-        size="small"
+        style={{ borderRadius: 8 }}
+        styles={{ body: { padding: 20 } }}
       >
-        <Space style={{ width: '100%', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-          <Flexbox horizontal justify="space-between" wrap gap={8}>
-            <Text type="secondary">{t('serverUrl')}</Text>
-            <Text style={{ wordBreak: 'break-all' }}>{status?.url || t('notConfigured')}</Text>
-          </Flexbox>
-          <Flexbox horizontal justify="space-between" wrap gap={8}>
-            <Text type="secondary">{t('remotePath')}</Text>
-            <Text style={{ wordBreak: 'break-all' }}>{status?.remotePath || t('notConfigured')}</Text>
-          </Flexbox>
-          <Flexbox horizontal justify="space-between" wrap gap={8}>
-            <Text type="secondary">{t('syncStatus')}</Text>
-            <Text>{status?.watching ? t('running') : t('stopped')}</Text>
-          </Flexbox>
-        </Space>
+        {initialLoading ? (
+          <Skeleton active paragraph={{ rows: 3 }} />
+        ) : (
+          <>
+            {/* 状态概览条 */}
+            <Flexbox horizontal justify="space-between" align="center" style={{ marginBottom: 16 }}>
+              <Flexbox horizontal gap={16} align="center">
+                <Badge
+                  status={status?.enabled ? 'success' : 'default'}
+                  text={
+                    <Text style={{ fontWeight: 600, fontSize: 14 }}>
+                      {status?.enabled ? t('enabled') : t('disabled')}
+                    </Text>
+                  }
+                />
+                <Divider type="vertical" style={{ height: 20 }} />
+                <Flexbox horizontal gap={6} align="center">
+                  <span style={{
+                    display: 'inline-block',
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: status?.watching ? '#52c41a' : '#d9d9d9',
+                  }} />
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    {status?.watching ? t('running') : t('stopped')}
+                  </Text>
+                </Flexbox>
+              </Flexbox>
+
+              {/* 配置/取消按钮 */}
+              <Button
+                type={configMode ? 'default' : 'primary'}
+                icon={configMode ? <CloseCircleOutlined /> : <SettingOutlined />}
+                onClick={() => setConfigMode(!configMode)}
+                size="small"
+              >
+                {configMode ? t('cancelConfig') : t('configureServer')}
+              </Button>
+            </Flexbox>
+
+            <Divider style={{ margin: '0 0 12px' }} />
+
+            {/* 服务器信息 */}
+            <Descriptions column={1} size="small" style={{ marginBottom: 0 }}>
+              <Descriptions.Item
+                label={<Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>{t('serverUrl')}</Text>}
+                style={{ paddingBottom: 8 }}
+              >
+                {status?.url ? (
+                  <Text style={{ wordBreak: 'break-all', fontSize: 13 }}>
+                    {status.url}
+                  </Text>
+                ) : (
+                  <Tag style={{ fontSize: 12, margin: 0 }}>{t('notConfigured')}</Tag>
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item
+                label={<Text type="secondary" style={{ fontSize: 13, whiteSpace: 'nowrap' }}>{t('remotePath')}</Text>}
+                style={{ paddingBottom: 0 }}
+              >
+                {status?.remotePath ? (
+                  <Text style={{ wordBreak: 'break-all', fontSize: 13 }}>{status.remotePath}</Text>
+                ) : (
+                  <Tag style={{ fontSize: 12, margin: 0 }}>{t('notConfigured')}</Tag>
+                )}
+              </Descriptions.Item>
+            </Descriptions>
+          </>
+        )}
       </Card>
 
-      <Card title={t('serverConfig')} size="small">
-        <Button
-          icon={<CloudServerOutlined />}
-          onClick={() => setConfigMode(!configMode)}
-        >
-          {configMode ? t('cancelConfig') : t('configureServer')}
-        </Button>
-      </Card>
-
+      {/* 配置表单（展开/收起） */}
       {configMode && (
-        <Card title={t('webdavServerSettings')} size="small">
-          <Form form={form} layout="vertical" onFinish={handleSaveConfig}>
-            <Form.Item name="url" label={t('serverUrl')} rules={[{ required: true, message: t('serverUrl') + ' ' + t('notConfigured') }]}>
-              <Input placeholder="https://webdav.example.com" />
+        <Card
+          style={{ borderRadius: 8, border: '1px solid #1677ff' }}
+          styles={{ header: { background: '#f0f5ff', borderRadius: '8px 8px 0 0' }, body: { padding: 20 } }}
+          title={
+            <Flexbox horizontal gap={8} align="center">
+              <SettingOutlined style={{ fontSize: 16, color: '#1677ff' }} />
+              <Text style={{ fontWeight: 600 }}>{t('webdavServerSettings')}</Text>
+            </Flexbox>
+          }
+        >
+          <Form form={form} layout="vertical" onFinish={handleSaveConfig} requiredMark="optional">
+            <Form.Item
+              name="url"
+              label={<Text style={{ fontWeight: 500 }}>{t('serverUrl')}</Text>}
+              rules={[{ required: true, message: t('serverUrl') + ' ' + t('notConfigured') }]}
+              tooltip="WebDAV 服务器地址，例如 https://webdav.example.com"
+            >
+              <Input
+                placeholder="https://webdav.example.com"
+                prefix={<CloudServerOutlined style={{ color: '#bfbfbf' }} />}
+                style={{ borderRadius: 6 }}
+              />
             </Form.Item>
-            <Form.Item name="username" label={t('username')} rules={[{ required: true, message: t('username') + ' ' + t('notConfigured') }]}>
-              <Input placeholder="username" />
+
+            <Flexbox horizontal gap={16} style={{ width: '100%' }}>
+              <Form.Item
+                name="username"
+                label={<Text style={{ fontWeight: 500 }}>{t('username')}</Text>}
+                rules={[{ required: true, message: t('username') + ' ' + t('notConfigured') }]}
+                style={{ flex: 1 }}
+              >
+                <Input placeholder="username" prefix={<span style={{ color: '#bfbfbf', fontSize: 13 }}>👤</span>} style={{ borderRadius: 6 }} />
+              </Form.Item>
+              <Form.Item
+                name="password"
+                label={<Text style={{ fontWeight: 500 }}>{t('password')}</Text>}
+                rules={[{ required: true, message: t('password') + ' ' + t('notConfigured') }]}
+                style={{ flex: 1 }}
+              >
+                <Input.Password
+                  placeholder={status?.url ? '留空则保持原密码' : 'password'}
+                  style={{ borderRadius: 6 }}
+                />
+              </Form.Item>
+            </Flexbox>
+
+            <Form.Item
+              name="remotePath"
+              label={<Text style={{ fontWeight: 500 }}>{t('remotePath')}</Text>}
+              rules={[{ required: true, message: t('remotePath') + ' ' + t('notConfigured') }]}
+              tooltip="远程存储路径，例如 /autocodellm"
+            >
+              <Input
+                placeholder="/autocodellm"
+                prefix={<AimOutlined style={{ color: '#bfbfbf' }} />}
+                style={{ borderRadius: 6 }}
+              />
             </Form.Item>
-            <Form.Item name="password" label={t('password')} rules={[{ required: true, message: t('password') + ' ' + t('notConfigured') }]}>
-              <Input.Password placeholder="password" />
-            </Form.Item>
-            <Form.Item name="remotePath" label={t('remotePath')} rules={[{ required: true, message: t('remotePath') + ' ' + t('notConfigured') }]}>
-              <Input placeholder="/autocodellm" />
-            </Form.Item>
-            <Form.Item name="enabled" label={t('enableSync')} valuePropName="checked" initialValue={false}>
+
+            <Form.Item name="enabled" label={<Text style={{ fontWeight: 500 }}>{t('enableSync')}</Text>} valuePropName="checked" initialValue={false}>
               <Switch />
             </Form.Item>
-            <Form.Item>
-              <Space wrap size={[8, 8]}>
-                <Button type="primary" htmlType="submit" loading={loading}>{t('saveConfig')}</Button>
-                <Button onClick={handleTest} loading={loading}>{t('testConnection')}</Button>
-              </Space>
+
+            <Divider style={{ margin: '8px 0 16px' }} />
+
+            <Form.Item style={{ marginBottom: 0 }}>
+              <Flexbox horizontal gap={12} justify="flex-end">
+                <Button onClick={() => setConfigMode(false)} loading={loading}>
+                  {t('cancelConfig')}
+                </Button>
+                <Button
+                  icon={<PlayCircleOutlined />}
+                  onClick={handleTest}
+                  loading={loading}
+                  style={{ borderRadius: 6 }}
+                >
+                  {t('testConnection')}
+                </Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  icon={<SaveOutlined />}
+                  loading={loading}
+                  style={{ borderRadius: 6 }}
+                >
+                  {t('saveConfig')}
+                </Button>
+              </Flexbox>
             </Form.Item>
           </Form>
         </Card>
