@@ -6,26 +6,19 @@ echo "🔍 开始 Pre-commit 检查..."
 echo ""
 
 # ============================================================
-# 1️⃣ ESLint — 仅检查 staged .ts/.tsx 文件
+# 1️⃣ ESLint — 仅检查 staged .ts/.tsx 文件，错误即阻拦
 # ============================================================
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  1️⃣  ESLint 代码规范检查"
+echo "  1️⃣  ESLint 代码规范检查（错误即阻拦）"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 STAGED_TS=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx)$' || true)
-ESLINT_OK=0
 if [ -n "$STAGED_TS" ]; then
-  # eslint 返回非零即有真正错误（忽略文件警告不计入）
-  ESLINT_OUT=$(echo "$STAGED_TS" | xargs npx eslint --max-warnings=0 2>&1) && ESLINT_OK=1 || true
-  if [ "$ESLINT_OK" -eq 0 ]; then
-    REAL_ERROR=$(echo "$ESLINT_OUT" | grep -c "error " || true)
-    if [ "$REAL_ERROR" -gt 0 ]; then
-      echo ""
-      echo "$ESLINT_OUT"
-      echo ""
-      echo "❌ ESLint 检查未通过，请修复后重试。"
-      exit 1
-    fi
+  # --quiet: 只输出错误，不输出警告
+  if ! echo "$STAGED_TS" | xargs npx eslint --quiet 2>&1; then
+    echo ""
+    echo "❌ ESLint 检查未通过，提交已阻拦。请修复后重试。"
+    exit 1
   fi
 fi
 echo "✅ ESLint 检查通过"
@@ -35,10 +28,10 @@ echo ""
 # 2️⃣ 安全检查
 # ============================================================
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  2️⃣  安全检查"
+echo "  2️⃣  安全检查（发现敏感信息即阻拦）"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# .env 文件检测（只检查 staged 文件，.env.example 为模板允许提交）
+# .env 文件检测（只检查 staged，.env.example 为模板允许提交）
 STAGED_ENV=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^\.env$|^\.env\.' | grep -v '\.env\.example' || true)
 if [ -n "$STAGED_ENV" ]; then
   echo "❌ 禁止提交环境配置文件："
@@ -53,19 +46,15 @@ SENSITIVE_PATTERNS=(
   "ghp_[a-zA-Z0-9]{36}"    # GitHub Token
 )
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx|js|jsx|json|yml|yaml)$' || true)
-SENSITIVE_FOUND=0
 if [ -n "$STAGED_FILES" ]; then
   for pattern in "${SENSITIVE_PATTERNS[@]}"; do
     MATCHES=$(echo "$STAGED_FILES" | xargs grep -l -E "$pattern" 2>/dev/null || true)
     if [ -n "$MATCHES" ]; then
       echo "❌ 检测到敏感信息（模式: $pattern）："
       echo "$MATCHES"
-      SENSITIVE_FOUND=1
+      exit 1
     fi
   done
-fi
-if [ "$SENSITIVE_FOUND" -eq 1 ]; then
-  exit 1
 fi
 echo "✅ 安全检查通过"
 echo ""
