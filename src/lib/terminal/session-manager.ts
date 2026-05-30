@@ -72,12 +72,18 @@ class SpawnTerminal implements ITerminal {
   private dataCallbacks: Array<(data: string) => void> = [];
   private exitCallbacks: Array<(result: { exitCode: number; signal?: number }) => void> = [];
   readonly pid: number;
+  private cols: number;
+  private rows: number;
 
-  constructor(shell: string, cwd: string, env: Record<string, string>, _cols: number, _rows: number) {
+  constructor(shell: string, cwd: string, env: Record<string, string>, cols: number, rows: number) {
+    this.cols = cols;
+    this.rows = rows;
+
     // 使用 spawn 创建交互式 shell，捕获所有输出流
     // -i: 交互模式，确保输出提示符
     // spawn 模式下无真实 PTY，设置 TERM=dumb 避免程序输出控制序列
-    const spawnEnv: Record<string, string | undefined> = { ...env, TERM: 'dumb' };
+    // 传递 COLUMNS/LINES 使 ls 等命令按正确宽度格式化输出
+    const spawnEnv: Record<string, string | undefined> = { ...env, TERM: 'dumb', COLUMNS: String(cols), LINES: String(rows) };
     this.process = spawn(shell, ['-i'], {
       cwd,
       env: spawnEnv as NodeJS.ProcessEnv,
@@ -136,8 +142,17 @@ class SpawnTerminal implements ITerminal {
     }
   }
 
-  resize(_cols: number, _rows: number): void {
-    // spawn 模式不支持 resize，忽略
+  resize(cols: number, rows: number): void {
+    this.cols = cols;
+    this.rows = rows;
+    // spawn 无 PTY，内核无法自动更新窗口尺寸。
+    // 发送 SIGWINCH 通知 bash 重新查询终端尺寸，
+    // bash 会在下一个提示符前尝试 checkwinsize。
+    try {
+      this.process.kill('SIGWINCH');
+    } catch {
+      // 进程可能已退出
+    }
   }
 
   kill(): void {

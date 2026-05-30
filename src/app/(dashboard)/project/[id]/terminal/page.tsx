@@ -36,10 +36,15 @@ export default function ProjectTerminalPage() {
       wsRef.current = null;
     }
 
+    // 获取当前终端实际尺寸
+    const term = terminalInstanceRef.current;
+    const cols = term?.cols ?? 80;
+    const rows = term?.rows ?? 24;
+
     // 使用当前页面的 origin 构建 WebSocket URL
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${encodeURIComponent(projectId)}`;
-    console.log('[terminal-page] WebSocket URL:', wsUrl);
+    const wsUrl = `${protocol}//${window.location.host}/api/terminal/ws?projectId=${encodeURIComponent(projectId)}&cols=${cols}&rows=${rows}`;
+    console.log('[terminal-page] WebSocket URL:', wsUrl, { cols, rows });
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
