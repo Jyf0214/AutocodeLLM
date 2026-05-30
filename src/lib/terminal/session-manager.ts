@@ -86,7 +86,9 @@ export function createSession(projectId: string, cols: number, rows: number): Te
 
   let ptyProcess;
   try {
-    ptyProcess = pty.spawn(shell, ['-i'], {
+    // Docker 默认 seccomp 拦截 TIOCSCTTY ioctl，导致 shell 收到 SIGHUP 退出。
+    // 使用 trap "" HUP 忽略挂断信号，确保 shell 即使无控制终端也能正常运行。
+    ptyProcess = pty.spawn(shell, ['-c', 'trap "" HUP; exec ' + shell + ' -i'], {
       name: 'xterm-256color',
       cols,
       rows,
