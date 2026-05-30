@@ -5,23 +5,16 @@ set -euo pipefail
 echo "🔍 开始 Pre-push 检查..."
 echo ""
 
+# 构建需要 DATABASE_URL，未设置时使用默认值
+# 编译阶段使用延迟导入（lazy import），默认值仅用于通过 Prisma Client 生成
+export DATABASE_URL="${DATABASE_URL:-mysql://user:password@localhost:3306/autocodellm}"
+
 # ============================================================
-# 1️⃣ 构建检查 — 前置条件
+# 1️⃣ 构建检查
 # ============================================================
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  1️⃣  构建检查"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-if [ -z "${DATABASE_URL:-}" ]; then
-  echo "⚠️  DATABASE_URL 未设置，跳过构建检查。"
-  echo "   确保 CI/CD 中已配置 DATABASE_URL。"
-  echo ""
-
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "  ✅ Pre-push 检查通过（跳过了构建）"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  exit 0
-fi
 
 # --- Prisma Client 生成 ---
 echo "  → 生成 Prisma Client..."
