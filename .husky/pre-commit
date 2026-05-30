@@ -44,7 +44,6 @@ if [ -n "$STAGED_TS_FILES" ]; then
     echo "$ESLINT_OUTPUT"
     echo ""
     echo "❌ ESLint 检查失败，请修复后重试。"
-    echo "   使用 --no-verify 可跳过本次检查。"
     exit 1
   fi
 fi
