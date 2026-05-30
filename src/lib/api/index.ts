@@ -5,7 +5,5 @@ export * from './types';
 export * from './response';
 export * from './db-response';
 export * from './env-types';
-export * from './model-types';
-export * from './provider-types';
 export * from './project-types';
 export * from './project-log-types';

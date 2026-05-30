@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { Button, Form, Input, InputPassword, Flexbox, Text } from '@lobehub/ui';
 import {
   UserOutlined,
   LockOutlined,
@@ -11,7 +10,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { message, Card, Radio } from 'antd';
+import { message, Card, Radio, Button, Form, Input } from 'antd';
 import type { RadioChangeEvent } from 'antd';
 
 /** 登录模式 */
@@ -234,7 +233,7 @@ export default function LoginPage() {
         }}
       >
         {/* 标题 */}
-        <Flexbox align="center" gap={8} style={{ marginBottom: 32, textAlign: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 32, textAlign: 'center' }}>
           <div
             style={{
               width: 48,
@@ -250,13 +249,13 @@ export default function LoginPage() {
           >
             <UserOutlined style={{ fontSize: 24, color: '#fff' }} />
           </div>
-          <Text strong style={{ fontSize: 26, color: '#333333' }}>
+          <span style={{ fontWeight: 'bold', fontSize: 26, color: '#333333' }}>
             {t('title')}
-          </Text>
-          <Text type="secondary" style={{ fontSize: 14, marginTop: 8, color: '#666666' }}>
+          </span>
+          <span style={{ fontSize: 14, marginTop: 8, color: '#666666' }}>
             {t('subtitle')}
-          </Text>
-        </Flexbox>
+          </span>
+        </div>
 
         {/* 登录模式切换 */}
         <div style={{ marginBottom: 24 }}>
@@ -312,7 +311,7 @@ export default function LoginPage() {
               label={t('password')}
               rules={[{ required: true, message: t('passwordRequired') }]}
             >
-              <InputPassword
+              <Input.Password
                 prefix={<LockOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />}
                 placeholder={t('passwordPlaceholder')}
                 style={{ borderRadius: 10, height: 44 }}
@@ -366,9 +365,9 @@ export default function LoginPage() {
         {/* 验证码提示 */}
         {loginMode === 'verificationCode' && (
           <div style={{ textAlign: 'center', marginTop: 16 }}>
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <span style={{ fontSize: 12, color: '#666666' }}>
               {t('codeHint')}
-            </Text>
+            </span>
           </div>
         )}
 

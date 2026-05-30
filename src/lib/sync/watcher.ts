@@ -1,6 +1,6 @@
 import { watch, type FSWatcher } from 'chokidar';
 import { createClient } from 'webdav';
-import { decryptValue } from '@/lib/providers/api-client';
+import { decryptValue } from '@/lib/crypto';
 import { pushToRemote } from './webdav';
 
 // 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）

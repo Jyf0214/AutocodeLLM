@@ -9,10 +9,8 @@ import { notifications } from '@mantine/notifications';
 import {
   IconArrowRight,
   IconFolder,
-  IconApi,
   IconCloud,
   IconCode,
-  IconShield,
   IconBrandGithub,
 } from '@tabler/icons-react';
 
@@ -68,9 +66,7 @@ export default function HomePage() {
   const features = [
     { icon: IconFolder, title: t('projectManagement'), desc: t('projectManagementDesc'), link: '/project' },
     { icon: IconCode, title: t('featureAI.title'), desc: t('featureAI.desc'), link: '/project' },
-    { icon: IconApi, title: t('multiModelSupport'), desc: t('multiModelSupportDesc'), link: '/provider' },
     { icon: IconCloud, title: t('cloudService'), desc: t('cloudServiceDesc'), link: '/cloud' },
-    { icon: IconShield, title: t('featureModels.title'), desc: t('featureModels.desc'), link: '/provider' },
   ];
 
   return (

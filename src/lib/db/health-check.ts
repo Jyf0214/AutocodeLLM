@@ -21,8 +21,7 @@ async function healthCheck(): Promise<void> {
     // 3. 检查用户数据
     await checkUserData();
 
-    // 4. 检查配置
-    await checkConfig();
+    // 4. 检查配置 (removed chatConfig check)
 
     console.log('\n========================================');
     console.log('✅ 数据库健康检查完成');
@@ -81,22 +80,6 @@ async function checkUserData(): Promise<void> {
   }
 
   console.log(` ✅ 找到 ${String(userCount)} 个用户\n`);
-}
-
-/**
- * 检查聊天配置
- */
-async function checkConfig(): Promise<void> {
-  console.log('4️⃣  检查聊天配置...');
-
-  const configCount = await prisma.chatConfig.count();
-
-  if (configCount === 0) {
-    console.log(' ⚠️  无聊天配置，请运行初始化脚本\n');
-    return;
-  }
-
-  console.log(` ✅ 找到 ${String(configCount)} 个配置\n`);
 }
 
 // 执行健康检查

@@ -14,7 +14,7 @@ import {
   handleError,
   validateRequiredFields,
 } from '@/lib/api/response';
-import { encryptValue, decryptValue } from '@/lib/providers/api-client';
+import { encryptValue, decryptValue } from '@/lib/crypto';
 import { maskValue } from '@/lib/api/response';
 import type {
 

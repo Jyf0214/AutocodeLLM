@@ -1,6 +1,6 @@
 /**
  * 数据库初始化脚本
- * 创建默认管理员账户和默认聊天配置
+ * 创建默认管理员账户
  *
  * 安全修复：移除硬编码 DEFAULT_PASSWORD
  * - 优先使用 INIT_ADMIN_PASSWORD 环境变量
@@ -33,9 +33,6 @@ async function main(): Promise<void> {
   try {
     // 1. 创建默认管理员账户
     await initializeAdminUser();
-
-    // 2. 创建默认聊天配置
-    await initializeChatConfig();
 
     console.log('\n✅ 数据库初始化完成！');
   } catch (error) {
@@ -77,33 +74,6 @@ async function initializeAdminUser(): Promise<void> {
   console.log('✅ 创建默认管理员账户 (username: admin)');
   console.log(`🔑 密码：${adminPassword}`);
   console.log('⚠️  首次登录后将强制修改密码\n');
-}
-
-/**
- * 初始化聊天配置
- */
-async function initializeChatConfig(): Promise<void> {
-  const existingConfig = await prisma.chatConfig.findFirst();
-
-  if (existingConfig) {
-    console.log('⏭️  聊天配置已存在');
-    return;
-  }
-
-  await prisma.chatConfig.create({
-    data: {
-      temperature: 0.7,
-      maxTokens: 4096,
-      topP: 1.0,
-      frequencyPenalty: 0.0,
-      presencePenalty: 0.0,
-      maxToolCallsPerMessage: 10,
-      enableStreaming: true,
-      enableFunctionCall: true,
-    },
-  });
-
-  console.log('✅ 创建默认聊天配置\n');
 }
 
 // 执行初始化

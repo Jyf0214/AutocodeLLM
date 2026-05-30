@@ -12,10 +12,8 @@ import {
   EnvironmentOutlined,
   UserOutlined,
   CloudServerOutlined,
-  ApiOutlined,
   MenuOutlined,
   FileOutlined,
-  BarChartOutlined,
 } from '@ant-design/icons';
 import { Drawer, Menu } from 'antd';
 
@@ -25,10 +23,8 @@ import { Drawer, Menu } from 'antd';
 const MENU_ITEMS = [
   { key: '/', icon: <HomeOutlined />, labelKey: 'common.appName' },
   { key: '/project', icon: <FolderOutlined />, labelKey: 'common.project' },
-  { key: '/provider', icon: <ApiOutlined />, labelKey: 'common.providers' },
   { key: '/env', icon: <EnvironmentOutlined />, labelKey: 'common.env' },
   { key: '/setting', icon: <SettingOutlined />, labelKey: 'common.setting' },
-  { key: '/state', icon: <BarChartOutlined />, labelKey: 'common.state' },
   { key: '/logs', icon: <FileOutlined />, labelKey: 'common.logs' },
   { key: '/cloud', icon: <CloudServerOutlined />, labelKey: 'common.cloud' },
   { key: '/account', icon: <UserOutlined />, labelKey: 'common.account' },

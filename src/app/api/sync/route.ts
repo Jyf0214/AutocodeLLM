@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { requireAuth } from '@/lib/auth';
-import { encryptValue, decryptValue } from '@/lib/providers/api-client';
+import { encryptValue, decryptValue } from '@/lib/crypto';
 import { testConnection, createWebdavClient, pullFromRemote, pushToRemote } from '@/lib/sync/webdav';
 import { startWatching, stopWatching, isWatchActive } from '@/lib/sync/watcher';
 

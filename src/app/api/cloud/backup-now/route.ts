@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { decryptValue } from '@/lib/providers/api-client';
+import { decryptValue } from '@/lib/crypto';
 import fs from 'fs';
 import path from 'path';
 
@@ -13,7 +13,7 @@ async function getPrisma() {
 
 // 惰性读取备份日志文件路径（避免模块加载时读取 process.env）
 function getBackupLogFile(): string {
-  return process.env.BACKUP_LOG_FILE || `${process.env.HOME || process.cwd()}/.autocodellm/backups/backup-logs.json`;
+  return process.env.BACKUP_LOG_FILE ?? `${process.env.HOME ?? process.cwd()}/.autocodellm/backups/backup-logs.json`;
 }
 
 interface BackupLog {

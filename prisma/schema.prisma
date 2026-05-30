@@ -77,51 +77,6 @@ model ApiKey {
   @@map("api_keys")
 }
 
-// ============================================================
-// AI 提供商
-// ============================================================
-
-model Provider {
-  id               String    @id @default(uuid())
-  name             String    @unique
-  baseUrl          String
-  apiKey           String    // 加密存储
-  databaseUrl      String?
-  enabled          Boolean   @default(true)
-  providerType     String    @default("custom") // preset, custom
-  sdkType          String    @default("openai") // openai, anthropic, google, ollama, azure
-  authType         String    @default("apiKey") // apiKey, oauth
-  oauthAccessToken String?   @db.Text
-  oauthRefreshToken String?  @db.Text
-  oauthExpiresAt   DateTime?
-  oauthClientId    String?
-  oauthDeviceCode  String?   @db.Text
-  metadata         String?   @default("{}") // JSON
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-
-  @@map("providers")
-}
-
-// ============================================================
-// 聊天配置
-// ============================================================
-
-model ChatConfig {
-  id                      String   @id @default(uuid())
-  temperature             Float    @default(0.7)
-  maxTokens               Int      @default(4096)
-  topP                    Float    @default(1.0)
-  frequencyPenalty        Float    @default(0.0)
-  presencePenalty         Float    @default(0.0)
-  maxToolCallsPerMessage  Int      @default(10)
-  enableStreaming          Boolean  @default(true)
-  enableFunctionCall      Boolean  @default(true)
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
-
-  @@map("chat_configs")
-}
 
 // ============================================================
 // 项目
@@ -135,7 +90,6 @@ model Project {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  messages        ChatMessage[]
   logs            ProjectLog[]
   backups         Backup[]
   channels        Channel[]
@@ -145,29 +99,6 @@ model Project {
   @@map("workspaces")
 }
 
-model ChatMessage {
-  id          String    @id @default(uuid())
-  projectId   String    @map("workspaceId")
-  role        String    // user, assistant, system, tool
-  content     String
-  toolCalls   String?   // JSON
-  toolCallId  String?
-  tokensUsed  Int       @default(0)
-  inputTokens Int       @default(0)
-  outputTokens Int      @default(0)
-  totalTokens Int       @default(0)
-  model       String?
-  providerId  String?
-  parentId    String?
-  createdAt   DateTime  @default(now())
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-  @@index([createdAt])
-  @@index([providerId])
-  @@map("chat_messages")
-}
 
 // ============================================================
 // 环境变量

@@ -1,13 +1,26 @@
-// node-pty 是可选原生模块，可能不可用（如 Docker 容器中缺少编译环境）
-// 使用延迟加载避免模块解析阶段的致命错误
-let ptyModule: typeof import('node-pty') | null = null;
+/**
+ * node-pty 是可选原生模块，仅在 TERMINAL_USE_PTY=true 时尝试加载。
+ *
+ * 使用动态模块名 + 运行时条件判断，防止 Next.js/Turbopack
+ * 在构建时对 'node-pty' 进行静态解析而导致构建失败。
+ */
+let ptyModule: any = null;
 let ptyLoadAttempted = false;
 
-function loadPty() {
+function loadPty(): any {
   if (ptyLoadAttempted) return ptyModule;
   ptyLoadAttempted = true;
+
+  // 默认不加载 node-pty，仅当用户显式设置 TERMINAL_USE_PTY=true 才尝试
+  if (process.env.TERMINAL_USE_PTY !== 'true') {
+    ptyModule = null;
+    return null;
+  }
+
   try {
-    ptyModule = require('node-pty');
+    // 动态拼接模块名，避免 Turbopack 构建时静态追踪
+    const modName = ['node', 'pty'].join('-');
+    ptyModule = require(modName);
   } catch {
     ptyModule = null;
   }
@@ -169,10 +182,10 @@ class SpawnTerminal implements ITerminal {
 // ============================================================
 
 class PtyTerminal implements ITerminal {
-  private ptyProcess: import('node-pty').IPty;
+  private ptyProcess: any;
   readonly pid: number;
 
-  constructor(pty: typeof import('node-pty'), shell: string, cwd: string, env: Record<string, string>, cols: number, rows: number) {
+  constructor(pty: any, shell: string, cwd: string, env: Record<string, string>, cols: number, rows: number) {
     // Docker 默认 seccomp 拦截 TIOCSCTTY ioctl，导致 shell 收到 SIGHUP 退出。
     // 使用 trap "" HUP 忽略挂断信号，确保 shell 即使无控制终端也能正常运行。
     this.ptyProcess = pty.spawn(shell, ['-c', 'trap "" HUP; exec ' + shell + ' -i'], {
@@ -212,14 +225,14 @@ class PtyTerminal implements ITerminal {
 function createTerminal(shell: string, cwd: string, env: Record<string, string>, cols: number, rows: number): ITerminal {
   // 默认使用 spawn 模式（不依赖原生模块，避免 SIGHUP 问题）
   // 设置 TERMINAL_USE_PTY=true 可启用 node-pty 获得完整 PTY 能力
-  const preferPty = process.env.TERMINAL_USE_PTY === 'true';
-  const ptyAvailable = loadPty() !== null;
 
-  if (preferPty && ptyAvailable) {
-    // 用户明确要求 node-pty 且模块可用
+  // 仅在 TERMINAL_USE_PTY=true 时尝试加载 node-pty
+  const ptyInstance = loadPty();
+
+  if (ptyInstance) {
     try {
       console.log('[terminal] 尝试 node-pty 模式');
-      const terminal = new PtyTerminal(loadPty()!, shell, cwd, env, cols, rows);
+      const terminal = new PtyTerminal(ptyInstance, shell, cwd, env, cols, rows);
       if (terminal.pid > 0) {
         console.log('[terminal] node-pty 模式成功, PID:', terminal.pid);
         return terminal;
@@ -229,8 +242,7 @@ function createTerminal(shell: string, cwd: string, env: Record<string, string>,
     }
   }
 
-  // 默认使用 spawn 模式（稳定可靠，不受 PTY/SIGHUP 影响）
-  console.log('[terminal] 使用 spawn 模式' + (ptyAvailable ? ' (node-pty 可用但未启用)' : ''));
+  console.log('[terminal] 使用 spawn 模式');
   return new SpawnTerminal(shell, cwd, env, cols, rows);
 }
 
