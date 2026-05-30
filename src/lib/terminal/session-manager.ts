@@ -74,10 +74,13 @@ class SpawnTerminal implements ITerminal {
   readonly pid: number;
 
   constructor(shell: string, cwd: string, env: Record<string, string>, _cols: number, _rows: number) {
-    // 使用 spawn 创建 shell 进程，捕获所有输出流
-    this.process = spawn(shell, [], {
+    // 使用 spawn 创建交互式 shell，捕获所有输出流
+    // -i: 交互模式，确保输出提示符
+    // spawn 模式下无真实 PTY，设置 TERM=dumb 避免程序输出控制序列
+    const spawnEnv: Record<string, string | undefined> = { ...env, TERM: 'dumb' };
+    this.process = spawn(shell, ['-i'], {
       cwd,
-      env: env as NodeJS.ProcessEnv,
+      env: spawnEnv as NodeJS.ProcessEnv,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 
