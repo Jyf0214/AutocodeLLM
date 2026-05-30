@@ -104,7 +104,6 @@
       "discordUser": "Discord User",
       "bindTime": "Bound At"
     },
-    "logs": "Logs",
     "files": "Files"
   },
   "login": {
@@ -187,8 +186,6 @@
     "features": "Features",
     "dashboard": "Dashboard",
     "dashboardDesc": "Project dashboard and data overview",
-    "logs": "Logs",
-    "logsDesc": "View conversation history and run logs",
     "tags": "Tags",
     "tagsDesc": "Manage conversation tags and categories",
     "members": "Members",
@@ -389,9 +386,6 @@
     "toggleSuccess": "Operation successful",
     "noSkills": "No skills yet, please add",
     "tools": "Tools Count"
-  },
-  "logs": {
-    "title": "System Logs"
   },
   "files": {
     "title": "File Manager",

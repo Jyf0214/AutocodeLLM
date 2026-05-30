@@ -215,32 +215,3 @@ enum ChannelType {
   ANNOUNCEMENT
 }
 
-model SystemLog {
-  id            String   @id @default(uuid())
-  level         String
-  message       String   @db.Text
-  source        String
-  path          String?
-  method        String?
-  statusCode    Int?
-  duration      Int?
-  userId        String?
-  ip            String?
-  queryParams   String?  @db.Text
-  requestBody   String?  @db.Text
-  responseBody  String?  @db.Text
-  cookies       String?  @db.Text
-  headers       String?  @db.Text
-  errorDetails  String?  @db.Text
-  traceId       String?
-  functionName  String?
-  functionArgs  String?  @db.Text
-  functionResult String? @db.Text
-  createdAt     DateTime @default(now())
-
-  @@index([createdAt])
-  @@index([level])
-  @@index([source])
-  @@index([traceId])
-  @@map("system_logs")
-}

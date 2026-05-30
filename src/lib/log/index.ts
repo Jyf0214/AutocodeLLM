@@ -1,17 +1,10 @@
 /**
  * 系统日志模块
- * 内存环形缓冲区 + 数据库持久化，支持后端日志、请求日志和函数调用日志
- * 数据库中的日志每2小时自动清理
+ * 内存环形缓冲区，支持后端日志、请求日志和函数调用日志
  * 支持 traceId 关联请求与函数调用链
  */
 
 import { AsyncLocalStorage } from 'async_hooks';
-
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -45,71 +38,6 @@ const MAX_LOGS = 10000;
 const logs: LogEntry[] = [];
 let logCounter = 0;
 
-const LOG_TTL_MS = 2 * 60 * 60 * 1000;
-const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
-let cleanupTimer: ReturnType<typeof setInterval> | null = null;
-
-async function writeEntryToDB(entry: LogEntry): Promise<void> {
-  try {
-    const db = await getPrisma();
-    await db.systemLog.create({
-      data: {
-        level: entry.level,
-        message: entry.message,
-        source: entry.source,
-        path: entry.path ?? null,
-        method: entry.method ?? null,
-        statusCode: entry.statusCode ?? null,
-        duration: entry.duration ?? null,
-        userId: entry.userId ?? null,
-        ip: entry.ip ?? null,
-        queryParams: entry.queryParams ?? null,
-        requestBody: entry.requestBody ?? null,
-        responseBody: entry.responseBody ?? null,
-        cookies: entry.cookies ?? null,
-        headers: entry.headers ?? null,
-        errorDetails: entry.errorDetails ?? null,
-        traceId: entry.traceId ?? null,
-        functionName: entry.functionName ?? null,
-        functionArgs: entry.functionArgs ?? null,
-        functionResult: entry.functionResult ?? null,
-      },
-    });
-  } catch {
-    // DB 写入失败不影响内存日志
-  }
-}
-
-export async function cleanupOldLogs(): Promise<number> {
-  const cutoff = new Date(Date.now() - LOG_TTL_MS);
-  try {
-    const db = await getPrisma();
-    const result = await db.systemLog.deleteMany({
-      where: { createdAt: { lt: cutoff } },
-    });
-    return result.count;
-  } catch {
-    return 0;
-  }
-}
-
-function startCleanupTimer() {
-  if (typeof window !== 'undefined') return;
-  if (cleanupTimer) return;
-  cleanupTimer = setInterval(() => {
-    cleanupOldLogs().catch(() => {});
-  }, CLEANUP_INTERVAL_MS);
-  cleanupOldLogs().catch(() => {});
-}
-
-// 惰性启动清理定时器：仅在首次创建日志条目时执行
-// 避免模块加载时（如构建阶段）因 DATABASE_URL 未设置而崩溃
-let cleanupStarted = false;
-function lazyStartCleanup() {
-  if (cleanupStarted) return;
-  cleanupStarted = true;
-  startCleanupTimer();
-}
 
 function createEntry(
   level: LogLevel,
@@ -132,11 +60,6 @@ function createEntry(
   if (logs.length > MAX_LOGS) {
     logs.splice(0, logs.length - MAX_LOGS);
   }
-
-  // 首次创建日志条目时惰性启动清理定时器
-  lazyStartCleanup();
-
-  writeEntryToDB(entry);
 
   return entry;
 }
@@ -400,37 +323,9 @@ export function queryLogs(query: LogQuery = {}): { total: number; entries: LogEn
   };
 }
 
-export function getLogStats() {
-  const now = Date.now();
-  const last5min = logs.filter((l) => l.timestamp > now - 5 * 60 * 1000);
-  const last1hour = logs.filter((l) => l.timestamp > now - 60 * 60 * 1000);
-
-  return {
-    total: logs.length,
-    last5min: last5min.length,
-    last1hour: last1hour.length,
-    errors: logs.filter((l) => l.level === 'error').length,
-    warnings: logs.filter((l) => l.level === 'warn').length,
-  };
-}
-
-export async function clearLogs() {
-  logs.length = 0;
-  try {
-    const db = await getPrisma();
-    await db.systemLog.deleteMany({});
-  } catch {
-    // 清空失败不影响内存日志
-  }
-}
 
 export function getLog(id: string): LogEntry | undefined {
   return logs.find((l) => l.id === id);
-}
-
-export interface LogQueryWithSearch extends LogQuery {
-  search?: string;
-  traceId?: string;
 }
 
 const SKIP_LOG_PATHS = new Set(['/api/logs', '/api/logs/', '/api/system/status', '/api/system/status/']);
@@ -495,37 +390,3 @@ export function withApiLogging<T extends (...args: any[]) => any>(
   }) as T;
 }
 
-export function queryLogsV2(query: LogQueryWithSearch = {}): { total: number; entries: LogEntry[] } {
-  let filtered = [...logs];
-
-  if (query.level) {
-    filtered = filtered.filter((l) => l.level === query.level);
-  }
-  if (query.source) {
-    filtered = filtered.filter((l) => l.source === query.source);
-  }
-  if (query.path) {
-    filtered = filtered.filter((l) => l.path?.includes(query.path!));
-  }
-  if (query.statusCode !== undefined) {
-    filtered = filtered.filter((l) => l.statusCode === query.statusCode);
-  }
-  if (query.search) {
-    const q = query.search.toLowerCase();
-    filtered = filtered.filter((l) => l.message.toLowerCase().includes(q));
-  }
-  if (query.traceId) {
-    filtered = filtered.filter((l) => l.traceId === query.traceId);
-  }
-
-  filtered.sort((a, b) => b.timestamp - a.timestamp);
-
-  const total = filtered.length;
-  const offset = query.offset || 0;
-  const limit = query.limit || 200;
-
-  return {
-    total,
-    entries: filtered.slice(offset, offset + limit),
-  };
-}

@@ -104,7 +104,6 @@
       "discordUser": "Discord 用户",
       "bindTime": "绑定时间"
     },
-    "logs": "日志",
     "files": "文件管理"
   },
   "login": {
@@ -187,8 +186,6 @@
     "features": "功能入口",
     "dashboard": "工作台",
     "dashboardDesc": "项目仪表板和数据概览",
-    "logs": "日志",
-    "logsDesc": "查看对话历史和运行日志",
     "tags": "标签",
     "tagsDesc": "管理对话标签和分类",
     "members": "成员",
@@ -389,9 +386,6 @@
       "LLM",
       "自动化工具"
     ]
-  },
-  "logs": {
-    "title": "系统日志"
   },
   "files": {
     "title": "文件管理",

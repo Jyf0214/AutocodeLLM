@@ -12,7 +12,6 @@ import {
   UserOutlined,
   CloudServerOutlined,
   MenuOutlined,
-  FileOutlined,
 } from '@ant-design/icons';
 import { Drawer, Menu } from 'antd';
 
@@ -23,7 +22,6 @@ const MENU_ITEMS = [
   { key: '/', icon: <HomeOutlined />, labelKey: 'common.appName' },
   { key: '/project', icon: <FolderOutlined />, labelKey: 'common.project' },
   { key: '/setting', icon: <SettingOutlined />, labelKey: 'common.setting' },
-  { key: '/logs', icon: <FileOutlined />, labelKey: 'common.logs' },
   { key: '/cloud', icon: <CloudServerOutlined />, labelKey: 'common.cloud' },
   { key: '/account', icon: <UserOutlined />, labelKey: 'common.account' },
 ] as const;
