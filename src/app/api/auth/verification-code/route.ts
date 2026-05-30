@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { randomBytes } from 'node:crypto';
-import { verificationCodes } from '../login/route';
-import { bindingCodes } from '../bind/route';
+import { verificationCodes, bindingCodes } from '@/lib/auth/verification-store';
+
+const MAX_VERIFICATION_CODES = 1000; // 验证码 Map 最大条目数，超出时删除最早条目
 
 // 生成 12 位数字验证码
 function generateCode(): string {
@@ -15,6 +16,24 @@ function generateCode(): string {
     }
   }
   return code;
+}
+
+/**
+ * 清理所有已过期的验证码条目
+ * 修复: 每次生成新验证码时清除过期条目, 防止内存泄漏和已过期验证码被使用
+ */
+function cleanupExpiredCodes(): void {
+  const now = Date.now();
+  for (const [key, value] of verificationCodes) {
+    if (now > value.expiresAt) {
+      verificationCodes.delete(key);
+    }
+  }
+  for (const [key, value] of bindingCodes) {
+    if (now > value.expiresAt) {
+      bindingCodes.delete(key);
+    }
+  }
 }
 
 export const POST = withApiLogging('POST auth/verification-code', async function POST(request: Request) {
@@ -34,11 +53,25 @@ export const POST = withApiLogging('POST auth/verification-code', async function
       );
     }
 
+    // 每次生成新验证码前清理所有过期条目, 防止内存泄漏
+    cleanupExpiredCodes();
+
     const code = generateCode();
     const expiresAt = Date.now() + 5 * 60 * 1000; // 5 分钟过期
 
+    // 在添加新验证码前检查 Map 大小，超过上限则删除最早的条目，防止内存泄漏
+    function enforceMapLimit<K, V>(map: Map<K, V>, max: number): void {
+      if (map.size >= max) {
+        const oldestKey = map.keys().next().value;
+        if (oldestKey !== undefined) {
+          map.delete(oldestKey);
+        }
+      }
+    }
+
     if (forBinding && targetType && targetId) {
       // 绑定验证码
+      enforceMapLimit(bindingCodes, MAX_VERIFICATION_CODES);
       bindingCodes.set(username, { code, expiresAt, targetType, targetId });
       
       // 打印到服务器控制台
@@ -52,6 +85,7 @@ export const POST = withApiLogging('POST auth/verification-code', async function
       console.log('========================================\n');
     } else {
       // 登录验证码
+      enforceMapLimit(verificationCodes, MAX_VERIFICATION_CODES);
       verificationCodes.set(username, { code, expiresAt });
 
       // 打印到服务器控制台

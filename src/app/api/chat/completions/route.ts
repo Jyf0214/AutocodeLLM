@@ -46,25 +46,12 @@ export const POST = withApiLogging('POST chat/completions', async function POST(
       );
     }
 
-    // 解密 API Key
-    const { createDecipheriv, createHash } = await import('crypto');
-    const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
-    const key = createHash('sha256').update(keyStr).digest();
+    // 安全修复：使用统一密钥派生（scryptSync），移除硬编码默认值和 SHA-256 派生
+    const { decryptValue } = await import('@/lib/providers/api-client');
 
     let apiKey: string;
     try {
-      const parts = providerConfig.apiKey.split(':');
-      if (parts.length !== 2) {
-        throw new Error('无效的加密格式');
-      }
-      const [ivHex, encryptedData] = parts;
-      if (!ivHex || !encryptedData) {
-        throw new Error('无效的加密格式');
-      }
-      const iv = Buffer.from(ivHex, 'hex');
-      const decipher = createDecipheriv('aes-256-cbc', key, iv);
-      apiKey = decipher.update(encryptedData, 'hex', 'utf8');
-      apiKey += decipher.final('utf8');
+      apiKey = decryptValue(providerConfig.apiKey);
     } catch {
       return NextResponse.json(
         {

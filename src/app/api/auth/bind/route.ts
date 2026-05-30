@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { createHash } from 'node:crypto';
+import { compareSync } from 'bcryptjs';
 import { prisma } from '@/lib/db/prisma';
-
-// 内存存储绑定验证码（12位）
-// 与 verification-code route 共享
-const bindingCodes = new Map<string, { code: string; expiresAt: number; targetType: string; targetId: string }>();
+import { bindingCodes } from '@/lib/auth/verification-store';
 
 /**
  * POST /api/auth/bind
@@ -93,9 +90,8 @@ export const POST = withApiLogging('POST auth/bind', async function POST(request
       );
     }
 
-    const passwordHash = createHash('sha256').update(password).digest('hex');
-    
-    if (user.passwordHash !== passwordHash) {
+    // 使用 bcrypt 验证密码（替代原来的 SHA-256 无盐哈希）
+    if (!compareSync(password, user.passwordHash)) {
       return NextResponse.json(
         { success: false, error: { message: '密码错误', code: 'INVALID_CREDENTIALS' } },
         { status: 401 },
@@ -156,11 +152,11 @@ export const POST = withApiLogging('POST auth/bind', async function POST(request
       },
     });
 
-    // 设置认证 cookie
+    // 设置认证 cookie（httpOnly 防止 XSS 窃取、sameSite strict 防止 CSRF）
     response.cookies.set('userId', updatedUser.id, {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
@@ -174,6 +170,3 @@ export const POST = withApiLogging('POST auth/bind', async function POST(request
     );
   }
 });
-
-// 导出供其他路由使用
-export { bindingCodes };

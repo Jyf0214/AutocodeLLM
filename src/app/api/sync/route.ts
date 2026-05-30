@@ -1,22 +1,28 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuth } from '@/lib/auth';
+import { encryptValue, decryptValue } from '@/lib/providers/api-client';
 import { testConnection, createWebdavClient, pullFromRemote, pushToRemote } from '@/lib/sync/webdav';
 import { startWatching, stopWatching, isWatchActive } from '@/lib/sync/watcher';
 
-export const GET = withApiLogging('GET sync', async function GET() {
+export const GET = withApiLogging('GET sync', async function GET(request: Request) {
   try {
+    // 认证检查
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
+
     const config = await prisma.webdavConfig.findFirst();
     return NextResponse.json({
       success: true,
       data: {
         enabled: config?.enabled ?? false,
         watching: isWatchActive(),
-        url: config?.url ?? '',
-        remotePath: config?.remotePath ?? '',
+        // 不返回 url 和 remotePath（URL 可能包含敏感信息）
       },
     });
-  } catch {
+  } catch (err) {
+    console.error('[Sync] 获取同步状态失败:', err);
     return NextResponse.json(
       { success: false, error: { message: '获取同步状态失败', code: 'GET_STATUS_FAILED' } },
       { status: 500 },
@@ -26,6 +32,10 @@ export const GET = withApiLogging('GET sync', async function GET() {
 
 export const POST = withApiLogging('POST sync', async function POST(request: Request) {
   try {
+    // 认证检查
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
+
     const body = (await request.json()) as Record<string, unknown>;
     const action = body.action as string;
 
@@ -41,16 +51,23 @@ export const POST = withApiLogging('POST sync', async function POST(request: Req
       // Switch 组件可能返回 boolean 或 string，统一处理
       const isEnabled = enabled === true || enabled === 'true';
 
+      // WebDAV 密码加密存储
+      const data = {
+        url,
+        username,
+        ...(password ? { password: encryptValue(password) } : {}),
+        remotePath,
+        enabled: isEnabled,
+      };
+
       const existing = await prisma.webdavConfig.findFirst();
       if (existing) {
         await prisma.webdavConfig.update({
           where: { id: existing.id },
-          data: { url, username, password, remotePath, enabled: isEnabled },
+          data,
         });
       } else {
-        await prisma.webdavConfig.create({
-          data: { url, username, password, remotePath, enabled: isEnabled },
-        });
+        await prisma.webdavConfig.create({ data });
       }
 
       // 如果启用了同步，自动启动文件监听
@@ -70,7 +87,17 @@ export const POST = withApiLogging('POST sync', async function POST(request: Req
         password: string;
         remotePath?: string;
       };
-      const ok = await testConnection(url, username, password, remotePath);
+
+      // 如果测试时未提供密码，尝试从数据库读取并解密
+      let effectivePassword = password;
+      if (!effectivePassword) {
+        const existingConfig = await prisma.webdavConfig.findFirst();
+        if (existingConfig?.password) {
+          effectivePassword = decryptValue(existingConfig.password);
+        }
+      }
+
+      const ok = await testConnection(url, username, effectivePassword, remotePath);
       return NextResponse.json({
         success: ok,
         message: ok ? '连接成功' : '连接失败，请检查服务器地址、凭据和远程路径',
@@ -152,7 +179,8 @@ export const POST = withApiLogging('POST sync', async function POST(request: Req
       { success: false, error: { message: '未知操作', code: 'UNKNOWN_ACTION' } },
       { status: 400 },
     );
-  } catch {
+  } catch (err) {
+    console.error('[Sync] 同步操作失败:', err);
     return NextResponse.json(
       { success: false, error: { message: '同步操作失败', code: 'SYNC_FAILED' } },
       { status: 500 },
@@ -160,15 +188,20 @@ export const POST = withApiLogging('POST sync', async function POST(request: Req
   }
 });
 
-export const DELETE = withApiLogging('DELETE sync', async function DELETE() {
+export const DELETE = withApiLogging('DELETE sync', async function DELETE(request: Request) {
   try {
+    // 认证检查
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
+
     await stopWatching();
     const existing = await prisma.webdavConfig.findFirst();
     if (existing) {
       await prisma.webdavConfig.delete({ where: { id: existing.id } });
     }
     return NextResponse.json({ success: true, message: '配置已删除' });
-  } catch {
+  } catch (err) {
+    console.error('[Sync] 删除配置失败:', err);
     return NextResponse.json(
       { success: false, error: { message: '删除配置失败', code: 'DELETE_FAILED' } },
       { status: 500 },

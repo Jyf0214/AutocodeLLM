@@ -1,6 +1,7 @@
 import { watch, type FSWatcher } from 'chokidar';
 import { createClient } from 'webdav';
 import { prisma } from '@/lib/db/prisma';
+import { decryptValue } from '@/lib/providers/api-client';
 import { pushToRemote } from './webdav';
 
 let watcher: FSWatcher | null = null;
@@ -18,9 +19,10 @@ export async function startWatching(): Promise<boolean> {
 
   const localDir = process.env.SYNC_LOCAL_DIR ?? './sync';
 
+  // 从数据库读取的密码是加密存储的，使用时需要解密
   const client = createClient(config.url, {
     username: config.username,
-    password: config.password,
+    password: decryptValue(config.password),
   });
 
   watcher = watch(localDir, {

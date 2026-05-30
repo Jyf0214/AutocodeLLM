@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { createHash } from 'node:crypto';
+import { compareSync, hashSync } from 'bcryptjs';
 import { prisma } from '@/lib/db/prisma';
+import { requireAuth } from '@/lib/auth';
 
 /**
  * GET /api/account
@@ -9,14 +10,11 @@ import { prisma } from '@/lib/db/prisma';
  */
 export const GET = withApiLogging('GET account', async function GET(request: Request) {
   try {
-    const userId = request.headers.get('x-user-id');
+    // 使用 requireAuth 获取当前登录用户身份（替代 x-user-id 自声明模式）
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
 
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: { message: '未提供用户 ID', code: 'MISSING_USER_ID' } },
-        { status: 401 },
-      );
-    }
+    const userId = auth.session.userId;
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -41,7 +39,8 @@ export const GET = withApiLogging('GET account', async function GET(request: Req
       success: true,
       data: user,
     });
-  } catch {
+  } catch (err) {
+    console.error('[Account] fetch user error:', err);
     return NextResponse.json(
       { success: false, error: { message: '获取用户信息失败', code: 'FETCH_USER_ERROR' } },
       { status: 500 },
@@ -55,14 +54,11 @@ export const GET = withApiLogging('GET account', async function GET(request: Req
  */
 export const PUT = withApiLogging('PUT account', async function PUT(request: Request) {
   try {
-    const userId = request.headers.get('x-user-id');
+    // 使用 requireAuth 获取当前登录用户身份（替代 x-user-id 自声明模式）
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
 
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: { message: '未提供用户 ID', code: 'MISSING_USER_ID' } },
-        { status: 401 },
-      );
-    }
+    const userId = auth.session.userId;
 
     const body = (await request.json()) as {
       oldPassword?: string;
@@ -88,7 +84,7 @@ export const PUT = withApiLogging('PUT account', async function PUT(request: Req
       isInitialPassword?: boolean;
     } = {};
 
-    // 处理密码修改
+    // 处理密码修改（使用 bcrypt 验证旧密码）
     if (body.newPassword) {
       if (!body.oldPassword) {
         return NextResponse.json(
@@ -97,8 +93,7 @@ export const PUT = withApiLogging('PUT account', async function PUT(request: Req
         );
       }
 
-      const oldPasswordHash = createHash('sha256').update(body.oldPassword).digest('hex');
-      if (oldPasswordHash !== user.passwordHash) {
+      if (!compareSync(body.oldPassword, user.passwordHash)) {
         return NextResponse.json(
           { success: false, error: { message: '旧密码不正确', code: 'INCORRECT_OLD_PASSWORD' } },
           { status: 400 },
@@ -112,7 +107,7 @@ export const PUT = withApiLogging('PUT account', async function PUT(request: Req
         );
       }
 
-      updateData.passwordHash = createHash('sha256').update(body.newPassword).digest('hex');
+      updateData.passwordHash = hashSync(body.newPassword, 10);
     }
 
     // 处理标志更新（只能设为 false）
@@ -161,7 +156,8 @@ export const PUT = withApiLogging('PUT account', async function PUT(request: Req
       success: true,
       data: updatedUser,
     });
-  } catch {
+  } catch (err) {
+    console.error('[Account] update user error:', err);
     return NextResponse.json(
       { success: false, error: { message: '更新用户信息失败', code: 'UPDATE_USER_ERROR' } },
       { status: 500 },

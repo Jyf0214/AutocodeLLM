@@ -2,17 +2,25 @@
  * Better Auth 集成
  * 提供现代化认证框架支持，与现有认证系统并存
  *
+ * 安全修复：移除 randomBytes 回退密钥，强制要求设置 BETTER_AUTH_SECRET 环境变量
+ *
  * 配置方式：
- * - BETTER_AUTH_SECRET: 签名密钥
+ * - BETTER_AUTH_SECRET: 签名密钥（必填）
  * - BETTER_AUTH_URL: 服务地址（默认 http://localhost:3000）
  */
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash } from 'node:crypto';
+
+// 强制检查 BETTER_AUTH_SECRET 环境变量
+const BETTER_AUTH_SECRET = process.env.BETTER_AUTH_SECRET;
+if (!BETTER_AUTH_SECRET) {
+  throw new Error('BETTER_AUTH_SECRET 环境变量未设置，Better Auth 无法启动');
+}
 
 /**
  * Better Auth 配置
  */
 export const betterAuthConfig = {
-  secret: process.env.BETTER_AUTH_SECRET || randomBytes(32).toString('hex'),
+  secret: BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
 };
 

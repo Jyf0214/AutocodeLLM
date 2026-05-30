@@ -1,15 +1,28 @@
 /**
  * 数据库初始化脚本
  * 创建默认管理员账户和默认聊天配置
+ *
+ * 安全修复：移除硬编码 DEFAULT_PASSWORD
+ * - 优先使用 INIT_ADMIN_PASSWORD 环境变量
+ * - 未设置时生成随机密码并打印到 stdout
  */
 
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from './prisma';
 
 /**
- * 默认管理员密码（仅用于初次安装）
+ * 获取初始管理员密码
+ * 优先使用环境变量，否则生成随机密码
  */
-const DEFAULT_PASSWORD = 'admin123';
+function getInitialAdminPassword(): string {
+  const envPassword = process.env.INIT_ADMIN_PASSWORD;
+  if (envPassword) {
+    return envPassword;
+  }
+  const randomPassword = randomBytes(12).toString('hex');
+  console.log(`[INIT] 未设置 INIT_ADMIN_PASSWORD，已生成随机密码`);
+  return randomPassword;
+}
 
 /**
  * 主函数：初始化数据库
@@ -46,8 +59,10 @@ async function initializeAdminUser(): Promise<void> {
     return;
   }
 
+  const adminPassword = getInitialAdminPassword();
+
   const passwordHash = createHash('sha256')
-    .update(DEFAULT_PASSWORD)
+    .update(adminPassword)
     .digest('hex');
 
   await prisma.user.create({
@@ -60,7 +75,7 @@ async function initializeAdminUser(): Promise<void> {
   });
 
   console.log('✅ 创建默认管理员账户 (username: admin)');
-  console.log(`🔑 密码：${DEFAULT_PASSWORD}`);
+  console.log(`🔑 密码：${adminPassword}`);
   console.log('⚠️  首次登录后将强制修改密码\n');
 }
 

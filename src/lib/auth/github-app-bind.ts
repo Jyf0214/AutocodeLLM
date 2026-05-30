@@ -2,6 +2,7 @@
  * GitHub App 账户绑定模块
  * 处理 GitHub 账号与现有账户的绑定
  */
+import { randomInt } from 'node:crypto';
 import { prisma } from '@/lib/db/prisma';
 
 export interface BindVerificationCode {
@@ -19,7 +20,8 @@ const verificationCodes = new Map<string, BindVerificationCode>();
  * 生成6位验证码
  */
 function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  // 修复: 使用 crypto.randomInt 替代 Math.random(), 提供密码学安全的随机数
+  return String(randomInt(100000, 999999));
 }
 
 /**

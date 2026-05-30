@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
+
+// 安全修复：设置测试专用的 KEY_VAULTS_SECRET，确保 api-client 模块加载时不因缺少环境变量而退出
+process.env.KEY_VAULTS_SECRET = 'test-key-vaults-secret-for-testing-only';
 
 // Mock Prisma
 const mockFindMany = vi.fn();
@@ -21,16 +24,16 @@ vi.mock('@/lib/db/prisma', () => ({
 }));
 
 /**
- * 从环境变量派生 32 字节 AES-256 密钥（使用 padEnd 截断）
- * 与 qwen-oauth.ts 保持一致
+ * 从环境变量派生 32 字节 AES-256 密钥（使用 scryptSync）
+ * 与 api-client.ts 保持一致
  */
 function deriveKey(): Buffer {
-  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
-  return Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'test-key-vaults-secret-for-testing-only';
+  return scryptSync(keyStr, 'autocodellm-key-salt', 32);
 }
 
 /**
- * AES-256-CBC 加密（与 qwen-oauth.ts 保持一致，使用 padEnd 截断密钥）
+ * AES-256-CBC 加密（与 api-client.ts 保持一致，使用 scryptSync 派生密钥）
  */
 function encryptValue(value: string): string {
   const key = deriveKey();
@@ -42,7 +45,7 @@ function encryptValue(value: string): string {
 }
 
 /**
- * AES-256-CBC 解密（与 route.ts 保持一致）
+ * AES-256-CBC 解密（与 api-client.ts 保持一致）
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function decryptValue(encrypted: string): string {

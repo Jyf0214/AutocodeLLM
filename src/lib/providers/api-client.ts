@@ -1,12 +1,36 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+/**
+ * 安全修复：移除硬编码默认密钥，改用 scryptSync 派生密钥
+ * - getEncryptionKey() 为统一的密钥获取函数
+ * - 模块加载时检查 KEY_VAULTS_SECRET 环境变量，未设置则进程退出
+ */
+import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import { prisma } from '@/lib/db/prisma';
+
+/**
+ * 获取 AES-256-CBC 加密密钥
+ * 使用 scryptSync 从 KEY_VAULTS_SECRET 派生 32 字节密钥
+ */
+export function getEncryptionKey(): Buffer {
+  const keyStr = process.env.KEY_VAULTS_SECRET;
+  if (!keyStr) {
+    throw new Error('KEY_VAULTS_SECRET 环境变量未设置，无法执行加解密操作');
+  }
+  return scryptSync(keyStr, 'autocodellm-key-salt', 32);
+}
+
+// 模块加载时检查 KEY_VAULTS_SECRET 是否已设置
+try {
+  getEncryptionKey();
+} catch (e) {
+  console.error('[FATAL]', (e as Error).message);
+  process.exit(1);
+}
 
 /**
  * AES-256-CBC 加密
  */
 export function encryptValue(value: string): string {
-  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
-  const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const key = getEncryptionKey();
   const iv = randomBytes(16);
   const cipher = createCipheriv('aes-256-cbc', key, iv);
   let encrypted = cipher.update(value, 'utf8', 'hex');
@@ -18,8 +42,7 @@ export function encryptValue(value: string): string {
  * AES-256-CBC 解密
  */
 export function decryptValue(encrypted: string): string {
-  const keyStr = process.env.KEY_VAULTS_SECRET ?? 'your-key-vaults-secret-change-in-production';
-  const key = Buffer.from(keyStr.padEnd(32).slice(0, 32));
+  const key = getEncryptionKey();
   const parts = encrypted.split(':');
   const ivHex = parts[0];
   const encryptedData = parts[1];

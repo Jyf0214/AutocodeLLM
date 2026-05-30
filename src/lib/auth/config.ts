@@ -48,7 +48,8 @@ export function getAuthConfig(): AuthConfig {
   if (methods.github) {
     config.github = {
       clientId: process.env.GITHUB_CLIENT_ID!,
-      redirectUri: process.env.GITHUB_REDIRECT_URI || '',
+      // 修复: GitHub OAuth 启用时, redirectUri 应为必需配置
+      redirectUri: process.env.GITHUB_REDIRECT_URI || (() => { throw new Error('GitHub OAuth 已启用但 GITHUB_REDIRECT_URI 未配置'); })(),
     };
   }
 
@@ -57,7 +58,8 @@ export function getAuthConfig(): AuthConfig {
     config.githubApp = {
       appId: process.env.GITHUB_APP_ID!,
       clientId: process.env.GITHUB_APP_CLIENT_ID!,
-      redirectUri: process.env.GITHUB_APP_REDIRECT_URI || '',
+      // 修复: GitHub App 启用时, redirectUri 应为必需配置
+      redirectUri: process.env.GITHUB_APP_REDIRECT_URI || (() => { throw new Error('GitHub App 已启用但 GITHUB_APP_REDIRECT_URI 未配置'); })(),
     };
   }
 

@@ -1,10 +1,24 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { createHash } from 'node:crypto';
+import { compareSync } from 'bcryptjs';
 import { prisma } from '@/lib/db/prisma';
+import { verificationCodes } from '@/lib/auth/verification-store';
 
-// 内存存储验证码（与 verification-code route 共享）
-const verificationCodes = new Map<string, { code: string; expiresAt: number }>();
+// 登录频率限制：Map<IP, { count: number; lastAttempt: number }>
+const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const MAX_ATTEMPTS = 10;          // 最大失败次数
+const RATE_LIMIT_WINDOW = 5 * 60 * 1000; // 5 分钟窗口（毫秒）
+const CODE_CLEANUP_INTERVAL = 5 * 60 * 1000; // 验证码清理间隔（毫秒）
+
+// 定期清理过期验证码，防止内存泄漏
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, stored] of verificationCodes) {
+    if (now > stored.expiresAt) {
+      verificationCodes.delete(key);
+    }
+  }
+}, CODE_CLEANUP_INTERVAL);
 
 export const POST = withApiLogging('POST auth/login', async function POST(request: Request) {
   try {
@@ -21,6 +35,23 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
         { success: false, error: { message: '用户名不能为空', code: 'MISSING_FIELDS' } },
         { status: 400 },
       );
+    }
+
+    // --- 登录频率限制（基于 IP） ---
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const now = Date.now();
+    const record = loginAttempts.get(ip);
+
+    if (record && now - record.lastAttempt < RATE_LIMIT_WINDOW) {
+      if (record.count >= MAX_ATTEMPTS) {
+        return NextResponse.json(
+          { success: false, error: { message: '登录尝试过于频繁，请 5 分钟后再试', code: 'RATE_LIMITED' } },
+          { status: 429 },
+        );
+      }
+    } else if (record) {
+      // 超出窗口期，重置计数
+      loginAttempts.set(ip, { count: 0, lastAttempt: now });
     }
 
     // 验证码登录模式
@@ -80,24 +111,28 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
         );
       }
 
-      const passwordHash = createHash('sha256').update(password).digest('hex');
+      // 使用 bcrypt 验证密码（替代原来的 SHA-256 无盐哈希）
+      if (!compareSync(password, user.passwordHash)) {
+        // 记录失败次数
+        const currentRecord = loginAttempts.get(ip);
+        if (currentRecord) {
+          currentRecord.count += 1;
+        } else {
+          loginAttempts.set(ip, { count: 1, lastAttempt: now });
+        }
 
-      if (user.passwordHash !== passwordHash) {
-        // 记录登录失败 - 密码错误（可选）
+        // 记录审计日志（仅记录 userId/action/success/message，不记录哈希值）
         try {
-          
           await prisma.passwordAudit.create({
-          data: {
-            userId: user.id,
-            action: 'LOGIN_FAILED',
-            submittedHash: passwordHash,
-            storedHash: user.passwordHash,
-            success: false,
-            message: '密码错误',
-          },
-        });
-        } catch {
-          // 审计表不存在，忽略
+            data: {
+              userId: user.id,
+              action: 'LOGIN_FAILED',
+              success: false,
+              message: '密码错误',
+            },
+          });
+        } catch (err) {
+          console.error('[Audit] password audit failed:', err);
         }
 
         return NextResponse.json(
@@ -106,23 +141,23 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
         );
       }
 
-      // 记录登录成功（可选）
+      // 记录登录成功（仅记录 userId/action/success/message，不记录哈希值）
       try {
-        
         await prisma.passwordAudit.create({
-        data: {
-          userId: user.id,
-          action: 'LOGIN_SUCCESS',
-          submittedHash: passwordHash,
-          storedHash: user.passwordHash,
-          success: true,
-          message: '登录成功',
-        },
-      });
-      } catch {
-        // 审计表不存在，忽略
+          data: {
+            userId: user.id,
+            action: 'LOGIN_SUCCESS',
+            success: true,
+            message: '登录成功',
+          },
+        });
+      } catch (err) {
+        console.error('[Audit] password audit failed:', err);
       }
     }
+
+    // 登录成功后重置该 IP 的失败计数
+    loginAttempts.delete(ip);
 
     const response = NextResponse.json({
       success: true,
@@ -134,23 +169,21 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
       },
     });
 
-    // 设置认证 cookie（httponly 增强安全性）
+    // 设置认证 cookie（httpOnly 防止 XSS 窃取、sameSite strict 防止 CSRF）
     response.cookies.set('userId', user.id, {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });
 
     return response;
-  } catch {
+  } catch (err) {
+    console.error('[Login] login error:', err);
     return NextResponse.json(
       { success: false, error: { message: '登录失败', code: 'LOGIN_ERROR' } },
       { status: 500 },
     );
   }
 });
-
-// 导出验证码存储供 verification-code route 使用
-export { verificationCodes };

@@ -89,43 +89,48 @@ export const POST = withApiLogging('POST projects/:id/chat', async function POST
       return errorResponse(`AI 服务调用失败：${errorMessage}`, 'PROVIDER_CALL_FAILED', 502);
     }
 
-    // 保存用户消息
-    const chatMessage = await prisma.chatMessage.create({
-      data: {
-        projectId: id,
-        role: 'user',
-        content: userContent,
-        inputTokens,
-        outputTokens: 0,
-        totalTokens: inputTokens,
-        model,
-        providerId,
-      },
-    });
+    // 使用事务确保用户消息、助手消息和日志的一致性写入
+    const [{ userMsg, assistantMsg }] = await prisma.$transaction(async (tx) => {
+      // 保存用户消息
+      const userMsg = await tx.chatMessage.create({
+        data: {
+          projectId: id,
+          role: 'user',
+          content: userContent,
+          inputTokens,
+          outputTokens: 0,
+          totalTokens: inputTokens,
+          model,
+          providerId,
+        },
+      });
 
-    // 保存助手消息
-    await prisma.chatMessage.create({
-      data: {
-        projectId: id,
-        role: 'assistant',
-        content,
-        inputTokens,
-        outputTokens,
-        totalTokens,
-        model,
-        providerId,
-        parentId: chatMessage.id,
-      },
-    });
+      // 保存助手消息（引用用户消息的 ID）
+      const assistantMsg = await tx.chatMessage.create({
+        data: {
+          projectId: id,
+          role: 'assistant',
+          content,
+          inputTokens,
+          outputTokens,
+          totalTokens,
+          model,
+          providerId,
+          parentId: userMsg.id,
+        },
+      });
 
-    // 记录日志
-    await prisma.projectLog.create({
-      data: {
-        projectId: id,
-        type: 'chat_message',
-        summary: `用户发送消息 (${model}, ${String(totalTokens)} tokens)`,
-        status: 'success',
-      },
+      // 记录日志
+      await tx.projectLog.create({
+        data: {
+          projectId: id,
+          type: 'chat_message',
+          summary: `用户发送消息 (${model}, ${String(totalTokens)} tokens)`,
+          status: 'success',
+        },
+      });
+
+      return { userMsg, assistantMsg };
     });
 
     return successResponse({

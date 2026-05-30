@@ -1,9 +1,9 @@
 import { createClient, type WebDAVClient } from 'webdav';
 import { prisma } from '@/lib/db/prisma';
-import { isWatchActive } from './watcher';
+import { decryptValue } from '@/lib/providers/api-client';
 
 /**
- * 创建 WebDAV 客户端
+ * 创建 WebDAV 客户端（自动解密密码）
  */
 export async function createWebdavClient(): Promise<WebDAVClient | null> {
   const config = await prisma.webdavConfig.findFirst({
@@ -12,7 +12,8 @@ export async function createWebdavClient(): Promise<WebDAVClient | null> {
   if (!config) return null;
   return createClient(config.url, {
     username: config.username,
-    password: config.password,
+    // 从数据库读取的密码是加密存储的，使用时需要解密
+    password: decryptValue(config.password),
   });
 }
 
@@ -31,7 +32,8 @@ export async function testConnection(
     const testPath = remotePath ?? '/';
     await client.getDirectoryContents(testPath);
     return true;
-  } catch {
+  } catch (err) {
+    console.error('[WebDAV] 连接测试失败:', err);
     return false;
   }
 }
@@ -69,8 +71,9 @@ export async function pullFromRemote(
       fs.writeFileSync(localPath, Buffer.from(content));
       count++;
     }
-  } catch {
-    // 忽略错误，继续处理
+  } catch (err) {
+    // 拉取过程中出错，记录日志但继续
+    console.error('[WebDAV] 拉取文件失败:', err);
   }
   return count;
 }
@@ -97,7 +100,8 @@ export async function pushToRemote(
 
     await client.putFileContents(remoteFile, content, { overwrite: true });
     return true;
-  } catch {
+  } catch (err) {
+    console.error('[WebDAV] 上传文件失败:', err);
     return false;
   }
 }
@@ -112,8 +116,9 @@ async function ensureRemoteDir(client: WebDAVClient, remoteDir: string): Promise
     currentPath += '/' + part;
     try {
       await client.createDirectory(currentPath);
-    } catch {
-      // 目录已存在，忽略错误
+    } catch (err) {
+      // 目录已存在，忽略错误（记录 debug 日志以便排查）
+      console.debug('[WebDAV] 创建远程目录（可能已存在）:', currentPath, err);
     }
   }
 }
@@ -131,7 +136,8 @@ export async function listRemoteFiles(
       filename: string;
     }[];
     return items.filter((item) => item.type === 'file').map((item) => item.filename);
-  } catch {
+  } catch (err) {
+    console.error('[WebDAV] 列出远程文件失败:', err);
     return [];
   }
 }
@@ -167,6 +173,8 @@ export async function getSyncStatus(): Promise<{
   remotePath: string;
   lastSync: string | null;
 }> {
+  // 使用动态导入避免与 watcher.ts 的循环依赖
+  const { isWatchActive } = await import('./watcher');
   const config = await prisma.webdavConfig.findFirst();
   return {
     enabled: config?.enabled ?? false,

@@ -61,6 +61,7 @@
     "@prisma/client": "6.19.3",
     "@types/ws": "^8.18.1",
     "antd": "^6.3.5",
+    "bcryptjs": "^3.0.3",
     "chokidar": "^4.0.3",
     "discord.js": "^14.26.3",
     "fast-glob": "^3.3.3",

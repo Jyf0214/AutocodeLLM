@@ -33,7 +33,9 @@ export const POST = withApiLogging('POST github/clone', async function POST(requ
     );
   }
 
-  const targetDir = `/home/node/.autocodellm/projects/${body.projectId}`;
+  // 修复: 使用环境变量或当前工作目录替换硬编码的 /home/node/ 路径
+  const baseDir = process.env.PROJECTS_DIR || `${process.env.HOME || process.cwd()}/.autocodellm/projects`;
+  const targetDir = `${baseDir}/${body.projectId}`;
 
   const result = await cloneRepo({
     repo: body.repo,

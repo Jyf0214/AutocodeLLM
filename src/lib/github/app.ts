@@ -3,7 +3,7 @@
  * 支持插件扩展、仓库克隆、GitHub API 调用
  */
 import { execSync } from 'node:child_process';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createPrivateKey, randomBytes, sign } from 'node:crypto';
 
 // ============================================================
 // GitHub App 配置
@@ -14,7 +14,7 @@ export interface GitHubAppConfig {
   privateKey: string;
   clientId: string;
   clientSecret: string;
-  webhookSecret: string;
+  webhookSecret?: string; // 可选: webhook 密钥, 未设置时跳过 webhook 验证
   installationId?: string;
 }
 
@@ -32,7 +32,7 @@ export function getGitHubAppConfig(): GitHubAppConfig | null {
     privateKey,
     clientId: clientId || '',
     clientSecret: clientSecret || '',
-    webhookSecret: webhookSecret || '',
+    ...(webhookSecret ? { webhookSecret } : {}), // 修复: webhookSecret 为可选, 不提供时不设置默认空值
   };
 }
 
@@ -41,7 +41,8 @@ export function getGitHubAppConfig(): GitHubAppConfig | null {
 // ============================================================
 
 async function getInstallationToken(config: GitHubAppConfig): Promise<string> {
-  // 生成 JWT
+  // 使用 RS256 签名生成 JWT
+  // 修复: 替换占位符 '.signature' 为真实 RSA 签名
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: 'RS256', typ: 'JWT' };
   const payload = {
@@ -50,8 +51,16 @@ async function getInstallationToken(config: GitHubAppConfig): Promise<string> {
     iss: config.appId,
   };
 
-  // 简化 JWT 签名（生产环境应使用 jose 库）
-  const jwt = `${Buffer.from(JSON.stringify(header)).toString('base64url')}.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.signature`;
+  const headerB64 = Buffer.from(JSON.stringify(header)).toString('base64url');
+  const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signingInput = `${headerB64}.${payloadB64}`;
+
+  // 使用 Node.js crypto 内置库进行 RS256 签名，无需额外依赖
+  const privateKey = createPrivateKey(config.privateKey);
+  const signature = sign(null, Buffer.from(signingInput), privateKey);
+  const signatureB64 = signature.toString('base64url');
+
+  const jwt = `${signingInput}.${signatureB64}`;
 
   const installationId = config.installationId || process.env.GITHUB_APP_INSTALLATION_ID;
   if (!installationId) {

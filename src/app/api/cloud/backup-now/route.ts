@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { prisma } from '@/lib/db/prisma';
+import { decryptValue } from '@/lib/providers/api-client';
 import fs from 'fs';
 import path from 'path';
 
+// 修复: 使用环境变量或当前工作目录替换硬编码的 /home/node/ 路径
 const BACKUP_LOG_FILE =
-  process.env.BACKUP_LOG_FILE ?? '/home/node/.autocodellm/backups/backup-logs.json';
+  process.env.BACKUP_LOG_FILE || `${process.env.HOME || process.cwd()}/.autocodellm/backups/backup-logs.json`;
 
 interface BackupLog {
   timestamp: string;
@@ -30,7 +32,8 @@ function readBackupLogs(): BackupLog[] {
     ensureBackupLogFile();
     const data = fs.readFileSync(BACKUP_LOG_FILE, 'utf-8');
     return JSON.parse(data);
-  } catch {
+  } catch (err) {
+    console.error('[Backup] 读取备份日志失败:', err);
     return [];
   }
 }
@@ -89,6 +92,9 @@ export const POST = withApiLogging('POST cloud/backup-now', async function POST(
         { status: 400 },
       );
     }
+
+    // 解密数据库中的加密密码（createWebdavClient 内部也会解密，此处确保解密后可用）
+    config.password = decryptValue(config.password);
 
     // 执行实际备份：将项目数据推送到 WebDAV
     const { createWebdavClient, pushToRemote } = await import('@/lib/sync/webdav');

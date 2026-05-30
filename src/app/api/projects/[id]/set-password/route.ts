@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
+import { hashSync } from 'bcryptjs';
 import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
@@ -33,10 +34,10 @@ export const POST = withApiLogging('POST projects/:id/set-password', async funct
       return errorResponse('项目不存在', 'PROJECT_NOT_FOUND', 404);
     }
 
-    // 空字符串表示清除密码
+    // 使用 bcrypt 哈希项目密码后存储（空字符串表示清除密码）
     await prisma.project.update({
       where: { id },
-      data: { accessPassword: password || null },
+      data: { accessPassword: password ? hashSync(password, 10) : null },
     });
 
     return successResponse(undefined);

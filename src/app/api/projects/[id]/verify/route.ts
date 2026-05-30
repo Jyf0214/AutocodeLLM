@@ -5,6 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
+import { compareSync } from 'bcryptjs';
 import { prisma } from '@/lib/db/prisma';
 import {
   successResponse,
@@ -44,8 +45,8 @@ export const POST = withApiLogging('POST projects/:id/verify', async function PO
       return successResponse({ verified: true });
     }
 
-    // 验证密码（简单文本对比，生产环境应使用 bcrypt）
-    const verified = project.accessPassword === password;
+    // 使用 bcrypt 验证密码（替代原来的明文比对）
+    const verified = compareSync(password, project.accessPassword);
 
     return successResponse({ verified });
   } catch (error) {
