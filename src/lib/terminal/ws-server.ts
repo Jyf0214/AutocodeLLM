@@ -3,21 +3,20 @@ import type { Server } from 'http';
 
 let wss: WebSocketServer | null = null;
 
-let ptyAvailable = false;
+let terminalAvailable = false;
 let createSession: ((projectId: string, cols: number, rows: number) => import('./session-manager').TerminalSession) | null = null;
 let findSessionByProject: ((projectId: string) => import('./session-manager').TerminalSession | null) | null = null;
 let destroySession: ((sessionId: string) => void) | null = null;
 
 try {
   const sessionManager = await import('./session-manager');
-  if (sessionManager.isPtyLoaded()) {
-    createSession = sessionManager.createSession;
-    findSessionByProject = sessionManager.findSessionByProject;
-    destroySession = sessionManager.destroySession;
-    ptyAvailable = true;
-  } else {
-    console.warn('⚠ node-pty 原生模块不可用，终端功能已禁用');
-  }
+  // 无论 node-pty 是否可用，都暴露会话函数（内部会回退到 spawn 模式）
+  createSession = sessionManager.createSession;
+  findSessionByProject = sessionManager.findSessionByProject;
+  destroySession = sessionManager.destroySession;
+  terminalAvailable = true;
+  const mode = sessionManager.isPtyLoaded() ? 'node-pty' : 'spawn(回退)';
+  console.log(`[ws-server] 终端会话管理器已加载，当前模式: ${mode}`);
 } catch (error) {
   console.warn('⚠ 终端会话管理器加载失败，终端功能已禁用:', (error as Error).message);
 }
@@ -41,14 +40,14 @@ function attachSessionListeners(session: import('./session-manager').TerminalSes
 
   console.log('[ws-server] 附加会话监听器:', { sessionId: session.id, projectId: session.projectId });
 
-  session.pty.onData((data) => {
-    console.log('[ws-server] pty 数据输出:', JSON.stringify(data.slice(0, 80)));
+  session.terminal.onData((data) => {
+    console.log('[ws-server] 终端数据输出:', JSON.stringify(data.slice(0, 80)));
     const msg = JSON.stringify({ type: 'data', data });
     broadcastToProject(session.projectId, msg);
   });
 
-  session.pty.onExit(({ exitCode, signal }) => {
-    console.log('[ws-server] pty 进程退出:', { sessionId: session.id, projectId: session.projectId, exitCode, signal });
+  session.terminal.onExit(({ exitCode, signal }) => {
+    console.log('[ws-server] 终端进程退出:', { sessionId: session.id, projectId: session.projectId, exitCode, signal });
     const msg = JSON.stringify({ type: 'exit', exitCode, signal });
     broadcastToProject(session.projectId, msg);
     sessionListenersAttached.delete(session.id);
@@ -89,14 +88,14 @@ function attachClientSession(
       if (msg.type === 'data' && typeof msg.data === 'string') {
         const currentSession = findSessionByProject!(projectId);
         if (currentSession) {
-          currentSession.pty.write(msg.data as string);
+          currentSession.terminal.write(msg.data as string);
           currentSession.lastActivity = Date.now();
         }
       }
       if (msg.type === 'resize' && typeof msg.cols === 'number' && typeof msg.rows === 'number') {
         const currentSession = findSessionByProject!(projectId);
         if (currentSession) {
-          currentSession.pty.resize(msg.cols as number, msg.rows as number);
+          currentSession.terminal.resize(msg.cols as number, msg.rows as number);
           currentSession.lastActivity = Date.now();
         }
       }
@@ -119,7 +118,7 @@ function attachClientSession(
 }
 
 export function initTerminalWebSocket(server: Server): void {
-  console.log('[ws-server] 初始化终端 WebSocket 服务...', { ptyAvailable });
+  console.log('[ws-server] 初始化终端 WebSocket 服务...', { terminalAvailable });
   wss = new WebSocketServer({ noServer: true });
 
   server.on('upgrade', (request, socket, head) => {
@@ -139,7 +138,7 @@ export function initTerminalWebSocket(server: Server): void {
     const rows = parseInt(url.searchParams.get('rows') ?? '24', 10);
     console.log('[ws-server] WebSocket 连接:', { url: request.url, projectId, cols, rows });
 
-    if (!ptyAvailable) {
+    if (!terminalAvailable) {
       console.log('[ws-server] pty 不可用，拒绝连接');
       ws.send(JSON.stringify({ type: 'error', message: '终端功能不可用：node-pty 原生模块未加载' }));
       ws.close();
@@ -167,7 +166,7 @@ export function handleTerminalUpgrade(
   cols: number,
   rows: number,
 ): void {
-  if (!ptyAvailable) {
+  if (!terminalAvailable) {
     client.send(JSON.stringify({ type: 'error', message: '终端功能不可用：node-pty 原生模块未加载' }));
     client.close();
     return;
@@ -191,6 +190,9 @@ export function closeTerminalWebSocket(): void {
   sessionListenersAttached.clear();
 }
 
-export function isPtyAvailable(): boolean {
-  return ptyAvailable;
+export function isTerminalAvailable(): boolean {
+  return terminalAvailable;
 }
+
+// 向后兼容
+export const isPtyAvailable = isTerminalAvailable;
