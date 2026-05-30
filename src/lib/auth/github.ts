@@ -3,13 +3,22 @@
  * 支持通过 GitHub 账号登录/注册
  */
 import { createHash } from 'node:crypto';
-import { prisma } from '@/lib/db/prisma';
 import { isGitHubAppEnabled, getGitHubAppConfig } from './github-app-config';
 
-// 修复: 不提供默认空值回退, 使用前会检查并抛出明确错误
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
-const GITHUB_REDIRECT_URI = process.env.GITHUB_REDIRECT_URI;
+// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
+
+// 惰性读取 GitHub 配置环境变量（避免模块加载时读取，构建阶段不会因缺失环境变量而崩溃）
+function getGitHubConfig() {
+  return {
+    clientId: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    redirectUri: process.env.GITHUB_REDIRECT_URI,
+  };
+}
 
 export interface GitHubUser {
   id: number;
@@ -23,16 +32,17 @@ export interface GitHubUser {
  * 生成 GitHub OAuth 授权 URL
  */
 export function getGitHubAuthUrl(state?: string): string {
+  const { clientId, redirectUri } = getGitHubConfig();
   // 修复: 检查必需配置, 避免使用缺少的关键参数生成授权 URL
-  if (!GITHUB_CLIENT_ID) {
+  if (!clientId) {
     throw new Error('GITHUB_CLIENT_ID 未配置');
   }
-  if (!GITHUB_REDIRECT_URI) {
+  if (!redirectUri) {
     throw new Error('GITHUB_REDIRECT_URI 未配置');
   }
   const params = new URLSearchParams({
-    client_id: GITHUB_CLIENT_ID,
-    redirect_uri: GITHUB_REDIRECT_URI,
+    client_id: clientId,
+    redirect_uri: redirectUri,
     scope: 'read:user user:email',
     ...(state && { state }),
   });
@@ -63,11 +73,12 @@ export function getGitHubAppAuthUrl(state?: string): string {
  * 用 authorization code 换取 access token (普通 OAuth)
  */
 export async function getGitHubAccessToken(code: string): Promise<string> {
+  const { clientId, clientSecret } = getGitHubConfig();
   // 修复: 检查必需配置, 避免使用空密钥发送请求
-  if (!GITHUB_CLIENT_ID) {
+  if (!clientId) {
     throw new Error('GITHUB_CLIENT_ID 未配置');
   }
-  if (!GITHUB_CLIENT_SECRET) {
+  if (!clientSecret) {
     throw new Error('GITHUB_CLIENT_SECRET 未配置');
   }
   const response = await fetch('https://github.com/login/oauth/access_token', {
@@ -77,8 +88,8 @@ export async function getGitHubAccessToken(code: string): Promise<string> {
       Accept: 'application/json',
     },
     body: JSON.stringify({
-      client_id: GITHUB_CLIENT_ID,
-      client_secret: GITHUB_CLIENT_SECRET,
+      client_id: clientId,
+      client_secret: clientSecret,
       code,
     }),
   });
@@ -150,6 +161,7 @@ export async function loginWithGitHub(githubUser: GitHubUser): Promise<{
   needsBinding?: boolean;
   githubId?: string;
 }> {
+  const prisma = await getPrisma();
   // 查找是否已绑定 GitHub 账号（通过 githubId 字段）
   const existingByGithubId = await prisma.user.findFirst({
     where: { githubId: String(githubUser.id) },
@@ -209,6 +221,7 @@ export async function loginWithGitHubApp(githubUser: GitHubUser): Promise<{
   githubUserId?: number;
   githubUsername?: string;
 }> {
+  const prisma = await getPrisma();
   // 查找是否已绑定 GitHub 账号
   const existing = await prisma.user.findFirst({
     where: { username: `github_${githubUser.id}` },

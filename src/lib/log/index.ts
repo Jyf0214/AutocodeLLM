@@ -95,7 +95,14 @@ function startCleanupTimer() {
   cleanupOldLogs().catch(() => {});
 }
 
-startCleanupTimer();
+// 惰性启动清理定时器：仅在首次创建日志条目时执行
+// 避免模块加载时（如构建阶段）因 DATABASE_URL 未设置而崩溃
+let cleanupStarted = false;
+function lazyStartCleanup() {
+  if (cleanupStarted) return;
+  cleanupStarted = true;
+  startCleanupTimer();
+}
 
 function createEntry(
   level: LogLevel,
@@ -118,6 +125,9 @@ function createEntry(
   if (logs.length > MAX_LOGS) {
     logs.splice(0, logs.length - MAX_LOGS);
   }
+
+  // 首次创建日志条目时惰性启动清理定时器
+  lazyStartCleanup();
 
   writeEntryToDB(entry);
 

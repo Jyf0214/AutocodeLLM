@@ -1,20 +1,27 @@
 import { promises as fs, constants as fsConstants } from 'node:fs';
 import path from 'node:path';
 
-/** 文件管理基础目录 */
-const BASE_DIR = path.resolve(process.env.FILES_BASE_PATH || path.join(process.cwd(), 'projects'));
+/** 文件管理基础目录（惰性初始化，避免构建时读取 process.env） */
+let _baseDir: string | null = null;
+
+function getBaseDirValue(): string {
+  if (_baseDir === null) {
+    _baseDir = path.resolve(process.env.FILES_BASE_PATH || path.join(process.cwd(), 'projects'));
+  }
+  return _baseDir;
+}
 
 /** 获取基础目录 */
 export function getBaseDir(): string {
-  return BASE_DIR;
+  return getBaseDirValue();
 }
 
 /** 确保基础目录存在 */
 export async function ensureBaseDir(): Promise<void> {
   try {
-    await fs.access(BASE_DIR, fsConstants.W_OK);
+    await fs.access(getBaseDirValue(), fsConstants.W_OK);
   } catch {
-    await fs.mkdir(BASE_DIR, { recursive: true });
+    await fs.mkdir(getBaseDirValue(), { recursive: true });
   }
 }
 
@@ -22,10 +29,10 @@ export async function ensureBaseDir(): Promise<void> {
 export function resolveSafePath(relativePath: string): string {
   // 规范化路径
   const normalized = path.normalize(relativePath).replace(/^[/\\]+/, '');
-  const absolute = path.join(BASE_DIR, normalized);
+  const absolute = path.join(getBaseDirValue(), normalized);
 
   // 防止路径遍历攻击
-  if (!absolute.startsWith(BASE_DIR)) {
+  if (!absolute.startsWith(getBaseDirValue())) {
     throw new Error('路径越界：不允许访问基础目录之外的文件');
   }
 

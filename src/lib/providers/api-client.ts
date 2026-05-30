@@ -4,7 +4,15 @@
  * - 模块加载时检查 KEY_VAULTS_SECRET 环境变量，未设置则进程退出
  */
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
-import { prisma } from '@/lib/db/prisma';
+
+/**
+ * 惰性获取 Prisma 客户端（动态 import 避免模块加载时实例化）
+ * 构建阶段不会因 DATABASE_URL 未设置而崩溃
+ */
+async function getPrisma() {
+  const { prisma } = await import('@/lib/db/prisma');
+  return prisma;
+}
 
 /**
  * 获取 AES-256-CBC 加密密钥
@@ -53,6 +61,7 @@ export function decryptValue(encrypted: string): string {
  * 解密并获取提供商的 API Key
  */
 export async function getProviderApiKey(providerId: string): Promise<string | null> {
+  const prisma = await getPrisma();
   const provider = await prisma.provider.findUnique({
     where: { id: providerId },
   });
@@ -85,6 +94,7 @@ export async function callProviderAPI(params: {
 }): Promise<{ content: string; usage?: { tokens: number } }> {
   const { providerId, messages, model, stream, temperature, maxTokens } = params;
 
+  const prisma = await getPrisma();
   const provider = await prisma.provider.findUnique({
     where: { id: providerId },
   });
@@ -151,6 +161,7 @@ export async function callProviderAPI(params: {
  * 获取提供商的模型列表
  */
 export async function fetchProviderModels(providerId: string): Promise<{ id: string; name: string }[]> {
+  const prisma = await getPrisma();
   const provider = await prisma.provider.findUnique({
     where: { id: providerId },
   });
@@ -221,6 +232,7 @@ export async function fetchProviderModels(providerId: string): Promise<{ id: str
  * 测试提供商连接
  */
 export async function testProviderConnection(providerId: string): Promise<{ connected: boolean; latency: number; message: string }> {
+  const prisma = await getPrisma();
   const provider = await prisma.provider.findUnique({
     where: { id: providerId },
   });
@@ -507,6 +519,7 @@ async function fetchWithRetry(
 
     if (authHeader) {
       const token = authHeader.replace('Bearer ', '');
+      const prisma = await getPrisma();
       const provider = await prisma.provider.findFirst({
         where: {
           OR: [
