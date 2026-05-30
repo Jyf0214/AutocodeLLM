@@ -211,120 +211,137 @@ export default function ProjectTerminalPage() {
         right: 0,
         bottom: 0,
         zIndex: isFullscreen ? 9999 : 'auto',
-        background: '#1e1e1e',
+        background: isFullscreen ? 'rgba(0,0,0,0.6)' : 'transparent',
+        justifyContent: isFullscreen ? 'center' : 'flex-start',
+        alignItems: isFullscreen ? 'center' : 'stretch',
+        padding: isFullscreen ? 24 : 0,
       }}
     >
-      {/* 顶部工具栏 */}
+      {/* 全屏终端卡片 */}
       <div
         style={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '8px 16px',
-          background: '#2d2d2d',
-          borderBottom: '1px solid #3e3e3e',
-          flexShrink: 0,
+          flexDirection: 'column',
+          ...(isFullscreen
+            ? { width: 'calc(100% - 48px)', maxWidth: 1200, height: 'calc(100% - 48px)', maxHeight: 900 }
+            : { flex: 1 }),
+          background: '#1e1e1e',
+          borderRadius: 8,
+          overflow: 'hidden',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            onClick={() => router.back()}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: 13,
-              color: '#d4d4d4',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '4px 8px',
-              borderRadius: 4,
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget).style.background = '#3e3e3e';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget).style.background = 'none';
-            }}
-          >
-            <ArrowLeftOutlined style={{ fontSize: 12 }} />
-            返回
-          </button>
-          <Text style={{ color: '#d4d4d4', fontSize: 14 }}>终端</Text>
-          <span
-            style={{
-              display: 'inline-block',
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: isConnected ? '#4caf50' : connecting ? '#ff9800' : '#f44747',
-            }}
-            title={isConnected ? '已连接' : connecting ? '连接中' : '未连接'}
-          />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {!isConnected && !connecting && (
+        {/* 顶部工具栏 */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '8px 16px',
+            background: '#2d2d2d',
+            borderBottom: '1px solid #3e3e3e',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
-              onClick={handleReconnect}
+              onClick={() => router.back()}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 4,
-                fontSize: 12,
+                fontSize: 13,
                 color: '#d4d4d4',
-                background: '#3e3e3e',
+                background: 'none',
                 border: 'none',
                 cursor: 'pointer',
                 padding: '4px 8px',
                 borderRadius: 4,
               }}
+              onMouseEnter={(e) => {
+                (e.currentTarget).style.background = '#3e3e3e';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget).style.background = 'none';
+              }}
             >
-              <ReloadOutlined />
-              重新连接
+              <ArrowLeftOutlined style={{ fontSize: 12 }} />
+              返回
             </button>
-          )}
-          <button
-            onClick={toggleFullscreen}
+            <Text style={{ color: '#d4d4d4', fontSize: 14 }}>终端</Text>
+            <span
+              style={{
+                display: 'inline-block',
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: isConnected ? '#4caf50' : connecting ? '#ff9800' : '#f44747',
+              }}
+              title={isConnected ? '已连接' : connecting ? '连接中' : '未连接'}
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {!isConnected && !connecting && (
+              <button
+                onClick={handleReconnect}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontSize: 12,
+                  color: '#d4d4d4',
+                  background: '#3e3e3e',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  borderRadius: 4,
+                }}
+              >
+                <ReloadOutlined />
+                重新连接
+              </button>
+            )}
+            <button
+              onClick={toggleFullscreen}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: 14,
+                color: '#d4d4d4',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: 4,
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget).style.background = '#3e3e3e';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget).style.background = 'none';
+              }}
+            >
+              {isFullscreen ? <CompressOutlined /> : <ExpandOutlined />}
+            </button>
+          </div>
+        </div>
+
+        {/* 错误提示 */}
+        {error && (
+          <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              fontSize: 14,
-              color: '#d4d4d4',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '4px 8px',
-              borderRadius: 4,
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget).style.background = '#3e3e3e';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget).style.background = 'none';
+              padding: '8px 16px',
+              background: '#3e2723',
+              color: '#f44747',
+              fontSize: 13,
             }}
           >
-            {isFullscreen ? <CompressOutlined /> : <ExpandOutlined />}
-          </button>
-        </div>
+            {error}
+          </div>
+        )}
+
+        {/* 终端容器 */}
+        <div ref={terminalRef} style={{ flex: 1, overflow: 'hidden' }} />
       </div>
-
-      {/* 错误提示 */}
-      {error && (
-        <div
-          style={{
-            padding: '8px 16px',
-            background: '#3e2723',
-            color: '#f44747',
-            fontSize: 13,
-          }}
-        >
-          {error}
-        </div>
-      )}
-
-      {/* 终端容器 */}
-      <div ref={terminalRef} style={{ flex: 1, overflow: 'hidden' }} />
     </div>
   );
 }
