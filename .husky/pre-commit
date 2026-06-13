@@ -7,3 +7,6 @@ npm run pre-commit || {
   echo '===================================================='
   exit 1
 }
+
+# Copyright header check
+bash scripts/pre-commit-copyright.sh || exit 1
