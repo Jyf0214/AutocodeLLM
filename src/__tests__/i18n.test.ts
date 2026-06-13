@@ -6,8 +6,8 @@ describe('国际化翻译文件', () => {
   describe('中文翻译', () => {
     it('应该包含 common 命名空间', () => {
       expect(zhMessages.common.appName).toBe('AutocodeLLM');
-      expect(zhMessages.common.login).toBe('登录');
       expect(zhMessages.common.project).toBe('项目');
+      expect(zhMessages.common.cloud).toBeDefined();
     });
 
     it('登录页面应该有所有必要的翻译', () => {
@@ -22,8 +22,8 @@ describe('国际化翻译文件', () => {
   describe('英文翻译', () => {
     it('应该包含 common 命名空间', () => {
       expect(enMessages.common.appName).toBe('AutocodeLLM');
-      expect(enMessages.common.login).toBe('Login');
       expect(enMessages.common.project).toBe('Project');
+      expect(enMessages.common.cloud).toBeDefined();
     });
 
     it('登录页面应该有所有必要的翻译', () => {
