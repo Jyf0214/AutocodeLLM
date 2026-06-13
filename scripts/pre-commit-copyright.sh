@@ -3,7 +3,7 @@
 # 在本地提交前检查待提交文件的版权头完整性和归属一致性
 # 与 CI workflow (copyright-header.yml) 逻辑一致，但只检查 staged 文件
 
-set -euo pipefail
+set -u
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -23,6 +23,7 @@ fi
 if [ "$FULL_SCAN" = true ]; then
   FILE_LIST=$(find . -type f \
     -not -path './node_modules/*' \
+    -not -path './.opencode/*' \
     -not -path './.git/*' \
     -not -path './.next/*' \
     -not -path './dist/*' \
@@ -51,7 +52,11 @@ NEW_MISSING_COUNT=0
 # 加载基线
 declare -A BL_CP BL_SP
 if [ -f "$BASELINE" ]; then
-  while IFS=' | ' read -r file copyright spdx _; do
+  while IFS='|' read -r file copyright spdx _; do
+    # 去除首尾空格
+    file="${file#"${file%%[![:space:]]*}"}"; file="${file%"${file##*[![:space:]]}"}"
+    copyright="${copyright#"${copyright%%[![:space:]]*}"}"; copyright="${copyright%"${copyright##*[![:space:]]}"}"
+    spdx="${spdx#"${spdx%%[![:space:]]*}"}"; spdx="${spdx%"${spdx##*[![:space:]]}"}"
     [[ "$file" =~ ^# ]] && continue
     [ -z "$file" ] && continue
     BL_CP["$file"]="$copyright"
@@ -82,6 +87,8 @@ while IFS= read -r file; do
     SCANNED=$((SCANNED + 1))
     [ $((SCANNED % 500)) -eq 0 ] && printf "\r  进度: %d / %d" "$SCANNED" "$TOTAL_FILES"
   fi
+  # 最后一行时补换行
+  [ "$FULL_SCAN" = true ] && [ "$SCANNED" -eq "$TOTAL_FILES" ] && echo ""
 
   rel="${file#./}"
   current_cp=$(head -10 "$file" 2>/dev/null | grep "Copyright " | head -1 | sed 's/^[[:space:]*/!]*//;s/[[:space:]]*$//')

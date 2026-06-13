@@ -1,9 +1,10 @@
 #!/bin/sh
 # pre-push — 推送前全量扫描所有源文件的版权头
-# 这是最后一层本地防线，防止问题流到远程
+# 最后一层本地防线，防止问题流到远程
 
-echo ""
-echo "━━━ 版权头全量扫描（pre-push）━━━"
+# 消耗 stdin（git push 传入的 ref 信息），避免脚本被多次触发
+while read -r line; do :; done
+
 bash scripts/pre-commit-copyright.sh --full-scan || {
   echo ''
   echo '===================================================='

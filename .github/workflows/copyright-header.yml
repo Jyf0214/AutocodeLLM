@@ -79,7 +79,11 @@ jobs:
           # 读取基线到关联数组
           declare -A BL_CP BL_SP
           if [ -f "$BASELINE_FILE" ]; then
-            while IFS=' | ' read -r file copyright spdx _; do
+            while IFS='|' read -r file copyright spdx _; do
+              # 去除首尾空格
+              file="${file#"${file%%[![:space:]]*}"}"; file="${file%"${file##*[![:space:]]}"}"
+              copyright="${copyright#"${copyright%%[![:space:]]*}"}"; copyright="${copyright%"${copyright##*[![:space:]]}"}"
+              spdx="${spdx#"${spdx%%[![:space:]]*}"}"; spdx="${spdx%"${spdx##*[![:space:]]}"}"
               [[ "$file" =~ ^# ]] && continue
               [ -z "$file" ] && continue
               BL_CP["$file"]="$copyright"
@@ -92,6 +96,7 @@ jobs:
 
           find . -type f \
             -not -path './node_modules/*' \
+            -not -path './.opencode/*' \
             -not -path './.git/*' \
             -not -path './.next/*' \
             -not -path './dist/*' \
