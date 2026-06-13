@@ -11,11 +11,35 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 BASELINE=".github/copyright-audit/baseline.txt"
 
-# 获取 staged 的源文件
-STAGED=$(git diff --cached --name-only --diff-filter=ACM \
-  | grep -E '\.(ts|tsx|js|jsx|mjs|cjs|py|java|kt|go|rs)$' || true)
+# ── 模式选择 ──────────────────────────────────────────────
+# --full-scan: pre-push 模式，扫描所有源文件
+# 无参数:      pre-commit 模式，只扫描 staged 文件
+FULL_SCAN=false
+if [ "${1:-}" = "--full-scan" ]; then
+  FULL_SCAN=true
+fi
 
-if [ -z "$STAGED" ]; then
+# ── 获取待检查文件列表 ────────────────────────────────────
+if [ "$FULL_SCAN" = true ]; then
+  FILE_LIST=$(find . -type f \
+    -not -path './node_modules/*' \
+    -not -path './.git/*' \
+    -not -path './.next/*' \
+    -not -path './dist/*' \
+    -not -path './.bundle/*' \
+    -not -path './coverage/*' \
+    -not -path './.qwen/*' \
+    -not -path './.gemini/*' \
+    -not -path './vendor/*' \
+    -not -path './third_party/*' \
+    -regextype posix-extended -regex '.*\.(ts|tsx|js|jsx|mjs|cjs|py|java|kt|go|rs)$' \
+    2>/dev/null || true)
+else
+  FILE_LIST=$(git diff --cached --name-only --diff-filter=ACM \
+    | grep -E '\.(ts|tsx|js|jsx|mjs|cjs|py|java|kt|go|rs)$' || true)
+fi
+
+if [ -z "$FILE_LIST" ]; then
   exit 0
 fi
 
@@ -36,11 +60,28 @@ if [ -f "$BASELINE" ]; then
 fi
 
 echo ""
-echo "━━━ 版权头检查 ━━━"
+if [ "$FULL_SCAN" = true ]; then
+  echo "━━━ 版权头全量扫描（pre-push）━━━"
+else
+  echo "━━━ 版权头检查（pre-commit）━━━"
+fi
+
+TOTAL_FILES=$(echo "$FILE_LIST" | wc -l)
+
+# pre-push 全量扫描时显示进度
+if [ "$FULL_SCAN" = true ]; then
+  echo "  扫描 $TOTAL_FILES 个源文件..."
+  SCANNED=0
+fi
 
 while IFS= read -r file; do
   [ -z "$file" ] && continue
   [ ! -f "$file" ] && continue
+
+  if [ "$FULL_SCAN" = true ]; then
+    SCANNED=$((SCANNED + 1))
+    [ $((SCANNED % 500)) -eq 0 ] && printf "\r  进度: %d / %d" "$SCANNED" "$TOTAL_FILES"
+  fi
 
   rel="${file#./}"
   current_cp=$(head -10 "$file" 2>/dev/null | grep "Copyright " | head -1 | sed 's/^[[:space:]*/!]*//;s/[[:space:]]*$//')
@@ -87,7 +128,7 @@ while IFS= read -r file; do
       printf "\n"
     fi
   fi
-done <<< "$STAGED"
+done <<< "$FILE_LIST"
 
 echo "━━━━━━━━━━━━━━━━━━"
 printf "${GREEN}✅  通过${NC} | " >&2
@@ -99,12 +140,22 @@ printf "${YELLOW}%d 个警告${NC}" "$NEW_MISSING_COUNT" >&2
 echo ""
 
 if [ "$HAS_ERROR" = true ]; then
-  echo ""
-  echo "❌ 版权检查未通过！已阻止提交。"
-  echo "  错误原因："
-  [ "$TAMPER_COUNT" -gt 0 ] && echo "    - 版权归属被篡改（恢复原始 Google LLC / Qwen Team 声明）"
-  [ "$MISSING_COUNT" -gt 0 ] && echo "    - 版权头被删除"
-  echo ""
-  echo "  使用 git commit --no-verify 跳过（不推荐）"
+  if [ "$FULL_SCAN" = true ]; then
+    echo ""
+    echo "❌ 版权检查未通过！已阻止推送。"
+    echo "  错误原因："
+    [ "$TAMPER_COUNT" -gt 0 ] && echo "    - 版权归属被篡改（恢复原始 Google LLC / Qwen Team 声明）"
+    [ "$MISSING_COUNT" -gt 0 ] && echo "    - 版权头被删除"
+    echo ""
+    echo "  使用 git push --no-verify 跳过（不推荐）"
+  else
+    echo ""
+    echo "❌ 版权检查未通过！已阻止提交。"
+    echo "  错误原因："
+    [ "$TAMPER_COUNT" -gt 0 ] && echo "    - 版权归属被篡改（恢复原始 Google LLC / Qwen Team 声明）"
+    [ "$MISSING_COUNT" -gt 0 ] && echo "    - 版权头被删除"
+    echo ""
+    echo "  使用 git commit --no-verify 跳过（不推荐）"
+  fi
   exit 1
 fi
