@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
+import { getPrisma } from '@/lib/db/get-prisma';
 
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 interface ProjectBackup {
   projectId: string;
@@ -27,26 +23,32 @@ export const GET = withApiLogging('GET cloud/backups', async function GET() {
       orderBy: { createdAt: 'desc' },
     });
 
-    const backups: ProjectBackup[] = await Promise.all(
-      projects.map(async (ws) => {
-        const backupRecords = await db.backup.findMany({
-          where: { projectId: ws.id },
-          orderBy: { createdAt: 'desc' },
-        });
-
-        const latestBackup = backupRecords[0];
-        const hasFailure = backupRecords.some((b) => b.status === 'failed');
-
-        return {
-          projectId: ws.id,
-          projectName: ws.name,
-          lastBackup: latestBackup?.createdAt.toISOString() ?? null,
-          nextBackup: null,
-          status: latestBackup ? (hasFailure ? 'failed' : 'ok') : 'no_backup',
-          backupCount: backupRecords.length,
-        };
-      })
+    const backupStats = await db.backup.groupBy({
+      by: ['projectId'],
+      _max: { createdAt: true },
+      _count: true,
+    });
+    const failedProjects = await db.backup.groupBy({
+      by: ['projectId'],
+      where: { status: 'FAILED' },
+      _count: true,
+    });
+    const failedSet = new Set(failedProjects.map((b) => b.projectId));
+    const statsMap = new Map(
+      backupStats.map((b) => [b.projectId, { maxCreatedAt: b._max.createdAt, count: b._count }])
     );
+    const backups: ProjectBackup[] = projects.map((ws) => {
+      const stats = statsMap.get(ws.id);
+      const hasFailure = failedSet.has(ws.id);
+      return {
+        projectId: ws.id,
+        projectName: ws.name,
+        lastBackup: stats?.maxCreatedAt?.toISOString() ?? null,
+        nextBackup: null,
+        status: stats ? (hasFailure ? 'failed' : 'ok') : 'no_backup',
+        backupCount: stats?.count ?? 0,
+      };
+    });
 
     return NextResponse.json({ success: true, data: backups });
   } catch (err) {

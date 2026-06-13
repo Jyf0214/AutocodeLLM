@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
+import { requireAuth } from '@/lib/auth';
 import { resolveSafePath, ensureBaseDir, getMimeType } from '@/lib/files/utils';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -7,6 +8,8 @@ import path from 'node:path';
 /** GET /api/files/download?path=/foo.txt — 下载文件 */
 export const GET = withApiLogging('GET files/download', async function GET(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
     await ensureBaseDir();
 
     const { searchParams } = new URL(request.url);

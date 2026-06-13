@@ -3,11 +3,35 @@
  * 应用启动时从远程拉取备份文件到本地
  * 配置从数据库读取（WebdavConfig 表）
  */
+import crypto from 'crypto';
 import { createClient } from 'webdav';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
 
 const SYNC_LOCAL_DIR = process.env.SYNC_LOCAL_DIR ?? './sync';
+
+/**
+ * AES-256-CBC 解密（内联实现，避免依赖 @/lib/crypto 的 TypeScript 模块路径）
+ * 与 src/lib/crypto.ts 中的 decryptValue 保持一致
+ */
+function decryptValue(encrypted) {
+  const keyStr = process.env.KEY_VAULTS_SECRET;
+  if (!keyStr) {
+    throw new Error('KEY_VAULTS_SECRET 环境变量未设置，无法执行加解密操作');
+  }
+  const key = crypto.scryptSync(keyStr, 'autocodellm-key-salt', 32);
+  const parts = encrypted.split(':');
+  const ivHex = parts[0];
+  const encryptedData = parts[1];
+  if (!ivHex || !encryptedData) {
+    throw new Error('无效的加密数据格式');
+  }
+  const iv = Buffer.from(ivHex, 'hex');
+  const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+  let decrypted = decipher.update(encryptedData, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+}
 
 /**
  * 从数据库读取 WebDAV 配置
@@ -74,7 +98,7 @@ export async function webdavRestore() {
   try {
     const client = createClient(config.url, {
       username: config.username,
-      password: config.password,
+      password: decryptValue(config.password),
     });
 
     // 测试连接

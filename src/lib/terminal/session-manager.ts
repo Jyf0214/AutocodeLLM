@@ -58,6 +58,8 @@ export interface TerminalSession {
 const SESSIONS = new Map<string, TerminalSession>();
 
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 分钟超时
+/** 最大并发会话数 */
+const MAX_SESSIONS = 50;
 
 /**
  * 获取终端的工作目录
@@ -257,6 +259,18 @@ function findSessionByProjectCwd(cwd: string): TerminalSession | null {
  * 创建项目终端会话
  */
 export function createSession(projectId: string, cols: number, rows: number): TerminalSession {
+  // 确保清理定时器已启动
+  initCleanupTimer();
+
+  // 限制最大会话数
+  if (SESSIONS.size >= MAX_SESSIONS) {
+    // 删除最旧的会话
+    const oldestKey = SESSIONS.keys().next().value;
+    if (oldestKey) {
+      destroySession(oldestKey);
+    }
+  }
+
   const existing = findSessionByProject(projectId);
   if (existing) {
     destroySession(existing.id);
@@ -351,6 +365,22 @@ export function destroySession(sessionId: string): void {
     session.terminal.kill();
     SESSIONS.delete(sessionId);
   }
+}
+
+/**
+ * 惰性初始化清理定时器，避免构建时副作用
+ */
+let cleanupInitialized = false;
+function initCleanupTimer(): void {
+  if (cleanupInitialized) return;
+  cleanupInitialized = true;
+  setInterval(() => {
+    try {
+      cleanupExpiredSessions();
+    } catch (e) {
+      console.error('[cleanup] 清理过期会话失败:', e);
+    }
+  }, 60000);
 }
 
 /**

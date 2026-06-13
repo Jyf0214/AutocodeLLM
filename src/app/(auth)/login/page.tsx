@@ -168,7 +168,7 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#ffffff',
+        background: 'var(--bg-primary)',
         padding: 24,
       }}
     >
@@ -187,14 +187,14 @@ export default function LoginPage() {
               width: 48,
               height: 48,
               borderRadius: 12,
-              background: '#000000',
+              background: 'var(--bg-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: 16,
             }}
           >
-            <UserOutlined style={{ fontSize: 24, color: '#fff' }} />
+            <UserOutlined style={{ fontSize: 24, color: 'var(--text-primary)' }} />
           </div>
           <span style={{ fontWeight: 'bold', fontSize: 26, color: 'var(--text-primary)' }}>
             {t('title')}

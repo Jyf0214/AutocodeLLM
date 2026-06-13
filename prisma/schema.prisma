@@ -12,6 +12,39 @@ datasource db {
 }
 
 // ============================================================
+// 枚举定义
+// ============================================================
+
+enum UserRole {
+  ADMIN
+  USER
+  VIEWER
+}
+
+enum AuditAction {
+  PASSWORD_CHANGED
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+}
+
+enum LogType {
+  FUNCTION_CALL
+  CHAT_MESSAGE
+}
+
+enum LogStatus {
+  SUCCESS
+  ERROR
+  PENDING
+}
+
+enum BackupStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+// ============================================================
 // 用户与权限
 // ============================================================
 
@@ -19,7 +52,7 @@ model User {
   id                  String   @id @default(uuid())
   username            String   @unique @default("admin")
   passwordHash        String
-  role                String   @default("admin") // admin, user, viewer
+  role                UserRole @default(USER)
   forceChangePassword Boolean  @default(true)
   isInitialPassword   Boolean  @default(true)
 
@@ -40,7 +73,7 @@ model User {
 model PasswordAudit {
   id           String    @id @default(uuid())
   userId       String
-  action       String    // PASSWORD_CHANGED, LOGIN_SUCCESS, LOGIN_FAILED
+  action       AuditAction
   submittedHash String?
   storedHash   String?
   ipAddress    String?
@@ -76,6 +109,23 @@ model ApiKey {
   @@map("api_keys")
 }
 
+// ============================================================
+// AI 提供商配置
+// ============================================================
+
+model Provider {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  baseUrl      String
+  apiKey       String
+  enabled      Boolean  @default(true)
+  providerType String   @default("custom")
+  sdkType      String   @default("openai")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("providers")
+}
 
 // ============================================================
 // 项目
@@ -121,7 +171,7 @@ model Backup {
   projectId   String   @map("workspaceId")
   name        String
   size        Int      @default(0)
-  status      String   @default("pending") // pending, completed, failed
+  status      BackupStatus @default(PENDING)
   createdAt   DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -138,10 +188,10 @@ model Backup {
 model ProjectLog {
   id          String   @id @default(uuid())
   projectId   String   @map("workspaceId")
-  type        String   // function_call, chat_message
+  type        LogType
   functionName String?
   summary     String?
-  status      String?  // success, error, pending
+  status      LogStatus?
   createdAt   DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)

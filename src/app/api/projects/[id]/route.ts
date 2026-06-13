@@ -13,12 +13,8 @@ import {
   errorResponse,
   handleError,
 } from '@/lib/api/response';
+import { getPrisma } from '@/lib/db/get-prisma';
 
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 /**
  * 解析项目 ID 参数
@@ -47,14 +43,18 @@ export const GET = withApiLogging('GET projects/:id', async function GET(
       return errorResponse('项目不存在', 'NOT_FOUND', 404);
     }
 
-    return successResponse({
-      id: project.id,
-      name: project.name,
-      description: project.description,
-      accessPassword: project.accessPassword ? '***' : null,
-      createdAt: project.createdAt.toISOString(),
-      updatedAt: project.updatedAt.toISOString(),
-    });
+    return successResponse(
+      {
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        accessPassword: project.accessPassword ? '***' : null,
+        createdAt: project.createdAt.toISOString(),
+        updatedAt: project.updatedAt.toISOString(),
+      },
+      200,
+      { 'Cache-Control': 'private, max-age=60' },
+    );
   } catch (error) {
     return handleError(error, '获取项目详情');
   }

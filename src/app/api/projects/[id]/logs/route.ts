@@ -17,12 +17,8 @@ import type {
   ProjectLogResponse,
   CreateProjectLogRequest,
 } from '@/lib/api/project-log-types';
+import { getPrisma } from '@/lib/db/get-prisma';
 
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 /**
  * GET /api/projects/[id]/logs - 获取项目日志
@@ -60,10 +56,10 @@ export const GET = withApiLogging('GET projects/:id/logs', async function GET(
     const data = logs.map((log) => ({
       id: log.id,
       projectId: log.projectId,
-      type: log.type as 'function_call' | 'chat_message',
+      type: log.type as 'FUNCTION_CALL' | 'CHAT_MESSAGE',
       functionName: log.functionName,
       summary: log.summary,
-      status: log.status as 'success' | 'error' | 'pending' | null,
+      status: log.status as 'SUCCESS' | 'ERROR' | 'PENDING' | null,
       createdAt: log.createdAt.toISOString(),
     }));
 
@@ -112,10 +108,10 @@ export const POST = withApiLogging('POST projects/:id/logs', async function POST
       {
         id: newLog.id,
         projectId: newLog.projectId,
-        type: newLog.type as 'function_call' | 'chat_message',
+        type: newLog.type as 'FUNCTION_CALL' | 'CHAT_MESSAGE',
         functionName: newLog.functionName,
         summary: newLog.summary,
-        status: newLog.status as 'success' | 'error' | 'pending' | null,
+        status: newLog.status as 'SUCCESS' | 'ERROR' | 'PENDING' | null,
         createdAt: newLog.createdAt.toISOString(),
       },
       201,

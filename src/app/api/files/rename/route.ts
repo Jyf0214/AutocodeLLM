@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
+import { requireAuth } from '@/lib/auth';
 import { renameEntry, exists } from '@/lib/files/utils';
 
 /** PUT /api/files/rename — 重命名/移动文件或目录 */
 export const PUT = withApiLogging('PUT files/rename', async function PUT(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
     const body = (await request.json()) as { oldPath: string; newPath: string };
     const { oldPath, newPath } = body;
 

@@ -4,12 +4,8 @@
  */
 import { createHash } from 'node:crypto';
 import { isGitHubAppEnabled, getGitHubAppConfig } from './github-app-config';
+import { getPrisma } from '@/lib/db/get-prisma';
 
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 // 惰性读取 GitHub 配置环境变量（避免模块加载时读取，构建阶段不会因缺失环境变量而崩溃）
 function getGitHubConfig() {

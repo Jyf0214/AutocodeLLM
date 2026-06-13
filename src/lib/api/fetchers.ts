@@ -11,6 +11,11 @@ export interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
 }
 
+/**
+ * 默认请求超时时间（毫秒）
+ */
+const DEFAULT_TIMEOUT_MS = 30_000;
+
 export async function apiFetch<T = unknown>(
   url: string,
   options: FetchOptions = {}
@@ -31,12 +36,25 @@ export async function apiFetch<T = unknown>(
     }
   }
 
-  const response = await fetch(finalUrl, {
-    ...fetchOptions,
-    credentials: 'include',
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
-  return response.json();
+  try {
+    const response = await fetch(finalUrl, {
+      ...fetchOptions,
+      signal: controller.signal,
+      credentials: 'include',
+    });
+
+    clearTimeout(timeoutId);
+    return response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error('请求超时');
+    }
+    throw error;
+  }
 }
 
 export async function apiGet<T = unknown>(

@@ -35,14 +35,19 @@ export interface PaginatedData<T> {
  * 成功响应
  * @param data 响应数据
  * @param status HTTP 状态码，默认 200
+ * @param headers 额外的响应头
  */
-export function successResponse<T>(data: T, status = 200): NextResponse<ApiResponse<T>> {
+export function successResponse<T>(
+  data: T,
+  status = 200,
+  headers?: Record<string, string>,
+): NextResponse<ApiResponse<T>> {
   return NextResponse.json(
     {
       success: true,
       data,
     } as ApiResponse<T>,
-    { status },
+    { status, headers },
   );
 }
 

@@ -4,12 +4,8 @@ import { requireAuth } from '@/lib/auth';
 import { encryptValue, decryptValue } from '@/lib/crypto';
 import { testConnection, createWebdavClient, pullFromRemote, pushToRemote } from '@/lib/sync/webdav';
 import { startWatching, stopWatching, isWatchActive } from '@/lib/sync/watcher';
+import { getPrisma } from '@/lib/db/get-prisma';
 
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 export const GET = withApiLogging('GET sync', async function GET(request: Request) {
   try {
@@ -46,6 +42,8 @@ export const POST = withApiLogging('POST sync', async function POST(request: Req
     const body = (await request.json()) as Record<string, unknown>;
     const action = body.action as string;
 
+    const db = await getPrisma();
+
     if (action === 'save') {
       const { url, username, password, remotePath, enabled } = body as {
         url: string;
@@ -66,8 +64,6 @@ export const POST = withApiLogging('POST sync', async function POST(request: Req
         remotePath,
         enabled: isEnabled,
       };
-
-      const db = await getPrisma();
       const existing = await db.webdavConfig.findFirst();
       if (existing) {
         await db.webdavConfig.update({

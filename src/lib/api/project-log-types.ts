@@ -8,10 +8,10 @@
 export interface ProjectLog {
   id: string;
   projectId: string;
-  type: 'function_call';
+  type: 'FUNCTION_CALL';
   functionName: string | null;
   summary: string | null;
-  status: 'success' | 'error' | 'pending' | null;
+  status: 'SUCCESS' | 'ERROR' | 'PENDING' | null;
   createdAt: string;
 }
 
@@ -19,10 +19,10 @@ export interface ProjectLog {
  * 创建项目日志请求
  */
 export interface CreateProjectLogRequest {
-  type?: 'function_call';
+  type?: 'FUNCTION_CALL';
   functionName?: string;
   summary?: string;
-  status?: 'success' | 'error' | 'pending';
+  status?: 'SUCCESS' | 'ERROR' | 'PENDING';
 }
 
 /**

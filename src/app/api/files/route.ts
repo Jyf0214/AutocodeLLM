@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
+import { requireAuth } from '@/lib/auth';
 import { listDirectory, createDirectory, deleteEntry, writeFileContent, exists } from '@/lib/files/utils';
 
 /** GET /api/files?path=/ — 列出目录内容 */
 export const GET = withApiLogging('GET files', async function GET(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
     const { searchParams } = new URL(request.url);
     const dirPath = searchParams.get('path') ?? '/';
 
@@ -27,6 +30,8 @@ export const GET = withApiLogging('GET files', async function GET(request: Reque
 /** POST /api/files — 创建文件或目录 */
 export const POST = withApiLogging('POST files', async function POST(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
     const body = (await request.json()) as {
       path: string;
       type: 'file' | 'directory';
@@ -72,6 +77,8 @@ export const POST = withApiLogging('POST files', async function POST(request: Re
 /** DELETE /api/files — 删除文件或目录 */
 export const DELETE = withApiLogging('DELETE files', async function DELETE(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
     const { searchParams } = new URL(request.url);
     const entryPath = searchParams.get('path');
 

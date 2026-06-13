@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
+import { requireAuth } from '@/lib/auth';
 import { readFileContent, writeFileContent } from '@/lib/files/utils';
 
 /** GET /api/files/content?path=/foo.txt — 读取文件内容 */
 export const GET = withApiLogging('GET files/content', async function GET(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
     const { searchParams } = new URL(request.url);
     const filePath = searchParams.get('path');
 
@@ -37,6 +40,8 @@ export const GET = withApiLogging('GET files/content', async function GET(reques
 /** PUT /api/files/content — 写入文件内容 */
 export const PUT = withApiLogging('PUT files/content', async function PUT(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
     const body = (await request.json()) as { path: string; content: string };
     const { path: filePath, content } = body;
 

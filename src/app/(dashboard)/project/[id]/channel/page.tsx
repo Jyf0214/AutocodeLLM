@@ -14,11 +14,11 @@ export default function ChannelPage() {
   const projectId = resolvedParams.id as string;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg-layout)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
       <div
         style={{
           background: 'var(--color-bg)',
-          borderBottom: '1px solid var(--color-border)',
+          borderBottom: '1px solid var(--border-primary)',
           padding: '16px 24px',
         }}
       >

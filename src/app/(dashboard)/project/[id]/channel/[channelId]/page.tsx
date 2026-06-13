@@ -78,7 +78,7 @@ export default function ChannelChatPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: 'var(--color-bg-layout)' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', padding: '28px 24px' }}>
           <Skeleton active paragraph={{ rows: 6 }} />
         </div>
@@ -91,7 +91,7 @@ export default function ChannelChatPage() {
       <div
         style={{
           minHeight: '100vh',
-          background: 'var(--color-bg-layout)',
+          background: 'var(--bg-primary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -120,11 +120,11 @@ export default function ChannelChatPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg-layout)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
       <div
         style={{
           background: 'var(--color-bg)',
-          borderBottom: '1px solid var(--color-border)',
+          borderBottom: '1px solid var(--border-primary)',
           padding: '16px 24px',
         }}
       >

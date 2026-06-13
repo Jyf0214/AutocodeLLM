@@ -35,6 +35,7 @@ yarn-error.log*
 # 本地环境文件
 .env*.local
 .env
+package-lock.json
 
 # TypeScript
 *.tsbuildinfo

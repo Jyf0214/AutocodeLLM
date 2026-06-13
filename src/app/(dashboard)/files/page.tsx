@@ -30,23 +30,7 @@ import {
   Upload,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-
-/** 文件信息 */
-interface FileInfo {
-  name: string;
-  path: string;
-  type: 'file' | 'directory';
-  size: number;
-  modifiedAt: string;
-  extension: string;
-}
-
-/** API 响应 */
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: { message: string; code: string };
-}
+import type { FileInfo, ApiResponse } from './types';
 
 /** 格式化文件大小 */
 function formatSize(bytes: number): string {
@@ -65,33 +49,14 @@ function formatTime(iso: string): string {
 }
 
 /** 获取文件扩展名图标颜色 */
-function getExtColor(ext: string): string {
-  const colors: Record<string, string> = {
-    '.ts': '#3178c6',
-    '.tsx': '#3178c6',
-    '.js': '#f7df1e',
-    '.jsx': '#61dafb',
-    '.json': '#f5a623',
-    '.css': '#1572b6',
-    '.html': '#e34f26',
-    '.md': '#42b883',
-    '.py': '#3776ab',
-    '.go': '#00add8',
-    '.rs': '#dea584',
-    '.yaml': '#cb171e',
-    '.yml': '#cb171e',
-    '.env': '#ecd53f',
-    '.sql': '#4479a1',
-    '.sh': '#4eaa25',
-    '.prisma': '#2d3748',
-  };
-  return colors[ext] ?? '#8c8c8c';
+function getExtColor(_ext: string): string {
+  return 'var(--text-primary)';
 }
 
 /** 文件图标组件 */
 function FileTypeIcon({ type, ext }: { type: 'file' | 'directory'; ext: string }) {
   if (type === 'directory') {
-    return <FolderOutlined style={{ fontSize: 20, color: '#faad14' }} />;
+    return <FolderOutlined style={{ fontSize: 20, color: 'var(--text-primary)' }} />;
   }
   return <FileOutlined style={{ fontSize: 20, color: getExtColor(ext) }} />;
 }

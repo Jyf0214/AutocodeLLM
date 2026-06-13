@@ -3,12 +3,8 @@
  * 处理 messageCreate 事件，将消息持久化到数据库
  */
 import type { Message } from 'discord.js';
+import { getPrisma } from '@/lib/db/get-prisma';
 
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { default: prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 /** 处理 Discord 新消息事件 */
 export async function handleDiscordMessage(message: Message): Promise<void> {

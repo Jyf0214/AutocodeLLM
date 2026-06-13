@@ -12,12 +12,8 @@ import {
   validateRequiredFields,
 } from '@/lib/api/response';
 import type { ProjectResponse, CreateProjectRequest } from '@/lib/api/project-types';
+import { getPrisma } from '@/lib/db/get-prisma';
 
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 /**
  * GET /api/projects - 获取所有项目列表
@@ -40,7 +36,9 @@ export const GET = withApiLogging('GET /api/projects', async function GET(
       updatedAt: project.updatedAt.toISOString(),
     }));
 
-    return successResponse(data);
+    return successResponse(data, 200, {
+      'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
+    });
   } catch (error) {
     return handleError(error, '获取项目列表');
   }

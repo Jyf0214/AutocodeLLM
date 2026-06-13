@@ -1,12 +1,8 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { requireAuth } from '@/lib/auth';
+import { getPrisma } from '@/lib/db/get-prisma';
 
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 /**
  * POST /api/system/call
@@ -35,9 +31,10 @@ export const POST = withApiLogging('POST system/call', async function POST(reque
   }
 
   try {
+    const db = await getPrisma();
+
     switch (body.action) {
       case 'listProjects': {
-    const db = await getPrisma();
         const projects = await db.project.findMany({
           select: { id: true, name: true, description: true, createdAt: true },
           orderBy: { createdAt: 'desc' },

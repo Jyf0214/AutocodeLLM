@@ -3,7 +3,7 @@
  * 支持插件扩展、仓库克隆、GitHub API 调用
  */
 import { execSync } from 'node:child_process';
-import { createHash, createPrivateKey, randomBytes, sign } from 'node:crypto';
+import { createHmac, createPrivateKey, randomBytes, sign, timingSafeEqual } from 'node:crypto';
 
 // ============================================================
 // GitHub App 配置
@@ -205,8 +205,12 @@ export function verifyGitHubWebhook(
   signature: string,
   secret: string,
 ): boolean {
-  const expected = `sha256=${createHash('sha256').update(`${secret}${payload}`).digest('hex')}`;
-  return signature === expected;
+  const sig = createHmac('sha256', secret).update(payload).digest('hex');
+  const expected = `sha256=${sig}`;
+  if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+    return false;
+  }
+  return true;
 }
 
 // ============================================================

@@ -38,9 +38,9 @@ export const GET = withApiLogging('GET auth/github/callback', async function GET
     const response = NextResponse.redirect(new URL('/project', request.url));
 
     response.cookies.set('userId', result.userId, {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict',
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     });

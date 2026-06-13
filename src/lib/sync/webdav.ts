@@ -1,11 +1,7 @@
 import { createClient, type WebDAVClient } from 'webdav';
-import { decryptValue } from '@/lib/crypto';
+import { decryptValue, encryptValue } from '@/lib/crypto';
+import { getPrisma } from '@/lib/db/get-prisma';
 
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 /**
  * 创建 WebDAV 客户端（自动解密密码）
@@ -159,14 +155,16 @@ export async function saveWebdavConfig(data: {
   enabled: boolean;
 }): Promise<void> {
   const db = await getPrisma();
+  // 加密密码后再存储
+  const encryptedData = { ...data, password: encryptValue(data.password) };
   const existing = await db.webdavConfig.findFirst();
   if (existing) {
     await db.webdavConfig.update({
       where: { id: existing.id },
-      data,
+      data: encryptedData,
     });
   } else {
-    await db.webdavConfig.create({ data });
+    await db.webdavConfig.create({ data: encryptedData });
   }
 }
 

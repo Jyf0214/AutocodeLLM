@@ -23,6 +23,7 @@ try {
 
 const projectClients = new Map<string, Set<WebSocket>>();
 const sessionListenersAttached = new Set<string>();
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
 function broadcastToProject(projectId: string, message: string, exclude?: WebSocket): void {
   const clients = projectClients.get(projectId);
@@ -112,6 +113,13 @@ function attachClientSession(
       if (c.size === 0) {
         console.log('[ws-server] 项目无客户端，清理项目连接:', { projectId });
         projectClients.delete(projectId);
+        // 清理会话监听器标记，防止内存泄漏
+        if (destroySession) {
+          const session = findSessionByProject!(projectId);
+          if (session) {
+            sessionListenersAttached.delete(session.id);
+          }
+        }
       }
     }
   });
@@ -138,6 +146,12 @@ export function initTerminalWebSocket(server: Server): void {
     const rows = parseInt(url.searchParams.get('rows') ?? '24', 10);
     console.log('[ws-server] WebSocket 连接:', { url: request.url, projectId, cols, rows });
 
+    // 心跳检测
+    (ws as any).__alive = true;
+    ws.on('pong', () => {
+      (ws as any).__alive = true;
+    });
+
     if (!terminalAvailable) {
       console.log('[ws-server] pty 不可用，拒绝连接');
       ws.send(JSON.stringify({ type: 'error', message: '终端功能不可用：node-pty 原生模块未加载' }));
@@ -155,6 +169,18 @@ export function initTerminalWebSocket(server: Server): void {
     console.log('[ws-server] 初始化客户端会话...');
     attachClientSession(ws, projectId, cols, rows);
   });
+
+  // 心跳定时器: 每 30 秒检测不活跃连接并关闭
+  heartbeatTimer = setInterval(() => {
+    wss!.clients.forEach((ws) => {
+      if ((ws as any).__alive === false) {
+        ws.terminate();
+        return;
+      }
+      (ws as any).__alive = false;
+      ws.ping();
+    });
+  }, 30000);
 }
 
 /**
@@ -182,6 +208,10 @@ export function handleTerminalUpgrade(
 }
 
 export function closeTerminalWebSocket(): void {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
   if (wss) {
     wss.close();
     wss = null;

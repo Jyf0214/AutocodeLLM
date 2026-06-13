@@ -1,0 +1,50 @@
+# 版本控制
+.git/
+.gitignore
+
+# 依赖
+node_modules/
+bun.lock
+package-lock.json
+
+# 构建产物
+.next/
+
+# CI/测试
+.github/
+.husky/
+.huskyignore
+
+# 环境文件
+.env
+.env.*
+.env.example
+
+# 开发配置
+.eslint*
+.lintstagedrc.*
+.prettier*
+tsconfig.json
+vitest.config.ts
+.vscode/
+
+# 编辑器/IDE
+.agents/
+.gemini/
+.idx/
+.opencode/
+.qwen/
+
+# 文档
+docs/
+QWEN.md
+PROJECT.md
+
+# Docker
+docker-compose.yml
+Dockerfile.base
+Dockerfile.preview
+
+# 项目特定
+fossa.yml
+prisma.config.ts

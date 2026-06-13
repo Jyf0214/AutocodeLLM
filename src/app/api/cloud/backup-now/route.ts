@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
-import { decryptValue } from '@/lib/crypto';
 import fs from 'fs';
 import path from 'path';
+import { getPrisma } from '@/lib/db/get-prisma';
 
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 
 // 惰性读取备份日志文件路径（避免模块加载时读取 process.env）
@@ -104,9 +99,6 @@ export const POST = withApiLogging('POST cloud/backup-now', async function POST(
       );
     }
 
-    // 解密数据库中的加密密码（createWebdavClient 内部也会解密，此处确保解密后可用）
-    config.password = decryptValue(config.password);
-
     // 执行实际备份：将项目数据推送到 WebDAV
     const { createWebdavClient, pushToRemote } = await import('@/lib/sync/webdav');
     const client = await createWebdavClient();
@@ -166,7 +158,7 @@ export const POST = withApiLogging('POST cloud/backup-now', async function POST(
       data: {
         projectId: project.id,
         name: 'WebDAV 备份 - ' + new Date().toISOString(),
-        status: 'completed',
+        status: 'COMPLETED',
       },
     });
 

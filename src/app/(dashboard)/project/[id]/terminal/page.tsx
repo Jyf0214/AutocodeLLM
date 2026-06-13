@@ -16,6 +16,9 @@ export default function ProjectTerminalPage() {
   const terminalInstanceRef = useRef<XTermType | null>(null);
   const fitAddonRef = useRef<FitAddonType | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectEnabledRef = useRef(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +55,7 @@ export default function ProjectTerminalPage() {
     ws.onopen = () => {
       console.log('[terminal-page] WebSocket 已打开');
       setConnecting(false);
+      reconnectAttemptRef.current = 0;
     };
 
     ws.onmessage = (event) => {
@@ -82,6 +86,17 @@ export default function ProjectTerminalPage() {
       console.log('[terminal-page] WebSocket 已关闭:', { code: evt.code, reason: evt.reason });
       setIsConnected(false);
       setConnecting(false);
+
+      // 指数退避自动重连: 初始 1s, 最大 30s
+      if (reconnectEnabledRef.current) {
+        const attempt = reconnectAttemptRef.current;
+        const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
+        reconnectAttemptRef.current = attempt + 1;
+        console.log(`[terminal-page] 计划自动重连 (#${attempt + 1})，延迟 ${delay}ms`);
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectTerminal();
+        }, delay);
+      }
     };
 
     ws.onerror = (evt) => {
@@ -171,6 +186,13 @@ export default function ProjectTerminalPage() {
 
     return () => {
       disposed = true;
+      // 禁止自动重连并清理定时器
+      reconnectEnabledRef.current = false;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      reconnectAttemptRef.current = 0;
       const term = terminalInstanceRef.current;
       if (term && typeof (term as any)._cleanup === 'function') {
         (term as any)._cleanup();

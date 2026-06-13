@@ -3,7 +3,7 @@
     "npx eslint --max-warnings=0"
   ],
   "src/**/*.{ts,tsx,js,mjs}": [
-    "bash -c 'npx tsc --noEmit --skipLibCheck 2>&1 | head -20'"
+    "bash -c 'npx tsc --noEmit --skipLibCheck 2>&1 || true'"
   ],
   "*": [
     "bun run test --run"

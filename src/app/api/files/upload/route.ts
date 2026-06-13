@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
+import { requireAuth } from '@/lib/auth';
 import { resolveSafePath, ensureBaseDir, exists } from '@/lib/files/utils';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -7,6 +8,8 @@ import path from 'node:path';
 /** POST /api/files/upload — 上传文件 */
 export const POST = withApiLogging('POST files/upload', async function POST(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
     await ensureBaseDir();
 
     const formData = await request.formData();

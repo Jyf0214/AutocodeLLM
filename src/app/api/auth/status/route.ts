@@ -2,12 +2,8 @@ import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { getAuthConfig } from '@/lib/auth/config';
 import { getSession } from '@/lib/auth';
+import { getPrisma } from '@/lib/db/get-prisma';
 
-// 惰性获取 Prisma（动态 import 避免模块加载时实例化，构建阶段不会因 DATABASE_URL 未设置而崩溃）
-async function getPrisma() {
-  const { prisma } = await import('@/lib/db/prisma');
-  return prisma;
-}
 
 /**
  * GET /api/auth/status
