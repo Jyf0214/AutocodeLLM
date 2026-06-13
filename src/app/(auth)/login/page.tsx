@@ -10,37 +10,28 @@ import {
 } from '@ant-design/icons';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { message, Card, Radio, Button, Form, Input } from 'antd';
-import type { RadioChangeEvent } from 'antd';
+import { message } from 'antd';
+import { CustomButton } from '@/lib/ui';
+import type { ButtonVariant } from '@/ui/button';
 
-/** 登录模式 */
 type LoginMode = 'password' | 'verificationCode';
 
-/** 登录 API 响应 */
 interface LoginResponse {
   success: boolean;
-  data?: {
-    userId: string;
-    username: string;
-    role: string;
-    forceChangePassword: boolean;
-  };
+  data?: { userId: string; username: string; role: string; forceChangePassword: boolean; };
   error?: { message: string; code: string };
 }
 
-/** 验证码 API 响应 */
 interface CodeResponse {
   success: boolean;
   error?: { message: string };
   data?: { message: string };
 }
 
-/** 登录表单值 */
-interface LoginFormValues {
-  username: string;
-  password?: string;
-  verificationCode?: string;
-}
+const modeTabs: { key: LoginMode; icon: typeof LockOutlined; labelKey: string }[] = [
+  { key: 'password', icon: LockOutlined, labelKey: 'passwordLogin' },
+  { key: 'verificationCode', icon: SafetyOutlined, labelKey: 'codeLogin' },
+];
 
 export default function LoginPage() {
   const t = useTranslations('login');
@@ -51,23 +42,17 @@ export default function LoginPage() {
   const [codeLoading, setCodeLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
 
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // 清理倒计时
   useEffect(() => {
-    return () => {
-      if (countdownRef.current) clearInterval(countdownRef.current);
-    };
+    return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, []);
 
-  /** 发送验证码 */
   const handleSendCode = useCallback(async () => {
-    if (!username.trim()) {
-      message.warning(t('enterUsernameFirst'));
-      return;
-    }
-
+    if (!username.trim()) { message.warning(t('enterUsernameFirst')); return; }
     setCodeLoading(true);
     try {
       const res = await fetch('/api/auth/verification-code', {
@@ -76,249 +61,192 @@ export default function LoginPage() {
         body: JSON.stringify({ username: username.trim() }),
       });
       const result: CodeResponse = await res.json();
-
       if (result.success) {
         message.success(t('codeSent'));
         setCountdown(60);
         countdownRef.current = setInterval(() => {
           setCountdown((prev) => {
-            if (prev <= 1) {
-              if (countdownRef.current) clearInterval(countdownRef.current);
-              return 0;
-            }
+            if (prev <= 1) { if (countdownRef.current) clearInterval(countdownRef.current); return 0; }
             return prev - 1;
           });
         }, 1000);
       } else {
         message.error(result.error?.message ?? t('codeSendFailed'));
       }
-    } catch {
-      message.error(t('networkError'));
-    } finally {
-      setCodeLoading(false);
-    }
+    } catch { message.error(t('networkError')); }
+    finally { setCodeLoading(false); }
   }, [username, t]);
 
-  /** 表单提交 */
-  const onFinish = useCallback(
-    async (values: LoginFormValues) => {
-      setLoading(true);
-      try {
-        const body: Record<string, unknown> = {
-          username: values.username.trim(),
-          useVerificationCode: loginMode === 'verificationCode',
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim()) { message.warning(t('usernameRequired')); return; }
+    if (loginMode === 'password' && !password) { message.warning(t('passwordRequired')); return; }
+    if (loginMode === 'verificationCode' && !verificationCode) { message.warning(t('verificationCodeRequired')); return; }
+
+    setLoading(true);
+    try {
+      const body: Record<string, unknown> = {
+        username: username.trim(),
+        useVerificationCode: loginMode === 'verificationCode',
+      };
+      if (loginMode === 'password') body.password = password;
+      else body.verificationCode = verificationCode;
+
+      const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const result: LoginResponse = await res.json();
+
+      if (result.success && result.data) {
+        if (result.data.forceChangePassword) {
+          message.warning(t('firstLoginWarning'));
+          router.push('/change-password');
+        } else {
+          message.success(t('loginSuccess'));
+          router.push('/project');
+        }
+      } else {
+        const errorCode = result.error?.code;
+        const errorMap: Record<string, string> = {
+          USER_NOT_FOUND: 'userNotFound',
+          INVALID_CREDENTIALS: 'wrongPassword',
+          CODE_EXPIRED: 'codeExpired',
+          INVALID_CODE: 'codeInvalid',
         };
-
-        if (loginMode === 'password') {
-          body.password = values.password;
-        } else {
-          body.verificationCode = values.verificationCode;
-        }
-
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-
-        const result: LoginResponse = await res.json();
-
-        if (result.success && result.data) {
-          if (result.data.forceChangePassword) {
-            message.warning(t('firstLoginWarning'));
-            router.push('/change-password');
-          } else {
-            message.success(t('loginSuccess'));
-            router.push('/project');
-          }
-        } else {
-          const errorCode = result.error?.code;
-          let errorMsg = result.error?.message ?? t('loginFailed');
-
-          switch (errorCode) {
-            case 'USER_NOT_FOUND':
-              errorMsg = t('userNotFound');
-              break;
-            case 'INVALID_CREDENTIALS':
-              errorMsg = t('wrongPassword');
-              break;
-            case 'CODE_EXPIRED':
-              errorMsg = t('codeExpired');
-              break;
-            case 'INVALID_CODE':
-              errorMsg = t('codeInvalid');
-              break;
-          }
-
-          message.error(errorMsg);
-        }
-      } catch {
-        message.error(t('networkError'));
-      } finally {
-        setLoading(false);
+        message.error(errorCode && errorMap[errorCode] ? t(errorMap[errorCode]) : (result.error?.message ?? t('loginFailed')));
       }
-    },
-    [loginMode, router, t],
-  );
+    } catch { message.error(t('networkError')); }
+    finally { setLoading(false); }
+  }, [username, password, verificationCode, loginMode, router, t]);
 
   return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--bg-primary)',
-        padding: 24,
-      }}
-    >
-      <Card
-        style={{
-          width: '100%',
-          maxWidth: 440,
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.12)',
-          borderRadius: 16,
-        }}
-      >
+    <div className="min-h-dvh flex items-center justify-center p-6"
+         style={{ background: 'var(--bg-primary)' }}>
+      <div className="w-full max-w-sm animate-fade-in">
+
         {/* 标题 */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 32, textAlign: 'center' }}>
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 12,
-              background: 'var(--bg-primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 16,
-            }}
-          >
+        <div className="flex flex-col items-center gap-2 mb-8 text-center">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+               style={{ background: 'var(--bg-primary)' }}>
             <UserOutlined style={{ fontSize: 24, color: 'var(--text-primary)' }} />
           </div>
-          <span style={{ fontWeight: 'bold', fontSize: 26, color: 'var(--text-primary)' }}>
-            {t('title')}
-          </span>
-          <span style={{ fontSize: 14, marginTop: 8, color: 'var(--text-secondary)' }}>
-            {t('subtitle')}
-          </span>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('title')}</h1>
+          <p className="text-sm mt-2" style={{ color: 'var(--text-secondary)' }}>{t('subtitle')}</p>
         </div>
 
-        {/* 登录模式切换 */}
-        <div style={{ marginBottom: 24 }}>
-          <Radio.Group
-            value={loginMode}
-            onChange={(e: RadioChangeEvent) => setLoginMode(e.target.value)}
-            block
-          >
-            <Radio.Button
-              value="password"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-              }}
+        {/* 模式切换 */}
+        <div className="flex gap-1 p-1 mb-6 rounded-xl border"
+             style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-primary)' }}>
+          {modeTabs.map(({ key, icon: Icon, labelKey }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setLoginMode(key)}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                loginMode === key
+                  ? 'shadow-sm bg-white text-zinc-900'
+                  : 'text-zinc-500 hover:text-zinc-700'
+              }`}
             >
-              <LockOutlined /> {t('passwordLogin')}
-            </Radio.Button>
-            <Radio.Button
-              value="verificationCode"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-              }}
-            >
-              <SafetyOutlined /> {t('codeLogin')}
-            </Radio.Button>
-          </Radio.Group>
+              <Icon style={{ fontSize: 14 }} />
+              {t(labelKey)}
+            </button>
+          ))}
         </div>
 
-        {/* 登录表单 */}
-        <Form name="login" onFinish={onFinish} size="large" layout="vertical">
-          <Form.Item
-            name="username"
-            label={t('username')}
-            rules={[{ required: true, message: t('usernameRequired') }]}
-          >
-            <Input
-              prefix={<UserOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />}
-              placeholder={t('usernamePlaceholder')}
-              onChange={(e) => setUsername(e.target.value)}
-              style={{ borderRadius: 10, height: 44 }}
-              allowClear
-            />
-          </Form.Item>
+        {/* 表单 */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          {/* 用户名 */}
+          <div>
+            <label className="block text-sm font-medium mb-1.5"
+                   style={{ color: 'var(--text-secondary)' }}>{t('username')}</label>
+            <div className="relative">
+              <UserOutlined className="absolute left-3.5 top-1/2 -translate-y-1/2"
+                            style={{ fontSize: 15, color: 'var(--text-tertiary)' }} />
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder={t('usernamePlaceholder')}
+                className="w-full h-11 pl-10 pr-3 rounded-xl border text-sm outline-none transition-all duration-200 focus:border-zinc-800"
+                style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+              />
+            </div>
+          </div>
 
+          {/* 密码 */}
           {loginMode === 'password' ? (
-            <Form.Item
-              name="password"
-              label={t('password')}
-              rules={[{ required: true, message: t('passwordRequired') }]}
-            >
-              <Input.Password
-                prefix={<LockOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />}
-                placeholder={t('passwordPlaceholder')}
-                style={{ borderRadius: 10, height: 44 }}
-              />
-            </Form.Item>
+            <div>
+              <label className="block text-sm font-medium mb-1.5"
+                     style={{ color: 'var(--text-secondary)' }}>{t('password')}</label>
+              <div className="relative">
+                <LockOutlined className="absolute left-3.5 top-1/2 -translate-y-1/2"
+                              style={{ fontSize: 15, color: 'var(--text-tertiary)' }} />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t('passwordPlaceholder')}
+                  className="w-full h-11 pl-10 pr-3 rounded-xl border text-sm outline-none transition-all duration-200 focus:border-zinc-800"
+                  style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                />
+              </div>
+            </div>
           ) : (
-            <Form.Item
-              name="verificationCode"
-              label={t('verificationCode')}
-              rules={[{ required: true, message: t('verificationCodeRequired') }]}
-            >
-              <Input
-                prefix={<MobileOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />}
-                placeholder={t('verificationCodePlaceholder')}
-                maxLength={12}
-                style={{ borderRadius: 10, height: 44 }}
-                suffix={
-                  <Button
-                    type="link"
-                    size="small"
-                    loading={codeLoading}
-                    disabled={countdown > 0}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleSendCode();
-                    }}
-                    style={{ padding: 0, minWidth: 'auto' }}
-                  >
-                    {countdown > 0 ? `${String(countdown)}s` : t('getCode')}
-                  </Button>
-                }
-              />
-            </Form.Item>
+            <div>
+              <label className="block text-sm font-medium mb-1.5"
+                     style={{ color: 'var(--text-secondary)' }}>{t('verificationCode')}</label>
+              <div className="flex gap-3">
+                <div className="relative flex-1">
+                  <MobileOutlined className="absolute left-3.5 top-1/2 -translate-y-1/2"
+                                  style={{ fontSize: 15, color: 'var(--text-tertiary)' }} />
+                  <input
+                    type="text"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value)}
+                    placeholder={t('verificationCodePlaceholder')}
+                    maxLength={12}
+                    className="w-full h-11 pl-10 pr-3 rounded-xl border text-sm outline-none transition-all duration-200 focus:border-zinc-800"
+                    style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={codeLoading || countdown > 0}
+                  className="shrink-0 h-11 px-4 rounded-xl text-sm font-medium border transition-all duration-200 disabled:opacity-50"
+                  style={{
+                    background: 'var(--bg-primary)',
+                    borderColor: 'var(--border-primary)',
+                    color: countdown > 0 ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                  }}
+                >
+                  {codeLoading ? '...' : countdown > 0 ? `${countdown}s` : t('getCode')}
+                </button>
+              </div>
+            </div>
           )}
 
-          <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              block
-              size="large"
-              icon={<ArrowRightOutlined />}
-              style={{ borderRadius: 10, height: 44, fontWeight: 600 }}
-            >
-              {loginMode === 'password' ? t('submitPassword') : t('submitCode')}
-            </Button>
-          </Form.Item>
-        </Form>
+          {/* 提交按钮 */}
+          <CustomButton
+            type="submit"
+            variant="primary"
+            size="lg"
+            block
+            loading={loading}
+            className="mt-2"
+          >
+            {loginMode === 'password' ? t('submitPassword') : t('submitCode')}
+            <ArrowRightOutlined style={{ fontSize: 14 }} />
+          </CustomButton>
 
-        {/* 验证码提示 */}
-        {loginMode === 'verificationCode' && (
-          <div style={{ textAlign: 'center', marginTop: 16 }}>
-            <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
+          {/* 提示 */}
+          {loginMode === 'verificationCode' && (
+            <p className="text-xs text-center mt-2"
+               style={{ color: 'var(--text-tertiary)' }}>
               {t('codeHint')}
-            </span>
-          </div>
-        )}
-
-      </Card>
+            </p>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

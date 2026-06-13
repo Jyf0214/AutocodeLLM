@@ -3,8 +3,9 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { message, Modal, Form, Dropdown } from 'antd';
-import { PageContainer, Button, Text, Flexbox } from '@/lib/ui';
+import { message, Modal, Form, Input, Dropdown } from 'antd';
+import { PageContainer, CustomButton, FilterPill } from '@/lib/ui';
+import { ProCard } from '@/ui/pro-card';
 import {
   PlusOutlined,
   FolderOutlined,
@@ -16,88 +17,47 @@ import {
   MoreOutlined,
 } from '@ant-design/icons';
 import type { ProjectListItem } from '@/lib/api/project-types';
-import { Input } from 'antd';
 
-interface ProjectCardProps {
+function ProjectCard({ project, onClick, onEdit, onDelete }: {
   project: ProjectListItem;
   onClick: () => void;
   onEdit: () => void;
   onDelete: () => void;
-}
-
-function ProjectCard({ project, onClick, onEdit, onDelete }: ProjectCardProps) {
+}) {
   const t = useTranslations('project');
-  const [hovered, setHovered] = useState(false);
   const date = new Date(project.createdAt);
-  const dateStr = `${String(date.getFullYear())}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-  const menuItems = [
-    { key: 'edit', icon: <EditOutlined />, label: t('edit') },
-    { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true },
-  ];
+  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
   return (
     <div
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="group cursor-pointer rounded-xl border transition-all duration-200 hover:shadow-md p-5"
       style={{
         background: 'var(--bg-primary)',
-        borderRadius: 8,
-        border: '1px solid var(--border-primary)',
-        padding: '16px 20px',
-        cursor: 'pointer',
-        transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-        boxShadow: hovered ? '0 2px 12px rgba(0,0,0,0.06)' : 'none',
-        borderColor: hovered ? 'var(--text-primary)' : 'var(--border-primary)',
+        borderColor: 'var(--border-primary)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+      <div className="flex items-start gap-3.5">
         {/* 图标 */}
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 8,
-            background: hovered ? 'var(--text-primary)' : 'var(--bg-secondary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            transition: 'background 0.15s ease',
-          }}
-        >
-          <FolderOutlined
-            style={{
-              fontSize: 18,
-              color: hovered ? '#fff' : 'var(--text-secondary)',
-              transition: 'color 0.15s ease',
-            }}
-          />
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200 group-hover:bg-zinc-900"
+             style={{ background: 'var(--bg-secondary)' }}>
+          <FolderOutlined className="text-base transition-all duration-200 group-hover:text-white"
+                          style={{ color: 'var(--text-secondary)' }} />
         </div>
 
         {/* 内容 */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Text
-              strong
-              style={{
-                fontSize: 15,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start gap-2">
+            <h3 className="text-[15px] font-semibold truncate"
+                style={{ color: 'var(--text-primary)' }}>
               {project.name}
-            </Text>
+            </h3>
             <Dropdown
               menu={{
-                items: menuItems.map((item) => ({
-                  key: item.key,
-                  icon: item.icon,
-                  label: item.label,
-                  danger: item.danger,
-                })),
+                items: [
+                  { key: 'edit', icon: <EditOutlined />, label: t('edit') },
+                  { key: 'delete', icon: <DeleteOutlined />, label: t('delete'), danger: true },
+                ],
                 onClick: ({ key, domEvent }) => {
                   domEvent.stopPropagation();
                   if (key === 'edit') onEdit();
@@ -107,70 +67,34 @@ function ProjectCard({ project, onClick, onEdit, onDelete }: ProjectCardProps) {
               trigger={['click']}
             >
               <button
+                type="button"
                 onClick={(e) => e.stopPropagation()}
-                style={{
-                  width: 28,
-                  height: 28,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: 'none',
-                  borderRadius: 6,
-                  background: hovered ? 'var(--bg-secondary)' : 'transparent',
-                  cursor: 'pointer',
-                  color: 'var(--text-tertiary)',
-                  flexShrink: 0,
-                  opacity: hovered ? 1 : 0,
-                  transition: 'opacity 0.15s ease',
-                }}
+                className="w-7 h-7 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-tertiary)' }}
               >
                 <MoreOutlined style={{ fontSize: 16 }} />
               </button>
             </Dropdown>
           </div>
-
-          <Text
-            type="secondary"
-            style={{
-              fontSize: 13,
-              display: 'block',
-              marginTop: 4,
-              fontStyle: project.description ? 'normal' : 'italic',
-            }}
-          >
-            {project.description || t('noDescription')}
-          </Text>
+          <p className="text-sm mt-1 truncate"
+             style={{ color: 'var(--text-tertiary)' }}>
+            {project.description || <span className="italic">{t('noDescription')}</span>}
+          </p>
         </div>
       </div>
 
       {/* 底部 */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginTop: 14,
-          paddingTop: 12,
-          borderTop: '1px solid var(--border-primary)',
-        }}
-      >
-        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+      <div className="flex justify-between items-center mt-3.5 pt-3 border-t"
+           style={{ borderColor: 'var(--border-primary)' }}>
+        <span className="text-xs flex items-center gap-1.5"
+              style={{ color: 'var(--text-tertiary)' }}>
           <ClockCircleOutlined style={{ fontSize: 12 }} />
-          创建于 {dateStr}
+          {t('createdAt')} {dateStr}
         </span>
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: 500,
-            color: hovered ? 'var(--text-primary)' : 'var(--text-tertiary)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            transition: 'color 0.15s ease',
-          }}
-        >
+        <span className="text-xs font-medium flex items-center gap-1 transition-all duration-200 group-hover:text-zinc-900"
+              style={{ color: 'var(--text-tertiary)' }}>
           {t('enter')}
-          <ArrowRightOutlined style={{ fontSize: 12 }} />
+          <ArrowRightOutlined style={{ fontSize: 11 }} />
         </span>
       </div>
     </div>
@@ -192,26 +116,11 @@ export default function ProjectPage() {
       const res = await fetch('/api/projects');
       const data = await res.json();
       if (data.success) setProjects(data.data ?? []);
-    } catch {
-      message.error(t('fetchFailed'));
-    } finally {
-      setLoading(false);
-    }
+    } catch { message.error(t('fetchFailed')); }
+    finally { setLoading(false); }
   }, [t]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('/api/projects');
-        const data = await res.json();
-        if (data.success) setProjects(data.data ?? []);
-      } catch {
-        message.error(t('fetchFailed'));
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [t]);
+  useEffect(() => { fetchProjects(); }, [fetchProjects]);
 
   const filtered = useMemo(() => {
     if (!search) return projects;
@@ -222,132 +131,92 @@ export default function ProjectPage() {
   const handleCreate = useCallback(async () => {
     try {
       const values = await form.validateFields();
-      const res = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
+      const res = await fetch('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
       const data = await res.json();
-      if (data.success) {
-        message.success(t('createSuccess'));
-        setCreateModal(false);
-        form.resetFields();
-        fetchProjects();
-      } else {
-        message.error(data.error?.message ?? t('createFailed'));
-      }
-    } catch {
-      // form validation error
-    }
+      if (data.success) { message.success(t('createSuccess')); setCreateModal(false); form.resetFields(); fetchProjects(); }
+      else message.error(data.error?.message ?? t('createFailed'));
+    } catch { /* validation error */ }
   }, [form, t, fetchProjects]);
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      try {
-        const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.success) {
-          message.success(t('deleteSuccess'));
-          fetchProjects();
-        } else {
-          message.error(data.error?.message ?? t('deleteFailed'));
-        }
-      } catch {
-        message.error(t('deleteFailed'));
-      }
-    },
-    [t, fetchProjects],
-  );
+  const handleDelete = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) { message.success(t('deleteSuccess')); fetchProjects(); }
+      else message.error(data.error?.message ?? t('deleteFailed'));
+    } catch { message.error(t('deleteFailed')); }
+  }, [t, fetchProjects]);
 
   return (
-    <PageContainer
-      title={t('title')}
-      subtitle={projects.length > 0 ? t('projectCount', { count: String(projects.length) }) : t('startByCreating')}
-      extra={
-        <Button icon={<PlusOutlined />} onClick={() => setCreateModal(true)}>
+    <div className="max-w-4xl mx-auto p-6 md:p-10 animate-fade-in">
+      {/* 头部 */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('title')}</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-tertiary)' }}>
+            {projects.length > 0 ? t('projectCount', { count: String(projects.length) }) : t('startByCreating')}
+          </p>
+        </div>
+        <CustomButton variant="primary" icon={<PlusOutlined />} onClick={() => setCreateModal(true)}>
           {t('new')}
-        </Button>
-      }
-    >
+        </CustomButton>
+      </div>
+
       {/* 搜索 */}
-      <Input
-        prefix={<SearchOutlined style={{ color: 'var(--text-tertiary)' }} />}
-        placeholder={t('search')}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        allowClear
-        style={{ marginBottom: 20 }}
-      />
+      <div className="relative mb-5">
+        <SearchOutlined className="absolute left-3.5 top-1/2 -translate-y-1/2"
+                       style={{ fontSize: 15, color: 'var(--text-tertiary)' }} />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('search')}
+          className="w-full h-10 pl-10 pr-3 rounded-lg border text-sm outline-none transition-all duration-200 focus:border-zinc-800"
+          style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
+        />
+      </div>
 
       {/* 列表 */}
       {loading ? (
-        <Flexbox gap={12}>
+        <div className="flex flex-col gap-3">
           {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              style={{
-                height: 100,
-                borderRadius: 8,
-                background: 'var(--bg-secondary)',
+            <div key={i} className="h-24 rounded-xl animate-pulse" style={{ background: 'var(--bg-secondary)' }} />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 animate-fade-in">
+          <FolderOutlined className="text-4xl mb-3" style={{ color: 'var(--text-tertiary)' }} />
+          <p style={{ color: 'var(--text-tertiary)' }}>{search ? t('noMatchFound') : t('empty')}</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {filtered.map((proj) => (
+            <ProjectCard
+              key={proj.id}
+              project={proj}
+              onClick={() => router.push(`/project/${proj.id}`)}
+              onEdit={() => { setEditModal({ open: true, project: proj }); form.setFieldsValue(proj); }}
+              onDelete={() => {
+                Modal.confirm({
+                  title: t('confirmDelete'),
+                  content: t('deleteProjectConfirm', { name: proj.name }),
+                  okText: t('delete'),
+                  cancelText: t('cancel'),
+                  okButtonProps: { danger: true },
+                  onOk: () => handleDelete(proj.id),
+                });
               }}
             />
           ))}
-        </Flexbox>
-      ) : filtered.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '48px 0',
-            color: 'var(--text-tertiary)',
-          }}
-        >
-          <FolderOutlined style={{ fontSize: 40, marginBottom: 12, display: 'block' }} />
-          <Text type="secondary">{search ? t('noMatchFound') : t('empty')}</Text>
         </div>
-       ) : (
-         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-           {filtered.map((proj) => (
-             <ProjectCard
-               key={proj.id}
-               project={proj}
-               onClick={() => router.push(`/project/${proj.id}`)}
-               onEdit={() => {
-                 setEditModal({ open: true, project: proj });
-                 form.setFieldsValue(proj);
-               }}
-               onDelete={() => {
-                 Modal.confirm({
-                   title: t('confirmDelete'),
-                   content: t('deleteProjectConfirm', { name: proj.name }),
-                   okText: t('delete'),
-                   cancelText: t('cancel'),
-                   okButtonProps: { danger: true },
-                   onOk: () => handleDelete(proj.id),
-                 });
-               }}
-             />
-           ))}
-         </div>
-       )}
+      )}
 
       {/* 创建弹窗 */}
-      <Modal
-        title={t('createNew')}
-        open={createModal}
-        onOk={handleCreate}
-        onCancel={() => {
-          setCreateModal(false);
-          form.resetFields();
-        }}
-        okText={t('createBtn')}
-        cancelText={t('cancel')}
-      >
+      <Modal title={t('createNew')} open={createModal}
+        onOk={handleCreate} onCancel={() => { setCreateModal(false); form.resetFields(); }}
+        okText={t('createBtn')} cancelText={t('cancel')}>
         <Form form={form} layout="vertical">
-          <Form.Item
-            name="name"
-            label={t('projectName')}
-            rules={[{ required: true, message: t('projectNameRequired') }]}
-          >
+          <Form.Item name="name" label={t('projectName')} rules={[{ required: true, message: t('projectNameRequired') }]}>
             <Input placeholder={t('projectNamePlaceholder')} />
           </Form.Item>
           <Form.Item name="description" label={t('projectDescription')}>
@@ -357,43 +226,20 @@ export default function ProjectPage() {
       </Modal>
 
       {/* 编辑弹窗 */}
-      <Modal
-        title={t('editProject')}
-        open={editModal.open}
+      <Modal title={t('editProject')} open={editModal.open}
         onOk={async () => {
           try {
             const values = await form.validateFields();
-            const res = await fetch(`/api/projects/${editModal.project?.id ?? ''}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(values),
-            });
+            const res = await fetch(`/api/projects/${editModal.project?.id ?? ''}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
             const data = await res.json();
-            if (data.success) {
-              message.success(t('updateSuccess'));
-              setEditModal({ open: false });
-              form.resetFields();
-              fetchProjects();
-            } else {
-              message.error(data.error?.message ?? t('updateFailed'));
-            }
-          } catch {
-            // validation error
-          }
+            if (data.success) { message.success(t('updateSuccess')); setEditModal({ open: false }); form.resetFields(); fetchProjects(); }
+            else message.error(data.error?.message ?? t('updateFailed'));
+          } catch { /* validation */ }
         }}
-        onCancel={() => {
-          setEditModal({ open: false });
-          form.resetFields();
-        }}
-        okText={t('update')}
-        cancelText={t('cancel')}
-      >
+        onCancel={() => { setEditModal({ open: false }); form.resetFields(); }}
+        okText={t('update')} cancelText={t('cancel')}>
         <Form form={form} layout="vertical">
-          <Form.Item
-            name="name"
-            label={t('projectName')}
-            rules={[{ required: true, message: t('projectNameRequired') }]}
-          >
+          <Form.Item name="name" label={t('projectName')} rules={[{ required: true, message: t('projectNameRequired') }]}>
             <Input placeholder={t('projectNamePlaceholder')} />
           </Form.Item>
           <Form.Item name="description" label={t('projectDescription')}>
@@ -401,6 +247,6 @@ export default function ProjectPage() {
           </Form.Item>
         </Form>
       </Modal>
-    </PageContainer>
+    </div>
   );
 }
