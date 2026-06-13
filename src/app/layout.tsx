@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
-import { ConfigProvider } from 'antd';
-import { ThemeProvider } from '@/lib/ui';
+import { ThemeProvider as UiThemeProvider } from '@/lib/ui';
+import { ThemeProvider } from '@/lib/theme-provider';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
@@ -34,30 +34,15 @@ export default async function RootLayout({
   const content = (
     <html lang="zh" suppressHydrationWarning>
       <body>
-        <ThemeProvider themeMode="light">
+        <UiThemeProvider themeMode="light">
           <AntdRegistry>
-            <ConfigProvider
-              theme={{
-                token: {
-                  colorPrimary: '#000000',
-                  borderRadius: 6,
-                  fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif",
-                  fontSize: 14,
-                },
-                components: {
-                  Button: { borderRadius: 6, controlHeight: 36 },
-                  Input: { borderRadius: 6, controlHeight: 36 },
-                  Card: { borderRadius: 12 },
-                  Modal: { borderRadius: 12 },
-                },
-              }}
-            >
+            <ThemeProvider>
               <NextIntlClientProvider messages={messages}>
                 {children}
               </NextIntlClientProvider>
-            </ConfigProvider>
+            </ThemeProvider>
           </AntdRegistry>
-        </ThemeProvider>
+        </UiThemeProvider>
       </body>
     </html>
   );

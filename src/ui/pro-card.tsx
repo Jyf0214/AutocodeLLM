@@ -1,24 +1,48 @@
-import React from 'react';
+import { type ReactNode, memo } from 'react';
 import { cn } from '@/lib/cn';
 
-interface ProCardProps {
-  children: React.ReactNode;
+export interface ProCardProps {
+  title?: ReactNode;
+  extra?: ReactNode;
+  children: ReactNode;
   className?: string;
-  padding?: boolean;
-  hover?: boolean;
+  bodyClassName?: string;
+  hoverable?: boolean;
+  bordered?: boolean;
+  padding?: string;
 }
 
-export function ProCard({ children, className, padding = true, hover = false }: ProCardProps) {
+export const ProCard = memo<ProCardProps>(({
+  title,
+  extra,
+  children,
+  className,
+  bodyClassName,
+  hoverable = false,
+  bordered = true,
+  padding = 'p-5',
+}) => {
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-zinc-200 shadow-sm',
-        padding && 'p-5',
-        hover && 'hover:shadow-md hover:border-zinc-300 transition-all duration-200',
+        'bg-white rounded-xl transition-all duration-300',
+        bordered && 'border border-zinc-100',
+        hoverable && 'hover:border-zinc-300 hover:shadow-md',
         className,
       )}
     >
-      {children}
+      {title && (
+        <div className={cn('flex items-center justify-between border-b border-zinc-50 px-5 py-4')}>
+          <div className="text-sm font-semibold text-zinc-900">{title}</div>
+          {extra && <div className="flex items-center gap-2">{extra}</div>}
+        </div>
+      )}
+      <div className={cn(padding, bodyClassName)}>
+        {children}
+      </div>
     </div>
   );
-}
+});
+ProCard.displayName = 'ProCard';
+
+export default ProCard;

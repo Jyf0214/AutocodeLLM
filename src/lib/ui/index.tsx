@@ -23,6 +23,11 @@ export {
   TailwindPageContainer,
   EmptyState,
   FilterPill,
+  TailwindInput,
+  Textarea,
   ProCard,
   StatusTag,
+  PageTransition,
+  AnimatedList,
+  ScrollReveal,
 } from '@/ui';

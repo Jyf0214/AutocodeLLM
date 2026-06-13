@@ -35,8 +35,13 @@ export type { ButtonProps as CustomButtonProps, ButtonVariant, ButtonSize, Butto
 export { PageContainer as TailwindPageContainer } from '@/ui/page-container';
 export { EmptyState } from '@/ui/empty-state';
 export { FilterPill } from '@/ui/filter-pill';
+export { Input as TailwindInput } from '@/ui/input';
+export { Textarea } from '@/ui/textarea';
 export { ProCard } from '@/ui/pro-card';
 export { Tag as StatusTag } from '@/ui/tag';
+export { PageTransition } from '@/ui/page-transition';
+export { AnimatedList } from '@/ui/animated-list';
+export { ScrollReveal } from '@/ui/scroll-reveal';
 
 // ============================================================
 // Avatar 组件（扩展 antd Avatar）

@@ -11,7 +11,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { message } from 'antd';
-import { CustomButton } from '@/lib/ui';
+import { CustomButton, PageTransition } from '@/lib/ui';
 import type { ButtonVariant } from '@/ui/button';
 
 type LoginMode = 'password' | 'verificationCode';
@@ -118,7 +118,7 @@ export default function LoginPage() {
   }, [username, password, verificationCode, loginMode, router, t]);
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-6"
+    <PageTransition className="min-h-dvh flex items-center justify-center p-6"
          style={{ background: 'var(--bg-primary)' }}>
       <div className="w-full max-w-sm animate-fade-in">
 
@@ -247,6 +247,6 @@ export default function LoginPage() {
           )}
         </form>
       </div>
-    </div>
+    </PageTransition>
   );
 }
