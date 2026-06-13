@@ -1,32 +1,3 @@
-# Build stage
-FROM docker.io/library/node:22-slim AS builder
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  python3 \
-  make \
-  g++ \
-  git \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-
-# Set up npm global package folder
-RUN mkdir -p /usr/local/share/npm-global
-ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin
-
-# Copy source code
-COPY . /home/node/app
-WORKDIR /home/node/app
-
-# Install dependencies, build workspaces, bundle into a single distributable, and pack
-RUN npm ci \
-  && npm run build \
-  && npm run bundle \
-  && npm run prepare:package \
-  && cd dist && npm pack
-
-# Runtime stage
 FROM docker.io/library/node:22-slim
 
 ARG SANDBOX_NAME="qwen-code-sandbox"
@@ -61,14 +32,9 @@ RUN mkdir -p /usr/local/share/npm-global
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
 ENV PATH=$PATH:/usr/local/share/npm-global/bin
 
-# Copy bundled package from builder stage
-COPY --from=builder /home/node/app/dist/*.tgz /tmp/
-
-# Install built packages globally
-RUN npm install -g /tmp/*.tgz \
-  && npm install -g @qwen-code/qwen-code@latest \
-  && npm cache clean --force \
-  && rm -rf /tmp/*.tgz
+# Install from npm registry
+RUN npm install -g @qwen-code/qwen-code@latest \
+  && npm cache clean --force
 
 # 复制 WebDAV 同步脚本到镜像
 COPY scripts/webdav-sync.js /usr/local/lib/autocodellm/webdav-sync.js
