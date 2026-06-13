@@ -1,10 +1,10 @@
 'use client';
 
-import { Text } from '@/lib/ui';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Skeleton, message } from 'antd';
+import { message } from 'antd';
+import { CustomButton } from '@/lib/ui';
 import {
   ArrowRightOutlined,
   FolderOutlined,
@@ -14,17 +14,15 @@ import {
 } from '@ant-design/icons';
 
 interface AuthStatus {
-  availableMethods: {
-    local: boolean;
-    github: boolean;
-    githubApp: boolean;
-  };
-  user: {
-    id: string;
-    username: string;
-    role: string;
-  } | null;
+  availableMethods: { local: boolean; github: boolean; githubApp: boolean; };
+  user: { id: string; username: string; role: string; } | null;
 }
+
+const features = [
+  { icon: FolderOutlined, titleKey: 'projectManagement', descKey: 'projectManagementDesc', link: '/project' },
+  { icon: CodeOutlined, titleKey: 'featureAI.title', descKey: 'featureAI.desc', link: '/project' },
+  { icon: CloudOutlined, titleKey: 'cloudService', descKey: 'cloudServiceDesc', link: '/cloud' },
+];
 
 export default function HomePage() {
   const t = useTranslations('common.landing');
@@ -38,115 +36,70 @@ export default function HomePage() {
   useEffect(() => {
     fetch('/api/auth/status')
       .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setAuthStatus(data.data);
-        }
-      })
-      .catch(() => { /* ignore */ })
+      .then((data) => { if (data.success) setAuthStatus(data.data); })
+      .catch(() => {})
       .finally(() => setLoadingAuth(false));
   }, []);
 
   const isLoggedIn = !!authStatus.user;
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
     setIsLoading(true);
     try {
-      document.cookie = 'userId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      message.success(t('logoutSuccess'));
-      setTimeout(() => window.location.reload(), 500);
-    } catch {
-      message.error(t('logoutFailed'));
-      setIsLoading(false);
-    }
+      const res = await fetch('/api/auth/logout', { method: 'POST' });
+      if (res.ok) {
+        message.success(t('logoutSuccess'));
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        message.error(t('logoutFailed'));
+      }
+    } catch { message.error(t('logoutFailed')); }
+    finally { setIsLoading(false); }
   }, [t]);
 
-  const features = [
-    { icon: FolderOutlined, title: t('projectManagement'), desc: t('projectManagementDesc'), link: '/project' },
-    { icon: CodeOutlined, title: t('featureAI.title'), desc: t('featureAI.desc'), link: '/project' },
-    { icon: CloudOutlined, title: t('cloudService'), desc: t('cloudServiceDesc'), link: '/cloud' },
-  ];
-
   return (
-    <div style={{ background: 'var(--bg-primary)' }}>
+    <div className="animate-fade-in" style={{ background: 'var(--bg-primary)' }}>
+
       {/* Hero */}
-      <section
-        style={{
-          padding: '120px 16px 80px',
-          textAlign: 'center',
-          maxWidth: 720,
-          margin: '0 auto',
-        }}
-      >
-        <h1
-          style={{
-            fontSize: 'clamp(36px, 6vw, 56px)',
-            fontWeight: 800,
-            color: 'var(--text-primary)',
-            margin: '0 0 16px',
-            letterSpacing: '-1px',
-            lineHeight: 1.1,
-          }}
-        >
+      <section className="px-4 py-32 text-center max-w-xl mx-auto">
+        <h1 className="text-[clamp(36px,6vw,56px)] font-extrabold mb-4 tracking-tight leading-[1.1]"
+            style={{ color: 'var(--text-primary)' }}>
           AutocodeLLM
         </h1>
-
-        <p
-          style={{
-            fontSize: 'clamp(16px, 2.5vw, 18px)',
-            color: 'var(--text-tertiary)',
-            margin: '0 auto 40px',
-            maxWidth: 520,
-            lineHeight: 1.7,
-          }}
-        >
+        <p className="text-[clamp(16px,2.5vw,18px)] mx-auto mb-10 max-w-lg leading-relaxed"
+           style={{ color: 'var(--text-tertiary)' }}>
           {t('subtitle')}
         </p>
 
         {loadingAuth ? (
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <Skeleton active title={{ width: 200 }} paragraph={false} />
+          <div className="flex justify-center">
+            <div className="h-5 w-40 rounded animate-pulse" style={{ background: 'var(--bg-tertiary)' }} />
           </div>
         ) : isLoggedIn ? (
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div className="flex gap-3 justify-center flex-wrap">
             <Link href="/project">
-              <Button
-                icon={<FolderOutlined />}
-                size="large"
-                type="primary"
-              >
+              <CustomButton variant="primary" size="lg" icon={<FolderOutlined />}>
                 {t('enterProject')}
-              </Button>
+              </CustomButton>
             </Link>
-            <Button
-              size="large"
-              onClick={handleLogout}
-              loading={isLoading}
-            >
+            <CustomButton variant="default" size="lg" onClick={handleLogout} loading={isLoading}>
               {t('logout')}
-            </Button>
+            </CustomButton>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+          <div className="flex flex-col gap-3 items-center">
             <Link href="/login">
-              <Button
-                icon={<ArrowRightOutlined />}
-                iconPlacement="end"
-                size="large"
-                type="primary"
-              >
+              <CustomButton variant="primary" size="lg">
                 {t('startNow')}
-              </Button>
+                <ArrowRightOutlined />
+              </CustomButton>
             </Link>
-
             {authStatus.availableMethods.github && (
-              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-                <a href="/api/auth/github" style={{ textDecoration: 'none' }}>
-                  <Button
-                    icon={<GithubOutlined />}
-                  >
+              <div className="mt-2 flex gap-2">
+                <a href="/api/auth/github">
+                  <CustomButton variant="default" icon={<GithubOutlined />}>
                     GitHub
-                  </Button>
+                  </CustomButton>
                 </a>
               </div>
             )}
@@ -155,80 +108,36 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section
-        style={{
-          maxWidth: 960,
-          margin: '0 auto',
-          padding: '0 16px 80px',
-        }}
-      >
-        <h2
-          style={{
-            fontSize: 24,
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            textAlign: 'center',
-            margin: '0 0 48px',
-          }}
-        >
+      <section className="max-w-4xl mx-auto px-4 pb-20">
+        <h2 className="text-2xl font-bold text-center mb-12"
+            style={{ color: 'var(--text-primary)' }}>
           {t('coreFeatures')}
         </h2>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: 16,
-          }}
-        >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => {
-            const IconComponent = f.icon;
+            const Icon = f.icon;
             return (
-              <Link
-                key={f.title}
-                href={f.link}
-                style={{ textDecoration: 'none' }}
-              >
+              <Link key={f.titleKey} href={f.link} className="no-underline">
                 <div
-                  style={{
-                    padding: '24px 20px',
-                    borderRadius: 8,
-                    border: '1px solid var(--border-primary)',
-                    background: 'var(--bg-primary)',
-                    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-                    height: '100%',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget).style.borderColor = 'var(--text-primary)';
-                    (e.currentTarget).style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget).style.borderColor = 'var(--border-primary)';
-                    (e.currentTarget).style.boxShadow = 'none';
-                  }}
+                  className="group p-6 rounded-xl border transition-all duration-200 h-full cursor-pointer
+                             hover:shadow-md hover:border-zinc-800"
+                  style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-primary)' }}
                 >
                   <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 8,
-                      background: 'var(--bg-secondary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: 16,
-                      color: 'var(--text-primary)',
-                      fontSize: 20,
-                    }}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 text-lg transition-all duration-200
+                               group-hover:bg-zinc-900 group-hover:text-white"
+                    style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
                   >
-                    <IconComponent />
+                    <Icon />
                   </div>
-                  <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 6 }}>
-                    {f.title}
-                  </Text>
-                  <Text type="secondary" style={{ fontSize: 13, lineHeight: 1.6 }}>
-                    {f.desc}
-                  </Text>
+                  <h3 className="text-[15px] font-semibold mb-1.5"
+                      style={{ color: 'var(--text-primary)' }}>
+                    {t(f.titleKey)}
+                  </h3>
+                  <p className="text-sm leading-relaxed"
+                     style={{ color: 'var(--text-tertiary)' }}>
+                    {t(f.descKey)}
+                  </p>
                 </div>
               </Link>
             );
@@ -238,59 +147,31 @@ export default function HomePage() {
 
       {/* CTA */}
       {!isLoggedIn && (
-        <section
-          style={{
-            background: 'var(--text-primary)',
-            padding: '80px 16px',
-            textAlign: 'center',
-          }}
-        >
-          <h2
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              color: 'var(--bg-primary)',
-              margin: '0 0 12px',
-            }}
-          >
+        <section className="py-20 px-4 text-center"
+                 style={{ background: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold mb-3" style={{ color: 'var(--bg-primary)' }}>
             {t('cta.title')}
           </h2>
-          <p
-            style={{
-              fontSize: 15,
-              color: 'var(--bg-secondary)',
-              margin: '0 auto 32px',
-              maxWidth: 400,
-              lineHeight: 1.6,
-              opacity: 0.7,
-            }}
-          >
+          <p className="text-sm mx-auto mb-8 max-w-sm leading-relaxed opacity-70"
+             style={{ color: 'var(--bg-secondary)' }}>
             {t('cta.desc')}
           </p>
           <Link href="/login">
-            <Button
-              icon={<ArrowRightOutlined />}
-              iconPlacement="end"
-              size="large"
-              style={{ background: '#ffffff', color: '#000000', borderColor: '#ffffff' }}
-            >
+            <CustomButton variant="filled"
+              className="!bg-white !text-black !border-white !hover:bg-zinc-100">
               {t('cta.loginBtn')}
-            </Button>
+              <ArrowRightOutlined />
+            </CustomButton>
           </Link>
         </section>
       )}
 
       {/* Footer */}
-      <footer
-        style={{
-          textAlign: 'center',
-          padding: '32px 16px',
-          borderTop: '1px solid var(--border-primary)',
-        }}
-      >
-        <Text type="secondary" style={{ fontSize: 12 }}>
+      <footer className="text-center py-8 px-4 border-t"
+               style={{ borderColor: 'var(--border-primary)' }}>
+        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           © 2026 {t('footer')}
-        </Text>
+        </p>
       </footer>
     </div>
   );
