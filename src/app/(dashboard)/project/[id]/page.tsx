@@ -135,7 +135,7 @@ export default function ProjectDetailPage() {
           <FolderOutlined style={{ fontSize: 48, color: 'var(--text-tertiary)', marginBottom: 16 }} />
         <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 8 }}>{t('loadFailed')}</Text>
         <Text type="secondary">{error ?? t('projectNotExist')}</Text>
-        <Flexbox gap={12} horizontal justify="center" style={{ marginTop: 24 }}>
+        <Flexbox gap={12} justify="center" style={{ marginTop: 24 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/project')}>{t('backToList')}</Button>
            <Button icon={<ReloadOutlined />} onClick={fetchProject}>{t('retry')}</Button>
         </Flexbox>

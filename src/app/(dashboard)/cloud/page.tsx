@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Modal } from 'antd';
 import { CustomButton, StatusTag } from '@/lib/ui';
-import { ProCard } from '@/ui/pro-card';
+import { ProCard } from '@/ui';
 import {
   CloudServerOutlined,
   CloudUploadOutlined,

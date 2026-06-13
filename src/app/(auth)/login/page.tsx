@@ -12,7 +12,6 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { message } from 'antd';
 import { CustomButton, PageTransition } from '@/lib/ui';
-import type { ButtonVariant } from '@/ui/button';
 
 type LoginMode = 'password' | 'verificationCode';
 

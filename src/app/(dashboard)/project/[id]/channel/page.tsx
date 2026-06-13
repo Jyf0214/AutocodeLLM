@@ -23,9 +23,9 @@ export default function ChannelPage() {
         }}
       >
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <Flexbox horizontal align="center" gap={12}>
+          <Flexbox align="center" gap={12}>
             <Button
-              type="text"
+              variant="ghost"
               icon={<ArrowLeftOutlined />}
               onClick={() => router.push(`/project/${projectId}`)}
             >

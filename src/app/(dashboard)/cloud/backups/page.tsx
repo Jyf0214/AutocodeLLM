@@ -89,7 +89,7 @@ export default function GlobalBackupsPage() {
       render: (name: string) => {
         const nameStr = name;
         return (
-          <Flexbox horizontal gap={8} align="center">
+          <Flexbox gap={8} align="center">
             <Avatar size="small" style={{ backgroundColor: 'var(--text-primary)' }}>
               {nameStr.charAt(0)}
             </Avatar>

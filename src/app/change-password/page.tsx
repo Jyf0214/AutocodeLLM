@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button, Form, InputPassword, Text, Alert } from '@/lib/ui';
-import { LockOutlined, SafetyOutlined } from '@ant-design/icons';
+import { SafetyOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import type { ChangePasswordResponse } from '@/lib/api/types';
 import { message, Card } from 'antd';
@@ -106,7 +106,6 @@ export default function ChangePasswordPage() {
             ]}
           >
             <InputPassword
-              prefix={<LockOutlined />}
               placeholder="请输入新密码"
             />
           </Form.Item>
@@ -116,8 +115,8 @@ export default function ChangePasswordPage() {
             label="确认新密码"
             rules={[
               { required: true, message: '请再次输入新密码' },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
+              ({ getFieldValue }: { getFieldValue: (name: string) => string }) => ({
+                validator(_: unknown, value: string | undefined) {
                   if (!value || getFieldValue('newPassword') === value) {
                     return Promise.resolve();
                   }
@@ -127,13 +126,12 @@ export default function ChangePasswordPage() {
             ]}
           >
             <InputPassword
-              prefix={<LockOutlined />}
               placeholder="请再次输入新密码"
             />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0 }}>
-            <Button type="primary" htmlType="submit" loading={loading} block>
+            <Button variant="primary" type="submit" loading={loading} block>
               修改密码并登录
             </Button>
           </Form.Item>

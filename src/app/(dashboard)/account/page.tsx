@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button, Form, InputPassword, Text, Alert, PageContainer } from '@/lib/ui';
-import { LockOutlined, SafetyOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { SafetyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { message, Tag, Divider, Card } from 'antd';
 import { useTranslations } from 'next-intl';
@@ -184,7 +184,7 @@ export default function AccountPage() {
                 description={t('flagWarning')}
                 type="info"
                 action={
-                  <Button size="small" onClick={handleUpdateFlags} loading={loading}>
+                  <Button size="sm" onClick={handleUpdateFlags} loading={loading}>
                     {t('disableFlags')}
                   </Button>
                 }
@@ -207,7 +207,6 @@ export default function AccountPage() {
               rules={[{ required: true, message: t('oldPasswordRequired') }]}
             >
               <InputPassword
-                prefix={<LockOutlined />}
                 placeholder={t('oldPasswordPlaceholder')}
               />
             </Form.Item>
@@ -221,7 +220,6 @@ export default function AccountPage() {
               ]}
             >
               <InputPassword
-                prefix={<LockOutlined />}
                 placeholder={t('newPasswordPlaceholder')}
               />
             </Form.Item>
@@ -231,8 +229,8 @@ export default function AccountPage() {
               label={t('confirmPassword')}
               rules={[
                 { required: true, message: t('confirmPasswordRequired') },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
+                ({ getFieldValue }: { getFieldValue: (name: string) => string }) => ({
+                  validator(_: unknown, value: string) {
                     if (!value || getFieldValue('newPassword') === value) {
                       return Promise.resolve();
                     }
@@ -242,13 +240,12 @@ export default function AccountPage() {
               ]}
             >
               <InputPassword
-                prefix={<LockOutlined />}
                 placeholder={t('confirmPasswordPlaceholder')}
               />
             </Form.Item>
 
             <Form.Item style={{ marginBottom: 0 }}>
-              <Button type="primary" htmlType="submit" loading={loading} block>
+              <Button variant="primary" type="submit" loading={loading} block>
                 {t('submit')}
               </Button>
             </Form.Item>

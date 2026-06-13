@@ -348,7 +348,6 @@ export default function FilesPage() {
       sorter: (a, b) => a.name.localeCompare(b.name),
       render: (name: string, record: FileInfo) => (
         <Flexbox
-          horizontal
           gap={10}
           align="center"
           style={{ cursor: 'pointer' }}
@@ -411,8 +410,8 @@ export default function FilesPage() {
           {record.type === 'file' && (
             <Tooltip title={t('edit')}>
               <Button
-                type="text"
-                size="small"
+                variant="ghost"
+                size="sm"
                 icon={<EditOutlined />}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -424,8 +423,8 @@ export default function FilesPage() {
           {record.type === 'file' && (
             <Tooltip title={t('download')}>
               <Button
-                type="text"
-                size="small"
+                variant="ghost"
+                size="sm"
                 icon={<DownloadOutlined />}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -436,8 +435,8 @@ export default function FilesPage() {
           )}
           <Tooltip title={t('rename')}>
             <Button
-              type="text"
-              size="small"
+              variant="ghost"
+              size="sm"
               icon={<EditOutlined />}
               onClick={(e) => {
                 e.stopPropagation();
@@ -458,9 +457,8 @@ export default function FilesPage() {
           >
             <Tooltip title={t('delete')}>
               <Button
-                type="text"
-                size="small"
-                danger
+                variant="dangerGhost"
+                size="sm"
                 icon={<DeleteOutlined />}
                 onClick={(e) => e.stopPropagation()}
               />
@@ -512,7 +510,7 @@ export default function FilesPage() {
           items={[
             {
               title: (
-                <Flexbox horizontal gap={6} align="center" style={{ cursor: 'pointer' }}>
+                <Flexbox gap={6} align="center" style={{ cursor: 'pointer' }}>
                   <HomeOutlined />
                   <span>{t('root')}</span>
                 </Flexbox>
@@ -521,7 +519,7 @@ export default function FilesPage() {
             },
             ...breadcrumbPaths.map((seg) => ({
               title: (
-                <Flexbox horizontal gap={6} align="center" style={{ cursor: 'pointer' }}>
+                <Flexbox gap={6} align="center" style={{ cursor: 'pointer' }}>
                   <FolderOpenOutlined />
                   <span>{seg.label}</span>
                 </Flexbox>
@@ -541,7 +539,7 @@ export default function FilesPage() {
           >
             <Space>
               <Button
-                type="primary"
+                variant="primary"
                 icon={<PlusOutlined />}
                 onClick={() => openCreate('file')}
               >

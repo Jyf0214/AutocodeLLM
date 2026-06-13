@@ -8,7 +8,7 @@ import {
   CloseCircleOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
-import { Flexbox, Text, PageContainer } from '@/lib/ui';
+import { Text, PageContainer } from '@/lib/ui';
 
 interface SyncStatus {
   enabled: boolean;
@@ -146,7 +146,7 @@ export default function WebDAVPage() {
     <PageContainer title={t('webdavConfig')} subtitle={t('description')}>
       <Card
         title={
-          <Flexbox horizontal gap={8} align="center">
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <span>{t('connectionStatus')}</span>
             <Tag
               icon={status?.enabled ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
@@ -155,7 +155,7 @@ export default function WebDAVPage() {
             >
               {status?.enabled ? t('enabled') : t('disabled')}
             </Tag>
-          </Flexbox>
+          </div>
         }
         extra={
           <Switch
@@ -171,23 +171,23 @@ export default function WebDAVPage() {
           <Skeleton active paragraph={{ rows: 3 }} />
         ) : (
           <Space style={{ width: '100%', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-            <Flexbox horizontal justify="space-between" wrap gap={8} style={{ width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, width: '100%' }}>
               <Text type="secondary">{t('serverUrl')}</Text>
               <Text style={{ wordBreak: 'break-all' }}>
                 {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- API 返回空字符串表示未配置，需用 || 捕获 */}
                 {status?.url || t('notConfigured')}
               </Text>
-            </Flexbox>
-            <Flexbox horizontal justify="space-between" wrap gap={8} style={{ width: '100%' }}>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, width: '100%' }}>
               <Text type="secondary">{t('remotePath')}</Text>
               <Text style={{ wordBreak: 'break-all' }}>
                 {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- API 返回空字符串表示未配置，需用 || 捕获 */}
                 {status?.remotePath || t('notConfigured')}
               </Text>
-            </Flexbox>
-            <Flexbox horizontal justify="space-between" wrap gap={8} style={{ width: '100%' }}>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, width: '100%' }}>
               <Text type="secondary">{t('syncStatus')}</Text>
-              <Flexbox horizontal gap={6} align="center">
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                 <span
                   style={{
                     display: 'inline-block',
@@ -198,8 +198,8 @@ export default function WebDAVPage() {
                   }}
                 />
                 <Text>{status?.watching ? t('running') : t('stopped')}</Text>
-              </Flexbox>
-            </Flexbox>
+              </div>
+            </div>
           </Space>
         )}
       </Card>

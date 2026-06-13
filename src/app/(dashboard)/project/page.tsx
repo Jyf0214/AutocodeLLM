@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { message, Modal, Form, Input, Dropdown } from 'antd';
 import { PageContainer, CustomButton, FilterPill } from '@/lib/ui';
-import { ProCard } from '@/ui/pro-card';
 import {
   PlusOutlined,
   FolderOutlined,

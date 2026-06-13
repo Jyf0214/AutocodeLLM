@@ -13,6 +13,13 @@ vi.mock('@/lib/db/prisma', () => ({
   },
 }));
 
+// Mock auth — avoid calling cookies() from next/headers outside request scope
+vi.mock('@/lib/auth', () => ({
+  requireAuth: vi.fn().mockResolvedValue({
+    session: { userId: 'test-user-id', username: 'admin', role: 'admin' as const },
+  }),
+}));
+
 describe('修改密码 API (/api/auth/change-password)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -120,7 +127,7 @@ describe('修改密码 API (/api/auth/change-password)', () => {
     await POST(request);
 
     expect(mockUpdate).toHaveBeenCalledWith({
-      where: { id: userId },
+      where: { id: 'test-user-id' },
       data: {
         passwordHash: expect.stringMatching(/^\$2[abxy]\$10\$/),
         forceChangePassword: false,

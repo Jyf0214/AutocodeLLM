@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
-import { ThemeProvider as UiThemeProvider } from '@/lib/ui';
 import { ThemeProvider } from '@/lib/theme-provider';
 import '../styles/globals.css';
 
@@ -34,15 +33,13 @@ export default async function RootLayout({
   const content = (
     <html lang="zh" suppressHydrationWarning>
       <body>
-        <UiThemeProvider themeMode="light">
-          <AntdRegistry>
-            <ThemeProvider>
-              <NextIntlClientProvider messages={messages}>
-                {children}
-              </NextIntlClientProvider>
-            </ThemeProvider>
-          </AntdRegistry>
-        </UiThemeProvider>
+        <AntdRegistry>
+          <ThemeProvider>
+            <NextIntlClientProvider messages={messages}>
+              {children}
+            </NextIntlClientProvider>
+          </ThemeProvider>
+        </AntdRegistry>
       </body>
     </html>
   );

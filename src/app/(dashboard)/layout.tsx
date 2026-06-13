@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
-import { ThemeSwitch } from '@/lib/ui';
 import {
   HomeOutlined,
   FolderOutlined,
@@ -119,13 +118,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
             AutocodeLLM
           </span>
-        }
-        extra={
-          <ThemeSwitch
-            themeMode={THEME_MODE_MAP[theme ?? 'light'] ?? 'light'}
-            onThemeSwitch={handleThemeSwitch}
-            labels={{ auto: '自动', dark: '深色', light: '浅色' }}
-          />
         }
       >
         <Menu

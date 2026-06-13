@@ -28,6 +28,13 @@ vi.mock('@/lib/sync/watcher', () => ({
   isWatchActive: mockIsWatchActive,
 }));
 
+// Mock auth — avoid calling cookies() from next/headers outside request scope
+vi.mock('@/lib/auth', () => ({
+  requireAuth: vi.fn().mockResolvedValue({
+    session: { userId: 'test-user-id', username: 'admin', role: 'admin' as const },
+  }),
+}));
+
 // Mock webdav
 const mockTestConnection = vi.fn();
 const mockCreateWebdavClient = vi.fn();
@@ -43,7 +50,7 @@ vi.mock('@/lib/sync/webdav', () => ({
 
 describe('WebDAV 同步 API (/api/sync)', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('GET 同步状态', () => {
@@ -52,7 +59,8 @@ describe('WebDAV 同步 API (/api/sync)', () => {
       mockIsWatchActive.mockReturnValue(false);
 
       const { GET } = await import('@/app/api/sync/route');
-      const response = await GET();
+      const request = new Request('http://localhost/api/sync');
+      const response = await GET(request);
       const body = await response.json();
 
       expect(body.success).toBe(true);
@@ -72,7 +80,8 @@ describe('WebDAV 同步 API (/api/sync)', () => {
       mockIsWatchActive.mockReturnValue(true);
 
       const { GET } = await import('@/app/api/sync/route');
-      const response = await GET();
+      const request = new Request('http://localhost/api/sync');
+      const response = await GET(request);
       const body = await response.json();
 
       expect(body.success).toBe(true);
@@ -237,7 +246,8 @@ describe('WebDAV 同步 API (/api/sync)', () => {
       mockWebdavConfigDelete.mockResolvedValue({ id: '1' });
 
       const { DELETE } = await import('@/app/api/sync/route');
-      const response = await DELETE();
+      const request = new Request('http://localhost/api/sync', { method: 'DELETE' });
+      const response = await DELETE(request);
       const body = await response.json();
 
       expect(body.success).toBe(true);

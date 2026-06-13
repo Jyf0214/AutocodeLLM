@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button, Text, Empty, Modal, Form, Input as LobeInput, PageContainer } from '@/lib/ui';
+import { Button, Text, Empty, Form, Input as LobeInput, PageContainer } from '@/lib/ui';
 import {
   PlusOutlined,
   EditOutlined,
@@ -11,7 +11,7 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
 } from '@ant-design/icons';
-import { Table, Tag, Space, Popconfirm, Switch, message, Input as AntdInput } from 'antd';
+import { Table, Tag, Space, Popconfirm, Switch, message, Input as AntdInput, Modal } from 'antd';
 import { useTranslations } from 'next-intl';
 
 interface EnvVariable {
@@ -274,8 +274,8 @@ export default function SettingPage() {
               {isVisible ? text : '****'}
             </Text>
             <Button
-              type="text"
-              size="small"
+              variant="ghost"
+              size="sm"
               icon={isVisible ? <EyeInvisibleOutlined /> : <EyeOutlined />}
               onClick={() => {
                 toggleKeyVisibility(record.id);
@@ -308,8 +308,8 @@ export default function SettingPage() {
       render: (_: unknown, record: EnvVariable) => (
         <Space>
           <Button
-            type="link"
-            size="small"
+            variant="link"
+            size="sm"
             icon={<EditOutlined />}
             onClick={() => {
               handleOpenModal(record);
@@ -325,7 +325,7 @@ export default function SettingPage() {
             okText={t('delete')}
             cancelText={t('cancel')}
           >
-            <Button type="link" danger size="small" icon={<DeleteOutlined />}>
+            <Button variant="link" size="sm" icon={<DeleteOutlined />}>
               {t('delete')}
             </Button>
           </Popconfirm>
@@ -342,7 +342,7 @@ export default function SettingPage() {
           {t('title')}
         </Text>
         <Space wrap>
-          <Button icon={<PlusOutlined />} type="primary" onClick={() => {
+          <Button icon={<PlusOutlined />} variant="primary" onClick={() => {
             handleOpenModal();
           }}>
             {t('add')}
@@ -409,7 +409,7 @@ export default function SettingPage() {
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>
               <Button onClick={handleCloseModal}>{t('cancel')}</Button>
-              <Button type="primary" htmlType="submit" loading={loading}>
+              <Button variant="primary" type="submit" loading={loading}>
                 {editingEnv ? t('update') : t('create')}
               </Button>
             </Space>
@@ -468,7 +468,7 @@ export default function SettingPage() {
               }}>
                 {t('cancel')}
               </Button>
-              <Button type="primary" htmlType="submit" loading={loading}>
+              <Button variant="primary" type="submit" loading={loading}>
                 {t('importConfirm')}
               </Button>
             </Space>

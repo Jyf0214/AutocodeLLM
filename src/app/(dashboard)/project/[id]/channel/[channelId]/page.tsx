@@ -98,18 +98,18 @@ export default function ChannelChatPage() {
         }}
       >
         <Card style={{ maxWidth: 400, textAlign: 'center', padding: 24 }}>
-          <Flexbox gap={16} direction="vertical">
+          <Flexbox gap={16} vertical>
             <Text strong style={{ fontSize: 18 }}>
               {error ?? '频道不存在'}
             </Text>
-            <Flexbox gap={12} horizontal justify="center">
+            <Flexbox gap={12} justify="center">
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={() => router.push(`/project/${projectId}/channel`)}
               >
                 {t('project.back')}
               </Button>
-              <Button type="primary" icon={<ReloadOutlined />} onClick={fetchChannel}>
+              <Button variant="primary" icon={<ReloadOutlined />} onClick={fetchChannel}>
                 {t('project.retry')}
               </Button>
             </Flexbox>
@@ -129,9 +129,9 @@ export default function ChannelChatPage() {
         }}
       >
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <Flexbox horizontal align="center" gap={12}>
+          <Flexbox align="center" gap={12}>
             <Button
-              type="text"
+              variant="ghost"
               icon={<ArrowLeftOutlined />}
               onClick={() => router.push(`/project/${projectId}/channel`)}
             >

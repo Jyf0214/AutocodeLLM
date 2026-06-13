@@ -82,7 +82,7 @@ export default function DataPage() {
 
   return (
        <PageContainer title="数据管理" subtitle="导出和导入系统数据">
-         <Flexbox gap={24} direction="vertical">
+         <Flexbox gap={24} vertical>
            {/* 导出 */}
            <Card title="导出数据" size="small">
              <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
