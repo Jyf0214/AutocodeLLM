@@ -16,9 +16,8 @@ permissions:
   pull-requests: write
 
 env:
-  # 受保护的文件：任何人不得删除
   PROTECTED_FILES: "LICENSE NOTICE"
-  # 需要版权头的源文件扩展名
+  BASELINE_FILE: .github/copyright-audit/baseline.txt
   SRC_EXT: '\.(ts|tsx|js|jsx|mjs|cjs|py|java|kt|go|rs)$'
 
 jobs:
@@ -44,10 +43,7 @@ jobs:
             fi
           done
 
-          if [ "$HAS_ERROR" = false ]; then
-            echo "✅ LICENSE 和 NOTICE 文件完好" >> /tmp/audit_protected.txt
-          fi
-
+          [ "$HAS_ERROR" = false ] && echo "✅ LICENSE 和 NOTICE 文件完好" >> /tmp/audit_protected.txt
           echo "has_error=$HAS_ERROR" >> "$GITHUB_OUTPUT"
 
       # ── Step 2: 检测 diff 变更（仅用于上下文报告） ────────────
@@ -63,28 +59,37 @@ jobs:
           fi
 
           mkdir -p /tmp/audit
-
           git diff --diff-filter=A --name-only "$BASE" "$HEAD" 2>/dev/null | grep -E "$SRC_EXT" > /tmp/audit/diff_added.txt || true
           git diff --diff-filter=M --name-only "$BASE" "$HEAD" 2>/dev/null | grep -E "$SRC_EXT" > /tmp/audit/diff_modified.txt || true
           git diff --diff-filter=R --name-only "$BASE" "$HEAD" 2>/dev/null | grep -E "$SRC_EXT" > /tmp/audit/diff_renamed.txt || true
           git diff --diff-filter=D --name-only "$BASE" "$HEAD" 2>/dev/null | grep -E "$SRC_EXT" > /tmp/audit/diff_deleted.txt || true
 
-          echo "added=$(wc -l < /tmp/audit/diff_added.txt)" >> "$GITHUB_OUTPUT"
-          echo "modified=$(wc -l < /tmp/audit/diff_modified.txt)" >> "$GITHUB_OUTPUT"
-          echo "renamed=$(wc -l < /tmp/audit/diff_renamed.txt)" >> "$GITHUB_OUTPUT"
-          echo "deleted=$(wc -l < /tmp/audit/diff_deleted.txt)" >> "$GITHUB_OUTPUT"
+          for k in added modified renamed deleted; do echo "$k=$(wc -l < /tmp/audit/diff_${k}.txt)" >> "$GITHUB_OUTPUT"; done
 
-      # ── Step 3: 全量扫描 —— 检查仓库中所有源文件的版权头 ────
-      #     这是核心防线：无论文件是什么时候改的，只要缺少版权头就报错
-      - name: Full scan — all source files
+      # ── Step 3: 全量扫描 — 版权存在性 + 归属一致性 ──────────
+      - name: Full scan with baseline comparison
         id: fullscan
         run: |
           HAS_ERROR=false
-          rm -f /tmp/audit/fullscan.txt
+          TAMPER_COUNT=0
+          MISSING_COUNT=0
+          NEW_MISSING_COUNT=0
+          rm -f /tmp/audit/fullscan_tamper.txt /tmp/audit/fullscan_missing.txt /tmp/audit/fullscan_new_missing.txt
 
-          echo "🔍 全量扫描源文件版权头..."
+          # 读取基线到关联数组
+          declare -A BL_CP BL_SP
+          if [ -f "$BASELINE_FILE" ]; then
+            while IFS=' | ' read -r file copyright spdx _; do
+              [[ "$file" =~ ^# ]] && continue
+              [ -z "$file" ] && continue
+              BL_CP["$file"]="$copyright"
+              BL_SP["$file"]="$spdx"
+            done < "$BASELINE_FILE"
+            echo "📋 基线已加载: ${#BL_CP[@]} 条记录"
+          else
+            echo "⚠️  基线文件不存在，将跳过归属一致性检查"
+          fi
 
-          # 查找所有源文件，排除常见非源码目录
           find . -type f \
             -not -path './node_modules/*' \
             -not -path './.git/*' \
@@ -100,126 +105,164 @@ jobs:
             > /tmp/audit/all_src.txt
 
           TOTAL=$(wc -l < /tmp/audit/all_src.txt)
-          echo "  共发现 $TOTAL 个源文件"
-
+          echo "🔍 全量扫描 $TOTAL 个源文件..."
           SCANNED=0
+
           while IFS= read -r file; do
             [ -z "$file" ] && continue
-
+            rel="${file#./}"
             SCANNED=$((SCANNED + 1))
-            # 每扫描 500 个文件输出一次进度
-            if [ $((SCANNED % 500)) -eq 0 ]; then
-              echo "  进度: $SCANNED / $TOTAL"
-            fi
+            [ $((SCANNED % 1000)) -eq 0 ] && echo "  进度: $SCANNED / $TOTAL"
 
-            # 检查版权头和 SPDX
-            has_copyright=false; has_spdx=false
-            head -10 "$file" 2>/dev/null | grep -q "Copyright "  && has_copyright=true
-            head -10 "$file" 2>/dev/null | grep -q "SPDX-License-Identifier" && has_spdx=true
+            current_cp=$(head -10 "$file" 2>/dev/null | grep "Copyright " | head -1 | sed 's/^[[:space:]*/!]*//;s/[[:space:]]*$//')
+            current_sp=$(head -10 "$file" 2>/dev/null | grep "SPDX-License-Identifier" | head -1 | sed 's/^[[:space:]*/!]*//;s/[[:space:]]*$//')
 
-            if [ "$has_copyright" = false ] || [ "$has_spdx" = false ]; then
-              HAS_ERROR=true
-              echo -n "  ❌  ${file#./}" >> /tmp/audit/fullscan.txt
-              [ "$has_copyright" = false ] && echo -n " [缺 Copyright]" >> /tmp/audit/fullscan.txt
-              [ "$has_spdx" = false ] && echo -n " [缺 SPDX]" >> /tmp/audit/fullscan.txt
-              echo "" >> /tmp/audit/fullscan.txt
+            hc=false; hs=false
+            [ -n "$current_cp" ] && hc=true
+            [ -n "$current_sp" ] && hs=true
+
+            # ── 基线中存在该文件 ────────────────────────────────
+            if [ -n "${BL_CP[$rel]}" ]; then
+              expected_cp="${BL_CP[$rel]}"
+              expected_sp="${BL_SP[$rel]}"
+
+              # 1) 基线有版权，但现在改了名字 → 篡改（硬阻断）
+              if [ "$expected_cp" != "(无)" ] && [ "$hc" = true ] && [ "$current_cp" != "$expected_cp" ]; then
+                HAS_ERROR=true; TAMPER_COUNT=$((TAMPER_COUNT + 1))
+                echo "  🚫  $rel" >> /tmp/audit/fullscan_tamper.txt
+                echo "     基线版权: $expected_cp" >> /tmp/audit/fullscan_tamper.txt
+                echo "     当前版权: $current_cp" >> /tmp/audit/fullscan_tamper.txt
+                echo "" >> /tmp/audit/fullscan_tamper.txt
+                continue
+              fi
+
+              # 2) 基线有版权，现在完全没了 → 被删除（硬阻断）
+              if [ "$expected_cp" != "(无)" ] && [ "$hc" = false ]; then
+                HAS_ERROR=true; MISSING_COUNT=$((MISSING_COUNT + 1))
+                echo "  ❌  $rel — 版权声明被完全移除 (基线: $expected_cp)" >> /tmp/audit/fullscan_missing.txt
+                continue
+              fi
+
+              # 3) 基线有 SPDX，现在没了 → 被删除（硬阻断）
+              if [ "$expected_sp" != "(无)" ] && [ "$hs" = false ]; then
+                HAS_ERROR=true; MISSING_COUNT=$((MISSING_COUNT + 1))
+                echo "  ❌  $rel — SPDX-License-Identifier 被移除 (基线: $expected_sp)" >> /tmp/audit/fullscan_missing.txt
+                continue
+              fi
+
+            # ── 新文件（基线中不存在） ────────────────────────
+            else
+              if [ "$hc" = false ] || [ "$hs" = false ]; then
+                NEW_MISSING_COUNT=$((NEW_MISSING_COUNT + 1))
+                echo -n "  ⚠️  $rel [新文件" >> /tmp/audit/fullscan_new_missing.txt
+                [ "$hc" = false ] && echo -n " 缺 Copyright" >> /tmp/audit/fullscan_new_missing.txt
+                [ "$hs" = false ] && echo -n " 缺 SPDX" >> /tmp/audit/fullscan_new_missing.txt
+                echo "]" >> /tmp/audit/fullscan_new_missing.txt
+              fi
             fi
           done < /tmp/audit/all_src.txt
 
-          echo "  扫描完成: $SCANNED / $TOTAL"
           echo "has_error=$HAS_ERROR" >> "$GITHUB_OUTPUT"
           echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+          echo "tamper_count=$TAMPER_COUNT" >> "$GITHUB_OUTPUT"
+          echo "missing_count=$MISSING_COUNT" >> "$GITHUB_OUTPUT"
+          echo "new_missing_count=$NEW_MISSING_COUNT" >> "$GITHUB_OUTPUT"
 
-      # ── Step 4: 生成汇总报告 ────────────────────────────────────
+      # ── Step 4: 汇总报告 ──────────────────────────────────────
       - name: Generate summary
         id: summary
         run: |
           PROTECTED_ERROR=false
-          [ -s /tmp/audit_protected.txt ] && head -1 /tmp/audit_protected.txt | grep -q "❌" && PROTECTED_ERROR=true
-
-          FULLSCAN_ERROR=false
-          FULLSCAN_COUNT=0
-          [ -s /tmp/audit/fullscan.txt ] && { FULLSCAN_ERROR=true; FULLSCAN_COUNT=$(wc -l < /tmp/audit/fullscan.txt); }
+          [ -f /tmp/audit_protected.txt ] && grep -q "❌" /tmp/audit_protected.txt && PROTECTED_ERROR=true
 
           IS_ERROR=false
           [ "$PROTECTED_ERROR" = true ] && IS_ERROR=true
-          [ "$FULLSCAN_ERROR" = true ] && IS_ERROR=true
-
-          DIFF_ADDED=$(cat /tmp/audit/diff_added.txt 2>/dev/null | wc -l)
-          DIFF_MODIFIED=$(cat /tmp/audit/diff_modified.txt 2>/dev/null | wc -l)
-          DIFF_RENAMED=$(cat /tmp/audit/diff_renamed.txt 2>/dev/null | wc -l)
-          DIFF_DELETED=$(cat /tmp/audit/diff_deleted.txt 2>/dev/null | wc -l)
+          [ "${{ steps.fullscan.outputs.tamper_count }}" -gt 0 ] && IS_ERROR=true
+          [ "${{ steps.fullscan.outputs.missing_count }}" -gt 0 ] && IS_ERROR=true
 
           {
             echo "## 📋 版权头审计报告"
             echo ""
 
-            # 1. 受保护文件
             echo "### 🔒 受保护文件"
-            cat /tmp/audit_protected.txt
+            cat /tmp/audit_protected.txt 2>/dev/null || echo "✅ 检查通过"
             echo ""
 
-            # 2. 全量扫描结果
-            if [ "$FULLSCAN_ERROR" = true ]; then
-              echo "### 🚨 全量扫描：${FULLSCAN_COUNT} 个文件缺少版权头"
+            # 版权归属篡改
+            if [ -s /tmp/audit/fullscan_tamper.txt ]; then
+              echo "### 🚨 版权归属被篡改（${{ steps.fullscan.outputs.tamper_count }} 个文件）"
               echo ""
-              echo "> 以下文件缺少 Copyright 声明或 SPDX-License-Identifier。"
-              echo "> 原有文件**必须保留**原始版权头（Google LLC / Qwen Team）。"
-              echo "> 新增文件应添加：\`Copyright 2026 Jyf0214\`"
+              echo "> 以下文件的版权声明被改成了其他名字，这违反了 Apache 2.0 许可要求。"
+              echo "> **必须恢复**原始版权归属（Google LLC / Qwen Team / Alibaba Group）。"
               echo ""
               echo '```'
-              cat /tmp/audit/fullscan.txt
+              cat /tmp/audit/fullscan_tamper.txt
               echo '```'
-            else
-              echo "### ✅ 全量扫描：${{ steps.fullscan.outputs.total }} 个源文件版权头全部正常"
+              echo ""
             fi
-            echo ""
 
-            # 3. 本次 diff 变更（仅做参考）
+            # 已有文件版权头缺失
+            if [ -s /tmp/audit/fullscan_missing.txt ]; then
+              echo "### ❌ 版权声明缺失（${{ steps.fullscan.outputs.missing_count }} 个文件）"
+              echo '```'
+              cat /tmp/audit/fullscan_missing.txt
+              echo '```'
+              echo ""
+            fi
+
+            # 新文件缺少版权头（仅警告）
+            if [ -s /tmp/audit/fullscan_new_missing.txt ]; then
+              echo "### ⚠️  新文件缺少版权头（${{ steps.fullscan.outputs.new_missing_count }} 个，建议添加）"
+              echo '```'
+              cat /tmp/audit/fullscan_new_missing.txt
+              echo '```'
+              echo ""
+            fi
+
+            # 统计
             echo "### 📂 本次变更统计"
             echo "| 类型 | 数量 |"
             echo "|------|:----:|"
-            echo "| 新增 | ${DIFF_ADDED} |"
-            echo "| 修改 | ${DIFF_MODIFIED} |"
-            echo "| 重命名 | ${DIFF_RENAMED} |"
-            echo "| 删除 | ${DIFF_DELETED} |"
+            DIFF_A=$(cat /tmp/audit/diff_added.txt 2>/dev/null | wc -l)
+            DIFF_M=$(cat /tmp/audit/diff_modified.txt 2>/dev/null | wc -l)
+            DIFF_R=$(cat /tmp/audit/diff_renamed.txt 2>/dev/null | wc -l)
+            DIFF_D=$(cat /tmp/audit/diff_deleted.txt 2>/dev/null | wc -l)
+            echo "| 新增 | ${DIFF_A} |"
+            echo "| 修改 | ${DIFF_M} |"
+            echo "| 重命名 | ${DIFF_R} |"
+            echo "| 删除 | ${DIFF_D} |"
             echo ""
 
-            # 4. 最终判定
             echo "### 最终判定"
             if [ "$IS_ERROR" = true ]; then
               echo "❌ **构建失败**"
-              if [ "$PROTECTED_ERROR" = true ]; then
-                echo "- 受保护文件（LICENSE/NOTICE）缺失"
-              fi
-              if [ "$FULLSCAN_ERROR" = true ]; then
-                echo "- 有 ${FULLSCAN_COUNT} 个源文件缺少版权头"
-                echo ""
-                echo "📝 正确的版权头格式："
-                echo '```'
-                echo "/**"
-                echo " * @license"
-                echo " * Copyright 2026 Jyf0214"
-                echo " * SPDX-License-Identifier: Apache-2.0"
-                echo " */"
-                echo '```'
-                echo ""
-                echo "原有文件请保留原版权，不要删除或修改 Google LLC / Qwen Team 声明"
-              fi
+              [ "$PROTECTED_ERROR" = true ] && echo "- 受保护文件（LICENSE/NOTICE）缺失"
+              [ "${{ steps.fullscan.outputs.tamper_count }}" -gt 0 ] && echo "- ${{ steps.fullscan.outputs.tamper_count }} 个文件的版权归属被篡改（请恢复原始 Google LLC / Qwen Team 声明）"
+              [ "${{ steps.fullscan.outputs.missing_count }}" -gt 0 ] && echo "- ${{ steps.fullscan.outputs.missing_count }} 个文件的版权头被移除"
             else
-              echo "✅ **全部通过** — 全量扫描 ${{ steps.fullscan.outputs.total }} 个文件，版权头均完整"
+              echo "✅ **全部通过** — 全量扫描 ${{ steps.fullscan.outputs.total }} 个文件"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
           echo "is_error=$IS_ERROR" >> "$GITHUB_OUTPUT"
 
-      # ── Step 5: 阻断 ────────────────────────────────────────────
+      # ── Step 5: 阻断 ──────────────────────────────────────────
       - name: Fail on errors
         if: steps.summary.outputs.is_error == 'true'
         run: |
-          echo "❌ 版权检查未通过！"
+          echo "❌ 版权检查未通过，阻断构建！"
           echo ""
           echo "阻断原因（全量扫描，不受 diff 范围限制）："
-          echo "  (1) LICENSE 或 NOTICE 文件缺失"
-          echo "  (2) 任意源文件缺少 Copyright 声明或 SPDX-License-Identifier"
+          [ "$PROTECTED_ERROR" = true ] && echo "  (1) LICENSE 或 NOTICE 文件缺失"
+          [ "${{ steps.fullscan.outputs.tamper_count }}" -gt 0 ] && echo "  (2) 原始版权归属被篡改 — 必须恢复"
+          [ "${{ steps.fullscan.outputs.missing_count }}" -gt 0 ] && echo "  (3) 已有文件的版权头被移除 — 必须恢复"
+          echo ""
+          echo "原有文件请保留以下原始版权（不可修改）："
+          echo "  Copyright 2025 Google LLC"
+          echo "  Copyright 2026 Qwen Team, Alibaba Group"
+          echo "  SPDX-License-Identifier: Apache-2.0"
+          echo ""
+          echo "新增文件请添加："
+          echo "  Copyright 2026 Jyf0214"
+          echo "  SPDX-License-Identifier: Apache-2.0"
           exit 1
