@@ -4,22 +4,43 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { message } from 'antd';
-import { CustomButton } from '@/lib/ui';
 import {
-  ArrowRightOutlined,
   FolderOutlined,
   CloudOutlined,
   GithubOutlined,
+  ArrowRightOutlined,
+  CheckCircleOutlined,
 } from '@ant-design/icons';
 
+import { HeroBanner, ProCard, StatusCard, Button, Tag, PageContainer } from '@/ui';
+
 interface AuthStatus {
-  availableMethods: { local: boolean; github: boolean; githubApp: boolean; };
-  user: { id: string; username: string; role: string; } | null;
+  availableMethods: { local: boolean; github: boolean; githubApp: boolean };
+  user: { id: string; username: string; role: string } | null;
 }
 
 const features = [
-  { icon: FolderOutlined, titleKey: 'projectManagement', descKey: 'projectManagementDesc', link: '/project' },
-  { icon: CloudOutlined, titleKey: 'cloudService', descKey: 'cloudServiceDesc', link: '/cloud' },
+  {
+    icon: <FolderOutlined style={{ fontSize: 22 }} />,
+    titleKey: 'projectManagement' as const,
+    descKey: 'projectManagementDesc' as const,
+    link: '/project',
+    tag: 'core' as const,
+  },
+  {
+    icon: <CloudOutlined style={{ fontSize: 22 }} />,
+    titleKey: 'cloudService' as const,
+    descKey: 'cloudServiceDesc' as const,
+    link: '/cloud',
+    tag: 'core' as const,
+  },
+  {
+    icon: <GithubOutlined style={{ fontSize: 22 }} />,
+    titleKey: 'projectManagement' as const,
+    descKey: 'projectManagementDesc' as const,
+    link: '/project',
+    tag: 'new' as const,
+  },
 ];
 
 export default function HomePage() {
@@ -34,9 +55,15 @@ export default function HomePage() {
   useEffect(() => {
     fetch('/api/auth/status')
       .then((res) => res.json())
-      .then((data) => { if (data.success) setAuthStatus(data.data); })
-      .catch(() => {/* ignore */})
-      .finally(() => { setLoadingAuth(false); });
+      .then((data) => {
+        if (data.success) setAuthStatus(data.data);
+      })
+      .catch(() => {
+        /* ignore */
+      })
+      .finally(() => {
+        setLoadingAuth(false);
+      });
   }, []);
 
   const isLoggedIn = !!authStatus.user;
@@ -51,125 +78,235 @@ export default function HomePage() {
       } else {
         message.error(t('logoutFailed'));
       }
-    } catch { message.error(t('logoutFailed')); }
-    finally { setIsLoading(false); }
+    } catch {
+      message.error(t('logoutFailed'));
+    } finally {
+      setIsLoading(false);
+    }
   }, [t]);
 
+  // 获取用户名的首字母（用于头像占位）
+  const userInitial = authStatus.user?.username ? authStatus.user.username.charAt(0).toUpperCase() : '?';
+
   return (
-    <div className="animate-fade-in" style={{ background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen bg-zinc-50">
+      {/* ================================================================= */}
+      {/* 顶部导航                                                          */}
+      {/* ================================================================= */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-200/60">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 no-underline">
+            <div className="w-9 h-9 bg-gradient-to-br from-zinc-900 to-zinc-700 rounded-xl flex items-center justify-center shadow-sm">
+              <span className="text-white font-bold text-lg leading-none">A</span>
+            </div>
+            <span className="font-bold text-xl tracking-tight text-zinc-900">
+              AutocodeLLM
+            </span>
+          </Link>
 
-      {/* Hero */}
-      <section className="px-4 py-32 text-center max-w-xl mx-auto">
-        <h1 className="text-[clamp(36px,6vw,56px)] font-extrabold mb-4 tracking-tight leading-[1.1]"
-            style={{ color: 'var(--text-primary)' }}>
-          AutocodeLLM
-        </h1>
-        <p className="text-[clamp(16px,2.5vw,18px)] mx-auto mb-10 max-w-lg leading-relaxed"
-           style={{ color: 'var(--text-tertiary)' }}>
-          {t('subtitle')}
-        </p>
-
-        {loadingAuth ? (
-          <div className="flex justify-center">
-            <div className="h-5 w-40 rounded animate-pulse" style={{ background: 'var(--bg-tertiary)' }} />
-          </div>
-        ) : isLoggedIn ? (
-          <div className="flex gap-3 justify-center flex-wrap">
-            <Link href="/project">
-              <CustomButton variant="primary" size="lg" icon={<FolderOutlined />}>
-                {t('enterProject')}
-              </CustomButton>
-            </Link>
-            <CustomButton variant="default" size="lg" onClick={handleLogout} loading={isLoading}>
-              {t('logout')}
-            </CustomButton>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3 items-center">
-            <Link href="/login">
-              <CustomButton variant="primary" size="lg">
-                {t('startNow')}
-                <ArrowRightOutlined />
-              </CustomButton>
-            </Link>
-            {authStatus.availableMethods.github && (
-              <div className="mt-2 flex gap-2">
-                <a href="/api/auth/github">
-                  <CustomButton variant="default" icon={<GithubOutlined />}>
-                    GitHub
-                  </CustomButton>
-                </a>
-              </div>
+          <div className="flex items-center gap-2">
+            {loadingAuth ? (
+              <div className="h-8 w-20 rounded-lg bg-zinc-100 animate-pulse" />
+            ) : isLoggedIn ? (
+              <>
+                <Link href="/project">
+                  <Button variant="ghost" size="sm">
+                    <FolderOutlined />
+                    {t('enterProject')}
+                  </Button>
+                </Link>
+                <Button variant="default" size="sm" onClick={handleLogout} loading={isLoading}>
+                  {t('logout')}
+                </Button>
+                <div className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-sm font-bold ml-1">
+                  {userInitial}
+                </div>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" size="sm">
+                    {t('startNow')}
+                  </Button>
+                </Link>
+                {authStatus.availableMethods.github && (
+                  <a href="/api/auth/github">
+                    <Button variant="default" size="sm" icon={<GithubOutlined />}>
+                      GitHub
+                    </Button>
+                  </a>
+                )}
+              </>
             )}
           </div>
-        )}
-      </section>
-
-      {/* Features */}
-      <section className="max-w-4xl mx-auto px-4 pb-20">
-        <h2 className="text-2xl font-bold text-center mb-12"
-            style={{ color: 'var(--text-primary)' }}>
-          {t('coreFeatures')}
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => {
-            const Icon = f.icon;
-            return (
-              <Link key={f.titleKey} href={f.link} className="no-underline">
-                <div
-                  className="group p-6 rounded-xl border transition-all duration-200 h-full cursor-pointer
-                             hover:shadow-md hover:border-zinc-800"
-                  style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-primary)' }}
-                >
-                  <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 text-lg transition-all duration-200
-                               group-hover:bg-zinc-900 group-hover:text-white"
-                    style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-                  >
-                    <Icon />
-                  </div>
-                  <h3 className="text-[15px] font-semibold mb-1.5"
-                      style={{ color: 'var(--text-primary)' }}>
-                    {t(f.titleKey)}
-                  </h3>
-                  <p className="text-sm leading-relaxed"
-                     style={{ color: 'var(--text-tertiary)' }}>
-                    {t(f.descKey)}
-                  </p>
-                </div>
-              </Link>
-            );
-          })}
         </div>
-      </section>
+      </nav>
 
-      {/* CTA */}
-      {!isLoggedIn && (
-        <section className="py-20 px-4 text-center"
-                 style={{ background: 'var(--text-primary)' }}>
-          <h2 className="text-2xl font-bold mb-3" style={{ color: 'var(--bg-primary)' }}>
-            {t('cta.title')}
-          </h2>
-          <p className="text-sm mx-auto mb-8 max-w-sm leading-relaxed opacity-70"
-             style={{ color: 'var(--bg-secondary)' }}>
-            {t('cta.desc')}
-          </p>
-          <Link href="/login">
-            <CustomButton variant="filled"
-              className="!bg-white !text-black !border-white !hover:bg-zinc-100">
-              {t('cta.loginBtn')}
-              <ArrowRightOutlined />
-            </CustomButton>
-          </Link>
+      {/* ================================================================= */}
+      {/* Hero 区 — 使用 HeroBanner 组件                                    */}
+      {/* ================================================================= */}
+      <PageContainer maxWidth="6xl" padding="wide">
+        <HeroBanner
+          title="AutocodeLLM"
+          description={t('subtitle')}
+          tips={t('coreFeatures')}
+          size="large"
+          buttons={[
+            ...(isLoggedIn
+              ? [
+                  {
+                    label: t('enterProject'),
+                    href: '/project',
+                    variant: 'primary' as const,
+                    icon: <FolderOutlined />,
+                  },
+                ]
+              : [
+                  {
+                    label: t('startNow'),
+                    href: '/login',
+                    variant: 'primary' as const,
+                    icon: <ArrowRightOutlined />,
+                  },
+                ]),
+            ...(authStatus.availableMethods.github
+              ? [
+                  {
+                    label: 'GitHub',
+                    href: '/api/auth/github',
+                    variant: 'ghost' as const,
+                    icon: <GithubOutlined />,
+                  },
+                ]
+              : []),
+          ]}
+          animate
+        />
+
+        {/* ================================================================= */}
+        {/* 特性卡片 — 使用 ProCard + Tag                                    */}
+        {/* ================================================================= */}
+        <section className="mt-16">
+          <div className="flex items-center gap-3 mb-8">
+            <h2 className="text-2xl font-bold text-zinc-900 m-0">{t('coreFeatures')}</h2>
+            <Tag variant="emerald" size="sm">
+              {features.length} 项
+            </Tag>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((f, idx) => {
+              const title = t(f.titleKey);
+              const desc = t(f.descKey);
+              return (
+                <Link key={idx} href={f.link} className="no-underline group">
+                  <ProCard
+                    hoverable
+                    bordered
+                    padding="p-6"
+                    className="h-full transition-all duration-300 group-hover:shadow-lg"
+                    title={
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-700">
+                          {f.icon}
+                        </div>
+                        <span className="text-[15px] font-semibold text-zinc-900">{title}</span>
+                      </div>
+                    }
+                    extra={
+                      f.tag === 'new' ? (
+                        <Tag variant="emerald" size="xs">
+                          NEW
+                        </Tag>
+                      ) : (
+                        <Tag variant="light" size="xs">
+                          CORE
+                        </Tag>
+                      )
+                    }
+                  >
+                    <p className="text-sm text-zinc-500 leading-relaxed mb-0">{desc}</p>
+                    <div className="mt-4 flex items-center gap-1 text-sm font-medium text-zinc-400 group-hover:text-zinc-900 transition-colors">
+                      {t('cloudService')}
+                      <ArrowRightOutlined style={{ fontSize: 12 }} />
+                    </div>
+                  </ProCard>
+                </Link>
+              );
+            })}
+          </div>
         </section>
-      )}
 
-      {/* Footer */}
-      <footer className="text-center py-8 px-4 border-t"
-               style={{ borderColor: 'var(--border-primary)' }}>
-        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-          © 2026 {t('footer')}
-        </p>
+        {/* ================================================================= */}
+        {/* 状态卡片 — 使用 StatusCard                                       */}
+        {/* ================================================================= */}
+        <section className="mt-16">
+          <h2 className="text-2xl font-bold text-zinc-900 mb-6">系统状态</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <StatusCard
+              icon={<CheckCircleOutlined />}
+              title="服务状态"
+              status={isLoggedIn ? '已登录 · 正常运行' : '未登录 · 游客模式'}
+              statusType={isLoggedIn ? 'success' : 'info'}
+            />
+            <StatusCard
+              icon={<FolderOutlined />}
+              title="项目访问"
+              status={isLoggedIn ? '可管理项目' : '请先登录'}
+              statusType={isLoggedIn ? 'success' : 'warning'}
+            />
+            <StatusCard
+              icon={<CloudOutlined />}
+              title="云服务"
+              status="在线可用"
+              statusType="info"
+            />
+          </div>
+        </section>
+
+        {/* ================================================================= */}
+        {/* CTA 区 — 非登录状态显示                                          */}
+        {/* ================================================================= */}
+        {!isLoggedIn && (
+          <section className="mt-20 text-center">
+            <ProCard
+              bordered
+              padding="p-12"
+              className="bg-gradient-to-br from-zinc-900 to-zinc-800 !border-zinc-700"
+            >
+              <h2 className="text-2xl font-bold text-white mb-3">{t('cta.title')}</h2>
+              <p className="text-sm text-zinc-400 max-w-sm mx-auto mb-8">{t('cta.desc')}</p>
+              <Link href="/login">
+                <Button variant="primary" size="lg">
+                  {t('cta.loginBtn')}
+                  <ArrowRightOutlined />
+                </Button>
+              </Link>
+            </ProCard>
+          </section>
+        )}
+      </PageContainer>
+
+      {/* ================================================================= */}
+      {/* Footer                                                            */}
+      {/* ================================================================= */}
+      <footer className="border-t border-zinc-200 bg-white mt-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-gradient-to-br from-zinc-900 to-zinc-700 rounded-md flex items-center justify-center">
+              <span className="text-white font-bold text-xs">A</span>
+            </div>
+            <span className="text-sm text-zinc-500">AutocodeLLM</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Tag variant="light" size="xs">
+              v{process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0'}
+            </Tag>
+            <span className="text-xs text-zinc-400">
+              © 2026 {t('footer')}
+            </span>
+          </div>
+        </div>
       </footer>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, forwardRef } from 'react';
-import { cn } from '@/lib/cn';
+import { cn } from '@/lib/ui';
 import type { ButtonProps, ButtonVariant, ButtonSize, ButtonRounded } from './button-types';
 import { variantStyles, sizePadding, iconOnlySize, roundedStyles, BASE_BUTTON_CLASSES } from './button-styles';
 import { useAutoLoading } from './use-auto-loading';
@@ -20,14 +20,14 @@ export type { ButtonProps, ButtonVariant, ButtonSize, ButtonRounded };
 export const Button = memo(
   forwardRef<HTMLButtonElement, ButtonProps>(
     ({ children, variant = 'default', size = 'md', rounded, loading, autoLoading = true, icon, iconOnly, block, className, disabled, onClick, ...props }, ref) => {
-      const isIconOnly = iconOnly || (icon && !children); // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing
+      const isIconOnly = Boolean(iconOnly) || !!(icon && !children);
       const { isLoading, handleClick, showLoading } = useAutoLoading(loading, autoLoading, disabled, onClick);
       const btnLoading = isLoading && 'animate-btn-loading';
 
       return (
         <button
           ref={ref}
-          disabled={disabled || isLoading} // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing
+          disabled={Boolean(disabled) || isLoading}
           onClick={handleClick}
           className={cn(
             BASE_BUTTON_CLASSES,

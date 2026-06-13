@@ -1,5 +1,5 @@
 import { type ReactNode, memo } from 'react';
-import { cn } from '@/lib/cn';
+import { cn } from '@/lib/ui';
 
 type TagVariant = 'light' | 'dark' | 'outline' | 'emerald' | 'amber' | 'danger' | 'success' | 'warning';
 type TagSize = 'xs' | 'sm' | 'md' | 'lg';
@@ -22,24 +22,9 @@ const sizeStyles: Record<TagSize, string> = {
   lg: 'px-4 py-1.5 text-sm font-medium rounded-full',
 };
 
-/** 旧版 color → variant 映射 */
-const colorToVariant: Record<string, TagVariant> = {
-  default: 'light',
-  success: 'success',
-  error: 'danger',
-  danger: 'danger',
-  warning: 'warning',
-  info: 'light',
-  processing: 'emerald',
-  green: 'success',
-  red: 'danger',
-};
-
 export interface TagProps {
   children: ReactNode;
   variant?: TagVariant;
-  /** @deprecated 改用 variant */
-  color?: string;
   size?: TagSize;
   className?: string;
   onClick?: () => void;
@@ -48,13 +33,12 @@ export interface TagProps {
 /**
  * 自定义标签组件 — 支持 light/emerald/amber/danger 等变体
  */
-export const Tag = memo<TagProps>(({ children, variant, color: _deprecatedColor, size = 'md', className, onClick }) => { // eslint-disable-line @typescript-eslint/no-deprecated
-  const resolvedVariant = variant ?? (_deprecatedColor ? (colorToVariant[_deprecatedColor] ?? 'light') : 'light');
+export const Tag = memo<TagProps>(({ children, variant = 'light', size = 'md', className, onClick }) => {
   return (
     <span
       className={cn(
         'inline-block border',
-        variantStyles[resolvedVariant],
+        variantStyles[variant],
         sizeStyles[size],
         onClick && 'cursor-pointer hover:opacity-80 transition-opacity',
         className,

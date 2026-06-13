@@ -7,6 +7,9 @@
 
 import { Flex, Typography } from 'antd';
 
+// CSS 工具函数（参考项目兼容导入路径）
+export { cn } from '@/lib/cn';
+
 import {
   Tag,
   Button,
