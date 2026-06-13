@@ -84,6 +84,21 @@ rsync -av --delete \
   --exclude='node_modules/' \
   --exclude='.next/' \
   --exclude='cache/' \
+  --exclude='dist/' \
+  --exclude='packages/desktop/' \
+  --exclude='*.tiff' \
+  --exclude='*.png' \
+  --exclude='*.jpg' \
+  --exclude='*.jpeg' \
+  --exclude='*.gif' \
+  --exclude='*.webp' \
+  --exclude='*.zip' \
+  --exclude='*.tar' \
+  --exclude='*.gz' \
+  --exclude='*.tgz' \
+  --exclude='*.dmg' \
+  --exclude='*.iso' \
+  --exclude='*.asar' \
   "$SYNC_DIR/" "$TEMP_DIR/"
 
 # 清理远程仓库中已存在的二进制文件（仅在远程清理，不删除本地文件）
