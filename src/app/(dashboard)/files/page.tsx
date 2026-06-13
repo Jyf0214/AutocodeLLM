@@ -460,7 +460,7 @@ export default function FilesPage() {
                 variant="dangerGhost"
                 size="sm"
                 icon={<DeleteOutlined />}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); }}
               />
             </Tooltip>
           </Popconfirm>
@@ -482,20 +482,20 @@ export default function FilesPage() {
                   key: 'file',
                   icon: <FileOutlined />,
                   label: t('newFile'),
-                  onClick: () => openCreate('file'),
+                  onClick: () => { openCreate('file'); },
                 },
                 {
                   key: 'directory',
                   icon: <FolderOutlined />,
                   label: t('newFolder'),
-                  onClick: () => openCreate('directory'),
+                  onClick: () => { openCreate('directory'); },
                 },
               ],
             }}
           >
             <Button icon={<PlusOutlined />}>{t('create')}</Button>
           </Dropdown>
-          <Button icon={<UploadOutlined />} onClick={() => setUploadOpen(true)}>
+          <Button icon={<UploadOutlined />} onClick={() => { setUploadOpen(true); }}>
             {t('upload')}
           </Button>
           <Button icon={<ReloadOutlined />} onClick={() => fetchFiles()}>
@@ -515,7 +515,7 @@ export default function FilesPage() {
                   <span>{t('root')}</span>
                 </Flexbox>
               ),
-              onClick: () => navigateTo('/'),
+              onClick: () => { navigateTo('/'); },
             },
             ...breadcrumbPaths.map((seg) => ({
               title: (
@@ -524,7 +524,7 @@ export default function FilesPage() {
                   <span>{seg.label}</span>
                 </Flexbox>
               ),
-              onClick: () => navigateTo(seg.path),
+              onClick: () => { navigateTo(seg.path); },
             })),
           ]}
         />
@@ -541,11 +541,11 @@ export default function FilesPage() {
               <Button
                 variant="primary"
                 icon={<PlusOutlined />}
-                onClick={() => openCreate('file')}
+                onClick={() => { openCreate('file'); }}
               >
                 {t('newFile')}
               </Button>
-              <Button icon={<FolderOutlined />} onClick={() => openCreate('directory')}>
+              <Button icon={<FolderOutlined />} onClick={() => { openCreate('directory'); }}>
                 {t('newFolder')}
               </Button>
             </Space>
@@ -560,7 +560,7 @@ export default function FilesPage() {
             showSorterTooltip={false}
             rowSelection={{
               selectedRowKeys,
-              onChange: (keys) => setSelectedRowKeys(keys),
+              onChange: (keys) => { setSelectedRowKeys(keys); },
             }}
             onRow={(record) => ({
               onDoubleClick: () => {
@@ -581,7 +581,7 @@ export default function FilesPage() {
         title={createType === 'file' ? t('newFile') : t('newFolder')}
         open={createModalOpen}
         onOk={handleCreate}
-        onCancel={() => setCreateModalOpen(false)}
+        onCancel={() => { setCreateModalOpen(false); }}
         confirmLoading={createLoading}
         okText={t('create')}
         cancelText={t('cancel')}
@@ -593,7 +593,7 @@ export default function FilesPage() {
           <Input
             placeholder={createType === 'file' ? t('fileNamePlaceholder') : t('folderNamePlaceholder')}
             value={createName}
-            onChange={(e) => setCreateName(e.target.value)}
+            onChange={(e) => { setCreateName(e.target.value); }}
             onPressEnter={handleCreate}
             autoFocus
           />
@@ -619,7 +619,7 @@ export default function FilesPage() {
           </Text>
           <Input
             value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
+            onChange={(e) => { setRenameValue(e.target.value); }}
             onPressEnter={handleRename}
             autoFocus
           />
@@ -649,7 +649,7 @@ export default function FilesPage() {
         ) : (
           <Input.TextArea
             value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
+            onChange={(e) => { setEditContent(e.target.value); }}
             rows={20}
             style={{ fontFamily: 'monospace', fontSize: 13, marginTop: 16 }}
             placeholder={t('editPlaceholder')}
@@ -661,7 +661,7 @@ export default function FilesPage() {
       <Modal
         title={t('upload')}
         open={uploadOpen}
-        onCancel={() => setUploadOpen(false)}
+        onCancel={() => { setUploadOpen(false); }}
         footer={null}
       >
         <div ref={uploadRef} style={{ marginTop: 16 }}>

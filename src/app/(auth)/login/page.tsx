@@ -76,7 +76,7 @@ export default function LoginPage() {
     finally { setCodeLoading(false); }
   }, [username, t]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!username.trim()) { message.warning(t('usernameRequired')); return; }
     if (loginMode === 'password' && !password) { message.warning(t('passwordRequired')); return; }
@@ -138,7 +138,7 @@ export default function LoginPage() {
             <button
               key={key}
               type="button"
-              onClick={() => setLoginMode(key)}
+              onClick={() => { setLoginMode(key); }}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                 loginMode === key
                   ? 'shadow-sm bg-white text-zinc-900'
@@ -163,7 +163,7 @@ export default function LoginPage() {
               <input
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => { setUsername(e.target.value); }}
                 placeholder={t('usernamePlaceholder')}
                 className="w-full h-11 pl-10 pr-3 rounded-xl border text-sm outline-none transition-all duration-200 focus:border-zinc-800"
                 style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
@@ -182,7 +182,7 @@ export default function LoginPage() {
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); }}
                   placeholder={t('passwordPlaceholder')}
                   className="w-full h-11 pl-10 pr-3 rounded-xl border text-sm outline-none transition-all duration-200 focus:border-zinc-800"
                   style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
@@ -200,7 +200,7 @@ export default function LoginPage() {
                   <input
                     type="text"
                     value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
+                    onChange={(e) => { setVerificationCode(e.target.value); }}
                     placeholder={t('verificationCodePlaceholder')}
                     maxLength={12}
                     className="w-full h-11 pl-10 pr-3 rounded-xl border text-sm outline-none transition-all duration-200 focus:border-zinc-800"
@@ -218,7 +218,7 @@ export default function LoginPage() {
                     color: countdown > 0 ? 'var(--text-tertiary)' : 'var(--text-primary)',
                   }}
                 >
-                  {codeLoading ? '...' : countdown > 0 ? `${countdown}s` : t('getCode')}
+                  {codeLoading ? '...' : countdown > 0 ? `${String(countdown)}s` : t('getCode')}
                 </button>
               </div>
             </div>

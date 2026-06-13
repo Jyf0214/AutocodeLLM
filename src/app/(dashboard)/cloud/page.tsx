@@ -73,10 +73,10 @@ export default function CloudPage() {
   }
 
   const statusTag = !overview?.sync?.enabled
-    ? <StatusTag color="default">{t('notConfigured')}</StatusTag>
+    ? <StatusTag variant="light">{t('notConfigured')}</StatusTag>
     : overview.sync.watching
-      ? <StatusTag color="success">{t('syncing')}</StatusTag>
-      : <StatusTag color="info">{t('configured')}</StatusTag>;
+      ? <StatusTag variant="success">{t('syncing')}</StatusTag>
+      : <StatusTag variant="light">{t('configured')}</StatusTag>;
 
   return (
     <div className="max-w-4xl mx-auto p-6 md:p-10 animate-fade-in">
@@ -110,10 +110,10 @@ export default function CloudPage() {
       <ProCard className="mb-4">
         <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>{t('quickAccess')}</h3>
         <div className="flex flex-wrap gap-2">
-          <CustomButton variant="primary" icon={<CloudServerOutlined />} onClick={() => router.push('/cloud/webdav')}>
+          <CustomButton variant="primary" icon={<CloudServerOutlined />} onClick={() => { router.push('/cloud/webdav'); }}>
             {t('webdavConfig')}
           </CustomButton>
-          <CustomButton variant="default" icon={<CloudDownloadOutlined />} onClick={() => router.push('/cloud/backups')}>
+          <CustomButton variant="default" icon={<CloudDownloadOutlined />} onClick={() => { router.push('/cloud/backups'); }}>
             {t('backupMonitor')}
           </CustomButton>
         </div>
@@ -129,7 +129,7 @@ export default function CloudPage() {
                 key={ws.projectId}
                 className="flex items-center justify-between gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm border border-transparent hover:border-zinc-200"
                 style={{ background: 'var(--bg-secondary)' }}
-                onClick={() => router.push(`/project/${ws.projectId}/backups`)}
+                onClick={() => { router.push(`/project/${ws.projectId}/backups`); }}
               >
                 <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold text-white"
@@ -142,10 +142,10 @@ export default function CloudPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {ws.status === 'ok'
-                    ? <StatusTag color="success">{t('backedUp')}</StatusTag>
+                    ? <StatusTag variant="success">{t('backedUp')}</StatusTag>
                     : ws.status === 'failed'
-                      ? <StatusTag color="error">{t('backupFailed')}</StatusTag>
-                      : <StatusTag color="default">{t('notBackedUp')}</StatusTag>
+                      ? <StatusTag variant="danger">{t('backupFailed')}</StatusTag>
+                      : <StatusTag variant="light">{t('notBackedUp')}</StatusTag>
                   }
                   <button
                     type="button"
@@ -181,7 +181,7 @@ export default function CloudPage() {
       {/* 备份日志弹窗 */}
       <Modal title={t('backupLogs') || '备份日志'}
         open={backupModalOpen}
-        onCancel={() => setBackupModalOpen(false)}
+        onCancel={() => { setBackupModalOpen(false); }}
         footer={null}
         width={600}
       >
@@ -190,7 +190,7 @@ export default function CloudPage() {
         ) : (
           <div className="flex flex-col max-h-96 overflow-y-auto">
             {backupLogs
-              .filter((log) => overview?.projectBackups?.some((ws) => ws.projectId === log.projectId))
+              .filter((log) => overview?.projectBackups.some((ws) => ws.projectId === log.projectId))
               .slice(0, 20)
               .map((item, i) => (
                 <div key={i} className="flex items-center gap-3 py-2.5 border-b last:border-b-0"

@@ -48,8 +48,8 @@ export interface TagProps {
 /**
  * 自定义标签组件 — 支持 light/emerald/amber/danger 等变体
  */
-export const Tag = memo<TagProps>(({ children, variant, color, size = 'md', className, onClick }) => {
-  const resolvedVariant = variant ?? (color ? (colorToVariant[color] ?? 'light') : 'light');
+export const Tag = memo<TagProps>(({ children, variant, color: _deprecatedColor, size = 'md', className, onClick }) => { // eslint-disable-line @typescript-eslint/no-deprecated
+  const resolvedVariant = variant ?? (_deprecatedColor ? (colorToVariant[_deprecatedColor] ?? 'light') : 'light');
   return (
     <span
       className={cn(

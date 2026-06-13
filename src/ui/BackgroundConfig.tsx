@@ -26,7 +26,7 @@ export default function BackgroundConfig({
         <FormField
           label={urlLabel}
           value={config.url}
-          onChange={v => onChange({ ...config, url: v })}
+          onChange={v => { onChange({ ...config, url: v }); }}
         />
       </div>
       <div>
@@ -38,8 +38,8 @@ export default function BackgroundConfig({
           max={1}
           step={0.05}
           value={config.opacity}
-          onChange={value => onChange({ ...config, opacity: value })}
-          tooltip={{ formatter: (v) => `${Math.round((v ?? 0) * 100)}%` }}
+          onChange={value => { onChange({ ...config, opacity: value }); }}
+          tooltip={{ formatter: (v) => `${String(Math.round((v ?? 0) * 100))}%` }}
         />
       </div>
     </>

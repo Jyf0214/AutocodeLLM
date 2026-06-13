@@ -35,8 +35,8 @@ export default function HomePage() {
     fetch('/api/auth/status')
       .then((res) => res.json())
       .then((data) => { if (data.success) setAuthStatus(data.data); })
-      .catch(() => {})
-      .finally(() => setLoadingAuth(false));
+      .catch(() => {/* ignore */})
+      .finally(() => { setLoadingAuth(false); });
   }, []);
 
   const isLoggedIn = !!authStatus.user;
@@ -47,7 +47,7 @@ export default function HomePage() {
       const res = await fetch('/api/auth/logout', { method: 'POST' });
       if (res.ok) {
         message.success(t('logoutSuccess'));
-        setTimeout(() => window.location.reload(), 500);
+        setTimeout(() => { window.location.reload(); }, 500);
       } else {
         message.error(t('logoutFailed'));
       }

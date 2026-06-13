@@ -24,6 +24,8 @@ export default function ProjectTerminalPage() {
   const [error, setError] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(true);
 
+  const connectTerminalRef = useRef<(() => void) | null>(null);
+
   const connectTerminal = useCallback(() => {
     if (!projectId) return;
 
@@ -92,9 +94,9 @@ export default function ProjectTerminalPage() {
         const attempt = reconnectAttemptRef.current;
         const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
         reconnectAttemptRef.current = attempt + 1;
-        console.log(`[terminal-page] 计划自动重连 (#${attempt + 1})，延迟 ${delay}ms`);
+        console.log(`[terminal-page] 计划自动重连 (#${String(attempt + 1)})，延迟 ${String(delay)}ms`);
         reconnectTimeoutRef.current = setTimeout(() => {
-          connectTerminal();
+          connectTerminalRef.current?.();
         }, delay);
       }
     };
@@ -105,6 +107,11 @@ export default function ProjectTerminalPage() {
       setConnecting(false);
     };
   }, [projectId]);
+
+  // Keep ref in sync so onclose/handlers inside connectTerminal can safely call it again
+  useEffect(() => {
+    connectTerminalRef.current = connectTerminal;
+  });
 
   useEffect(() => {
     if (!projectId || !terminalRef.current) return;
@@ -272,7 +279,7 @@ export default function ProjectTerminalPage() {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
-              onClick={() => router.back()}
+              onClick={() => { router.back(); }}
               style={{
                 display: 'flex',
                 alignItems: 'center',

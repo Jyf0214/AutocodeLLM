@@ -30,6 +30,7 @@ export const MIN_LOADING_DURATION_MS = 400;
  */
 export function runWithMinLoadingDuration(
   setLoading: (loading: boolean) => void,
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   action: () => void | Promise<unknown>,
   minMs: number = MIN_LOADING_DURATION_MS,
 ): void {
@@ -45,7 +46,7 @@ export function runWithMinLoadingDuration(
     if (remaining === 0) {
       setLoading(false);
     } else {
-      setTimeout(() => setLoading(false), remaining);
+      setTimeout(() => { setLoading(false); }, remaining);
     }
   };
 
@@ -84,5 +85,5 @@ export function useAutoLoading(
     );
   }, [isLoading, disabled, autoLoading, isControlled, onClick]);
 
-  return { isLoading, handleClick, showLoading: loading || (autoLoading && internalLoading) };
+  return { isLoading, handleClick, showLoading: loading ?? (autoLoading && internalLoading) };
 }

@@ -28,7 +28,7 @@ function buildTree(items: TocHeading[]): TocNode[] {
       }
     }
     if (stack.length > 0) {
-      stack[stack.length - 1]!.children.push(node);
+      stack[stack.length - 1]?.children.push(node);
     } else {
       root.push(node);
     }
@@ -55,11 +55,11 @@ export function TOC({ content, config, locale }: TOCProps) {
     const result: TocHeading[] = [];
     let match: RegExpExecArray | null;
     while ((match = regex.exec(content)) !== null) {
-      const level = match[1]!.length;
+      const level = match[1]?.length ?? 0;
       // 跳过 h1（通常是文章标题），只处理 h2-h4
       if (level <= 1) continue;
       if (level > 4) continue;
-      const text = match[2]!.replace(/[`*_~\[\]()]/g, '').trim();
+      const text = (match[2] ?? '').replace(/[`*_~[\]()]/g, '').trim();
       const id = slugify(text);
       result.push({ id, text, level });
     }
@@ -97,7 +97,7 @@ export function TOC({ content, config, locale }: TOCProps) {
       <div className="lg:hidden fixed bottom-6 right-6 z-50">
         <details
           open={mobileOpen}
-          onToggle={(e) => setMobileOpen((e.target as HTMLDetailsElement).open)}
+          onToggle={(e) => { setMobileOpen((e.target as HTMLDetailsElement).open); }}
           className="group"
         >
           <summary className="w-12 h-12 bg-white rounded-2xl shadow-lg border border-zinc-100 flex items-center justify-center cursor-pointer list-none text-zinc-500 hover:text-zinc-900 hover:shadow-xl transition-all">

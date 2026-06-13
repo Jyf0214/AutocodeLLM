@@ -3,7 +3,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useTheme } from 'next-themes';
 import {
   HomeOutlined,
   FolderOutlined,
@@ -25,17 +24,10 @@ const MENU_ITEMS = [
   { key: '/account', icon: <UserOutlined />, labelKey: 'common.account' },
 ] as const;
 
-const THEME_MODE_MAP: Record<string, 'auto' | 'light' | 'dark'> = {
-  system: 'auto',
-  light: 'light',
-  dark: 'dark',
-};
-
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations();
-  const { theme, setTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const selectedKey = useMemo(() => {
@@ -60,19 +52,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     [router],
   );
 
-  const handleThemeSwitch = useCallback(
-    (mode: 'auto' | 'light' | 'dark') => {
-      const themeMap: Record<string, string> = { auto: 'system', light: 'light', dark: 'dark' };
-      setTheme(themeMap[mode] ?? 'system');
-    },
-    [setTheme],
-  );
-
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
       {/* 左上角菜单按钮 */}
       <button
-        onClick={() => setDrawerOpen(true)}
+        onClick={() => { setDrawerOpen(true); }}
         aria-label="打开菜单"
         style={{
           position: 'fixed',
@@ -107,7 +91,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Drawer
         placement="left"
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => { setDrawerOpen(false); }}
         size={240}
         closable={false}
         styles={{
@@ -124,7 +108,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           mode="inline"
           items={translatedMenuItems}
           selectedKeys={[selectedKey]}
-          onClick={({ key }) => handleNavigate(key)}
+          onClick={({ key }) => { handleNavigate(key); }}
           style={{ borderInlineEnd: 'none' }}
         />
       </Drawer>

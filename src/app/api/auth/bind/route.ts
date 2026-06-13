@@ -147,7 +147,7 @@ export const POST = withApiLogging('POST auth/bind', async function POST(request
       data: {
         userId: updatedUser.id,
         username: updatedUser.username,
-        role: updatedUser.role || 'user',
+        role: updatedUser.role,
         githubId: updatedUser.githubId,
       },
     });

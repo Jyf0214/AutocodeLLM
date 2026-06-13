@@ -36,7 +36,7 @@ export default function ConfigSection({
       {/* 标题栏：可点击折叠 */}
       <button
         type="button"
-        onClick={() => setOpen(!open)}
+        onClick={() => { setOpen(!open); }}
         className="w-full flex items-center gap-2.5 p-6 pb-0 text-left group"
       >
         {Icon ? (

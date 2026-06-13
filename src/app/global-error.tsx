@@ -148,7 +148,7 @@ export default function GlobalError({
             {error.stack && (
               <>
                 <button
-                  onClick={() => setShowDetail(!showDetail)}
+                  onClick={() => { setShowDetail(!showDetail); }}
                   style={{
                     marginTop: 8,
                     padding: 0,

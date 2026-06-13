@@ -131,7 +131,7 @@ export default function GlobalBackupsPage() {
             type="link"
             size="small"
             icon={<EyeOutlined />}
-            onClick={() => router.push(`/project/${record.projectId}/backups`)}
+            onClick={() => { router.push(`/project/${record.projectId}/backups`); }}
           >
             {t('viewDetails')}
           </Button>

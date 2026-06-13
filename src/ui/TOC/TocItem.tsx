@@ -31,7 +31,7 @@ export function TocItem({
     <ul className={depth === 0 ? TOC_LIST_TOP : TOC_LIST_NESTED}>
       {items.map((item) => {
         counter++;
-        const num = prefix ? `${prefix}.${counter}` : `${counter}`;
+        const num = prefix ? `${prefix}.${String(counter)}` : String(counter);
         const isActive = activeId === item.id;
 
         return (

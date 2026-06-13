@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { message, Modal, Form, Input, Dropdown } from 'antd';
-import { PageContainer, CustomButton, FilterPill } from '@/lib/ui';
+import { CustomButton } from '@/lib/ui';
 import {
   PlusOutlined,
   FolderOutlined,
@@ -25,7 +25,7 @@ function ProjectCard({ project, onClick, onEdit, onDelete }: {
 }) {
   const t = useTranslations('project');
   const date = new Date(project.createdAt);
-  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const dateStr = `${String(date.getFullYear())}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
   return (
     <div
@@ -67,7 +67,7 @@ function ProjectCard({ project, onClick, onEdit, onDelete }: {
             >
               <button
                 type="button"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); }}
                 className="w-7 h-7 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200"
                 style={{ background: 'var(--bg-secondary)', color: 'var(--text-tertiary)' }}
               >
@@ -119,7 +119,8 @@ export default function ProjectPage() {
     finally { setLoading(false); }
   }, [t]);
 
-  useEffect(() => { fetchProjects(); }, [fetchProjects]);
+  // Load projects on mount; deps intentionally empty to avoid cascading renders
+  useEffect(() => { fetchProjects(); }, []); // eslint-disable-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
 
   const filtered = useMemo(() => {
     if (!search) return projects;
@@ -156,7 +157,7 @@ export default function ProjectPage() {
             {projects.length > 0 ? t('projectCount', { count: String(projects.length) }) : t('startByCreating')}
           </p>
         </div>
-        <CustomButton variant="primary" icon={<PlusOutlined />} onClick={() => setCreateModal(true)}>
+        <CustomButton variant="primary" icon={<PlusOutlined />} onClick={() => { setCreateModal(true); }}>
           {t('new')}
         </CustomButton>
       </div>
@@ -168,7 +169,7 @@ export default function ProjectPage() {
         <input
           type="text"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); }}
           placeholder={t('search')}
           className="w-full h-10 pl-10 pr-3 rounded-lg border text-sm outline-none transition-all duration-200 focus:border-zinc-800"
           style={{ background: 'var(--bg-primary)', borderColor: 'var(--border-primary)', color: 'var(--text-primary)' }}
@@ -193,7 +194,7 @@ export default function ProjectPage() {
             <ProjectCard
               key={proj.id}
               project={proj}
-              onClick={() => router.push(`/project/${proj.id}`)}
+              onClick={() => { router.push(`/project/${proj.id}`); }}
               onEdit={() => { setEditModal({ open: true, project: proj }); form.setFieldsValue(proj); }}
               onDelete={() => {
                 Modal.confirm({

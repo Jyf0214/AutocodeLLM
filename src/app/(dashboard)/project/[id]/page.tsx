@@ -136,7 +136,7 @@ export default function ProjectDetailPage() {
         <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 8 }}>{t('loadFailed')}</Text>
         <Text type="secondary">{error ?? t('projectNotExist')}</Text>
         <Flexbox gap={12} justify="center" style={{ marginTop: 24 }}>
-          <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/project')}>{t('backToList')}</Button>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => { router.push('/project'); }}>{t('backToList')}</Button>
            <Button icon={<ReloadOutlined />} onClick={fetchProject}>{t('retry')}</Button>
         </Flexbox>
         </div>
@@ -153,7 +153,7 @@ export default function ProjectDetailPage() {
       {/* 头部 */}
       <div style={{ marginBottom: 32 }}>
         <button
-          onClick={() => router.push('/project')}
+          onClick={() => { router.push('/project'); }}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -233,7 +233,7 @@ export default function ProjectDetailPage() {
         {menuItems.map((item) => (
           <div
             key={item.path}
-            onClick={() => router.push(item.path)}
+            onClick={() => { router.push(item.path); }}
             style={{
               display: 'flex',
               alignItems: 'center',

@@ -59,10 +59,10 @@ export const GET = withApiLogging('GET projects/:id/logs', async function GET(
     const data = logs.map((log) => ({
       id: log.id,
       projectId: log.projectId,
-      type: log.type as 'FUNCTION_CALL' | 'CHAT_MESSAGE',
+      type: log.type,
       functionName: log.functionName,
       summary: log.summary,
-      status: log.status as 'SUCCESS' | 'ERROR' | 'PENDING' | null,
+      status: log.status,
       createdAt: log.createdAt.toISOString(),
     }));
 
@@ -111,10 +111,10 @@ export const POST = withApiLogging('POST projects/:id/logs', async function POST
       {
         id: newLog.id,
         projectId: newLog.projectId,
-        type: newLog.type as 'FUNCTION_CALL' | 'CHAT_MESSAGE',
+        type: newLog.type,
         functionName: newLog.functionName,
         summary: newLog.summary,
-        status: newLog.status as 'SUCCESS' | 'ERROR' | 'PENDING' | null,
+        status: newLog.status,
         createdAt: newLog.createdAt.toISOString(),
       },
       201,

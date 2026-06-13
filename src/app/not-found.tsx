@@ -62,7 +62,7 @@ export default function NotFoundPage() {
         {/* 按钮 */}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => { router.push('/'); }}
             style={{
               height: 40,
               padding: '0 20px',
@@ -82,7 +82,7 @@ export default function NotFoundPage() {
             {t('goHome')}
           </button>
           <button
-            onClick={() => router.back()}
+            onClick={() => { router.back(); }}
             style={{
               height: 40,
               padding: '0 20px',

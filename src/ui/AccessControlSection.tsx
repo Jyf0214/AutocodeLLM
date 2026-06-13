@@ -42,7 +42,7 @@ export default function AccessControlSection({
               </div>
               <Switch
                 checked={publicState}
-                onChange={(checked: boolean) => onToggle(item.key, checked)}
+                onChange={(checked: boolean) => { onToggle(item.key, checked); }}
               />
             </div>
           );

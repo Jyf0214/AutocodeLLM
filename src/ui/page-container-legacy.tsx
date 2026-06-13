@@ -17,8 +17,8 @@ const maxWidthPresets = { lg: 1200, md: 900, sm: 720, full: '100%' } as const;
 const paddingPresets = { default: '32px 16px', compact: '24px 16px' } as const;
 
 export function PageContainer({ children, title, subtitle, extra, maxWidth = 'lg', padding = 'default' }: PageContainerProps & { maxWidth?: keyof typeof maxWidthPresets | number; padding?: keyof typeof paddingPresets }) {
-  const resolvedMaxWidth = typeof maxWidth === 'number' ? maxWidth : maxWidthPresets[maxWidth as keyof typeof maxWidthPresets] ?? 1200;
-  const resolvedPadding = paddingPresets[padding as keyof typeof paddingPresets] ?? '32px 16px';
+  const resolvedMaxWidth = typeof maxWidth === 'number' ? maxWidth : maxWidthPresets[maxWidth];
+  const resolvedPadding = paddingPresets[padding];
   return (
     <div style={{ maxWidth: resolvedMaxWidth, margin: '0 auto', padding: resolvedPadding }}>
       {(title ?? extra) && (

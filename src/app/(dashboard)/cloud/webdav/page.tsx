@@ -207,7 +207,7 @@ export default function WebDAVPage() {
       <Card title={t('serverConfig')} size="small">
         <Button
           icon={<SettingOutlined />}
-          onClick={() => setConfigMode(!configMode)}
+          onClick={() => { setConfigMode(!configMode); }}
         >
           {configMode ? t('cancelConfig') : t('configureServer')}
         </Button>

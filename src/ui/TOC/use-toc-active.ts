@@ -35,7 +35,7 @@ export function useTocActive(headings: HeadingRef[]): string {
       if (el) observer.observe(el);
     }
 
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); };
   }, [headings]);
 
   return activeId;

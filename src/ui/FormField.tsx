@@ -30,7 +30,7 @@ export default function FormField({
         <AntInput.TextArea
           rows={rows}
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => { onChange(e.target.value); }}
           placeholder={placeholder}
         />
       )}
@@ -46,7 +46,7 @@ export default function FormField({
         <Input
           type="text"
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => { onChange(e.target.value); }}
           placeholder={placeholder}
         />
       )}

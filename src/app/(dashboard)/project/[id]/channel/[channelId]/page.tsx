@@ -105,7 +105,7 @@ export default function ChannelChatPage() {
             <Flexbox gap={12} justify="center">
               <Button
                 icon={<ArrowLeftOutlined />}
-                onClick={() => router.push(`/project/${projectId}/channel`)}
+                onClick={() => { router.push(`/project/${projectId}/channel`); }}
               >
                 {t('project.back')}
               </Button>
@@ -133,7 +133,7 @@ export default function ChannelChatPage() {
             <Button
               variant="ghost"
               icon={<ArrowLeftOutlined />}
-              onClick={() => router.push(`/project/${projectId}/channel`)}
+              onClick={() => { router.push(`/project/${projectId}/channel`); }}
             >
               {t('project.back')}
             </Button>

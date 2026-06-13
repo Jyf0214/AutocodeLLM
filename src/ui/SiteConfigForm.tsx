@@ -28,28 +28,28 @@ export default function SiteConfigForm({ config, onChange }: SiteConfigFormProps
       <FormField
         label={t('config.siteTitle')}
         value={config.title}
-        onChange={v => updateField('title', v)}
+        onChange={v => { updateField('title', v); }}
       />
       <FormField
         label={t('config.siteDescription')}
         value={config.description}
-        onChange={v => updateField('description', v)}
+        onChange={v => { updateField('description', v); }}
       />
       <FormField
         label={t('config.heroTitle1')}
         value={config.heroTitleLine1}
-        onChange={v => updateField('heroTitleLine1', v)}
+        onChange={v => { updateField('heroTitleLine1', v); }}
       />
       <FormField
         label={t('config.heroTitle2')}
         value={config.heroTitleLine2}
-        onChange={v => updateField('heroTitleLine2', v)}
+        onChange={v => { updateField('heroTitleLine2', v); }}
       />
       <div>
         <label className="block text-sm font-medium mb-2">{t('config.language')}</label>
         <Select
           value={config.lang}
-          onChange={value => updateField('lang', value)}
+          onChange={value => { updateField('lang', value); }}
           options={[
             { value: 'zh-CN', label: '中文' },
             { value: 'en-US', label: 'English' },

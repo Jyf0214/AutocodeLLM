@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 
-export const POST = withApiLogging('POST auth/logout', async function POST() {
+export const POST = withApiLogging('POST auth/logout', function POST() {
   try {
     const response = NextResponse.json({ success: true });
 

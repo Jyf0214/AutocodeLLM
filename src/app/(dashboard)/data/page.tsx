@@ -104,7 +104,7 @@ export default function DataPage() {
           </Text>
 
           <div style={{ marginBottom: 16 }}>
-            <Radio.Group value={mode} onChange={(e: RadioChangeEvent) => setMode(e.target.value)}>
+            <Radio.Group value={mode} onChange={(e: RadioChangeEvent) => { setMode(e.target.value); }}>
               <Radio.Button value="merge">合并模式</Radio.Button>
               <Radio.Button value="overwrite">覆盖模式</Radio.Button>
             </Radio.Group>

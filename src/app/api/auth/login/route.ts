@@ -147,7 +147,7 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
     const response = successResponse({
       userId: user.id,
       username: user.username,
-      role: user.role || 'admin',
+      role: user.role,
       forceChangePassword: user.forceChangePassword,
     });
 

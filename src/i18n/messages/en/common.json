@@ -8,10 +8,6 @@
     "landing": {
       "subtitle": "AI Coding Agent Platform — Full toolchain for function calling, task agents, file operations, and web search",
       "coreFeatures": "Core Features",
-      "featureAI": {
-        "title": "AI Coding Agent",
-        "desc": "Function calling, task agents, file operations — let AI handle repetitive coding tasks"
-      },
       "cta": {
         "title": "Ready to Get Started?",
         "desc": "Log in to your account and experience the full AI coding agent features",

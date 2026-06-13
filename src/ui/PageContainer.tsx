@@ -28,7 +28,7 @@ export function PageContainer({
   className = '',
 }: PageContainerProps) {
   return (
-    <div className={`flex-1 ${maxWidthMap[maxWidth]} mx-auto w-full ${paddingMap[padding]} ${className}`}>
+    <div className={`flex-1 ${String(maxWidthMap[maxWidth])} mx-auto w-full ${String(paddingMap[padding])} ${className}`}>
       {children}
     </div>
   );

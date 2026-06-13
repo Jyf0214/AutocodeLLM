@@ -92,7 +92,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
+      '@typescript-eslint/no-confusing-void-expression': 'error',
     },
   },
   // 外部库类型豁免：xterm、chokidar、webdav 在 CI --ignore-scripts 下类型无法解析

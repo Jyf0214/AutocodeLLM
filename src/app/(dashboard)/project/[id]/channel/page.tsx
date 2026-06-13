@@ -27,7 +27,7 @@ export default function ChannelPage() {
             <Button
               variant="ghost"
               icon={<ArrowLeftOutlined />}
-              onClick={() => router.push(`/project/${projectId}`)}
+              onClick={() => { router.push(`/project/${projectId}`); }}
             >
               {t('project.back')}
             </Button>

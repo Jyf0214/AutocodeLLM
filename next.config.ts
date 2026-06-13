@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ['node-pty', 'chokidar', 'webdav', 'zlib-sync', '@discordjs/ws', '@discordjs/gateway', '@discordjs/opus', '@discordjs/rest', 'discord.js', 'erlpack', 'tweetnacl', 'tweetnacl-secretspace'],
   allowedDevOrigins: ['surtr-twilight-autocodellm.hf.space'],
-  async headers() {
+  headers() {
     return [
       {
         source: '/(.*)',

@@ -49,7 +49,7 @@ export default function LoadingAnimationConfig({
           <label className="block text-xs font-medium mb-2 text-zinc-500">动画类型</label>
           <Select
             value={config.type}
-            onChange={v => onChange({ ...config, type: v })}
+            onChange={v => { onChange({ ...config, type: v }); }}
             options={loadingTypeOptions}
             style={{ width: '100%' }}
           />
@@ -58,7 +58,7 @@ export default function LoadingAnimationConfig({
           <label className="block text-xs font-medium mb-2 text-zinc-500">颜色</label>
           <ColorPicker
             value={config.color}
-            onChange={(c: Color) => onChange({ ...config, color: c.toHexString() })}
+            onChange={(c: Color) => { onChange({ ...config, color: c.toHexString() }); }}
             showText
           />
         </div>
@@ -67,7 +67,7 @@ export default function LoadingAnimationConfig({
             <label className="block text-xs font-medium mb-2 text-zinc-500">位置</label>
             <Select
               value={config.position}
-              onChange={v => onChange({ ...config, position: v })}
+              onChange={v => { onChange({ ...config, position: v }); }}
               options={positionOptions}
               style={{ width: '100%' }}
             />

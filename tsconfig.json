@@ -48,6 +48,9 @@
   "include": [
     "src/app/**/*.ts",
     "src/app/**/*.tsx",
+    "src/ui/**/*.tsx",
+    "src/ui/**/*.ts",
+    "src/proxy.ts",
     "src/middleware.ts",
     "next.config.ts",
     "next-env.d.ts",
