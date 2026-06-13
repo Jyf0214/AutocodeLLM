@@ -1,0 +1,242 @@
+name: Copyright Header Audit
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  audit:
+    name: Copyright Header Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── Step 1: 检测变更 ────────────────────────────────────────
+      - name: Detect changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            HEAD="${{ github.event.pull_request.head.sha }}"
+          else
+            BASE="$(git rev-parse HEAD^ 2>/dev/null || echo '')"
+            HEAD="HEAD"
+          fi
+
+          mkdir -p /tmp/audit
+          EXT_PAT='\.(ts|tsx|js|jsx|mjs|cjs|py|java|kt|go|rs)$'
+
+          # 所有源文件变更
+          git diff --diff-filter=A --name-only "$BASE" "$HEAD" 2>/dev/null | grep -E "$EXT_PAT" > /tmp/audit/added.txt || true
+          git diff --diff-filter=M --name-only "$BASE" "$HEAD" 2>/dev/null | grep -E "$EXT_PAT" > /tmp/audit/modified.txt || true
+          git diff --diff-filter=R --name-only "$BASE" "$HEAD" 2>/dev/null | grep -E "$EXT_PAT" > /tmp/audit/renamed.txt || true
+          git diff --diff-filter=D --name-only "$BASE" "$HEAD" 2>/dev/null | grep -E "$EXT_PAT" > /tmp/audit/deleted.txt || true
+
+          # 受保护文件（LICENSE / NOTICE）
+          git diff --diff-filter=D --name-only "$BASE" "$HEAD" 2>/dev/null \
+            | grep -E '^(LICENSE|NOTICE)$' > /tmp/audit/protected_del.txt || true
+
+          echo "added=$(wc -l < /tmp/audit/added.txt)" >> "$GITHUB_OUTPUT"
+          echo "modified=$(wc -l < /tmp/audit/modified.txt)" >> "$GITHUB_OUTPUT"
+          echo "renamed=$(wc -l < /tmp/audit/renamed.txt)" >> "$GITHUB_OUTPUT"
+          echo "deleted=$(wc -l < /tmp/audit/deleted.txt)" >> "$GITHUB_OUTPUT"
+
+      # ── Step 2: 检查受保护文件 ──────────────────────────────────
+      - name: Check protected files
+        run: |
+          RC=0
+          if [ -s /tmp/audit/protected_del.txt ]; then
+            echo "❌ 受保护文件被删除！" | tee /tmp/audit/protected_report.txt
+            cat /tmp/audit/protected_del.txt | sed 's/^/  🚫  /' | tee -a /tmp/audit/protected_report.txt
+            RC=1
+          else
+            echo "✅ LICENSE 和 NOTICE 文件完好" > /tmp/audit/protected_report.txt
+          fi
+          echo "exit_code=$RC" >> "$GITHUB_OUTPUT"
+
+      # ── Step 3: 检查新增文件版权头 ──────────────────────────────
+      - name: Check new files
+        run: |
+          MISSING=false
+          rm -f /tmp/audit/new_report.txt
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ ! -f "$file" ] && continue
+
+            head -10 "$file" 2>/dev/null | grep -q "Copyright "  || { MISSING=true; echo "  ⚠️  $file [缺 Copyright]" >> /tmp/audit/new_report.txt; continue; }
+            head -10 "$file" 2>/dev/null | grep -q "SPDX-License-Identifier" || { MISSING=true; echo "  ⚠️  $file [缺 SPDX]" >> /tmp/audit/new_report.txt; }
+          done < /tmp/audit/added.txt
+
+          echo "has_missing=$MISSING" >> "$GITHUB_OUTPUT"
+
+      # ── Step 4: 检查修改文件版权完整性 ──────────────────────────
+      - name: Check modified files
+        run: |
+          REMOVED=false
+          rm -f /tmp/audit/mod_report.txt
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ ! -f "$file" ] && continue
+
+            has_copyright=false; has_spdx=false
+            head -10 "$file" 2>/dev/null | grep -q "Copyright "  && has_copyright=true
+            head -10 "$file" 2>/dev/null | grep -q "SPDX-License-Identifier" && has_spdx=true
+
+            if [ "$has_copyright" = false ] || [ "$has_spdx" = false ]; then
+              REMOVED=true
+              echo -n "  ❌  $file — 版权头被移除！" >> /tmp/audit/mod_report.txt
+              [ "$has_copyright" = false ] && echo -n " [缺 Copyright]" >> /tmp/audit/mod_report.txt
+              [ "$has_spdx" = false ] && echo -n " [缺 SPDX]" >> /tmp/audit/mod_report.txt
+              echo "" >> /tmp/audit/mod_report.txt
+            fi
+          done < /tmp/audit/modified.txt
+
+          echo "has_removed=$REMOVED" >> "$GITHUB_OUTPUT"
+
+      # ── Step 5: 检查重命名文件 ──────────────────────────────────
+      - name: Check renamed files
+        run: |
+          rm -f /tmp/audit/ren_report.txt
+          HAS_ISSUE=false
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ ! -f "$file" ] && continue
+            head -10 "$file" 2>/dev/null | grep -q "Copyright " || {
+              HAS_ISSUE=true
+              echo "  ⚠️  $file — 重命名后版权头丢失" >> /tmp/audit/ren_report.txt
+            }
+          done < /tmp/audit/renamed.txt
+
+          echo "has_issue=$HAS_ISSUE" >> "$GITHUB_OUTPUT"
+
+      # ── Step 6: 生成汇总报告 ────────────────────────────────────
+      - name: Generate summary
+        id: summary
+        run: |
+          IS_ERROR=false
+          IS_WARNING=false
+
+          # 读取各检查结果
+          PROTECTED_OK=true
+          if [ -s /tmp/audit/protected_del.txt ]; then PROTECTED_OK=false; IS_ERROR=true; fi
+
+          NEW_MISSING=false
+          [ -s /tmp/audit/new_report.txt ] && NEW_MISSING=true && IS_WARNING=true
+
+          MOD_REMOVED=false
+          [ -s /tmp/audit/mod_report.txt ] && MOD_REMOVED=true && IS_ERROR=true
+
+          REN_ISSUE=false
+          [ -s /tmp/audit/ren_report.txt ] && REN_ISSUE=true && IS_WARNING=true
+
+          DEL_COUNT=$(wc -l < /tmp/audit/deleted.txt)
+
+          # ── 写到 GITHUB_STEP_SUMMARY ──────────────────────────
+          {
+            echo "## 📋 版权头审计报告"
+            echo ""
+
+            echo "### 🔒 受保护文件"
+            if [ "$PROTECTED_OK" = true ]; then
+              echo "✅ LICENSE 和 NOTICE 文件完好"
+            else
+              echo "❌ **严重**: LICENSE 或 NOTICE 文件被删除！"
+              cat /tmp/audit/protected_del.txt | sed 's/^/  🚫  /'
+            fi
+            echo ""
+
+            if [ "$NEW_MISSING" = true ]; then
+              echo "### 🆕 新增文件版权头缺失（建议添加）"
+              echo '```'
+              cat /tmp/audit/new_report.txt
+              echo '```'
+              echo ""
+            fi
+
+            if [ "$MOD_REMOVED" = true ]; then
+              echo "### 🔴 修改文件版权头丢失（必须修复）"
+              echo '```'
+              cat /tmp/audit/mod_report.txt
+              echo '```'
+              echo ""
+            fi
+
+            if [ "$REN_ISSUE" = true ]; then
+              echo "### 🔄 重命名文件版权检查"
+              echo '```'
+              cat /tmp/audit/ren_report.txt
+              echo '```'
+              echo ""
+            fi
+
+            if [ "$DEL_COUNT" -gt 0 ]; then
+              echo "### 🗑️  删除的源文件（${DEL_COUNT} 个）"
+              echo '```'
+              cat /tmp/audit/deleted.txt | sed 's/^/  📄  /'
+              echo '```'
+              echo ""
+            fi
+
+            echo "### 最终判定"
+            if [ "$IS_ERROR" = true ]; then
+              echo "❌ **构建失败**: 存在必须修复的版权问题"
+            elif [ "$IS_WARNING" = true ]; then
+              echo "⚠️  **通过（有警告）**: 建议补充版权头"
+              echo ""
+              echo "新增文件应包含以下头部："
+              echo '```'
+              echo "/**"
+              echo " * @license"
+              echo " * Copyright 2026 Jyf0214"
+              echo " * SPDX-License-Identifier: Apache-2.0"
+              echo " */"
+              echo '```'
+            else
+              echo "✅ **全部通过**: 所有版权头检查均正常"
+            fi
+
+            echo ""
+            echo "### 统计"
+            echo "| 类型 | 数量 |"
+            echo "|------|:----:|"
+            echo "| 新增 | ${{ steps.changes.outputs.added }} |"
+            echo "| 修改 | ${{ steps.changes.outputs.modified }} |"
+            echo "| 重命名 | ${{ steps.changes.outputs.renamed }} |"
+            echo "| 删除 | ${{ steps.changes.outputs.deleted }} |"
+
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "is_error=$IS_ERROR" >> "$GITHUB_OUTPUT"
+
+      # ── Step 7: 严重错误时阻断 ──────────────────────────────────
+      - name: Fail on critical errors
+        if: steps.summary.outputs.is_error == 'true'
+        run: |
+          echo "❌ 版权检查未通过！"
+          echo ""
+          echo "阻断原因："
+          echo "  (1) LICENSE 或 NOTICE 文件被删除"
+          echo "  (2) 修改过的源文件版权头被移除"
+          echo ""
+          echo "━━━ 版权头正确格式 ━━━"
+          echo "/**"
+          echo " * @license"
+          echo " * Copyright 2026 Jyf0214"
+          echo " * SPDX-License-Identifier: Apache-2.0"
+          echo " */"
+          echo "━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "原有文件保留原版权头（Google LLC / Qwen Team）"
+          exit 1
