@@ -62,43 +62,13 @@ cd "$TEMP_DIR"
 git config user.name "github-actions[bot]"
 git config user.email "github-actions[bot]@users.noreply.github.com"
 
-# 同步文件（排除 .git、.gitignore、README 和 HF 不支持的二进制文件）
+# 同步文件（动态读取 .gitignore 排除规则）
 echo "同步文件..."
 rsync -av --delete \
   --exclude='.git' \
-  --exclude='.gitignore' \
   --exclude='README.md' \
   --exclude='README.*' \
-  --exclude='*.ttf' \
-  --exclude='*.otf' \
-  --exclude='*.woff' \
-  --exclude='*.woff2' \
-  --exclude='*.eot' \
-  --exclude='*.dll' \
-  --exclude='*.exe' \
-  --exclude='*.so' \
-  --exclude='*.dylib' \
-  --exclude='*.pyc' \
-  --exclude='*.pyo' \
-  --exclude='__pycache__/' \
-  --exclude='node_modules/' \
-  --exclude='.next/' \
-  --exclude='cache/' \
-  --exclude='dist/' \
-  --exclude='packages/desktop/' \
-  --exclude='*.tiff' \
-  --exclude='*.png' \
-  --exclude='*.jpg' \
-  --exclude='*.jpeg' \
-  --exclude='*.gif' \
-  --exclude='*.webp' \
-  --exclude='*.zip' \
-  --exclude='*.tar' \
-  --exclude='*.gz' \
-  --exclude='*.tgz' \
-  --exclude='*.dmg' \
-  --exclude='*.iso' \
-  --exclude='*.asar' \
+  --exclude-from='.gitignore' \
   "$SYNC_DIR/" "$TEMP_DIR/"
 
 # 清理远程仓库中已存在的二进制文件（仅在远程清理，不删除本地文件）
