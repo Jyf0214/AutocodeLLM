@@ -1,0 +1,56 @@
+# 依赖
+node_modules/
+
+# 构建产物
+.next/
+out/
+build/
+dist/
+
+# 测试覆盖率
+coverage/
+
+# Prisma
+generated/
+prisma/migrations/
+
+# 缓存
+cache/
+.qwen/
+.agents/
+
+# 配置文件与锁文件
+*.lock
+.env
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+
+# 静态资源
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.svg
+*.ico
+*.bmp
+*.ttf
+*.otf
+*.woff
+*.woff2
+*.eot
+*.dll
+*.exe
+*.so
+*.dylib
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo

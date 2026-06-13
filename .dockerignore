@@ -24,7 +24,6 @@ package-lock.json
 .eslint*
 .lintstagedrc.*
 .prettier*
-tsconfig.json
 vitest.config.ts
 .vscode/
 

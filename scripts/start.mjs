@@ -5,7 +5,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { isDocker, initPersistentDirs } from './init-dirs.mjs';
-import { runDbPush, generatePrismaClient } from './db-push.mjs';
+import { runDbDeploy, generatePrismaClient } from './db-deploy.mjs';
 import { initAdminAccount } from './init-admin.mjs';
 import { webdavRestore } from './webdav-restore.mjs';
 import { startNextServer } from './start-next.mjs';
@@ -42,15 +42,15 @@ console.log('[1/5] 初始化持久化目录...');
 initPersistentDirs();
 console.log('✓ 持久化目录已就绪\n');
 
-// 步骤 2: 数据库同步 + 生成 Prisma 客户端
-console.log('[2/5] 数据库同步...');
+// 步骤 2: 数据库迁移 + 生成 Prisma 客户端
+console.log('[2/5] 数据库迁移...');
 try {
-  await runDbPush();
+  await runDbDeploy();
   generatePrismaClient();
   console.log('');
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
-  console.error(`✗ 数据库同步失败: ${message}`);
+  console.error(`✗ 数据库迁移失败: ${message}`);
   process.exit(1);
 }
 

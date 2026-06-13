@@ -1,6 +1,3 @@
-// AutocodeLLM UI 组件兼容层
-// 参考源库组件 (优先) + antd 别名导出 (避免命名冲突)
-
 'use client';
 
 import React from 'react';
@@ -15,31 +12,28 @@ import {
 } from 'antd';
 
 // ============================================================
-// 参考源库组件 (来自 reference-exports.ts)
-// 这些是经过验证可以正常工作的组件
+// 自定义组件 — 直接导出，不再经过 reference-exports.ts
 // ============================================================
-export {
-  Button,
-  Input,
-  Textarea,
-  Select,
-  Tag,
-  ProCard,
-  PageContainer,
-  EmptyState,
-  FilterPill,
-  ConfigSection,
-  FormField,
-  ToggleField,
-  StatusCard,
-  ButtonGroup,
-  GitHubStatus,
-  HeroBanner,
-  AccessControlSection,
-  SiteConfigForm,
-  BackgroundConfig,
-  LoadingAnimationConfig,
-} from './reference-exports';
+export { default as ConfigSection, type ConfigSectionProps } from './ConfigSection';
+export { default as FormField, type FormFieldProps } from './FormField';
+export { default as ToggleField, type ToggleFieldProps } from './ToggleField';
+export { StatusCard, type StatusCardProps, type StatusType } from './StatusCard';
+export { ButtonGroup, type ButtonGroupProps } from './ButtonGroup';
+export { default as SiteConfigForm } from './SiteConfigForm';
+export { default as LoadingAnimationConfig } from './LoadingAnimationConfig';
+export { default as AccessControlSection } from './AccessControlSection';
+export { default as BackgroundConfig } from './BackgroundConfig';
+export { default as GitHubStatus } from './GitHubStatus';
+export { ProCard, type ProCardProps } from './ProCard';
+export { PageContainer } from './PageContainer';
+export { EmptyState } from './EmptyState';
+export { HeroBanner, type HeroBannerProps, type HeroButton } from './HeroBanner';
+export { Button, type ButtonProps } from './Button';
+export { Input, type InputProps, type InputSize, type InputRounded, type InputRing } from './Input';
+export { Textarea, type TextareaProps, type TextareaSize, type TextareaRounded, type TextareaRing } from './Textarea';
+export { Select, type SelectProps, type SelectSize, type SelectRounded, type SelectRing } from './Select';
+export { Tag, type TagProps } from './Tag';
+export { FilterPill, type FilterPillProps } from './FilterPill';
 
 // TOC
 export { TOC } from './TOC';
