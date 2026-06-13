@@ -21,20 +21,10 @@ fi
 
 # ── 获取待检查文件列表 ────────────────────────────────────
 if [ "$FULL_SCAN" = true ]; then
-  FILE_LIST=$(find . -type f \
-    -not -path './node_modules/*' \
-    -not -path './.opencode/*' \
-    -not -path './.git/*' \
-    -not -path './.next/*' \
-    -not -path './dist/*' \
-    -not -path './.bundle/*' \
-    -not -path './coverage/*' \
-    -not -path './.qwen/*' \
-    -not -path './.gemini/*' \
-    -not -path './vendor/*' \
-    -not -path './third_party/*' \
-    -regextype posix-extended -regex '.*\.(ts|tsx|js|jsx|mjs|cjs|py|java|kt|go|rs)$' \
-    2>/dev/null || true)
+  # 使用 git ls-files 动态识别 .gitignore（比硬编码 find 排除更可靠）
+  FILE_LIST=$(git ls-files --cached --others --exclude-standard \
+    | grep -E '\.(ts|tsx|js|jsx|mjs|cjs|py|java|kt|go|rs)$' \
+    || true)
 else
   FILE_LIST=$(git diff --cached --name-only --diff-filter=ACM \
     | grep -E '\.(ts|tsx|js|jsx|mjs|cjs|py|java|kt|go|rs)$' || true)
