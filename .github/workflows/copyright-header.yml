@@ -16,7 +16,7 @@ permissions:
   pull-requests: write
 
 env:
-  PROTECTED_FILES: "LICENSE NOTICE"
+  PROTECTED_FILES: "LICENSE NOTICE QWEN.md"
   BASELINE_FILE: .github/copyright-audit/baseline.txt
   SRC_EXT: '\.(ts|tsx|js|jsx|mjs|cjs|py|java|kt|go|rs)$'
 
