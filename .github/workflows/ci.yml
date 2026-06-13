@@ -163,7 +163,7 @@ jobs:
           cache: 'npm'
 
       - run: 'npm ci'
-      - uses: 'preactjs/compressed-size-action@efd02c54e9416f3ae1861e5c9f652bb8577edf82' # v2.7.0
+      - uses: 'preactjs/compressed-size-action@55bc26418aac9d1e7ee232255af3e3e9523ba23b' # v2.9.1
         with:
           repo-token: '${{ secrets.GITHUB_TOKEN }}'
           build-script: 'npm run build'
@@ -300,12 +300,12 @@ jobs:
             pkg=$(basename $(dirname $(dirname "$f")))
             echo "::group::Coverage: $pkg"
             python3 -c "
-import json,sys
-d=json.load(open('$f'))['total']
-for k in ['lines','statements','functions','branches']:
-    pct=d[k].get('pct',0)
-    print(f'  $pkg | {k}: {pct:.1f}%')
-" || true
+            import json,sys
+            d=json.load(open('$f'))['total']
+            for k in ['lines','statements','functions','branches']:
+                pct=d[k].get('pct',0)
+                print(f'  $pkg | {k}: {pct:.1f}%')
+            " || true
             echo "::endgroup::"
           done
           echo "has_missing=$MISSING" >> "$GITHUB_OUTPUT"
@@ -342,7 +342,7 @@ for k in ['lines','statements','functions','branches']:
         with:
           persist-credentials: false
 
-      - uses: 'lycheeverse/lychee-action@2b973e86fc7b1f6b36a53795c2b2c1bea2d0c250' # v2.3.0
+      - uses: 'lycheeverse/lychee-action@f613c4a64e50d792e0b31ec34bbcbba12263c6a6' # v2.3.0
         with:
           args: './**/*.md --exclude node_modules --accept 200,503'
           fail: true
