@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { withApiLogging } from '@/lib/log';
+import { requireAuth } from '@/lib/auth';
 import { isWatchActive } from '@/lib/sync/watcher';
 import { getPrisma } from '@/lib/db/get-prisma';
 
@@ -23,8 +24,11 @@ interface CloudOverview {
   projectBackups: ProjectBackupStatus[];
 }
 
-export const GET = withApiLogging('GET cloud/overview', async function GET() {
+export const GET = withApiLogging('GET cloud/overview', async function GET(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
+
     const db = await getPrisma();
     const config = await db.webdavConfig.findFirst();
     const syncStatus: SyncStatus = {
@@ -64,15 +68,9 @@ export const GET = withApiLogging('GET cloud/overview', async function GET() {
       projectBackups,
     };
 
-    return NextResponse.json(
-      { success: true, data: overview },
-      { headers: { 'Cache-Control': 'private, max-age=30' } },
-    );
+    return successResponse(overview, 200, { 'Cache-Control': 'private, max-age=30' });
   } catch (err) {
     console.error('[Cloud/Overview] 获取云服务概览失败:', err);
-    return NextResponse.json(
-      { success: false, error: { message: '获取云服务概览失败', code: 'GET_OVERVIEW_FAILED' } },
-      { status: 500 }
-    );
+    return errorResponse('获取云服务概览失败', 'GET_OVERVIEW_FAILED', 500);
   }
 });

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { withApiLogging } from '@/lib/log';
 import { getAuthConfig } from '@/lib/auth/config';
 import { getSession } from '@/lib/auth';
@@ -39,18 +39,12 @@ export const GET = withApiLogging('GET auth/status', async function GET() {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        availableMethods: config.availableMethods,
-        user,
-      },
+    return successResponse({
+      availableMethods: config.availableMethods,
+      user,
     });
   } catch (err) {
     console.error('[Auth/Status] 获取认证状态失败:', err);
-    return NextResponse.json(
-      { success: false, error: { message: '获取认证状态失败' } },
-      { status: 500 },
-    );
+    return errorResponse('获取认证状态失败', 'AUTH_STATUS_ERROR', 500);
   }
 });

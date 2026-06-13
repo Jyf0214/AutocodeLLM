@@ -5,6 +5,7 @@ import {
   getGitHubUser,
   loginWithGitHubApp,
 } from '@/lib/auth/github';
+import { signUserId } from '@/lib/auth';
 
 /**
  * GET /api/auth/github-app/callback
@@ -53,7 +54,7 @@ export const GET = withApiLogging('GET auth/github-app/callback', async function
     // 已绑定，直接登录
     const response = NextResponse.redirect(new URL('/project', request.url));
 
-    response.cookies.set('userId', result.userId ?? '', {
+    response.cookies.set('userId', signUserId(result.userId ?? ''), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

@@ -4,7 +4,7 @@
  * - API Key 认证
  * - 路由权限守卫
  */
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { getPrisma } from '@/lib/db/get-prisma';
 
@@ -45,9 +45,44 @@ export interface Session {
   role: Role;
 }
 
+const SESSION_SALT = 'autocodellm-session-v1';
+
+/**
+ * 对 userId 进行 HMAC 签名，防止 Cookie 被篡改
+ */
+export function signUserId(userId: string): string {
+  const secret = process.env.AUTH_SECRET || process.env.KEY_VAULTS_SECRET || 'fallback-dev-only';
+  const hmac = createHmac('sha256', secret).update(userId + SESSION_SALT).digest('hex');
+  return `${userId}.${hmac}`;
+}
+
+/**
+ * 验证签名的 Cookie 值，返回原始 userId，无效则返回 null
+ */
+function verifySignedCookie(value: string): string | null {
+  const dot = value.lastIndexOf('.');
+  if (dot === -1) return null;
+  const userId = value.slice(0, dot);
+  const signature = value.slice(dot + 1);
+  const secret = process.env.AUTH_SECRET || process.env.KEY_VAULTS_SECRET || 'fallback-dev-only';
+  const expected = createHmac('sha256', secret)
+    .update(userId + SESSION_SALT).digest('hex');
+  // timingSafeEqual 防止时序攻击
+  if (expected.length !== signature.length) return null;
+  try {
+    return timingSafeEqual(Buffer.from(expected), Buffer.from(signature)) ? userId : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getSession(): Promise<Session | null> {
   const cookieStore = await cookies();
-  const userId = cookieStore.get('userId')?.value;
+  const signedValue = cookieStore.get('userId')?.value;
+  if (!signedValue) return null;
+
+  // 验证签名
+  const userId = verifySignedCookie(signedValue);
   if (!userId) return null;
 
   const db = await getPrisma();

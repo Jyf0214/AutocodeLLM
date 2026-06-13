@@ -5,6 +5,7 @@
  */
 import { NextRequest } from 'next/server';
 import { withApiLogging } from '@/lib/log';
+import { requireAuth } from '@/lib/auth';
 import {
   successResponse,
   errorResponse,
@@ -21,6 +22,9 @@ import { getPrisma } from '@/lib/db/get-prisma';
 /** 获取频道列表 */
 export const GET = withApiLogging('GET channels', async function GET(request: NextRequest) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
+
     const { searchParams } = request.nextUrl;
     const projectId = searchParams.get('projectId');
 

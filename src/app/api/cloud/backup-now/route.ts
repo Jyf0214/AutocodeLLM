@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { withApiLogging } from '@/lib/log';
 import fs from 'fs';
 import path from 'path';
@@ -56,10 +56,7 @@ export const POST = withApiLogging('POST cloud/backup-now', async function POST(
     const { projectId } = body;
 
     if (!projectId) {
-      return NextResponse.json(
-         { success: false, error: { message: '缺少项目 ID' } },
-        { status: 400 },
-      );
+      return errorResponse('缺少项目 ID', 'MISSING_FIELDS', 400);
     }
 
     const db = await getPrisma();
@@ -68,10 +65,7 @@ export const POST = withApiLogging('POST cloud/backup-now', async function POST(
     });
 
     if (!project) {
-      return NextResponse.json(
-         { success: false, error: { message: '项目不存在' } },
-        { status: 404 },
-      );
+      return errorResponse('项目不存在', 'NOT_FOUND', 404);
     }
 
     appendBackupLog({
@@ -93,10 +87,7 @@ export const POST = withApiLogging('POST cloud/backup-now', async function POST(
         status: 'failed',
         message: 'WebDAV 未配置或未启用',
       });
-      return NextResponse.json(
-        { success: false, error: { message: 'WebDAV 未配置或未启用' } },
-        { status: 400 },
-      );
+      return errorResponse('WebDAV 未配置或未启用', 'NOT_CONFIGURED', 400);
     }
 
     // 执行实际备份：将项目数据推送到 WebDAV
@@ -111,10 +102,7 @@ export const POST = withApiLogging('POST cloud/backup-now', async function POST(
         status: 'failed',
         message: 'WebDAV 客户端创建失败',
       });
-      return NextResponse.json(
-        { success: false, error: { message: 'WebDAV 客户端创建失败' } },
-        { status: 500 },
-      );
+      return errorResponse('WebDAV 客户端创建失败', 'CLIENT_CREATE_FAILED', 500);
     }
 
     const localDir = process.env.SYNC_LOCAL_DIR ?? './sync';
@@ -162,25 +150,19 @@ export const POST = withApiLogging('POST cloud/backup-now', async function POST(
       },
     });
 
-    return NextResponse.json({ success: true });
+    return successResponse({});
   } catch (error) {
     console.error('备份请求处理失败:', error);
-    return NextResponse.json(
-      { success: false, error: { message: '请求处理失败' } },
-      { status: 500 },
-    );
+    return errorResponse('请求处理失败', 'REQUEST_FAILED', 500);
   }
 });
 
 export const GET = withApiLogging('GET cloud/backup-now', function GET()  {
   try {
     const logs = readBackupLogs();
-    return NextResponse.json({ success: true, data: logs });
+    return successResponse(logs);
   } catch (error) {
     console.error('获取备份日志失败:', error);
-    return NextResponse.json(
-      { success: false, error: { message: '获取日志失败' } },
-      { status: 500 },
-    );
+    return errorResponse('获取日志失败', 'GET_LOGS_FAILED', 500);
   }
 });

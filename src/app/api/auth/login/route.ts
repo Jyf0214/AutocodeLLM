@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { withApiLogging } from '@/lib/log';
 import { compareSync, hashSync } from 'bcryptjs';
 import { createHash } from 'node:crypto';
 import { verificationCodes } from '@/lib/auth/verification-store';
 import { getPrisma } from '@/lib/db/get-prisma';
+import { signUserId } from '@/lib/auth';
 
 
 // 登录频率限制：Map<IP, { count: number; lastAttempt: number }>
@@ -41,10 +42,7 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
     const { username, password, verificationCode, useVerificationCode } = body;
 
     if (!username) {
-      return NextResponse.json(
-        { success: false, error: { message: '用户名不能为空', code: 'MISSING_FIELDS' } },
-        { status: 400 },
-      );
+      return errorResponse('用户名不能为空', 'MISSING_FIELDS', 400);
     }
 
     // --- 登录频率限制（基于 IP） ---
@@ -54,10 +52,7 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
 
     if (record && now - record.lastAttempt < RATE_LIMIT_WINDOW) {
       if (record.count >= MAX_ATTEMPTS) {
-        return NextResponse.json(
-          { success: false, error: { message: '登录尝试过于频繁，请 5 分钟后再试', code: 'RATE_LIMITED' } },
-          { status: 429 },
-        );
+        return errorResponse('登录尝试过于频繁，请 5 分钟后再试', 'RATE_LIMITED', 429);
       }
     } else if (record) {
       // 超出窗口期，重置计数
@@ -67,34 +62,22 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
     // 验证码登录模式
     if (useVerificationCode) {
       if (!verificationCode) {
-        return NextResponse.json(
-          { success: false, error: { message: '请输入验证码', code: 'MISSING_CODE' } },
-          { status: 400 },
-        );
+        return errorResponse('请输入验证码', 'MISSING_CODE', 400);
       }
 
       const stored = verificationCodes.get(username);
 
       if (!stored) {
-        return NextResponse.json(
-          { success: false, error: { message: '请先获取验证码', code: 'NO_CODE_REQUEST' } },
-          { status: 401 },
-        );
+        return errorResponse('请先获取验证码', 'NO_CODE_REQUEST', 401);
       }
 
       if (Date.now() > stored.expiresAt) {
         verificationCodes.delete(username);
-        return NextResponse.json(
-          { success: false, error: { message: '验证码已过期', code: 'CODE_EXPIRED' } },
-          { status: 401 },
-        );
+        return errorResponse('验证码已过期', 'CODE_EXPIRED', 401);
       }
 
       if (stored.code !== verificationCode) {
-        return NextResponse.json(
-          { success: false, error: { message: '验证码错误', code: 'INVALID_CODE' } },
-          { status: 401 },
-        );
+        return errorResponse('验证码错误', 'INVALID_CODE', 401);
       }
 
       // 验证码验证通过，删除验证码
@@ -107,19 +90,13 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: { message: '用户不存在', code: 'USER_NOT_FOUND' } },
-        { status: 401 },
-      );
+      return errorResponse('用户不存在', 'USER_NOT_FOUND', 401);
     }
 
     // 密码登录模式需要验证密码
     if (!useVerificationCode) {
       if (!password) {
-        return NextResponse.json(
-          { success: false, error: { message: '密码不能为空', code: 'MISSING_PASSWORD' } },
-          { status: 400 },
-        );
+        return errorResponse('密码不能为空', 'MISSING_PASSWORD', 400);
       }
 
       // 使用 bcrypt 验证密码（替代原来的 SHA-256 无盐哈希）
@@ -157,10 +134,7 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
             console.error('[Audit] password audit failed:', err);
           }
 
-          return NextResponse.json(
-            { success: false, error: { message: '密码错误', code: 'INVALID_CREDENTIALS' } },
-            { status: 401 },
-          );
+          return errorResponse('密码错误', 'INVALID_CREDENTIALS', 401);
         }
       }
 
@@ -182,18 +156,15 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
     // 登录成功后重置该 IP 的失败计数
     loginAttempts.delete(ip);
 
-    const response = NextResponse.json({
-      success: true,
-      data: {
-        userId: user.id,
-        username: user.username,
-        role: user.role || 'admin',
-        forceChangePassword: user.forceChangePassword,
-      },
+    const response = successResponse({
+      userId: user.id,
+      username: user.username,
+      role: user.role || 'admin',
+      forceChangePassword: user.forceChangePassword,
     });
 
     // 设置认证 cookie（httpOnly 防止 XSS 窃取、sameSite strict 防止 CSRF）
-    response.cookies.set('userId', user.id, {
+    response.cookies.set('userId', signUserId(user.id), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -204,9 +175,6 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
     return response;
   } catch (err) {
     console.error('[Login] login error:', err);
-    return NextResponse.json(
-      { success: false, error: { message: '登录失败', code: 'LOGIN_ERROR' } },
-      { status: 500 },
-    );
+    return errorResponse('登录失败', 'LOGIN_ERROR', 500);
   }
 });

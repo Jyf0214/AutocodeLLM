@@ -145,6 +145,7 @@ model Project {
   discordBindings DiscordBinding[]
 
   @@index([name])
+  @@index([createdAt])
   @@map("workspaces")
 }
 
@@ -176,8 +177,7 @@ model Backup {
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@index([projectId])
-  @@index([createdAt])
+  @@index([projectId, createdAt])
   @@map("backups")
 }
 
@@ -196,8 +196,7 @@ model ProjectLog {
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@index([projectId])
-  @@index([createdAt])
+  @@index([projectId, createdAt])
   @@map("workspace_logs")
 }
 

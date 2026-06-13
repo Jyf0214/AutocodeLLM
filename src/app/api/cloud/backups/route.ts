@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { successResponse, errorResponse } from '@/lib/api/response';
 import { withApiLogging } from '@/lib/log';
+import { requireAuth } from '@/lib/auth';
 import { getPrisma } from '@/lib/db/get-prisma';
 
 
@@ -12,8 +13,11 @@ interface ProjectBackup {
   backupCount: number;
 }
 
-export const GET = withApiLogging('GET cloud/backups', async function GET() {
+export const GET = withApiLogging('GET cloud/backups', async function GET(request: Request) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) return auth.error;
+
     const db = await getPrisma();
     const projects = await db.project.findMany({
       select: {
@@ -50,12 +54,9 @@ export const GET = withApiLogging('GET cloud/backups', async function GET() {
       };
     });
 
-    return NextResponse.json({ success: true, data: backups });
+    return successResponse(backups);
   } catch (err) {
     console.error('[Cloud/Backups] 获取备份列表失败:', err);
-    return NextResponse.json(
-      { success: false, error: { message: '获取备份列表失败', code: 'GET_BACKUPS_FAILED' } },
-      { status: 500 }
-    );
+    return errorResponse('获取备份列表失败', 'GET_BACKUPS_FAILED', 500);
   }
 });

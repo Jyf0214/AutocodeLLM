@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withApiLogging } from '@/lib/log';
 import { getGitHubAccessToken, getGitHubUser, loginWithGitHub } from '@/lib/auth/github';
+import { signUserId } from '@/lib/auth';
 
 /**
  * GET /api/auth/github/callback
@@ -37,7 +38,7 @@ export const GET = withApiLogging('GET auth/github/callback', async function GET
 
     const response = NextResponse.redirect(new URL('/project', request.url));
 
-    response.cookies.set('userId', result.userId, {
+    response.cookies.set('userId', signUserId(result.userId), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
