@@ -2,11 +2,11 @@ name: CI & Docker
 
 on:
   push:
-    branches: [main]
+    branches: [archive/2026-06-13]
     tags:
       - 'v*'
   pull_request:
-    branches: [main]
+    branches: [archive/2026-06-13]
   workflow_dispatch:
     inputs:
       tag_type:
