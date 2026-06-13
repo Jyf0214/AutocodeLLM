@@ -300,12 +300,12 @@ jobs:
             pkg=$(basename $(dirname $(dirname "$f")))
             echo "::group::Coverage: $pkg"
             python3 -c "
-import json,sys
-d=json.load(open('$f'))['total']
-for k in ['lines','statements','functions','branches']:
-    pct=d[k].get('pct',0)
-    print(f'  $pkg | {k}: {pct:.1f}%')
-" || true
+            import json,sys
+            d=json.load(open('$f'))['total']
+            for k in ['lines','statements','functions','branches']:
+                pct=d[k].get('pct',0)
+                print(f'  $pkg | {k}: {pct:.1f}%')
+            " || true
             echo "::endgroup::"
           done
           echo "has_missing=$MISSING" >> "$GITHUB_OUTPUT"
