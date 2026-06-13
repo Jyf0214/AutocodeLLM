@@ -12,9 +12,6 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { join, dirname, relative, resolve } from 'node:path';
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-const { Minimatch } = require('minimatch');
 
 /* ── 配置 ─────────────────────────────────────────────── */
 
@@ -83,12 +80,63 @@ export function parseGitignore(filePath) {
 }
 
 /**
- * 创建匹配器。对每条规则预编译 Minimatch 实例。
+ * 将 gitignore glob 模式转为正则表达式
+ */
+function globToRegex(pattern, { dot = true, anchored = false } = {}) {
+  let re = '';
+  let i = 0;
+  while (i < pattern.length) {
+    const ch = pattern[i];
+    if (ch === '*') {
+      if (pattern[i + 1] === '*') {
+        // ** - 匹配任意路径
+        re += '.*';
+        i += 2;
+        if (pattern[i] === '/') i++; // 跳过 ** 后面的 /
+      } else {
+        // * - 匹配除 / 外的任意字符
+        re += dot ? '[^/]*' : '[^/.]*';
+        i++;
+      }
+    } else if (ch === '?') {
+      re += dot ? '.' : '[^/.]';
+      i++;
+    } else if (ch === '[') {
+      let cls = '';
+      i++;
+      if (i < pattern.length && pattern[i] === '^') {
+        cls += '^';
+        i++;
+      }
+      while (i < pattern.length && pattern[i] !== ']') {
+        cls += pattern[i] === '.' ? '.' : pattern[i];
+        i++;
+      }
+      i++; // skip ]
+      re += '[' + cls + ']';
+    } else if (ch === '/' || ch === '.') {
+      re += '\\' + ch;
+      i++;
+    } else {
+      re += ch;
+      i++;
+    }
+  }
+  if (anchored) return new RegExp('^' + re + '(?:/.*)?$');
+  // 非锚定：匹配路径任意部分（basename 或完整路径）
+  return new RegExp('(?:^|/)' + re + '(?:/.*)?$');
+}
+
+/**
+ * 创建匹配器。对每条规则预编译正则表达式。
  */
 function compileMatcher(rules) {
   return rules.map((r) => ({
     ...r,
-    mm: new Minimatch(r.pattern, { dot: true, matchBase: !r.anchored }),
+    re: globToRegex(r.pattern, { dot: true, anchored: r.anchored }),
+    reBase: r.anchored
+      ? null
+      : globToRegex(r.pattern, { dot: true, anchored: false }),
   }));
 }
 
@@ -101,25 +149,18 @@ function compileMatcher(rules) {
  */
 export function isIgnored(relPath, isDir, compiled) {
   let ignored = false;
+  const normPath = relPath.replace(/^\//, '');
 
   for (const rule of compiled) {
-    // 目录限定：规则只对目录生效
     if (rule.dirOnly && !isDir) continue;
-
-    // minimatch 的 matchBase 控制是否只匹配 basename
-    // anchored 为 true 时 matchBase=false 需匹配完整路径
-    // anchored 为 false 时 matchBase=true 可匹配任意层级
-    const dotSlashPath = relPath.startsWith('/') ? relPath.slice(1) : relPath;
 
     let matched;
     if (rule.anchored) {
-      matched = rule.mm.match(dotSlashPath);
+      matched = rule.re.test(normPath);
     } else {
-      // 非锚定模式：匹配路径任意部分
-      // Minimatch .match() 在设置 matchBase 时若路径包含 / 也会尝试匹配 basename
-      matched =
-        rule.mm.match(dotSlashPath) ||
-        rule.mm.match(relPath.split('/').pop() || relPath);
+      // 非锚定：匹配完整路径或 basename
+      const base = normPath.split('/').pop() || normPath;
+      matched = rule.re.test(normPath) || rule.re.test(base);
     }
 
     if (matched) {
