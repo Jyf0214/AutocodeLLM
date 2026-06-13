@@ -104,9 +104,9 @@ export default function HomePage() {
 
   // --- Feature cards (uniform width) ---
   const features = (
-    <div className="max-w-5xl mx-auto px-4 pb-24">
+    <div className="max-w-5xl mx-auto px-4 pt-10 pb-24">
       <h2 className="text-2xl font-bold text-center text-gray-900 mb-10">{t('coreFeatures')}</h2>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2">
         {(['projectManagement', 'cloudService'] as const).map((key) => (
           <div key={key} className="border border-gray-200 rounded-xl p-6 hover:border-gray-300 hover:shadow-sm transition-all">
             <h3 className="font-semibold text-gray-900 mb-2">{t(key)}</h3>
@@ -119,7 +119,7 @@ export default function HomePage() {
 
   // --- CTA (only after auth resolved AND user not logged in) ---
   const cta = !loadingAuth && !isLoggedIn ? (
-    <div className="max-w-5xl mx-auto px-4 pb-24">
+    <div className="max-w-5xl mx-auto px-4 pt-10 pb-24">
       <div className="bg-gray-900 rounded-2xl p-12 text-center">
         <h2 className="text-2xl font-bold text-white mb-3">{t('cta.title')}</h2>
         <p className="text-sm text-gray-400 mb-8">{t('cta.desc')}</p>
@@ -144,7 +144,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       {nav}
-      <div className="max-w-5xl mx-auto px-4 py-24 text-center">
+      <div className="max-w-5xl mx-auto px-4 py-16 text-center">
         <h1 className="text-5xl font-bold tracking-tight text-gray-900 mb-4">AutocodeLLM</h1>
         <p className="text-lg text-gray-500 mb-8 max-w-lg mx-auto">{t('subtitle')}</p>
         {heroAction}
