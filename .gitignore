@@ -59,6 +59,9 @@ bundle
 # Desktop app (large binaries)
 packages/desktop/
 
+# Vendor binaries (ripgrep, tree-sitter wasm etc.)
+packages/core/vendor/
+
 # Docker folder to help skip auth refreshes
 .docker
 
