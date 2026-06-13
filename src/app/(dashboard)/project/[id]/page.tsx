@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { message, Modal, Form, Input } from 'antd';
-import { Button, Text, Flexbox } from '@/lib/ui';
+import { Button, Text, Flexbox, PageContainer } from '@/lib/ui';
 import { Skeleton } from 'antd';
 import {
   FolderOutlined,
@@ -122,23 +122,25 @@ export default function ProjectDetailPage() {
 
   if (fetching) {
     return (
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px' }}>
+      <PageContainer maxWidth={720}>
         <Skeleton active paragraph={{ rows: 4 }} />
-      </div>
+      </PageContainer>
     );
   }
 
   if (error || !project) {
     return (
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px', textAlign: 'center' }}>
-        <FolderOutlined style={{ fontSize: 48, color: 'var(--text-tertiary)', marginBottom: 16 }} />
+      <PageContainer maxWidth={720}>
+        <div style={{ textAlign: 'center' }}>
+          <FolderOutlined style={{ fontSize: 48, color: 'var(--text-tertiary)', marginBottom: 16 }} />
         <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 8 }}>{t('loadFailed')}</Text>
         <Text type="secondary">{error ?? t('projectNotExist')}</Text>
         <Flexbox gap={12} horizontal justify="center" style={{ marginTop: 24 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/project')}>{t('backToList')}</Button>
            <Button icon={<ReloadOutlined />} onClick={fetchProject}>{t('retry')}</Button>
         </Flexbox>
-      </div>
+        </div>
+      </PageContainer>
     );
   }
 
@@ -147,7 +149,7 @@ export default function ProjectDetailPage() {
   const fmt = (d: Date) => `${String(d.getFullYear())}/${String(d.getMonth() + 1)}/${String(d.getDate())}`;
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 16px' }}>
+    <PageContainer maxWidth={720}>
       {/* 头部 */}
       <div style={{ marginBottom: 32 }}>
         <button
@@ -297,6 +299,6 @@ export default function ProjectDetailPage() {
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </PageContainer>
   );
 }

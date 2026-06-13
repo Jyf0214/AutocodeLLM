@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button, Form, InputPassword, Text, Alert } from '@/lib/ui';
+import { Button, Form, InputPassword, Text, Alert, PageContainer } from '@/lib/ui';
 import { LockOutlined, SafetyOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { message, Tag, Divider, Card } from 'antd';
@@ -132,8 +132,8 @@ export default function AccountPage() {
   }
 
   return (
-    
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <PageContainer maxWidth={800}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* 页面标题 */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <SafetyOutlined style={{ fontSize: 24, marginRight: 12 }} />
@@ -255,6 +255,6 @@ export default function AccountPage() {
           </Form>
         </Card>
       </div>
-    
+    </PageContainer>
   );
 }

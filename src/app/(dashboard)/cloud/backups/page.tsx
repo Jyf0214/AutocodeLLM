@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, Table, Tag, Button, Spin, Space } from 'antd';
 import { useTranslations } from 'next-intl';
 import { ReloadOutlined, EyeOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { Flexbox, Text, Avatar } from '@/lib/ui';
+import { Flexbox, Text, Avatar, PageContainer } from '@/lib/ui';
 import { useRouter } from 'next/navigation';
 
 interface ProjectBackup {
@@ -149,10 +149,7 @@ export default function GlobalBackupsPage() {
   }
 
   return (
-    <Flexbox gap={16} style={{ flexDirection: 'column', height: '100%', maxHeight: 'calc(100dvh - 64px)', overflowY: 'auto', padding: '0 16px 24px' }}>
-      <Text style={{ fontSize: 20, fontWeight: 700 }}>{t('globalBackupMonitor')}</Text>
-      <Text type="secondary">{t('backupDesc')}</Text>
-
+    <PageContainer title={t('globalBackupMonitor')} subtitle={t('backupDesc')}>
       <Card
         title={t('backupOverview')}
         extra={
@@ -179,6 +176,6 @@ export default function GlobalBackupsPage() {
           />
         )}
       </Card>
-    </Flexbox>
+    </PageContainer>
   );
 }

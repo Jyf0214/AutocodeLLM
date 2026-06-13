@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button, Text, Empty, Modal, Form, Input as LobeInput } from '@/lib/ui';
+import { Button, Text, Empty, Modal, Form, Input as LobeInput, PageContainer } from '@/lib/ui';
 import {
   PlusOutlined,
   EditOutlined,
@@ -335,9 +335,10 @@ export default function SettingPage() {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <Text strong style={{ fontSize: 20 }}>
+    <PageContainer>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <Text strong style={{ fontSize: 20 }}>
           {t('title')}
         </Text>
         <Space wrap>
@@ -475,5 +476,6 @@ export default function SettingPage() {
         </Form>
       </Modal>
     </div>
+    </PageContainer>
   );
 }

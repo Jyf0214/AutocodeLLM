@@ -272,12 +272,27 @@ export const InputPassword: React.FC<InputPasswordProps> = ({ value, onChange, p
 // PageContainer 统一页面容器（黑白极简风）
 // ============================================================
 
+const maxWidthPresets = {
+  lg: 1200,
+  md: 900,
+  sm: 720,
+  full: '100%',
+} as const;
+
+const paddingPresets = {
+  default: '32px 16px 32px',
+  compact: '24px 16px 24px',
+} as const;
+
 export interface PageContainerProps {
   children?: React.ReactNode;
   title?: string;
   subtitle?: string;
   extra?: React.ReactNode;
-  maxWidth?: number;
+  /** maxWidth preset: 'lg' (1200px), 'md' (900px), 'sm' (720px), 'full' (100%), or a custom number */
+  maxWidth?: 'lg' | 'md' | 'sm' | 'full' | number;
+  /** padding preset: 'default' (32px 16px 32px) or 'compact' (24px 16px 24px) */
+  padding?: 'default' | 'compact';
 }
 
 export const PageContainer: React.FC<PageContainerProps> = ({
@@ -285,9 +300,13 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   title,
   subtitle,
   extra,
-  maxWidth = 1200,
-}) => (
-  <div style={{ maxWidth, margin: '0 auto', padding: '32px 16px' }}>
+  maxWidth = 'lg',
+  padding = 'default',
+}) => {
+  const resolvedMaxWidth = typeof maxWidth === 'number' ? maxWidth : maxWidthPresets[maxWidth];
+  const resolvedPadding = paddingPresets[padding];
+  return (
+  <div style={{ maxWidth: resolvedMaxWidth, margin: '0 auto', padding: resolvedPadding }}>
     {(title ?? extra) && (
       <div
         style={{
@@ -330,4 +349,5 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     )}
     {children}
   </div>
-);
+  );
+};

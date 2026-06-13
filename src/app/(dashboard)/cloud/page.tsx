@@ -14,7 +14,7 @@ import {
   CloseCircleOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
-import { Flexbox, Text, Avatar } from '@/lib/ui';
+import { Flexbox, Text, Avatar, PageContainer } from '@/lib/ui';
 
 interface SyncStatus {
   enabled: boolean;
@@ -128,10 +128,7 @@ export default function CloudPage() {
   }
 
   return (
-    <Flexbox gap={16} style={{ flexDirection: 'column', height: '100%', maxHeight: 'calc(100dvh - 64px)', overflowY: 'auto', padding: '0 16px 24px' }}>
-      <Text style={{ fontSize: 20, fontWeight: 700 }}>{t('title')}</Text>
-      <Text type="secondary">{t('description')}</Text>
-
+    <PageContainer title={t('title')} subtitle={t('description')}>
       <Card title={t('webdavSyncStatus')} extra={getSyncStatusTag()} size="small">
         <Space style={{ width: '100%', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
           <Flexbox horizontal justify="space-between" wrap gap={8}>
@@ -196,7 +193,7 @@ export default function CloudPage() {
                       onClick={(e) => openBackupLogs(ws.projectId, e)}
                       title={t('viewLogs') || '查看日志'}
                     />
-                    <RightOutlined style={{ fontSize: 12, color: '#999' }} />
+                    <RightOutlined style={{ fontSize: 12, color: 'var(--text-tertiary)' }} />
                   </Flexbox>
                 </Flexbox>
               </Card>
@@ -226,9 +223,9 @@ export default function CloudPage() {
                 {item.status === 'running' ? (
                   <LoadingOutlined spin style={{ color: 'var(--text-primary)' }} />
                 ) : item.status === 'success' ? (
-                  <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                  <CheckCircleOutlined style={{ color: 'var(--text-primary)' }} />
                 ) : (
-                  <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+                  <CloseCircleOutlined style={{ color: 'var(--text-primary)' }} />
                 )}
                 <Text style={{ flex: 1 }}>{item.projectName}</Text>
                 <Text type="secondary" style={{ fontSize: 12 }}>
@@ -242,6 +239,6 @@ export default function CloudPage() {
           )}
         />
       </Modal>
-    </Flexbox>
+    </PageContainer>
   );
 }

@@ -8,7 +8,7 @@ import {
   CloseCircleOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
-import { Flexbox, Text } from '@/lib/ui';
+import { Flexbox, Text, PageContainer } from '@/lib/ui';
 
 interface SyncStatus {
   enabled: boolean;
@@ -143,10 +143,7 @@ export default function WebDAVPage() {
   }, [status, fetchStatus, t]);
 
   return (
-    <Flexbox gap={16} style={{ flexDirection: 'column', height: '100%', maxHeight: 'calc(100dvh - 64px)', overflowY: 'auto', padding: '0 16px 24px' }}>
-      <Text style={{ fontSize: 20, fontWeight: 700 }}>{t('webdavConfig')}</Text>
-      <Text type="secondary">{t('description')}</Text>
-
+    <PageContainer title={t('webdavConfig')} subtitle={t('description')}>
       <Card
         title={
           <Flexbox horizontal gap={8} align="center">
@@ -197,7 +194,7 @@ export default function WebDAVPage() {
                     width: 8,
                     height: 8,
                     borderRadius: '50%',
-                    background: status?.watching ? '#52c41a' : '#d9d9d9',
+                    background: status?.watching ? 'var(--text-primary)' : 'var(--border-primary)',
                   }}
                 />
                 <Text>{status?.watching ? t('running') : t('stopped')}</Text>
@@ -243,6 +240,6 @@ export default function WebDAVPage() {
           </Form>
         </Card>
       )}
-    </Flexbox>
+    </PageContainer>
   );
 }
