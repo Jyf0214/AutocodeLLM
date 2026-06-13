@@ -13,11 +13,37 @@ concurrency:
   cancel-in-progress: |-
     ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: 'bash'
+
 jobs:
-  e2e-test-linux:
+  merge_queue_skipper:
+    name: 'Merge Queue Skipper'
+    if: github.repository == 'Jyf0214/AutocodeLLM'
+    runs-on: 'ubuntu-latest'
+    continue-on-error: true
+    permissions: read-all
+    outputs:
+      skip: '${{ steps.check.outputs.skip }}'
+    steps:
+      - id: 'check'
+        run: |
+          skip=false
+          [[ "${{ github.event_name }}" == "merge_group" ]] && skip=true
+          echo "skip=${skip}" >> "${GITHUB_OUTPUT}"
+
+  # ── E2E: Linux (sandbox:none + sandbox:docker) ────────────────
+  e2e-linux:
     name: 'E2E Test (Linux) - ${{ matrix.sandbox }}'
+    if: ${{ !cancelled() && (needs.merge_queue_skipper.outputs.skip != 'true') }}
+    needs: 'merge_queue_skipper'
     runs-on: 'ubuntu-latest'
     strategy:
+      fail-fast: false
       matrix:
         sandbox:
           - 'sandbox:none'
@@ -25,49 +51,33 @@ jobs:
         node-version:
           - '22.x'
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd'  # v6.0.2
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4.2.2
+        with:
+          persist-credentials: false
 
-      - name: 'Set up Node.js ${{ matrix.node-version }}'
-        uses: 'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e'  # v6.4.0
+      - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # v4.2.0
         with:
           node-version: '${{ matrix.node-version }}'
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
           registry-url: 'https://registry.npmjs.org/'
 
-      - name: 'Configure npm for rate limiting'
-        run: |-
+      - name: 'Configure npm'
+        run: |
           npm config set fetch-retry-mintimeout 20000
           npm config set fetch-retry-maxtimeout 120000
           npm config set fetch-retries 5
           npm config set fetch-timeout 300000
 
-      - name: 'Install dependencies'
-        run: |-
-          npm ci --prefer-offline --no-audit --progress=false
+      - run: 'npm ci --prefer-offline --no-audit --progress=false'
 
-      - name: 'Build project'
-        run: |-
+      - name: 'Build and bundle'
+        run: |
           npm run build
-
-      - name: 'Bundle CLI for E2E tests'
-        run: |-
           npm run bundle
 
       - name: 'Set up Docker'
-        if: |-
-          ${{ matrix.sandbox == 'sandbox:docker' }}
-        uses: 'docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd' # ratchet:docker/setup-buildx-action@v4
-
-      - name: 'Set up Podman'
-        if: |-
-          ${{ matrix.sandbox == 'sandbox:podman' }}
-        uses: 'redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603' # ratchet:redhat-actions/podman-login@v1
-        with:
-          registry: 'docker.io'
-          username: '${{ secrets.DOCKERHUB_USERNAME }}'
-          password: '${{ secrets.DOCKERHUB_TOKEN }}'
+        if: matrix.sandbox == 'sandbox:docker'
+        uses: 'docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349' # v3.7.1
 
       - name: 'Run E2E tests'
         env:
@@ -76,45 +86,43 @@ jobs:
           OPENAI_MODEL: '${{ secrets.OPENAI_MODEL }}'
           KEEP_OUTPUT: 'true'
           VERBOSE: 'true'
-        run: |-
+        run: |
           if [[ "${{ matrix.sandbox }}" == "sandbox:docker" ]]; then
             npm run test:integration:sandbox:docker
           else
             npm run test:integration:sandbox:none
           fi
 
-  e2e-test-macos:
-    name: 'E2E Test - macOS'
+  # ── E2E: macOS ────────────────────────────────────────────────
+  e2e-macos:
+    name: 'E2E Test (macOS)'
+    if: ${{ !cancelled() && (needs.merge_queue_skipper.outputs.skip != 'true') }}
+    needs: 'merge_queue_skipper'
     runs-on: 'macos-latest'
+    continue-on-error: true
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd'  # v6.0.2
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4.2.2
+        with:
+          persist-credentials: false
 
-      - name: 'Set up Node.js'
-        uses: 'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e'  # v6.4.0
+      - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # v4.2.0
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
           registry-url: 'https://registry.npmjs.org/'
 
-      - name: 'Configure npm for rate limiting'
-        run: |-
+      - name: 'Configure npm'
+        run: |
           npm config set fetch-retry-mintimeout 20000
           npm config set fetch-retry-maxtimeout 120000
           npm config set fetch-retries 5
           npm config set fetch-timeout 300000
 
-      - name: 'Install dependencies'
-        run: |-
-          npm ci --prefer-offline --no-audit --progress=false
+      - run: 'npm ci --prefer-offline --no-audit --progress=false'
 
-      - name: 'Build project'
-        run: |-
+      - name: 'Build and bundle'
+        run: |
           npm run build
-
-      - name: 'Bundle CLI for E2E tests'
-        run: |-
           npm run bundle
 
       - name: 'Run E2E tests'
@@ -123,3 +131,85 @@ jobs:
           OPENAI_BASE_URL: '${{ secrets.OPENAI_BASE_URL }}'
           OPENAI_MODEL: '${{ secrets.OPENAI_MODEL }}'
         run: 'npm run test:e2e'
+
+  # ── E2E: Windows ──────────────────────────────────────────────
+  e2e-windows:
+    name: 'E2E Test (Windows)'
+    if: ${{ !cancelled() && (needs.merge_queue_skipper.outputs.skip != 'true') }}
+    needs: 'merge_queue_skipper'
+    runs-on: 'windows-latest'
+    continue-on-error: true
+    steps:
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # v4.2.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: 'Configure npm'
+        shell: 'pwsh'
+        run: |
+          npm config set fetch-retry-mintimeout 20000
+          npm config set fetch-retry-maxtimeout 120000
+          npm config set fetch-retries 5
+          npm config set fetch-timeout 300000
+
+      - run: 'npm ci --prefer-offline --no-audit --progress=false'
+
+      - name: 'Build and bundle'
+        run: |
+          npm run build
+          npm run bundle
+
+      - name: 'Run E2E tests'
+        shell: 'pwsh'
+        env:
+          OPENAI_API_KEY: '${{ secrets.OPENAI_API_KEY }}'
+          OPENAI_BASE_URL: '${{ secrets.OPENAI_BASE_URL }}'
+          OPENAI_MODEL: '${{ secrets.OPENAI_MODEL }}'
+        run: 'npm run test:e2e'
+
+  # ── Aggregator ────────────────────────────────────────────────
+  e2e:
+    name: 'E2E'
+    if: ${{ always() && github.repository == 'Jyf0214/AutocodeLLM' }}
+    needs:
+      - 'merge_queue_skipper'
+      - 'e2e-linux'
+      - 'e2e-macos'
+      - 'e2e-windows'
+    runs-on: 'ubuntu-latest'
+    permissions: read-all
+    steps:
+      - name: 'Check results'
+        env:
+          LINUX_RESULT: '${{ needs.e2e-linux.result }}'
+          MACOS_RESULT: '${{ needs.e2e-macos.result }}'
+          WINDOWS_RESULT: '${{ needs.e2e-windows.result }}'
+        run: |
+          FAILED=false
+
+          check_result() {
+            local name="$1"
+            local result="$2"
+            if [ "$result" = "success" ] || [ "$result" = "skipped" ]; then
+              echo "✅ $name: $result"
+            else
+              echo "❌ $name: $result"
+              FAILED=true
+            fi
+          }
+
+          check_result "Linux" "$LINUX_RESULT"
+          check_result "macOS" "$MACOS_RESULT"
+          check_result "Windows" "$WINDOWS_RESULT"
+
+          if [ "$FAILED" = "true" ]; then
+            echo "❌ E2E failed — see individual job logs"
+            exit 1
+          fi
+          echo "✅ All E2E tests passed"

@@ -1,6 +1,4 @@
-# .github/workflows/ci.yml
-
-name: 'Qwen Code CI'
+name: 'CI'
 
 on:
   push:
@@ -22,13 +20,10 @@ on:
 
 concurrency:
   group: '${{ github.workflow }}-${{ github.head_ref || github.ref }}'
-  cancel-in-progress: |-
-    ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/heads/release/') }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/heads/release/') }}
 
 permissions:
-  checks: 'write'
-  contents: 'read'
-  statuses: 'write'
+  contents: read
 
 defaults:
   run:
@@ -40,70 +35,47 @@ env:
   YAMLLINT_VERSION: '1.35.1'
 
 jobs:
-  classify_pr:
-    name: 'Classify PR'
-    if: "${{ github.event_name == 'pull_request' }}"
+  # ── Gatekeeper: avoids duplicate runs on merge queue ──────────
+  merge_queue_skipper:
+    name: 'Merge Queue Skipper'
+    if: github.repository == 'Jyf0214/AutocodeLLM'
     runs-on: 'ubuntu-latest'
     continue-on-error: true
+    permissions: read-all
     outputs:
-      skip_ci: '${{ steps.release_sync.outputs.skip_ci }}'
+      skip: '${{ steps.check.outputs.skip }}'
     steps:
-      - name: 'Detect release version-sync PR'
-        id: 'release_sync'
-        env:
-          # Repository variables can override these defaults if release naming
-          # or the CI bot account changes.
-          HEAD_REPO: "${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || '' }}"
-          HEAD_REF: "${{ github.event_name == 'pull_request' && github.head_ref || '' }}"
-          PR_TITLE: "${{ github.event_name == 'pull_request' && github.event.pull_request.title || '' }}"
-          RELEASE_SYNC_HEAD_PREFIX: "${{ vars.RELEASE_SYNC_HEAD_PREFIX || 'release/' }}"
-          RELEASE_SYNC_TITLE_PREFIX: "${{ vars.RELEASE_SYNC_TITLE_PREFIX || 'chore(release):' }}"
-          RELEASE_SYNC_ACTOR: "${{ vars.RELEASE_SYNC_ACTOR || 'qwen-code-ci-bot' }}"
-        run: |-
-          skip_ci=false
-          repo_match=false
-          actor_match=false
-          head_match=false
-          title_match=false
-          [[ "${HEAD_REPO}" == "${GITHUB_REPOSITORY}" ]] && repo_match=true
-          [[ "${GITHUB_ACTOR}" == "${RELEASE_SYNC_ACTOR}" ]] && actor_match=true
-          [[ "${HEAD_REF}" == "${RELEASE_SYNC_HEAD_PREFIX}"* ]] && head_match=true
-          [[ "${PR_TITLE}" == "${RELEASE_SYNC_TITLE_PREFIX}"* ]] && title_match=true
-
-          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" &&
-                "${repo_match}" == "true" &&
-                "${actor_match}" == "true" &&
-                "${head_match}" == "true" &&
-                "${title_match}" == "true" ]]; then
-            skip_ci=true
-            echo "Release sync PR detected: actor=${GITHUB_ACTOR}, head_ref=${HEAD_REF}, title=${PR_TITLE}"
-          else
-            echo "Not a release sync PR: event=${GITHUB_EVENT_NAME}, actor=${GITHUB_ACTOR}, expected_actor=${RELEASE_SYNC_ACTOR}, repo_match=${repo_match}, head_match=${head_match}, title_match=${title_match}"
+      - name: 'Check merge queue context'
+        id: 'check'
+        run: |
+          skip=false
+          if [[ "${{ github.event_name }}" == "merge_group" ]]; then
+            skip=true
+            echo "Merge group event — CI already validated, skip redundant checks"
           fi
+          echo "skip=${skip}" >> "${GITHUB_OUTPUT}"
 
-          echo "skip_ci=${skip_ci}" >> "${GITHUB_OUTPUT}"
-          echo "skip_ci=${skip_ci}"
-
+  # ── Lint: all quality checks serial in one job ────────────────
   lint:
     name: 'Lint'
-    needs: 'classify_pr'
-    if: "${{ !cancelled() && needs.classify_pr.outputs.skip_ci != 'true' }}"
+    needs: 'merge_queue_skipper'
+    if: ${{ !cancelled() && (needs.merge_queue_skipper.outputs.skip != 'true') }}
     runs-on: 'ubuntu-latest'
+    permissions:
+      contents: read
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd' # v6.0.2
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4.2.2
         with:
           ref: '${{ github.event.inputs.branch_ref || github.ref }}'
           fetch-depth: 0
+          persist-credentials: false
 
-      - name: 'Set up Node.js 22.x'
-        uses: 'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e' # v6.4.0
+      - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # v4.2.0
         with:
           node-version: '22.x'
           cache: 'npm'
 
-      - name: 'Install dependencies and run prepare'
-        run: 'npm ci'
+      - run: 'npm ci'
 
       - name: 'Check lockfile'
         run: 'npm run check:lockfile'
@@ -135,6 +107,9 @@ jobs:
       - name: 'Run i18n check'
         run: 'npm run check-i18n'
 
+      - name: 'Check GitHub Actions pinning'
+        run: 'node scripts/lint.js --check-github-actions-pinning'
+
       - name: 'Generate settings schema'
         run: 'npm run generate:settings-schema'
 
@@ -142,154 +117,281 @@ jobs:
         run: |
           if [[ -n $(git status --porcelain packages/vscode-ide-companion/schemas/settings.schema.json) ]]; then
             echo "❌ Error: settings.schema.json is out of date!"
-            echo "   Please run: npm run generate:settings-schema"
+            echo "   Run: npm run generate:settings-schema"
             echo "   Then commit the updated schema file."
             git diff packages/vscode-ide-companion/schemas/settings.schema.json
             exit 1
           fi
           echo "✅ Settings schema is up-to-date"
 
-  #
-  # Test: Node
-  #
+  # ── TypeScript strict typecheck ───────────────────────────────
+  typecheck:
+    name: 'Typecheck'
+    needs: 'merge_queue_skipper'
+    if: ${{ !cancelled() && (needs.merge_queue_skipper.outputs.skip != 'true') }}
+    runs-on: 'ubuntu-latest'
+    steps:
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # v4.2.0
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - run: 'npm ci'
+      - name: 'TypeScript typecheck'
+        run: 'npm run typecheck'
+
+  # ── Bundle size check (PR only) ───────────────────────────────
+  bundle_size:
+    name: 'Bundle Size'
+    needs: 'merge_queue_skipper'
+    if: ${{ !cancelled() && github.event_name == 'pull_request' && needs.merge_queue_skipper.outputs.skip != 'true' }}
+    runs-on: 'ubuntu-latest'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # v4.2.0
+        with:
+          node-version: '22.x'
+          cache: 'npm'
+
+      - run: 'npm ci'
+      - uses: 'preactjs/compressed-size-action@efd02c54e9416f3ae1861e5c9f652bb8577edf82' # v2.7.0
+        with:
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'
+          build-script: 'npm run build'
+
+  # ── Tests: matrix × OS × Node × shard ─────────────────────────
   test:
-    name: 'Test (${{ matrix.os }}, Node ${{ matrix.node-version }})'
-    needs: 'classify_pr'
-    if: "${{ !cancelled() && needs.classify_pr.outputs.skip_ci != 'true' }}"
+    name: 'Test (${{ matrix.os }}, Node ${{ matrix.node-version }}, ${{ matrix.shard }})'
+    needs: 'merge_queue_skipper'
+    if: ${{ !cancelled() && (needs.merge_queue_skipper.outputs.skip != 'true') }}
     runs-on: '${{ matrix.os }}'
     permissions:
-      contents: 'read'
-      checks: 'write'
-      pull-requests: 'write'
+      contents: read
+      checks: write
+      pull-requests: write
     strategy:
-      fail-fast: false # So we can see all test failures
+      fail-fast: false
       matrix:
         include:
-          - os: 'macos-latest'
-            node-version: '22.x'
-            upload-coverage: 'false'
           - os: 'ubuntu-latest'
             node-version: '22.x'
+            shard: 'cli'
             upload-coverage: 'true'
+          - os: 'ubuntu-latest'
+            node-version: '22.x'
+            shard: 'others'
+            upload-coverage: 'true'
+          - os: 'macos-latest'
+            node-version: '22.x'
+            shard: 'cli'
+            upload-coverage: 'false'
+          - os: 'macos-latest'
+            node-version: '22.x'
+            shard: 'others'
+            upload-coverage: 'false'
           - os: 'windows-latest'
             node-version: '22.x'
+            shard: 'cli'
+            upload-coverage: 'false'
+          - os: 'windows-latest'
+            node-version: '22.x'
+            shard: 'others'
             upload-coverage: 'false'
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd' # v6.0.2
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4.2.2
+        with:
+          persist-credentials: false
 
-      - name: 'Set up Node.js ${{ matrix.node-version }}'
-        uses: 'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e' # v6.4.0
+      - uses: 'actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a' # v4.2.0
         with:
           node-version: '${{ matrix.node-version }}'
           cache: 'npm'
-          cache-dependency-path: 'package-lock.json'
           registry-url: 'https://registry.npmjs.org/'
 
       - name: 'Configure npm for rate limiting'
-        run: |-
+        run: |
           npm config set fetch-retry-mintimeout 20000
           npm config set fetch-retry-maxtimeout 120000
           npm config set fetch-retries 5
           npm config set fetch-timeout 300000
 
-      - name: 'Install dependencies'
-        run: |-
-          npm ci --prefer-offline --no-audit --progress=false
+      - run: 'npm ci --prefer-offline --no-audit --progress=false'
 
-      - name: 'Run tests and generate reports'
+      - name: 'Run tests'
         env:
           NO_COLOR: true
-        run: 'npm run test:ci'
+        run: |
+          if [[ "${{ matrix.shard }}" == "cli" ]]; then
+            npm run test:ci --workspace @qwen-code/qwen-code
+          else
+            npm run test:ci --workspaces --if-present --parallel \
+              --workspace @qwen-code/qwen-code-core \
+              --workspace @qwen-code/acp-bridge \
+              --workspace @qwen-code/sdk-typescript \
+              --workspace @qwen-code/webui \
+              --workspace @qwen-code/web-shell
+            npm run test:scripts
+          fi
 
-      - name: 'Publish Test Report (for non-forks)'
-        if: |-
-          ${{ always() && (github.event.pull_request.head.repo.full_name == github.repository) }}
-        uses: 'dorny/test-reporter@dc3a92680fcc15842eef52e8c4606ea7ce6bd3f3' # ratchet:dorny/test-reporter@v2
+      - name: 'Publish Test Report'
+        if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: 'dorny/test-reporter@31a54ee7ebcacc03a09ea97a7e5465a47b84aea5' # v2.0.0
         with:
-          name: 'Test Results (${{ matrix.os }}, Node ${{ matrix.node-version }})'
+          name: 'Test Results (${{ matrix.os }}, Node ${{ matrix.node-version }}, ${{ matrix.shard }})'
           path: 'packages/*/junit.xml'
           reporter: 'java-junit'
           fail-on-error: 'false'
 
-      - name: 'Upload Test Results Artifact (for forks)'
-        if: |-
-          ${{ always() && (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
-        uses: 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a' # v7.0.1
+      - name: 'Upload Test Results Artifact (forks)'
+        if: ${{ always() && github.event.pull_request.head.repo.full_name != github.repository }}
+        uses: 'actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08' # v4.6.0
         with:
-          name: 'test-results-fork-${{ matrix.node-version }}-${{ matrix.os }}'
+          name: 'test-results-${{ matrix.node-version }}-${{ matrix.os }}-${{ matrix.shard }}'
           path: 'packages/*/junit.xml'
 
       - name: 'Upload coverage reports'
-        if: |-
-          ${{ always() && matrix.upload-coverage == 'true' }}
-        uses: 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a' # v7.0.1
+        if: ${{ always() && matrix.upload-coverage == 'true' }}
+        uses: 'actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08' # v4.6.0
         with:
-          name: 'coverage-reports-${{ matrix.node-version }}-${{ matrix.os }}'
+          name: 'coverage-${{ matrix.node-version }}-${{ matrix.os }}-${{ matrix.shard }}'
           path: 'packages/*/coverage'
 
-  post_coverage_comment:
-    name: 'Post Coverage Comment'
+  # ── Coverage PR comment ───────────────────────────────────────
+  coverage:
+    name: 'Coverage Comment'
     runs-on: 'ubuntu-latest'
     needs:
-      - 'classify_pr'
+      - 'merge_queue_skipper'
       - 'test'
-    if: |-
-      ${{
-        always() &&
-        needs.classify_pr.outputs.skip_ci != 'true' &&
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.head.repo.full_name == github.repository
-      }}
+    if: ${{ always() && needs.merge_queue_skipper.outputs.skip != 'true' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
     continue-on-error: true
     permissions:
-      contents: 'read' # For checkout
-      pull-requests: 'write' # For commenting
+      contents: read
+      pull-requests: write
     strategy:
       matrix:
-        # Reduce noise by only posting the comment once
-        os:
-          - 'ubuntu-latest'
-        node-version:
-          - '22.x'
+        os: ['ubuntu-latest']
+        node-version: ['22.x']
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd' # v6.0.2
-
-      - name: 'Download coverage reports artifact'
-        uses: 'actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c' # v8.0.1
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4.2.2
         with:
-          name: 'coverage-reports-${{ matrix.node-version }}-${{ matrix.os }}'
-          path: 'coverage_artifact' # Download to a specific directory
+          persist-credentials: false
 
-      - name: 'Post Coverage Comment using Composite Action'
-        uses: './.github/actions/post-coverage-comment' # Path to the composite action directory
+      - uses: 'actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16' # v4.1.8
         with:
-          cli_json_file: 'coverage_artifact/cli/coverage/coverage-summary.json'
-          core_json_file: 'coverage_artifact/core/coverage/coverage-summary.json'
-          cli_full_text_summary_file: 'coverage_artifact/cli/coverage/full-text-summary.txt'
-          core_full_text_summary_file: 'coverage_artifact/core/coverage/full-text-summary.txt'
-          node_version: '${{ matrix.node-version }}'
-          os: '${{ matrix.os }}'
-          github_token: '${{ secrets.GITHUB_TOKEN }}'
+          name: 'coverage-${{ matrix.node-version }}-${{ matrix.os }}-others'
+          path: 'coverage_artifact'
 
+      - name: 'Generate coverage summary'
+        id: 'coverage_summary'
+        run: |
+          MISSING=false
+          for f in coverage_artifact/*/coverage/coverage-summary.json; do
+            [ -f "$f" ] || { MISSING=true; continue; }
+            pkg=$(basename $(dirname $(dirname "$f")))
+            echo "::group::Coverage: $pkg"
+            python3 -c "
+import json,sys
+d=json.load(open('$f'))['total']
+for k in ['lines','statements','functions','branches']:
+    pct=d[k].get('pct',0)
+    print(f'  $pkg | {k}: {pct:.1f}%')
+" || true
+            echo "::endgroup::"
+          done
+          echo "has_missing=$MISSING" >> "$GITHUB_OUTPUT"
+
+  # ── CodeQL security analysis ──────────────────────────────────
   codeql:
     name: 'CodeQL'
-    needs: 'classify_pr'
-    if: "${{ !cancelled() && needs.classify_pr.outputs.skip_ci != 'true' }}"
+    needs: 'merge_queue_skipper'
+    if: ${{ !cancelled() && (needs.merge_queue_skipper.outputs.skip != 'true') }}
     runs-on: 'ubuntu-latest'
     permissions:
-      actions: 'read'
-      contents: 'read'
-      security-events: 'write'
+      actions: read
+      contents: read
+      security-events: write
     steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd' # v6.0.2
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4.2.2
+        with:
+          persist-credentials: false
 
-      - name: 'Initialize CodeQL'
-        uses: 'github/codeql-action/init@df559355d593797519d70b90fc8edd5db049e7a2' # ratchet:github/codeql-action/init@v3
+      - uses: 'github/codeql-action/init@6a3a83aeea0c7d3e609a9a104525be0873a19329' # v3.26.10
         with:
           languages: 'javascript'
 
-      - name: 'Perform CodeQL Analysis'
-        uses: 'github/codeql-action/analyze@df559355d593797519d70b90fc8edd5db049e7a2' # ratchet:github/codeql-action/analyze@v3
+      - uses: 'github/codeql-action/analyze@6a3a83aeea0c7d3e609a9a104525be0873a19329' # v3.26.10
+
+  # ── Links: broken link checker ────────────────────────────────
+  links:
+    name: 'Link Checker'
+    needs: 'merge_queue_skipper'
+    if: ${{ !cancelled() && (needs.merge_queue_skipper.outputs.skip != 'true') }}
+    runs-on: 'ubuntu-latest'
+    steps:
+      - uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: 'lycheeverse/lychee-action@2b973e86fc7b1f6b36a53795c2b2c1bea2d0c250' # v2.3.0
+        with:
+          args: './**/*.md --exclude node_modules --accept 200,503'
+          fail: true
+
+  # ── Aggregator: single pass/fail for branch protection ────────
+  ci:
+    name: 'CI'
+    if: ${{ always() && github.repository == 'Jyf0214/AutocodeLLM' }}
+    needs:
+      - 'merge_queue_skipper'
+      - 'lint'
+      - 'typecheck'
+      - 'test'
+      - 'codeql'
+      - 'links'
+    runs-on: 'ubuntu-latest'
+    permissions: read-all
+    steps:
+      - name: 'Check results'
+        env:
+          MERGE_SKIP: '${{ needs.merge_queue_skipper.outputs.skip }}'
+          LINT_RESULT: '${{ needs.lint.result }}'
+          TYPECHECK_RESULT: '${{ needs.typecheck.result }}'
+          TEST_RESULT: '${{ needs.test.result }}'
+          CODEQL_RESULT: '${{ needs.codeql.result }}'
+          LINKS_RESULT: '${{ needs.links.result }}'
+        run: |
+          FAILED=false
+
+          check_result() {
+            local name="$1"
+            local result="$2"
+            if [ "$result" = "success" ] || [ "$result" = "skipped" ]; then
+              echo "✅ $name: $result"
+            else
+              echo "❌ $name: $result"
+              FAILED=true
+            fi
+          }
+
+          check_result "Lint" "$LINT_RESULT"
+          check_result "Typecheck" "$TYPECHECK_RESULT"
+          check_result "Test" "$TEST_RESULT"
+          check_result "CodeQL" "$CODEQL_RESULT"
+          check_result "Link Checker" "$LINKS_RESULT"
+
+          if [ "$FAILED" = "true" ]; then
+            echo "❌ CI failed — one or more checks did not pass"
+            exit 1
+          fi
+          echo "✅ All CI checks passed"

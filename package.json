@@ -82,7 +82,8 @@
     "check:desktop-isolation": "node scripts/check-desktop-isolation.js",
     "desktop-openwork-sync": "bun run scripts/desktop-openwork-sync.ts",
     "clean": "node scripts/clean.js",
-    "pre-commit": "node scripts/pre-commit.js"
+    "pre-commit": "node scripts/pre-commit.js",
+    "preflight": "npm run build && npm run typecheck && npm run lint && npm run test:ci && bash scripts/pre-commit-copyright.sh --full-scan"
   },
   "overrides": {
     "ansi-regex": "6.2.2",
