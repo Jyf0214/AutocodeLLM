@@ -65,6 +65,15 @@
     "src/store/userMemory",
     "src/store/aiInfra",
     "src/__tests__",
-    "src/components/_unused_*"
+    "src/components/_unused_*",
+    "src/ui/button/**",
+    "src/ui/empty-state.tsx",
+    "src/ui/filter-pill.tsx",
+    "src/ui/input.tsx",
+    "src/ui/page-container.tsx",
+    "src/ui/pro-card.tsx",
+    "src/ui/tag.tsx",
+    "src/ui/textarea.tsx",
+    "src/ui/reference"
   ]
 }

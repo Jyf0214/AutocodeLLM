@@ -22,6 +22,17 @@ export default tseslint.config(
       // ========== 仍在用但无需额外审查的目录豁免 ==========
       'src/hooks/**',
       'src/lib/**',
+      // ========== 已迁移的旧版 UI 组件（保留供参考，不参与编译检查） ==========
+      'src/ui/button/**',
+      'src/ui/empty-state.tsx',
+      'src/ui/filter-pill.tsx',
+      'src/ui/input.tsx',
+      'src/ui/page-container.tsx',
+      'src/ui/pro-card.tsx',
+      'src/ui/tag.tsx',
+      'src/ui/textarea.tsx',
+      // ========== 参考项目 UI 包（ZhouZBoss-Web 迁移，仅供查看不参与编译） ==========
+      'src/ui/reference/**',
     ],
   },
   js.configs.recommended,

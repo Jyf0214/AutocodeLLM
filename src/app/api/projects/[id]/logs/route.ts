@@ -59,7 +59,7 @@ export const GET = withApiLogging('GET projects/:id/logs', async function GET(
     const data = logs.map((log) => ({
       id: log.id,
       projectId: log.projectId,
-      type: log.type as LogType,
+      type: log.type,
       functionName: log.functionName,
       summary: log.summary,
       status: log.status,
@@ -111,7 +111,7 @@ export const POST = withApiLogging('POST projects/:id/logs', async function POST
       {
         id: newLog.id,
         projectId: newLog.projectId,
-        type: newLog.type as LogType,
+        type: newLog.type,
         functionName: newLog.functionName,
         summary: newLog.summary,
         status: newLog.status,
