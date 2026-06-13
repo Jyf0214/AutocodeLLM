@@ -111,13 +111,14 @@ function attachClientSession(
     if (c) {
       c.delete(ws);
       if (c.size === 0) {
-        console.log('[ws-server] 项目无客户端，清理项目连接:', { projectId });
+        console.log('[ws-server] 项目无客户端，销毁会话:', { projectId });
         projectClients.delete(projectId);
-        // 清理会话监听器标记，防止内存泄漏
+        // 清理会话监听器标记并销毁会话，防止新连接复用已终止的旧会话
         if (destroySession) {
           const session = findSessionByProject!(projectId);
           if (session) {
             sessionListenersAttached.delete(session.id);
+            destroySession(session.id); // 关键: 销毁会话
           }
         }
       }

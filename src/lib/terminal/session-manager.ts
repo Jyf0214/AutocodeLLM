@@ -107,6 +107,14 @@ class SpawnTerminal implements ITerminal {
 
     this.pid = this.process.pid ?? 0;
 
+    // spawn 模式无真实 PTY，通过 stty 设置终端尺寸
+    // 确保 ls 等命令按正确宽度换行
+    setTimeout(() => {
+      if (this.process.stdin?.writable) {
+        this.process.stdin.write(`stty rows ${rows} cols ${cols}\n`);
+      }
+    }, 100);
+
     // 转发 stdout
     this.process.stdout?.on('data', (chunk: Buffer) => {
       const data = chunk.toString();
@@ -160,9 +168,11 @@ class SpawnTerminal implements ITerminal {
   resize(cols: number, rows: number): void {
     this.cols = cols;
     this.rows = rows;
-    // spawn 无 PTY，内核无法自动更新窗口尺寸。
-    // 发送 SIGWINCH 通知 bash 重新查询终端尺寸，
-    // bash 会在下一个提示符前尝试 checkwinsize。
+    // spawn 模式无 PTY，通过 stty 命令设置行列数
+    // 这样 ls 等命令才能按正确宽度换行
+    if (this.process.stdin?.writable) {
+      this.process.stdin.write(`stty rows ${rows} cols ${cols}\n`);
+    }
     try {
       this.process.kill('SIGWINCH');
     } catch {
