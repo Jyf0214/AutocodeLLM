@@ -69,5 +69,9 @@ RUN npm install -g /tmp/*.tgz \
   && npm cache clean --force \
   && rm -rf /tmp/*.tgz
 
-# Default entrypoint when none specified
-CMD ["qwen"]
+# 复制 WebDAV 同步脚本到镜像
+COPY scripts/webdav-sync.js /usr/local/lib/autocodellm/webdav-sync.js
+COPY scripts/webdav-entry.js /usr/local/lib/autocodellm/webdav-entry.js
+
+# 入口：WebDAV 同步 + Token 校验 + qwen serve
+CMD ["node", "/usr/local/lib/autocodellm/webdav-entry.js"]

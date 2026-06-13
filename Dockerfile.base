@@ -1,0 +1,63 @@
+# AutocodeLLM 基础镜像
+# 安装所有系统依赖和运行时环境
+
+FROM node:24-slim AS base
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装系统依赖（包含笔记中要求的全部工具）
+RUN apt-get update && apt-get install -y sudo \
+    build-essential \
+  pkg-config \
+    # node-pty vte 依赖（可选但推荐）
+    libvte-2.91-dev \
+    # Python 3.13
+    python3-full \
+    python3-pip \
+    pipx \
+    # Go
+    golang-go \
+    # PHP 8.0+
+    php-cli \
+    # Rust
+    rustc \
+    cargo \
+    # Git + OpenSSH/SSL
+    git \
+    openssh-client \
+    openssl \
+    # rclone
+    rclone \
+    # 通用工具
+    wget \
+    curl \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+USER node
+# 安装 Bun（使用官方推荐方式，全局安装）
+RUN curl -fsSL https://bun.sh/install | bash
+
+USER root
+# 创建符号链接使所有用户都能使用 bun 和 bunx
+RUN ln -s /home/node/.bun/bin/bun /usr/local/bin/bun && \
+    ln -s /home/node/.bun/bin/bunx /usr/local/bin/bunx
+
+# 安装 nvm（Node 版本管理器）
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+ENV NVM_DIR="~/.nvm"
+
+# 配置 pipx 全局路径
+ENV PIPX_HOME=/usr/local/pipx
+ENV PIPX_BIN_DIR=/usr/local/bin
+
+USER root
+# 安装 Playwright 依赖
+RUN npx playwright install-deps
+
+# 确保所有工具对 uid 1000 可用
+RUN chown -R 1000:1000 /app
+
+# 标记此镜像为基础镜像
+ENV BASE_IMAGE=true
