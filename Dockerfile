@@ -66,6 +66,9 @@ COPY --from=builder /app/postcss.config.mjs ./postcss.config.mjs
 # ── Step 4: 复制 Prisma schema（启动时用于 db push / generate）──────────────
 COPY --from=builder /app/prisma       ./prisma
 
+# ── Step 4b: 生成 Prisma Client（依赖 node_modules 和 prisma schema）────────
+RUN bunx prisma generate
+
 # ── Step 5: 复制 TypeScript 源文件（server.ts 通过 @/ 别名运行时引用）─────
 COPY --from=builder /app/src          ./src
 COPY --from=builder /app/tsconfig.json     ./tsconfig.json
