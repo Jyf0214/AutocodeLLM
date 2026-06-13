@@ -13,7 +13,6 @@ package-lock.json
 # CI/测试
 .github/
 .husky/
-.huskyignore
 
 # 环境文件
 .env
@@ -35,7 +34,6 @@ vitest.config.ts
 .qwen/
 
 # 文档
-docs/
 QWEN.md
 PROJECT.md
 
