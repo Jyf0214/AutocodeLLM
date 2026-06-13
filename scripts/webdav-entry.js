@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * @license
+ * Copyright 2026 Jyf0214
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/**
  * AutocodeLLM Docker 入口点
  *
  * 职责：
@@ -9,34 +14,34 @@
  * 4. 启动 qwen serve --token $QWEN_SERVER_TOKEN
  */
 
-import { existsSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
-import { spawn } from "node:child_process";
+import { existsSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { spawn } from 'node:child_process';
 import {
   getConfig,
   getLatestBackup,
   downloadDir,
   uploadDir,
   generateBackupName,
-} from "./webdav-sync.js";
+} from './webdav-sync.js';
 
-const QWEN_DIR = join(homedir(), ".qwen");
+const QWEN_DIR = join(homedir(), '.qwen');
 const SYNC_INTERVAL = 10 * 60 * 1000; // 10 分钟
 
 /* ── Step 1: 验证 Token ───────────────────────────────── */
 
 function validateToken() {
   const token = process.env.QWEN_SERVER_TOKEN;
-  if (!token || token.trim() === "") {
-    console.error("");
-    console.error("❌ 错误: QWEN_SERVER_TOKEN 环境变量未设置！");
-    console.error("");
-    console.error("  请设置一个 Bearer token 用于 API 鉴权：");
-    console.error("    export QWEN_SERVER_TOKEN=your-secret-token");
-    console.error("  或在 docker run 时传入：");
-    console.error("    -e QWEN_SERVER_TOKEN=your-secret-token");
-    console.error("");
+  if (!token || token.trim() === '') {
+    console.error('');
+    console.error('❌ 错误: QWEN_SERVER_TOKEN 环境变量未设置！');
+    console.error('');
+    console.error('  请设置一个 Bearer token 用于 API 鉴权：');
+    console.error('    export QWEN_SERVER_TOKEN=your-secret-token');
+    console.error('  或在 docker run 时传入：');
+    console.error('    -e QWEN_SERVER_TOKEN=your-secret-token');
+    console.error('');
     process.exit(1);
   }
   return token.trim();
@@ -46,14 +51,14 @@ function validateToken() {
 
 async function restoreFromWebDAV() {
   if (!getConfig()) {
-    console.log("[entry] WebDAV 未配置，跳过远程恢复");
+    console.log('[entry] WebDAV 未配置，跳过远程恢复');
     return false;
   }
 
   try {
     const latestDir = await getLatestBackup();
     if (!latestDir) {
-      console.log("[entry] 远程没有找到备份，跳过恢复");
+      console.log('[entry] 远程没有找到备份，跳过恢复');
       return false;
     }
 
@@ -63,14 +68,16 @@ async function restoreFromWebDAV() {
     const result = await downloadDir(latestDir, QWEN_DIR);
 
     if (result.files > 0) {
-      console.log(`[entry] ✅ 已恢复 ${result.files} 个文件, ${result.dirs} 个目录`);
+      console.log(
+        `[entry] ✅ 已恢复 ${result.files} 个文件, ${result.dirs} 个目录`,
+      );
     } else {
-      console.log("[entry] 远程备份为空目录，跳过恢复");
+      console.log('[entry] 远程备份为空目录，跳过恢复');
     }
     return true;
   } catch (err) {
-    console.error("[entry] WebDAV 恢复失败:", err.message);
-    console.error("[entry] 将继续启动，不恢复远程数据");
+    console.error('[entry] WebDAV 恢复失败:', err.message);
+    console.error('[entry] 将继续启动，不恢复远程数据');
     return false;
   }
 }
@@ -82,13 +89,13 @@ let isSyncing = false;
 
 async function syncToWebDAV() {
   if (isSyncing) {
-    console.log("[webdav] 上一次同步尚未完成，跳过本次");
+    console.log('[webdav] 上一次同步尚未完成，跳过本次');
     return;
   }
 
   if (!getConfig()) return;
   if (!existsSync(QWEN_DIR)) {
-    console.log("[webdav] ~/.qwen 目录不存在，跳过同步");
+    console.log('[webdav] ~/.qwen 目录不存在，跳过同步');
     return;
   }
 
@@ -98,7 +105,9 @@ async function syncToWebDAV() {
 
   try {
     const result = await uploadDir(QWEN_DIR, name);
-    console.log(`[webdav] ✅ 同步完成: ${result.files} 文件, ${result.dirs} 目录 → ${name}`);
+    console.log(
+      `[webdav] ✅ 同步完成: ${result.files} 文件, ${result.dirs} 目录 → ${name}`,
+    );
   } catch (err) {
     console.error(`[webdav] ❌ 同步失败:`, err.message);
   } finally {
@@ -129,40 +138,43 @@ function stopPeriodicSync() {
 function startQwenServe(token) {
   return new Promise((resolve, reject) => {
     const args = [
-      "serve",
-      "--port", "4170",
-      "--token", token,
-      "--require-auth",
-      "--hostname", "0.0.0.0",
+      'serve',
+      '--port',
+      '4170',
+      '--token',
+      token,
+      '--require-auth',
+      '--hostname',
+      '0.0.0.0',
     ];
 
-    console.log(`[entry] 启动 qwen ${args.join(" ")}`);
+    console.log(`[entry] 启动 qwen ${args.join(' ')}`);
 
-    const child = spawn("qwen", args, {
-      stdio: "inherit",
+    const child = spawn('qwen', args, {
+      stdio: 'inherit',
       env: { ...process.env },
     });
 
-    child.on("error", (err) => {
-      console.error("[entry] ❌ 启动 qwen 失败:", err.message);
+    child.on('error', (err) => {
+      console.error('[entry] ❌ 启动 qwen 失败:', err.message);
       reject(err);
     });
 
-    child.on("close", (code) => {
+    child.on('close', (code) => {
       console.log(`[entry] qwen 进程退出，code=${code}`);
       resolve(code);
     });
 
     // 捕获退出信号，先同步再退出
     const shutdown = async () => {
-      console.log("[entry] 收到退出信号，执行最后一次同步...");
+      console.log('[entry] 收到退出信号，执行最后一次同步...');
       stopPeriodicSync();
       await syncToWebDAV().catch(() => {});
       child.kill();
     };
 
-    process.on("SIGTERM", shutdown);
-    process.on("SIGINT", shutdown);
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
   });
 }
 
@@ -171,7 +183,7 @@ function startQwenServe(token) {
 async function main() {
   try {
     const token = validateToken();
-    console.log("[entry] ✅ Token 验证通过");
+    console.log('[entry] ✅ Token 验证通过');
 
     // 从 WebDAV 恢复
     await restoreFromWebDAV();
@@ -183,13 +195,13 @@ async function main() {
     const exitCode = await startQwenServe(token);
 
     // qwen 退出后做一次最终同步
-    console.log("[entry] qwen 已退出，执行最终同步...");
+    console.log('[entry] qwen 已退出，执行最终同步...');
     stopPeriodicSync();
     await syncToWebDAV().catch(() => {});
 
     process.exit(exitCode ?? 0);
   } catch (err) {
-    console.error("[entry] ❌ 致命错误:", err.message);
+    console.error('[entry] ❌ 致命错误:', err.message);
     process.exit(1);
   }
 }
