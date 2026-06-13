@@ -94,19 +94,9 @@ jobs:
             echo "⚠️  基线文件不存在，将跳过归属一致性检查"
           fi
 
-          find . -type f \
-            -not -path './node_modules/*' \
-            -not -path './.opencode/*' \
-            -not -path './.git/*' \
-            -not -path './.next/*' \
-            -not -path './dist/*' \
-            -not -path './.bundle/*' \
-            -not -path './coverage/*' \
-            -not -path './.qwen/*' \
-            -not -path './.gemini/*' \
-            -not -path './vendor/*' \
-            -not -path './third_party/*' \
-            -regextype posix-extended -regex ".*$SRC_EXT" \
+          # 使用 git ls-files 动态识别 .gitignore（比硬编码 find 排除更可靠）
+          git ls-files --cached --others --exclude-standard \
+            | grep -E "$SRC_EXT" \
             > /tmp/audit/all_src.txt
 
           TOTAL=$(wc -l < /tmp/audit/all_src.txt)
