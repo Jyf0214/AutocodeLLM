@@ -1,5 +1,5 @@
 import { type ReactNode, memo } from 'react';
-import { cn } from '@/lib/ui';
+import { cn } from '@/lib/cn';
 
 type TagVariant = 'light' | 'dark' | 'outline' | 'emerald' | 'amber' | 'danger' | 'success' | 'warning';
 type TagSize = 'xs' | 'sm' | 'md' | 'lg';

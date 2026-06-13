@@ -208,6 +208,26 @@
 
 ---
 
+## 🛡️ 强制规则（不可违反）
+
+### 每轮必须调用 GitHub CLI
+
+任何涉及远程的操作后，必须立即用 `gh` 命令检查状态：
+- 提交推送后：`gh run list` 查看 CI 是否触发
+- CI 失败后：`gh run view --log-failed` 获取失败原因
+- 处理 PR/Issue：用 `gh pr` / `gh issue`
+
+### 排查根因优先，禁止降级替代修复
+
+CI 失败时的排查顺序：
+1. 本地执行和 CI 执行的是同一个命令吗？（检查 `package.json` scripts）
+2. CI 工作流 `.github/workflows/*.yml` 的执行步骤顺序是否正确？
+3. 依赖生成步骤（prisma generate、postinstall）是否在编译检查之前？
+4. 找到根本差异后修复 CI 配置，而非用 eslint-disable / as Type 掩盖
+5. 修复后必须清理之前加的所有临时回退代码
+
+---
+
 ## 🚀 并行 Agent 最大化规则
 
 始终充分利用并行 Agent 能力（上限 10 个并发），绝不空闲等待。

@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, forwardRef } from 'react';
-import { cn } from '@/lib/ui';
+import { cn } from '@/lib/cn';
 import type { ButtonProps, ButtonVariant, ButtonSize, ButtonRounded } from './button-types';
 import { variantStyles, sizePadding, iconOnlySize, roundedStyles, BASE_BUTTON_CLASSES } from './button-styles';
 import { useAutoLoading } from './use-auto-loading';

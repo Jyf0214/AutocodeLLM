@@ -1,5 +1,5 @@
 import { type ReactNode, memo } from 'react';
-import { cn } from '@/lib/ui';
+import { cn } from '@/lib/cn';
 
 export interface ProCardProps {
   title?: ReactNode;
