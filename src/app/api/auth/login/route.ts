@@ -1,5 +1,5 @@
 import { successResponse, errorResponse } from '@/lib/api/response';
-import { withApiLogging } from '@/lib/log';
+import { withApiLogging, logPasswordAudit } from '@/lib/log';
 import { compareSync, hashSync } from 'bcryptjs';
 import { createHash } from 'node:crypto';
 import { verificationCodes } from '@/lib/auth/verification-store';
@@ -121,36 +121,24 @@ export const POST = withApiLogging('POST auth/login', async function POST(reques
           }
 
           // 记录审计日志（仅记录 userId/action/success/message，不记录哈希值）
-          try {
-            await db.passwordAudit.create({
-              data: {
-                userId: user.id,
-                action: 'LOGIN_FAILED',
-                success: false,
-                message: '密码错误',
-              },
-            });
-          } catch (err) {
-            console.error('[Audit] password audit failed:', err);
-          }
+          await logPasswordAudit(db, {
+            userId: user.id,
+            action: 'LOGIN_FAILED',
+            success: false,
+            message: '密码错误',
+          });
 
           return errorResponse('密码错误', 'INVALID_CREDENTIALS', 401);
         }
       }
 
       // 记录登录成功（仅记录 userId/action/success/message，不记录哈希值）
-      try {
-        await db.passwordAudit.create({
-          data: {
-            userId: user.id,
-            action: 'LOGIN_SUCCESS',
-            success: true,
-            message: '登录成功',
-          },
-        });
-      } catch (err) {
-        console.error('[Audit] password audit failed:', err);
-      }
+      await logPasswordAudit(db, {
+        userId: user.id,
+        action: 'LOGIN_SUCCESS',
+        success: true,
+        message: '登录成功',
+      });
     }
 
     // 登录成功后重置该 IP 的失败计数

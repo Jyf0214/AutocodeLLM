@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { withApiLogging } from '@/lib/log';
+import { withApiLogging, logPasswordAudit } from '@/lib/log';
 import { hashSync } from 'bcryptjs';
 import { requireAuth } from '@/lib/auth';
 import { getPrisma } from '@/lib/db/get-prisma';
@@ -55,18 +55,12 @@ export const POST = withApiLogging('POST auth/change-password', async function P
     });
 
     // 记录密码修改审计日志（仅记录 userId/action/success/message，不记录哈希值）
-    try {
-      await db.passwordAudit.create({
-        data: {
-          userId,
-          action: 'PASSWORD_CHANGED',
-          success: true,
-          message: '密码已修改',
-        },
-      });
-    } catch (err) {
-      console.error('[Audit] password audit failed:', err);
-    }
+    await logPasswordAudit(db, {
+      userId,
+      action: 'PASSWORD_CHANGED',
+      success: true,
+      message: '密码已修改',
+    });
 
     return NextResponse.json({
       success: true,

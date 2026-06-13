@@ -11,7 +11,10 @@ import {
   errorResponse,
   handleError,
 } from '@/lib/api/response';
-import type { LogType } from '@prisma/client';
+
+/** LogType 枚举值 */
+type LogType = 'FUNCTION_CALL' | 'CHAT_MESSAGE';
+
 import type {
   ProjectLogListResponse,
   ProjectLogResponse,

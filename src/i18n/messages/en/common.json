@@ -8,6 +8,10 @@
     "landing": {
       "subtitle": "AI Coding Agent Platform — Full toolchain for function calling, task agents, file operations, and web search",
       "coreFeatures": "Core Features",
+      "featureAI": {
+        "title": "AI Coding Agent",
+        "desc": "Function calling, task agents, file operations — let AI handle repetitive coding tasks"
+      },
       "cta": {
         "title": "Ready to Get Started?",
         "desc": "Log in to your account and experience the full AI coding agent features",
@@ -18,7 +22,11 @@
       "enterProject": "Enter Project",
       "logoutSuccess": "Logged out successfully",
       "logoutFailed": "Logout failed, please try again",
-      "startNow": "Get Started"
+      "startNow": "Get Started",
+      "projectManagement": "Project Management",
+      "projectManagementDesc": "Create and manage your coding projects with toolchain and collaboration",
+      "cloudService": "Cloud Services",
+      "cloudServiceDesc": "Sync, backup, and cloud storage management for data security"
     }
   },
   "login": {
@@ -142,6 +150,7 @@
     "projectBackupStatus": "Project Backup Status",
     "backedUp": "Backed up",
     "backupFailed": "Backup failed",
+    "backupLogs": "Backup Logs",
     "notBackedUp": "Not backed up",
     "noProjectData": "No project data",
     "connectionStatus": "Connection Status",
@@ -167,6 +176,7 @@
     "backupDesc": "View all project backup status (read-only)",
     "refresh": "Refresh",
     "noBackupData": "No backup data",
+    "noLogs": "No logs",
     "project": "Project",
     "status": "Status",
     "lastBackup": "Last Backup",

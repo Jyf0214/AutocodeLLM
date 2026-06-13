@@ -9,7 +9,6 @@ import {
   ArrowRightOutlined,
   FolderOutlined,
   CloudOutlined,
-  CodeOutlined,
   GithubOutlined,
 } from '@ant-design/icons';
 
@@ -20,7 +19,6 @@ interface AuthStatus {
 
 const features = [
   { icon: FolderOutlined, titleKey: 'projectManagement', descKey: 'projectManagementDesc', link: '/project' },
-  { icon: CodeOutlined, titleKey: 'featureAI.title', descKey: 'featureAI.desc', link: '/project' },
   { icon: CloudOutlined, titleKey: 'cloudService', descKey: 'cloudServiceDesc', link: '/cloud' },
 ];
 

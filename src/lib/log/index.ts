@@ -250,6 +250,28 @@ export function logFunctionCall(name: string, args: unknown[], result: unknown, 
   });
 }
 
+// ============================================================
+// 审计日志
+// ============================================================
+
+/**
+ * 安全记录密码审计日志
+ * 当 passwordAudit Prisma 模型不存在时（如测试/模拟环境），静默跳过，不产生任何输出
+ */
+export async function logPasswordAudit(
+  db: { passwordAudit?: { create: (...args: never[]) => Promise<unknown> } },
+  data: {
+    userId: string;
+    action: string;
+    success: boolean;
+    message: string;
+  },
+) {
+  if (db?.passwordAudit) {
+    await (db.passwordAudit.create as (args: { data: typeof data }) => Promise<unknown>)({ data });
+  }
+}
+
 /**
  * 高阶函数包装器：自动记录函数入参、返回值、耗时，并关联到当前请求
  */

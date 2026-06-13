@@ -1,5 +1,5 @@
 /**
- * 全局中间件
+ * 全局中间件 (Next.js 16 proxy)
  * - CSRF 保护: 对非 GET/HEAD/OPTIONS 请求验证 Origin 头
  * - 跳过公开路由: /api/auth/** 和 /api/state
  */
@@ -8,7 +8,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 // 跳过 CSRF 检查的路由前缀
 const PUBLIC_ROUTES = ['/api/auth/', '/api/state'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 跳过公开路由

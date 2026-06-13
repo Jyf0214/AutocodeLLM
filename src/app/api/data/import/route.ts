@@ -89,7 +89,7 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
   if (data.providers?.length) {
     if (mode === 'overwrite') {
       // 使用事务包装 deleteMany + 批量创建，确保原子性
-      await db.$transaction(async (tx) => {
+      await db.$transaction(async (tx: any) => {
         await tx.provider.deleteMany();
         progress.push('已清除现有提供商');
 
@@ -124,9 +124,9 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
       // merge 模式：逐条处理
       for (const p of data.providers) {
         try {
-          const existing = await db.provider.findUnique({ where: { name: p.name } });
+          const existing = await (db as any).provider.findUnique({ where: { name: p.name } });
           if (existing) {
-            await db.provider.update({
+            await (db as any).provider.update({
               where: { name: p.name },
               data: { baseUrl: p.baseUrl, enabled: p.enabled ?? true },
             });
@@ -141,7 +141,7 @@ export const POST = withApiLogging('POST data/import', async function POST(reque
             continue;
           }
 
-          await db.provider.create({
+          await (db as any).provider.create({
             data: {
               name: p.name,
               baseUrl: p.baseUrl,

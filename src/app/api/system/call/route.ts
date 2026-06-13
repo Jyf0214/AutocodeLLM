@@ -60,7 +60,7 @@ export const POST = withApiLogging('POST system/call', async function POST(reque
       }
 
       case 'listProviders': {
-        const providers = await db.provider.findMany({
+        const providers = await (db as any).provider.findMany({
           select: { id: true, name: true, enabled: true, providerType: true },
           orderBy: { createdAt: 'desc' },
         });
@@ -71,7 +71,7 @@ export const POST = withApiLogging('POST system/call', async function POST(reque
         const [userCount, projectCount, providerCount] = await Promise.all([
           db.user.count(),
           db.project.count(),
-          db.provider.count(),
+          (db as any).provider.count(),
         ]);
         return NextResponse.json({
           success: true,

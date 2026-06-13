@@ -8,6 +8,10 @@
     "landing": {
       "subtitle": "AI 编码代理平台 — 支持函数调用、任务代理、文件操作、Web 搜索等完整工具链",
       "coreFeatures": "核心功能",
+      "featureAI": {
+        "title": "AI 编码代理",
+        "desc": "支持函数调用、任务代理、文件操作，让 AI 帮你完成重复的编码工作"
+      },
       "cta": {
         "title": "准备好开始了吗？",
         "desc": "登录你的账户，体验完整的 AI 编码代理功能",
@@ -18,7 +22,11 @@
       "enterProject": "进入项目",
       "logoutSuccess": "已退出登录",
       "logoutFailed": "退出失败，请重试",
-      "startNow": "立即开始"
+      "startNow": "立即开始",
+      "projectManagement": "项目管理",
+      "projectManagementDesc": "创建和管理你的编码项目，配置工具链与协作环境",
+      "cloudService": "云服务",
+      "cloudServiceDesc": "同步、备份与云端存储管理，保障数据安全"
     }
   },
   "login": {
@@ -142,6 +150,7 @@
     "projectBackupStatus": "项目备份状态",
     "backedUp": "已备份",
     "backupFailed": "备份失败",
+    "backupLogs": "备份日志",
     "notBackedUp": "未备份",
     "noProjectData": "暂无项目数据",
     "connectionStatus": "连接状态",
@@ -167,6 +176,7 @@
     "backupDesc": "查看所有项目的备份状态（只读视图）",
     "refresh": "刷新",
     "noBackupData": "暂无备份数据",
+    "noLogs": "暂无日志",
     "status": "状态",
     "lastBackup": "上次备份",
     "nextBackup": "下次备份",
