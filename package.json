@@ -1,6 +1,9 @@
 {
-  "name": "@qwen-code/qwen-code",
+  "name": "@jyf0214/autocodellm",
   "version": "0.18.0",
+  "description": "AutocodeLLM — A fork of Qwen-Code (originally forked from Google Gemini CLI)",
+  "author": "Jyf0214",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=22.0.0"
   },
@@ -17,10 +20,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/QwenLM/qwen-code.git"
+    "url": "git+https://github.com/Jyf0214/AutocodeLLM.git"
   },
   "config": {
-    "sandboxImageUri": "ghcr.io/qwenlm/qwen-code:0.18.0"
+    "sandboxImageUri": "ghcr.io/jyf0214/autocodellm:0.18.0"
   },
   "scripts": {
     "start": "cross-env node scripts/start.js",

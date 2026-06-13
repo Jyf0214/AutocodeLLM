@@ -1,0 +1,46 @@
+AutocodeLLM
+Copyright 2026 Jyf0214 (https://github.com/Jyf0214)
+
+This product is a fork of Qwen-Code, which is itself a fork of Google Gemini CLI.
+
+========================================================================
+Copyright notices for incorporated components:
+========================================================================
+
+1. Google Gemini CLI
+   Copyright 2025 Google LLC
+   Licensed under the Apache License, Version 2.0.
+   Source: https://github.com/google-gemini/gemini-cli
+
+2. Qwen-Code
+   Copyright 2026 Qwen Team, Alibaba Group
+   Licensed under the Apache License, Version 2.0.
+   Source: https://github.com/QwenLM/qwen-code
+
+3. AutocodeLLM (this fork)
+   Copyright 2026 Jyf0214
+   Licensed under the Apache License, Version 2.0.
+   Source: https://github.com/Jyf0214/AutocodeLLM
+
+========================================================================
+Modifications:
+========================================================================
+
+This project is a fork of Qwen-Code (v0.18.0) by Jyf0214.
+All modifications are documented in the Git history of this repository.
+
+========================================================================
+Apache License 2.0
+========================================================================
+
+All source code in this repository is licensed under the Apache License,
+Version 2.0 (the "License"); you may not use these files except in
+compliance with the License. You may obtain a copy of the License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

@@ -1,20 +1,15 @@
 <div align="center">
 
-[![npm version](https://img.shields.io/npm/v/@qwen-code/qwen-code.svg)](https://www.npmjs.com/package/@qwen-code/qwen-code)
-[![License](https://img.shields.io/github/license/QwenLM/qwen-code.svg)](./LICENSE)
+# AutocodeLLM
+
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg)](https://nodejs.org/)
-[![Downloads](https://img.shields.io/npm/dm/@qwen-code/qwen-code.svg)](https://www.npmjs.com/package/@qwen-code/qwen-code)
+[![Fork](https://img.shields.io/badge/fork-Qwen--Code-blue)](https://github.com/QwenLM/qwen-code)
 
-<a href="https://trendshift.io/repositories/15287" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15287" alt="QwenLM%2Fqwen-code | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+**An open-source AI coding agent for the terminal.**
 
-**An open-source AI agent that lives in your terminal.**
-
-<a href="https://qwenlm.github.io/qwen-code-docs/zh/users/overview">中文</a> |
-<a href="https://qwenlm.github.io/qwen-code-docs/de/users/overview">Deutsch</a> |
-<a href="https://qwenlm.github.io/qwen-code-docs/fr/users/overview">français</a> |
-<a href="https://qwenlm.github.io/qwen-code-docs/ja/users/overview">日本語</a> |
-<a href="https://qwenlm.github.io/qwen-code-docs/ru/users/overview">Русский</a> |
-<a href="https://qwenlm.github.io/qwen-code-docs/pt-BR/users/overview">Português (Brasil)</a>
+A fork of [Qwen-Code](https://github.com/QwenLM/qwen-code) (v0.18.0),
+originally derived from [Google Gemini CLI](https://github.com/google-gemini/gemini-cli).
 
 </div>
 
@@ -581,4 +576,10 @@ To report a bug from within the CLI, run `/bug` and include a short title and re
 
 ## Acknowledgments
 
-This project is based on [Google Gemini CLI](https://github.com/google-gemini/gemini-cli). We acknowledge and appreciate the excellent work of the Gemini CLI team. Our main contribution focuses on parser-level adaptations to better support Qwen-Coder models.
+This project is a fork of [Qwen-Code](https://github.com/QwenLM/qwen-code) (v0.18.0),
+which is itself based on [Google Gemini CLI](https://github.com/google-gemini/gemini-cli).
+We acknowledge and thank both the Qwen Team (Alibaba Group) and Google Gemini CLI team
+for their excellent work.
+
+Copyright and license notices for all incorporated works can be found in the
+[NOTICE](./NOTICE) file.
