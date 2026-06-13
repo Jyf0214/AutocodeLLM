@@ -9,9 +9,6 @@ const nextConfig: NextConfig = {
     resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
   },
   serverExternalPackages: ['node-pty', 'chokidar', 'webdav', 'zlib-sync', '@discordjs/ws', '@discordjs/gateway', '@discordjs/opus', '@discordjs/rest', 'discord.js', 'erlpack', 'tweetnacl', 'tweetnacl-secretspace'],
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   allowedDevOrigins: ['surtr-twilight-autocodellm.hf.space'],
   async headers() {
     return [

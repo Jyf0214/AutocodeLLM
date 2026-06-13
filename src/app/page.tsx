@@ -105,7 +105,7 @@ export default function HomePage() {
 
         {loadingAuth ? (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <Skeleton active title={{ width: 200, height: 48 }} paragraph={false} />
+            <Skeleton active title={{ width: 200 }} paragraph={false} />
           </div>
         ) : isLoggedIn ? (
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>

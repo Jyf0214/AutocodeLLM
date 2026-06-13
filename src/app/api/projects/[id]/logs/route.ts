@@ -11,8 +11,8 @@ import {
   errorResponse,
   handleError,
 } from '@/lib/api/response';
+import type { LogType } from '@prisma/client';
 import type {
-
   ProjectLogListResponse,
   ProjectLogResponse,
   CreateProjectLogRequest,
@@ -46,7 +46,7 @@ export const GET = withApiLogging('GET projects/:id/logs', async function GET(
     const logs = await db.projectLog.findMany({
       where: {
         projectId: id,
-        ...(type ? { type } : {}),
+        ...(type ? { type: type as LogType } : {}),
       },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,

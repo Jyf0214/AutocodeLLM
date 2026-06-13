@@ -65,7 +65,9 @@ export const POST = withApiLogging('POST sync', async function POST(request: Req
           data,
         });
       } else {
-        await db.webdavConfig.create({ data });
+        await db.webdavConfig.create({
+          data: { ...data, password: data.password ?? '' },
+        });
       }
 
       // 如果启用了同步，自动启动文件监听

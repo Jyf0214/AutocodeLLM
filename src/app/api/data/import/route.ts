@@ -14,6 +14,7 @@ interface ImportData {
     id?: string;
     name: string;
     baseUrl: string;
+    apiKey?: string;
     enabled?: boolean;
     providerType?: string;
     sdkType?: string;

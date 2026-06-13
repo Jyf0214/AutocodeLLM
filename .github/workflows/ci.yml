@@ -60,6 +60,12 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Run TypeScript type check
+        run: bun run typecheck
+
+      - name: Run ESLint
+        run: bun run lint
+
       - name: Generate version
         run: node scripts/version.mjs
 

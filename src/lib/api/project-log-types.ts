@@ -8,7 +8,7 @@
 export interface ProjectLog {
   id: string;
   projectId: string;
-  type: 'FUNCTION_CALL';
+  type: 'FUNCTION_CALL' | 'CHAT_MESSAGE';
   functionName: string | null;
   summary: string | null;
   status: 'SUCCESS' | 'ERROR' | 'PENDING' | null;
@@ -19,7 +19,7 @@ export interface ProjectLog {
  * 创建项目日志请求
  */
 export interface CreateProjectLogRequest {
-  type?: 'FUNCTION_CALL';
+  type?: 'FUNCTION_CALL' | 'CHAT_MESSAGE';
   functionName?: string;
   summary?: string;
   status?: 'SUCCESS' | 'ERROR' | 'PENDING';

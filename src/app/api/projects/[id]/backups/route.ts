@@ -31,7 +31,7 @@ export const GET = withApiLogging('GET projects/:id/backups', async function GET
     });
 
     const latestBackup = backupRecords[0];
-    const hasFailure = backupRecords.some((b) => b.status === 'failed');
+    const hasFailure = backupRecords.some((b) => b.status === 'FAILED');
 
     const backupInfo = {
       lastBackup: latestBackup?.createdAt.toISOString() ?? null,
