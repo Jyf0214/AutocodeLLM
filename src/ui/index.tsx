@@ -1,5 +1,5 @@
 // AutocodeLLM UI 组件兼容层
-// 仅保留实际使用的 13 个组件导出
+// 包含 antd 重导出 + 自定义 Tailwind 组件
 
 'use client';
 
@@ -25,6 +25,18 @@ export const Input = AntdInput;
 export const Alert = AntdAlert;
 export const Modal = AntdModal;
 export const Empty = AntdEmpty;
+
+// ============================================================
+// 自定义 Tailwind 组件
+// ============================================================
+
+export { Button as CustomButton } from '@/ui/button';
+export type { ButtonProps as CustomButtonProps, ButtonVariant, ButtonSize, ButtonRounded } from '@/ui/button';
+export { PageContainer as TailwindPageContainer } from '@/ui/page-container';
+export { EmptyState } from '@/ui/empty-state';
+export { FilterPill } from '@/ui/filter-pill';
+export { ProCard } from '@/ui/pro-card';
+export { Tag as StatusTag } from '@/ui/tag';
 
 // ============================================================
 // Avatar 组件（扩展 antd Avatar）

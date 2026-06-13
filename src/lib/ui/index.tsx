@@ -1,6 +1,6 @@
 /**
  * UI 组件兼容层
- * 仅重新导出实际使用的 13 个组件
+ * 重新导出所有 UI 组件
  */
 
 'use client';
@@ -19,4 +19,10 @@ export {
   ThemeSwitch,
   InputPassword,
   PageContainer,
+  CustomButton,
+  TailwindPageContainer,
+  EmptyState,
+  FilterPill,
+  ProCard,
+  StatusTag,
 } from '@/ui';

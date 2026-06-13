@@ -10,11 +10,15 @@ import { message, Card } from 'antd';
 export default function ChangePasswordPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [userId] = useState<string | null>(() => sessionStorage.getItem('userId'));
-  const [username] = useState(() => sessionStorage.getItem('username') ?? '');
+  const [userId] = useState<string | null>(() => {
+    try { return typeof window !== 'undefined' ? sessionStorage.getItem('userId') : null; } catch { return null; }
+  });
+  const [username] = useState(() => {
+    try { return typeof window !== 'undefined' ? sessionStorage.getItem('username') ?? '' : ''; } catch { return ''; }
+  });
 
   useEffect(() => {
-    const forceChange = sessionStorage.getItem('forceChangePassword');
+    const forceChange = typeof window !== 'undefined' ? sessionStorage.getItem('forceChangePassword') : null;
 
     if (!userId || forceChange !== 'true') {
       router.push('/login');
