@@ -29,22 +29,16 @@ import {
 const QWEN_DIR = join(homedir(), '.qwen');
 const SYNC_INTERVAL = 10 * 60 * 1000; // 10 分钟
 
-/* ── Step 1: 验证 Token ───────────────────────────────── */
+/* ── Step 1: 读取 Token ───────────────────────────────── */
 
-function validateToken() {
+function getToken() {
   const token = process.env.QWEN_SERVER_TOKEN;
-  if (!token || token.trim() === '') {
-    console.error('');
-    console.error('❌ 错误: QWEN_SERVER_TOKEN 环境变量未设置！');
-    console.error('');
-    console.error('  请设置一个 Bearer token 用于 API 鉴权：');
-    console.error('    export QWEN_SERVER_TOKEN=your-secret-token');
-    console.error('  或在 docker run 时传入：');
-    console.error('    -e QWEN_SERVER_TOKEN=your-secret-token');
-    console.error('');
-    process.exit(1);
+  if (token && token.trim() !== '') {
+    console.log('[entry] ✅ Token 已设置，启用 Bearer 鉴权');
+    return token.trim();
   }
-  return token.trim();
+  console.log('[entry] ⚠️  QWEN_SERVER_TOKEN 未设置，开放访问模式');
+  return null;
 }
 
 /* ── Step 2: WebDAV 启动恢复 ──────────────────────────── */
@@ -137,16 +131,11 @@ function stopPeriodicSync() {
 
 function startQwenServe(token) {
   return new Promise((resolve, reject) => {
-    const args = [
-      'serve',
-      '--port',
-      '4170',
-      '--token',
-      token,
-      '--require-auth',
-      '--hostname',
-      '0.0.0.0',
-    ];
+    const args = ['serve', '--port', '4170', '--hostname', '0.0.0.0'];
+
+    if (token) {
+      args.push('--token', token, '--require-auth');
+    }
 
     console.log(`[entry] 启动 qwen ${args.join(' ')}`);
 
@@ -182,8 +171,7 @@ function startQwenServe(token) {
 
 async function main() {
   try {
-    const token = validateToken();
-    console.log('[entry] ✅ Token 验证通过');
+    const token = getToken();
 
     // 从 WebDAV 恢复
     await restoreFromWebDAV();
