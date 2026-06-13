@@ -25,7 +25,7 @@
     "db:health": "bun run src/lib/db/health-check.ts",
     "db:reset": "prisma db push --force-reset && bun run db:init",
     "terminal": "bun run scripts/terminal-server.ts",
-    "postinstall": "prisma generate"
+    "postinstall": ""
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^16.2.2",
