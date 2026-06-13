@@ -66,6 +66,7 @@ COPY --from=builder /home/node/app/dist/*.tgz /tmp/
 
 # Install built packages globally
 RUN npm install -g /tmp/*.tgz \
+  && npm install -g @qwen-code/qwen-code@latest \
   && npm cache clean --force \
   && rm -rf /tmp/*.tgz
 
