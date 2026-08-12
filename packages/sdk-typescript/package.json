@@ -54,7 +54,7 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.2",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^3.25.0"
   },
   "devDependencies": {
@@ -67,7 +67,7 @@
     "esbuild": "^0.25.12",
     "eslint": "^8.57.0",
     "typescript": "^5.4.5",
-    "vitest": "^1.6.0"
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "typescript": ">=5.0.0"
